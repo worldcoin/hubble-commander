@@ -226,6 +226,35 @@ func (s *MassMigrationTestSuite) TestGetMassMigrationWithBatchDetails_WithoutBat
 	s.Equal(expected, *res)
 }
 
+func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID() {
+	massMigration1 := massMigration
+	massMigration1.CommitmentID = &txCommitment.ID
+
+	err := s.storage.AddMassMigration(&massMigration1)
+	s.NoError(err)
+
+	massMigrations, err := s.storage.GetMassMigrationsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(massMigrations, 1)
+}
+
+func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID_NoTransactions() {
+	massMigrations, err := s.storage.GetMassMigrationsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(massMigrations, 0)
+}
+
+func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID_NoMassMigrationsButSomeTransfers() {
+	transfer1 := transfer
+	transfer1.CommitmentID = &txCommitment.ID
+	err := s.storage.AddTransfer(&transfer1)
+	s.NoError(err)
+
+	massMigrations, err := s.storage.GetMassMigrationsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(massMigrations, 0)
+}
+
 func TestMassMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(MassMigrationTestSuite))
 }
