@@ -5,21 +5,22 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type commitment interface {
+type GenericCommitment interface {
 	BodyHash(accountRoot common.Hash) *common.Hash
 	LeafHash(accountRoot common.Hash) common.Hash
 }
 
-func decodedTxCommitmentsToCommitments(commitments []encoder.DecodedCommitment) []commitment {
-	result := make([]commitment, 0, len(commitments))
+//TODO-sync: move to encoder package and remove above interface
+func decodedTxCommitmentsToCommitments(commitments []encoder.DecodedCommitment) []encoder.GenericCommitment {
+	result := make([]encoder.GenericCommitment, 0, len(commitments))
 	for i := range commitments {
 		result = append(result, &commitments[i])
 	}
 	return result
 }
 
-func decodedMMCommitmentsToCommitments(commitments []encoder.DecodedMassMigrationCommitment) []commitment {
-	result := make([]commitment, 0, len(commitments))
+func decodedMMCommitmentsToCommitments(commitments []encoder.DecodedMMCommitment) []encoder.GenericCommitment {
+	result := make([]encoder.GenericCommitment, 0, len(commitments))
 	for i := range commitments {
 		result = append(result, &commitments[i])
 	}

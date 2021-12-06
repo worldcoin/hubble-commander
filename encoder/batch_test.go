@@ -82,6 +82,7 @@ func TestDecodeMassMigrationBatchCalldata(t *testing.T) {
 	require.Equal(t, commitments[0].PostStateRoot, decoded.StateRoot)
 	require.Equal(t, commitments[0].CombinedSignature, decoded.CombinedSignature)
 	require.Equal(t, metas[0], *decoded.Meta)
+	require.Equal(t, metas[0].FeeReceiver, decoded.FeeReceiver)
 	require.Equal(t, withdrawRoots[0], decoded.WithdrawRoot)
 	require.Equal(t, commitments[0].Transactions, decoded.Transactions)
 	require.Equal(t, *batchID, decoded.ID.BatchID)

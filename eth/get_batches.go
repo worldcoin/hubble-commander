@@ -196,7 +196,8 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	err = verifyBatchHash(*batch.Hash, accountRoot, decodedTxCommitmentsToCommitments(commitments))
+	decodedCommitments := decodedTxCommitmentsToCommitments(commitments)
+	err = verifyBatchHash(*batch.Hash, accountRoot, decodedCommitments)
 	if err != nil {
 		return nil, err
 	}
@@ -213,22 +214,24 @@ func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 			accountRoot,
 			timestamp,
 		),
-		Commitments: commitments,
+		Commitments: decodedCommitments,
 	}, nil
 }
 
+//TODO-sync: replace with function that accepts decodeCalldataFunction
 func (c *Client) getMMBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
 	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeMassMigrationBatchCalldata(c.Rollup.ABI, tx.Data())
+	decodedCommitments, err := encoder.DecodeMassMigrationBatchCalldata(c.Rollup.ABI, tx.Data())
 	if err != nil {
 		return nil, err
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	err = verifyBatchHash(*batch.Hash, accountRoot, decodedMMCommitmentsToCommitments(commitments))
+	commitments := decodedMMCommitmentsToCommitments(decodedCommitments)
+	err = verifyBatchHash(*batch.Hash, accountRoot, commitments)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +241,7 @@ func (c *Client) getMMBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transac
 		return nil, err
 	}
 
-	return &DecodedMMBatch{
+	return &DecodedTxBatch{
 		DecodedBatchBase: *NewDecodedBatchBase(
 			batch,
 			tx.Hash(),
@@ -290,7 +293,7 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	return models.NewTimestamp(utcTime), nil
 }
 
-func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []commitment) error {
+func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.GenericCommitment) error {
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
 		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))

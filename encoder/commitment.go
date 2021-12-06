@@ -10,12 +10,22 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+type GenericCommitment interface {
+	ToDecodedCommitment() *DecodedCommitment
+	BodyHash(accountRoot common.Hash) *common.Hash
+	LeafHash(accountRoot common.Hash) common.Hash
+}
+
 type DecodedCommitment struct {
 	ID                models.CommitmentID
 	StateRoot         common.Hash
 	CombinedSignature models.Signature
 	FeeReceiver       uint32
 	Transactions      []byte
+}
+
+func (c *DecodedCommitment) ToDecodedCommitment() *DecodedCommitment {
+	return c
 }
 
 func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
@@ -33,16 +43,17 @@ func (c *DecodedCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.StateRoot, *c.BodyHash(accountRoot))
 }
 
-type DecodedMassMigrationCommitment struct {
-	ID                models.CommitmentID
-	StateRoot         common.Hash
-	CombinedSignature models.Signature
-	Meta              *models.MassMigrationMeta
-	WithdrawRoot      common.Hash
-	Transactions      []byte
+type DecodedMMCommitment struct {
+	DecodedCommitment
+	Meta         *models.MassMigrationMeta
+	WithdrawRoot common.Hash
 }
 
-func (c *DecodedMassMigrationCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
+func (c *DecodedMMCommitment) ToDecodedCommitment() *DecodedCommitment {
+	return &c.DecodedCommitment
+}
+
+func (c *DecodedMMCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
 	arr := make([]byte, 32+64+32+32+32+32+32+len(c.Transactions))
 
 	copy(arr[0:32], accountRoot.Bytes())
@@ -57,6 +68,6 @@ func (c *DecodedMassMigrationCommitment) BodyHash(accountRoot common.Hash) *comm
 	return ref.Hash(crypto.Keccak256Hash(arr))
 }
 
-func (c *DecodedMassMigrationCommitment) LeafHash(accountRoot common.Hash) common.Hash {
+func (c *DecodedMMCommitment) LeafHash(accountRoot common.Hash) common.Hash {
 	return utils.HashTwo(c.StateRoot, *c.BodyHash(accountRoot))
 }

@@ -95,8 +95,9 @@ func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
 
 	decodedBatch, err := s.client.getMMBatch(event, transaction)
 	s.NoError(err)
-	decodedMMBatch := decodedBatch.ToDecodedMMBatch()
+	decodedMMBatch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(batchID, decodedMMBatch.ID)
+	s.EqualValues(event.BatchType, decodedMMBatch.Type)
 	s.Len(decodedMMBatch.Commitments, len(s.commitments))
 	s.EqualValues(event.AccountRoot, decodedMMBatch.AccountTreeRoot)
 }

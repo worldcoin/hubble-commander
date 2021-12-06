@@ -11,7 +11,6 @@ type DecodedBatch interface {
 	GetID() models.Uint256
 	GetBase() *DecodedBatchBase
 	ToDecodedTxBatch() *DecodedTxBatch
-	ToDecodedMMBatch() *DecodedMMBatch
 	ToDecodedDepositBatch() *DecodedDepositBatch
 	ToBatch(prevStateRoot common.Hash) *models.Batch
 	GetCommitmentsLength() int
@@ -58,7 +57,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 
 type DecodedTxBatch struct {
 	DecodedBatchBase
-	Commitments []encoder.DecodedCommitment
+	Commitments []encoder.GenericCommitment
 }
 
 func (b *DecodedTxBatch) GetID() models.Uint256 {
@@ -73,44 +72,11 @@ func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	return b
 }
 
-func (b *DecodedTxBatch) ToDecodedMMBatch() *DecodedMMBatch {
-	panic("ToDecodedMMBatch cannot be invoked on DecodedTxBatch")
-}
-
 func (b *DecodedTxBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
 	panic("ToDecodedDepositBatch cannot be invoked on DecodedTxBatch")
 }
 
 func (b *DecodedTxBatch) GetCommitmentsLength() int {
-	return len(b.Commitments)
-}
-
-type DecodedMMBatch struct {
-	DecodedBatchBase
-	Commitments []encoder.DecodedMassMigrationCommitment
-}
-
-func (b *DecodedMMBatch) GetID() models.Uint256 {
-	return b.DecodedBatchBase.ID
-}
-
-func (b *DecodedMMBatch) GetBase() *DecodedBatchBase {
-	return &b.DecodedBatchBase
-}
-
-func (b *DecodedMMBatch) ToDecodedTxBatch() *DecodedTxBatch {
-	panic("ToDecodedDepositBatch cannot be invoked on DecodedMMBatch")
-}
-
-func (b *DecodedMMBatch) ToDecodedMMBatch() *DecodedMMBatch {
-	return b
-}
-
-func (b *DecodedMMBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
-	panic("ToDecodedDepositBatch cannot be invoked on DecodedMMBatch")
-}
-
-func (b *DecodedMMBatch) GetCommitmentsLength() int {
 	return len(b.Commitments)
 }
 
@@ -130,10 +96,6 @@ func (b *DecodedDepositBatch) GetBase() *DecodedBatchBase {
 
 func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	panic("ToDecodedTxBatch cannot be invoked on DecodedDepositBatch")
-}
-
-func (b *DecodedDepositBatch) ToDecodedMMBatch() *DecodedMMBatch {
-	panic("ToDecodedMMBatch cannot be invoked on DecodedDepositBatch")
 }
 
 func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
