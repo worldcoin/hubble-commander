@@ -86,15 +86,15 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) TestStop_DoesNotPanicWithWorkerErrorAfterAManualStop() {
+func (s *CommanderTestSuite) TestStop_DoesNotPanicWhenWorkerErrorsWhileStopping() {
 	testErr := ErrInvalidStateRoot
 	stopped := false
 
-	go s.NotPanics(func() {
+	go func() {
 		err := s.cmd.StartAndWait()
 		s.NoError(err)
 		stopped = true
-	}, "Should not panic because it's stopped manually.")
+	}()
 
 	s.Eventually(func() bool {
 		return s.cmd.isRunning
