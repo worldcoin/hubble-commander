@@ -257,7 +257,7 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 }
 
 func stopCommander(cmd *Commander) {
-	if !cmd.IsRunning() {
+	if !cmd.isRunning {
 		return
 	}
 	cmd.stopWorkersContext()

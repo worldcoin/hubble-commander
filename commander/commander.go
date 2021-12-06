@@ -38,7 +38,9 @@ type worker struct {
 	err  error
 }
 
+// nolint:structcheck
 type lifecycle struct {
+	isRunning           bool
 	releaseStartAndWait context.CancelFunc
 	manualStop          bool
 
@@ -87,7 +89,7 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Start() (err error) {
-	if c.IsRunning() {
+	if c.isRunning {
 		return nil
 	}
 
@@ -137,12 +139,12 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-
+	c.isRunning = true
 	return nil
 }
 
 func (c *Commander) Stop() error {
-	if !c.IsRunning() {
+	if !c.isRunning {
 		return nil
 	}
 
@@ -162,10 +164,6 @@ func (c *Commander) Stop() error {
 	c.releaseStartAndWait()
 	c.resetCommander()
 	return nil
-}
-
-func (c *Commander) IsRunning() bool {
-	return c.workersContext != nil
 }
 
 func (c *Commander) startWorker(name string, fn func() error) {

@@ -40,17 +40,17 @@ func (s *CommanderTestSuite) TearDownTest() {
 }
 
 func (s *CommanderTestSuite) TestStartStop() {
-	s.False(s.cmd.IsRunning())
+	s.False(s.cmd.isRunning)
 
 	err := s.cmd.Start()
 	s.NoError(err)
 
-	s.True(s.cmd.IsRunning())
+	s.True(s.cmd.isRunning)
 
 	err = s.cmd.Stop()
 	s.NoError(err)
 
-	s.False(s.cmd.IsRunning())
+	s.False(s.cmd.isRunning)
 }
 
 func (s *CommanderTestSuite) TestStartAndWait() {
@@ -62,7 +62,7 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 		startAndWaitReturnTime = ref.Time(time.Now())
 	}()
 	s.Eventually(func() bool {
-		return s.cmd.IsRunning()
+		return s.cmd.isRunning
 	}, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
 
 	err := s.cmd.Stop()
@@ -86,7 +86,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
-func (s *CommanderTestSuite) TestStop_NotPanicWithWorkerErrorAfterManuallyStop() {
+func (s *CommanderTestSuite) TestStop_DoesNotPanicWithWorkerErrorAfterAManualStop() {
 	testErr := ErrInvalidStateRoot
 	stopped := false
 
@@ -97,7 +97,7 @@ func (s *CommanderTestSuite) TestStop_NotPanicWithWorkerErrorAfterManuallyStop()
 	}, "Should not panic because it's stopped manually.")
 
 	s.Eventually(func() bool {
-		return s.cmd.IsRunning()
+		return s.cmd.isRunning
 	}, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
 
 	go func() {
