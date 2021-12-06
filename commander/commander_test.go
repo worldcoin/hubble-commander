@@ -86,6 +86,33 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	s.NoError(err)
 }
 
+func (s *CommanderTestSuite) TestStop_NotPanicWithWorkerErrorAfterManuallyStop() {
+	testErr := ErrInvalidStateRoot
+	stopped := false
+
+	go s.NotPanics(func() {
+		err := s.cmd.StartAndWait()
+		s.NoError(err)
+		stopped = true
+	}, "Should not panic because it's stopped manually.")
+
+	s.Eventually(func() bool {
+		return s.cmd.IsRunning()
+	}, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
+
+	go func() {
+		err := s.cmd.Stop()
+		s.NoError(err)
+	}()
+	s.cmd.startWorker(func() error {
+		return testErr // any error
+	})
+
+	s.Eventually(func() bool {
+		return stopped
+	}, 15*time.Second, 100*time.Millisecond)
+}
+
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain chain.Connection) {
 	deployerCfg := config.GetDeployerConfig()
 	yamlChainSpec, err := Deploy(deployerCfg, blockchain)

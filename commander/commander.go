@@ -39,6 +39,7 @@ type Commander struct {
 	stopWorkers         context.CancelFunc
 	workers             sync.WaitGroup
 	workersErr          error
+	workersStopped      bool
 	releaseStartAndWait context.CancelFunc
 
 	invalidBatchID    *models.Uint256
@@ -133,7 +134,7 @@ func (c *Commander) startWorker(fn func() error) {
 
 func (c *Commander) handleWorkerError() {
 	<-c.workersContext.Done()
-	if c.workersErr == nil {
+	if c.workersErr == nil || c.workersStopped {
 		return
 	}
 	if err := c.stop(); err != nil {
@@ -166,6 +167,7 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) stop() error {
+	c.workersStopped = true
 	if !c.IsRunning() {
 		return nil
 	}
