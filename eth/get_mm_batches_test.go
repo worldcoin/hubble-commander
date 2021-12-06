@@ -93,7 +93,7 @@ func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
 		BatchType:   uint8(batchtype.MassMigration),
 	}
 
-	decodedBatch, err := s.client.getMMBatch(event, transaction)
+	decodedBatch, err := s.client.getTxBatch(event, transaction, decodedMMCommitments)
 	s.NoError(err)
 	decodedMMBatch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(batchID, decodedMMBatch.ID)
@@ -116,7 +116,7 @@ func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchNotExists() {
 		BatchType:   uint8(batchtype.MassMigration),
 	}
 
-	batch, err := s.client.getMMBatch(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction, decodedMMCommitments)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
@@ -136,7 +136,7 @@ func (s *GetMMBatchesTestSuite) TestGetMMBatch_DifferentBatchHash() {
 		BatchType:   uint8(batchtype.MassMigration),
 	}
 
-	batch, err := s.client.getMMBatch(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction, decodedMMCommitments)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }

@@ -46,7 +46,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.EqualValues(t, 0, decoded.ID.IndexInBatch)
 }
 
-func TestDecodeMassMigrationBatchCalldata(t *testing.T) {
+func TestDecodeMMBatchCalldata(t *testing.T) {
 	rollupABI, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
@@ -74,7 +74,7 @@ func TestDecodeMassMigrationBatchCalldata(t *testing.T) {
 	calldata, err := rollupABI.Pack("submitMassMigration", arg1, arg2, arg3, arg4, arg5, arg6)
 	require.NoError(t, err)
 
-	decodedCommitments, err := DecodeMassMigrationBatchCalldata(&rollupABI, calldata)
+	decodedCommitments, err := DecodeMMBatchCalldata(&rollupABI, calldata)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(decodedCommitments))
 

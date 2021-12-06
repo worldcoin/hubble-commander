@@ -46,14 +46,14 @@ func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitme
 	return commitments, nil
 }
 
-// DecodeMassMigrationBatchCalldata
+// DecodeMMBatchCalldata
 //	 uint256 batchID,
 //	 bytes32[] stateRoots,
 //	 uint256[2][] signatures,
 //	 uint256[4][] meta,
 //	 bytes32[] withdrawRoots,
 //	 bytes[] txss
-func DecodeMassMigrationBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMMCommitment, error) {
+func DecodeMMBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMMCommitment, error) {
 	unpacked, err := rollupABI.Methods["submitMassMigration"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -2,27 +2,33 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type GenericCommitment interface {
-	BodyHash(accountRoot common.Hash) *common.Hash
-	LeafHash(accountRoot common.Hash) common.Hash
-}
+type decodeCommitmentsFunc func(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error)
 
-//TODO-sync: move to encoder package and remove above interface
-func decodedTxCommitmentsToCommitments(commitments []encoder.DecodedCommitment) []encoder.GenericCommitment {
+func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error) {
+	commitments, err := encoder.DecodeBatchCalldata(rollupABI, calldata)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]encoder.GenericCommitment, 0, len(commitments))
 	for i := range commitments {
 		result = append(result, &commitments[i])
 	}
-	return result
+	return result, nil
 }
 
-func decodedMMCommitmentsToCommitments(commitments []encoder.DecodedMMCommitment) []encoder.GenericCommitment {
+func decodedMMCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error) {
+	commitments, err := encoder.DecodeMMBatchCalldata(rollupABI, calldata)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]encoder.GenericCommitment, 0, len(commitments))
 	for i := range commitments {
 		result = append(result, &commitments[i])
 	}
-	return result
+	return result, nil
 }

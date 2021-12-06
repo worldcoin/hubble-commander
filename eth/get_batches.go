@@ -63,12 +63,12 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 
 		switch batchtype.BatchType(event.BatchType) {
 		case batchtype.Transfer, batchtype.Create2Transfer:
-			decodedBatch, err = c.getTxBatch(event, tx)
+			decodedBatch, err = c.getTxBatch(event, tx, decodedTxCommitments)
+		case batchtype.MassMigration:
+			decodedBatch, err = c.getTxBatch(event, tx, decodedMMCommitments)
 		case batchtype.Deposit:
 			decodedBatch, err = c.getDepositBatch(event, depositEvents[depositIndex], tx)
 			depositIndex++
-		case batchtype.MassMigration:
-			decodedBatch, err = c.getMMBatch(event, tx)
 		case batchtype.Genesis:
 			panic("syncing genesis batch should have been skipped")
 		}
@@ -185,52 +185,17 @@ func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
 
-func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
+func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction, decodeCommitments decodeCommitmentsFunc) (DecodedBatch, error) {
 	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeBatchCalldata(c.Rollup.ABI, tx.Data())
+	commitments, err := decodeCommitments(c.Rollup.ABI, tx.Data())
 	if err != nil {
 		return nil, err
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	decodedCommitments := decodedTxCommitmentsToCommitments(commitments)
-	err = verifyBatchHash(*batch.Hash, accountRoot, decodedCommitments)
-	if err != nil {
-		return nil, err
-	}
-
-	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DecodedTxBatch{
-		DecodedBatchBase: *NewDecodedBatchBase(
-			batch,
-			tx.Hash(),
-			accountRoot,
-			timestamp,
-		),
-		Commitments: decodedCommitments,
-	}, nil
-}
-
-//TODO-sync: replace with function that accepts decodeCalldataFunction
-func (c *Client) getMMBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
-	batch, err := c.getBatchDetails(batchEvent)
-	if err != nil {
-		return nil, err
-	}
-	decodedCommitments, err := encoder.DecodeMassMigrationBatchCalldata(c.Rollup.ABI, tx.Data())
-	if err != nil {
-		return nil, err
-	}
-	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
-
-	commitments := decodedMMCommitmentsToCommitments(decodedCommitments)
 	err = verifyBatchHash(*batch.Hash, accountRoot, commitments)
 	if err != nil {
 		return nil, err

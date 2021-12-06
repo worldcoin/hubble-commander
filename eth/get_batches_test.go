@@ -129,7 +129,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchExists() {
 		BatchType:   uint8(batchtype.Transfer),
 	}
 
-	decodedBatch, err := s.client.getTxBatch(event, transaction)
+	decodedBatch, err := s.client.getTxBatch(event, transaction, decodedTxCommitments)
 	s.NoError(err)
 	decodedTxBatch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(batchID, decodedTxBatch.ID)
@@ -151,7 +151,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchNotExists() {
 		BatchType:   uint8(batchtype.Transfer),
 	}
 
-	batch, err := s.client.getTxBatch(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction, decodedTxCommitments)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
@@ -171,7 +171,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_DifferentBatchHash() {
 		BatchType:   uint8(batchtype.Transfer),
 	}
 
-	batch, err := s.client.getTxBatch(event, transaction)
+	batch, err := s.client.getTxBatch(event, transaction, decodedTxCommitments)
 	s.Nil(batch)
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
