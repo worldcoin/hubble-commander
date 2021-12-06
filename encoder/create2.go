@@ -120,11 +120,6 @@ func DecodeCreate2TransferFromCommitment(data []byte) (create2Transfer *models.C
 		},
 		ToStateID: &toStateID,
 	}
-	transferHash, err := HashCreate2Transfer(create2Transfer)
-	if err != nil {
-		return nil, 0, err
-	}
-	create2Transfer.Hash = *transferHash
 	return create2Transfer, toPubKeyID, nil
 }
 

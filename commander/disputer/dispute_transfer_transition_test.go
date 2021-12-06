@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -143,10 +144,10 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
-	commitments := s.createInvalidCommitments(txs, invalidTxHash)
-	s.Len(commitments, len(txs))
+	result := s.createInvalidCommitments(txs, invalidTxHash)
+	s.Equal(result.Len(), len(txs))
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, result)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -156,11 +157,11 @@ func (s *DisputeTransferTransitionTestSuite) submitInvalidBatch(txs [][]models.T
 func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 	commitmentTxs [][]models.Transfer,
 	invalidTxHash common.Hash,
-) []models.CommitmentWithTxs {
+) executor.BatchData {
 	commitmentID, err := s.txsCtx.NextCommitmentID()
 	s.NoError(err)
 
-	commitments := make([]models.CommitmentWithTxs, 0, len(commitmentTxs))
+	batchData := s.txsCtx.Executor.NewBatchData(uint32(len(commitmentTxs)))
 	for i := range commitmentTxs {
 		commitmentID.IndexInBatch = uint8(i)
 		txs := commitmentTxs[i]
@@ -182,10 +183,10 @@ func (s *DisputeTransferTransitionTestSuite) createInvalidCommitments(
 		executeTxsForCommitmentResult := s.txsCtx.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult)
 		commitment, err := s.txsCtx.BuildCommitment(executeTxsForCommitmentResult, commitmentID, 0)
 		s.NoError(err)
-		commitments = append(commitments, *commitment)
+		batchData.AddCommitment(commitment)
 	}
 
-	return commitments
+	return batchData
 }
 
 func TestDisputeTransferTransitionTestSuite(t *testing.T) {

@@ -45,6 +45,22 @@ func (a *ExecuteC2TForCommitmentResult) PendingAccounts() []models.AccountLeaf {
 	return a.pendingAccounts
 }
 
+type ExecuteMassMigrationsForCommitmentResult struct {
+	appliedTxs models.MassMigrationArray
+}
+
+func (a *ExecuteMassMigrationsForCommitmentResult) AppliedTxs() models.GenericTransactionArray {
+	return a.appliedTxs
+}
+
+func (a *ExecuteMassMigrationsForCommitmentResult) AddedPubKeyIDs() []uint32 {
+	panic("AddedPubKeyIDs cannot be invoked on ExecuteMassMigrationsForCommitmentResult")
+}
+
+func (a *ExecuteMassMigrationsForCommitmentResult) PendingAccounts() []models.AccountLeaf {
+	panic("PendingAccounts cannot be invoked on ExecuteMassMigrationsForCommitmentResult")
+}
+
 type ExecuteTxsResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	InvalidTxs() models.GenericTransactionArray
@@ -145,5 +161,47 @@ func (a *ExecuteC2TResult) AddInvalidTx(tx models.GenericTransaction) {
 }
 
 func (a *ExecuteC2TResult) AddSkippedTx(tx models.GenericTransaction) {
+	a.skippedTxs = a.skippedTxs.AppendOne(tx)
+}
+
+type ExecuteMassMigrationsResult struct {
+	appliedTxs models.GenericTransactionArray
+	invalidTxs models.GenericTransactionArray
+	skippedTxs models.GenericTransactionArray
+}
+
+func (a *ExecuteMassMigrationsResult) AppliedTxs() models.GenericTransactionArray {
+	return a.appliedTxs
+}
+
+func (a *ExecuteMassMigrationsResult) InvalidTxs() models.GenericTransactionArray {
+	return a.invalidTxs
+}
+
+func (a *ExecuteMassMigrationsResult) SkippedTxs() models.GenericTransactionArray {
+	return a.skippedTxs
+}
+
+func (a *ExecuteMassMigrationsResult) AddedPubKeyIDs() []uint32 {
+	panic("AddedPubKeyIDs cannot be invoked on ExecuteMassMigrationsResult")
+}
+
+func (a *ExecuteMassMigrationsResult) PendingAccounts() []models.AccountLeaf {
+	panic("PendingAccounts cannot be invoked on ExecuteMassMigrationsResult")
+}
+
+func (a *ExecuteMassMigrationsResult) AllTxs() models.GenericTransactionArray {
+	return a.appliedTxs.Append(a.invalidTxs.Append(a.skippedTxs))
+}
+
+func (a *ExecuteMassMigrationsResult) AddApplied(singleTxResult applier.ApplySingleTxResult) {
+	a.appliedTxs = a.appliedTxs.AppendOne(singleTxResult.AppliedTx())
+}
+
+func (a *ExecuteMassMigrationsResult) AddInvalidTx(tx models.GenericTransaction) {
+	a.invalidTxs = a.invalidTxs.AppendOne(tx)
+}
+
+func (a *ExecuteMassMigrationsResult) AddSkippedTx(tx models.GenericTransaction) {
 	a.skippedTxs = a.skippedTxs.AppendOne(tx)
 }

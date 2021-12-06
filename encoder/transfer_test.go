@@ -69,7 +69,7 @@ func (s *TransferTestSuite) TestEncodeTransfer() {
 }
 
 func (s *TransferTestSuite) TestEncodeTransferForSigning() {
-	txTransfer := &models.Transfer{
+	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 2,
 			Amount:      models.MakeUint256(4),
@@ -78,12 +78,12 @@ func (s *TransferTestSuite) TestEncodeTransferForSigning() {
 		},
 		ToStateID: 3,
 	}
-	encodedTransfer, err := EncodeTransfer(txTransfer)
+	encodedTransfer, err := EncodeTransfer(transfer)
 	s.NoError(err)
 	expected, err := s.transfer.SignBytes(nil, encodedTransfer)
 	s.NoError(err)
 
-	actual, err := EncodeTransferForSigning(txTransfer)
+	actual, err := EncodeTransferForSigning(transfer)
 	s.NoError(err)
 	s.Equal(expected, actual)
 }
@@ -98,7 +98,7 @@ func newTxTransfer(transfer *models.Transfer) testtx.TxTransfer {
 }
 
 func (s *TransferTestSuite) TestEncodeTransferForCommitment() {
-	txTransfer := &models.Transfer{
+	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
 			Amount:      models.MakeUint256(50),
@@ -107,17 +107,17 @@ func (s *TransferTestSuite) TestEncodeTransferForCommitment() {
 		ToStateID: 2,
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(txTransfer)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(transfer)})
 	s.NoError(err)
 
-	encoded, err := EncodeTransferForCommitment(txTransfer)
+	encoded, err := EncodeTransferForCommitment(transfer)
 	s.NoError(err)
 
 	s.Equal(expected, encoded)
 }
 
 func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
-	txTransfer := &models.Transfer{
+	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
 			FromStateID: 1,
@@ -126,21 +126,18 @@ func (s *TransferTestSuite) TestDecodeTransferForCommitment() {
 		},
 		ToStateID: 2,
 	}
-	transferHash, err := HashTransfer(txTransfer)
-	s.NoError(err)
-	txTransfer.Hash = *transferHash
 
-	encoded, err := EncodeTransferForCommitment(txTransfer)
+	encoded, err := EncodeTransferForCommitment(transfer)
 	s.NoError(err)
 
 	decoded, err := DecodeTransferFromCommitment(encoded)
 	s.NoError(err)
 
-	s.Equal(txTransfer, decoded)
+	s.Equal(transfer, decoded)
 }
 
 func (s *TransferTestSuite) TestSerializeTransfers() {
-	txTransfer := models.Transfer{
+	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
 			Amount:      models.MakeUint256(50),
@@ -157,10 +154,10 @@ func (s *TransferTestSuite) TestSerializeTransfers() {
 		ToStateID: 3,
 	}
 
-	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&txTransfer), newTxTransfer(&transfer2)})
+	expected, err := s.testTx.TransferSerialize(nil, []testtx.TxTransfer{newTxTransfer(&transfer), newTxTransfer(&transfer2)})
 	s.NoError(err)
 
-	serialized, err := SerializeTransfers([]models.Transfer{txTransfer, transfer2})
+	serialized, err := SerializeTransfers([]models.Transfer{transfer, transfer2})
 	s.NoError(err)
 
 	s.Equal(expected, serialized)
@@ -185,13 +182,6 @@ func (s *TransferTestSuite) TestDeserializeTransfers() {
 		},
 		ToStateID: 3,
 	}
-
-	transferHash, err := HashTransfer(&transfer)
-	s.NoError(err)
-	transfer.Hash = *transferHash
-	transferHash, err = HashTransfer(&transfer2)
-	s.NoError(err)
-	transfer2.Hash = *transferHash
 
 	serialized, err := s.testTx.TransferSerialize(
 		nil,

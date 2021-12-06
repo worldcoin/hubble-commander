@@ -16,6 +16,7 @@
 #  max_commitments_per_batch: 32
 #  transfer_batch_submission_gas_limit: 400000
 #  c2t_batch_submission_gas_limit: 500000
+#  mass_migration_batch_submission_gas_limit: 550000
 #  deposit_batch_submission_gas_limit: 220000
 #  transition_dispute_gas_limit: 5000000
 #  signature_dispute_gas_limit: 7500000

@@ -10,7 +10,7 @@ func (c *TxsContext) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	[]models.StateMerkleProof,
 	error,
 ) {
-	appliedTxs := models.NewGenericTransactionArray(txtype.TransactionType(c.BatchType), 0, txs.Txs().Len())
+	appliedTxs := models.NewGenericTransactionArray(txtype.FromBatchType(c.BatchType), 0, txs.Txs().Len())
 	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Txs().Len()+1)
 	combinedFee := models.NewUint256(0)
 
