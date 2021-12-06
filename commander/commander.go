@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -31,6 +32,7 @@ var (
 	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
 	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
+	errNotRunning                = fmt.Errorf("commander is not running")
 )
 
 type Commander struct {
@@ -169,7 +171,7 @@ func (c *Commander) Stop() error {
 func (c *Commander) stop() error {
 	c.workersStopped = true
 	if !c.IsRunning() {
-		return nil
+		return errNotRunning
 	}
 
 	if err := c.apiServer.Close(); err != nil {
