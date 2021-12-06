@@ -19,7 +19,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -39,39 +38,52 @@ type worker struct {
 	err  error
 }
 
-type Commander struct {
-	cfg                *config.Config
+type lifecycle struct {
+	releaseStartAndWait context.CancelFunc
+	manualStop          bool
+
 	workersContext     context.Context
 	stopWorkersContext context.CancelFunc
 	workersWaitGroup   sync.WaitGroup
 	workers            []*worker
+}
 
-	manualStop          bool
-	releaseStartAndWait context.CancelFunc
+type Commander struct {
+	lifecycle
 
-	invalidBatchID    *models.Uint256
-	rollupLoopRunning bool
-	stateMutex        sync.Mutex
+	cfg        *config.Config
+	blockchain chain.Connection
 
+	metrics       *metrics.CommanderMetrics
 	storage       *st.Storage
 	client        *eth.Client
-	blockchain    chain.Connection
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	metrics *metrics.CommanderMetrics
+	stateMutex        sync.Mutex
+	rollupLoopRunning bool
+	invalidBatchID    *models.Uint256
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:                 cfg,
-		blockchain:          blockchain,
-		releaseStartAndWait: func() {}, // noop
+		cfg:        cfg,
+		blockchain: blockchain,
+		lifecycle: lifecycle{
+			releaseStartAndWait: func() {}, // noop
+		},
 	}
 }
 
-func (c *Commander) IsRunning() bool {
-	return c.workersContext != nil
+func (c *Commander) StartAndWait() error {
+	if err := c.Start(); err != nil {
+		return err
+	}
+	var stopContext context.Context
+	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
+
+	<-stopContext.Done()
+	return nil
 }
 
 func (c *Commander) Start() (err error) {
@@ -129,14 +141,41 @@ func (c *Commander) Start() (err error) {
 	return nil
 }
 
+func (c *Commander) Stop() error {
+	if !c.IsRunning() {
+		return nil
+	}
+
+	c.manualStop = true
+
+	if err := c.stop(); err != nil {
+		return err
+	}
+
+	workersErrors := c.gatherWorkerErrors()
+	if workersErrors != "" {
+		log.Errorf("Errors while stopping:\n%s", workersErrors)
+	}
+
+	log.Warningln("Commander stopped.")
+
+	c.releaseStartAndWait()
+	c.resetCommander()
+	return nil
+}
+
+func (c *Commander) IsRunning() bool {
+	return c.workersContext != nil
+}
+
 func (c *Commander) startWorker(name string, fn func() error) {
 	c.workersWaitGroup.Add(1)
-	worker := worker{name: name}
-	c.workers = append(c.workers, &worker)
+	w := worker{name: name}
+	c.workers = append(c.workers, &w)
 	go func() {
 		// TODO catch panics
 		if err := fn(); err != nil {
-			worker.err = err
+			w.err = err
 			c.stopWorkersContext()
 		}
 		c.workersWaitGroup.Done()
@@ -149,53 +188,19 @@ func (c *Commander) handleWorkerError() {
 		return
 	}
 	if err := c.stop(); err != nil {
-		log.Panicf("Stop caused by:\n%s\nfailed with: %+v", c.gatherWorkersErrors(), err)
+		log.Panicf("Stop caused by:\n%s\nfailed with: %+v", c.gatherWorkerErrors(), err)
 	}
-	log.Panicf("%s", c.gatherWorkersErrors())
+	log.Panicf("%s", c.gatherWorkerErrors())
 }
 
-func (c *Commander) gatherWorkersErrors() string {
+func (c *Commander) gatherWorkerErrors() string {
 	errString := ""
-	for _, worker := range c.workers {
-		if worker.err != nil {
-			errString += fmt.Sprintf("%s: %s\n", worker.name, worker.err.Error())
+	for _, w := range c.workers {
+		if w.err != nil {
+			errString += fmt.Sprintf("%s: %+v\n", w.name, w.err)
 		}
 	}
 	return errString
-}
-
-func (c *Commander) StartAndWait() error {
-	if err := c.Start(); err != nil {
-		return err
-	}
-	var stopContext context.Context
-	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
-
-	<-stopContext.Done()
-	return nil
-}
-
-func (c *Commander) Stop() error {
-	if !c.IsRunning() {
-		return nil
-	}
-
-	c.manualStop = true
-
-	if err := c.stop(); err != nil {
-		return err
-	}
-
-	workersErrors := c.gatherWorkersErrors()
-	if workersErrors != "" {
-		log.Errorf("Errors while stopping:\n%s", workersErrors)
-	}
-
-	log.Warningln("Commander stopped.")
-
-	c.releaseStartAndWait()
-	c.resetCommander()
-	return nil
 }
 
 func (c *Commander) stop() error {
@@ -212,16 +217,6 @@ func (c *Commander) stop() error {
 
 func (c *Commander) resetCommander() {
 	*c = *NewCommander(c.cfg, c.blockchain)
-}
-
-func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
-	if cfg.RPCURL == "simulator" {
-		return simulator.NewConfiguredSimulator(simulator.Config{
-			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
-			AutomineEnabled:        ref.Bool(true),
-		})
-	}
-	return chain.NewRPCCConnection(cfg)
 }
 
 func getClient(
