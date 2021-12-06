@@ -15,6 +15,7 @@ const (
 	// Transaction labels
 	TransferTxLabel = "transfer"
 	C2TTxLabel      = "create2transfer"
+	MMTxLabel       = "mass_migration"
 
 	// Transaction statuses
 	AcceptedTxStatus = "accepted"
@@ -25,6 +26,7 @@ const (
 const (
 	TransferBatchLabel = "transfer"
 	C2TBatchLabel      = "create2transfer"
+	MMBatchLabel       = "mass_migration"
 	DepositBatchLabel  = "deposit"
 )
 

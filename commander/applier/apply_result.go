@@ -49,3 +49,19 @@ func (a *ApplySingleC2TResult) AddedPubKeyID() uint32 {
 func (a *ApplySingleC2TResult) PendingAccount() *models.AccountLeaf {
 	return a.pendingAccount
 }
+
+type ApplySingleMassMigrationResult struct {
+	tx *models.MassMigration
+}
+
+func (a *ApplySingleMassMigrationResult) AppliedTx() models.GenericTransaction {
+	return a.tx
+}
+
+func (a *ApplySingleMassMigrationResult) AddedPubKeyID() uint32 {
+	panic("AddedPubKeyID cannot be invoked on ApplySingleMassMigrationResult")
+}
+
+func (a *ApplySingleMassMigrationResult) PendingAccount() *models.AccountLeaf {
+	panic("PendingAccount cannot be invoked on ApplySingleMassMigrationResult")
+}

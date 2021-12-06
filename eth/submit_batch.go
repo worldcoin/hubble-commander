@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,36 +12,30 @@ import (
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTxBatch(
-	batchType batchtype.BatchType,
-	batchID *models.Uint256,
-	commitments []models.CommitmentWithTxs,
-) (*types.Transaction, error) {
-	// nolint:exhaustive
-	switch batchType {
-	case batchtype.Transfer:
-		return c.SubmitTransfersBatch(batchID, commitments)
-	case batchtype.Create2Transfer:
-		return c.SubmitCreate2TransfersBatch(batchID, commitments)
-	case batchtype.MassMigration:
-		panic("not implemented")
-	default:
-		panic("invalid batch type")
-	}
-}
-
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
-		SubmitTransfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
+		SubmitTransfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
-		SubmitCreate2Transfer(encoder.CommitmentsToSubmitBatchFields(batchID, commitments))
+		SubmitCreate2Transfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
+}
+
+func (c *Client) SubmitMassMigrationsBatch(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+	metas []models.MassMigrationMeta,
+	withdrawRoot []common.Hash,
+) (*types.Transaction, error) {
+	return c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.MassMigrationBatchSubmissionGasLimit).
+		SubmitMassMigration(encoder.CommitmentsToSubmitMassMigrationBatchFields(batchID, commitments, metas, withdrawRoot))
 }
 
 func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {

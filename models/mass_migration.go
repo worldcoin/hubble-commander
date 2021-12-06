@@ -22,7 +22,7 @@ func (m *MassMigration) GetToStateID() *uint32 {
 }
 
 func (m *MassMigration) ToTransfer() *Transfer {
-	panic("MassMigration cannot be cast to Create2Transfer")
+	panic("MassMigration cannot be cast to Transfer")
 }
 
 func (m *MassMigration) ToCreate2Transfer() *Create2Transfer {

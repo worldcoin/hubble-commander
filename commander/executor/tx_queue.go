@@ -11,6 +11,7 @@ func NewTxQueue(transactions models.GenericTransactionArray) *TxQueue {
 }
 
 func (q *TxQueue) PickTxsForCommitment() models.GenericTransactionArray {
+	//TODO: implement logic to return MM grouped and sorted by spokeID
 	return q.transactions
 }
 

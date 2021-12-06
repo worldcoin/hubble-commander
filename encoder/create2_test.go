@@ -155,9 +155,6 @@ func (s *Create2TestSuite) TestDecodeCreate2TransferForCommitment() {
 		},
 		ToStateID: ref.Uint32(2),
 	}
-	transferHash, err := HashCreate2Transfer(transfer)
-	s.NoError(err)
-	transfer.Hash = *transferHash
 
 	encoded, err := EncodeCreate2TransferForCommitment(transfer, 6)
 	s.NoError(err)
@@ -222,14 +219,24 @@ func (s *Create2TestSuite) TestSerializeCreate2Transfers_InvalidLength() {
 
 func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 	txs := []models.Create2Transfer{
-		testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, nil),
-		testutils.MakeCreate2Transfer(2, ref.Uint32(3), 0, 200, nil),
-	}
-
-	for i := range txs {
-		transferHash, err := HashCreate2Transfer(&txs[i])
-		s.NoError(err)
-		txs[i].Hash = *transferHash
+		{
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(50),
+				Fee:         models.MakeUint256(10),
+			},
+			ToStateID: ref.Uint32(2),
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 2,
+				Amount:      models.MakeUint256(200),
+				Fee:         models.MakeUint256(10),
+			},
+			ToStateID: ref.Uint32(3),
+		},
 	}
 
 	serialized, err := s.testTx.Create2transferSerialize(
@@ -249,8 +256,24 @@ func (s *Create2TestSuite) TestDeserializeCreate2Transfers() {
 
 func (s *Create2TestSuite) TestDeserializeCreate2TransferPubKeyIDs() {
 	txs := []models.Create2Transfer{
-		testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, nil),
-		testutils.MakeCreate2Transfer(2, ref.Uint32(3), 0, 200, nil),
+		{
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(50),
+				Fee:         models.MakeUint256(10),
+			},
+			ToStateID: ref.Uint32(2),
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				TxType:      txtype.Create2Transfer,
+				FromStateID: 2,
+				Amount:      models.MakeUint256(200),
+				Fee:         models.MakeUint256(10),
+			},
+			ToStateID: ref.Uint32(3),
+		},
 	}
 
 	for i := range txs {
