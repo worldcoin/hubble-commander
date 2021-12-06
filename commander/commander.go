@@ -171,12 +171,23 @@ func (c *Commander) startWorker(name string, fn func() error) {
 	w := worker{name: name}
 	c.workers = append(c.workers, &w)
 	go func() {
-		// TODO catch panics
-		if err := fn(); err != nil {
-			w.err = err
-			c.stopWorkersContext()
-		}
-		c.workersWaitGroup.Done()
+		var err error
+		defer func() {
+			if recoverErr := recover(); recoverErr != nil {
+				var ok bool
+				err, ok = recoverErr.(error)
+				if !ok {
+					err = fmt.Errorf("%+v", recoverErr)
+				}
+			}
+			if err != nil {
+				w.err = err
+				c.stopWorkersContext()
+			}
+			c.workersWaitGroup.Done()
+		}()
+
+		err = fn()
 	}()
 }
 
