@@ -139,7 +139,7 @@ func (c *Commander) handleWorkerError() {
 	if err := c.stop(); err != nil {
 		log.Errorf("Error while stopping: %+v", err)
 	}
-	log.Fatalf("%+v", c.workersErr)
+	log.Panicf("%+v", c.workersErr)
 }
 
 func (c *Commander) StartAndWait() error {
