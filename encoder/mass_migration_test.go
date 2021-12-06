@@ -47,16 +47,8 @@ func (s *MassMigrationTestSuite) TearDownTest() {
 }
 
 func (s *MassMigrationTestSuite) TestEncodeMassMigration() {
-	massMigration := &models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 2,
-			Amount:      models.MakeUint256(4),
-			Fee:         models.MakeUint256(5),
-			Nonce:       models.MakeUint256(6),
-		},
-		SpokeID: 3,
-	}
-	encodedMassMigration, err := EncodeMassMigration(massMigration)
+	massMigration := testutils.MakeMassMigration(2, 3, 6, 4)
+	encodedMassMigration, err := EncodeMassMigration(&massMigration)
 	s.NoError(err)
 
 	decodedMassMigration, err := s.massMigration.Decode(&bind.CallOpts{}, encodedMassMigration)
@@ -70,35 +62,20 @@ func (s *MassMigrationTestSuite) TestEncodeMassMigration() {
 }
 
 func (s *MassMigrationTestSuite) TestEncodeMassMigrationForSigning() {
-	massMigration := &models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 2,
-			Amount:      models.MakeUint256(4),
-			Fee:         models.MakeUint256(5),
-			Nonce:       models.MakeUint256(6),
-		},
-		SpokeID: 3,
-	}
-	encodedMassMigration, err := EncodeMassMigration(massMigration)
+	massMigration := testutils.MakeMassMigration(2, 3, 6, 4)
+	encodedMassMigration, err := EncodeMassMigration(&massMigration)
 	s.NoError(err)
 	expected, err := s.massMigration.SignBytes(nil, encodedMassMigration)
 	s.NoError(err)
 
-	actual := EncodeMassMigrationForSigning(massMigration)
+	actual := EncodeMassMigrationForSigning(&massMigration)
 	s.Equal(expected, actual)
 }
 
 func (s *MassMigrationTestSuite) TestEncodeMassMigrationForCommitment() {
-	massMigration := &models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(50),
-			Fee:         models.MakeUint256(10),
-		},
-		SpokeID: 2,
-	}
+	massMigration := testutils.MakeMassMigration(1, 2, 6, 50)
 
-	encoded, err := EncodeMassMigrationForCommitment(massMigration)
+	encoded, err := EncodeMassMigrationForCommitment(&massMigration)
 	s.NoError(err)
 
 	massMigrationCount, err := s.testTx.MassMigrationSize(nil, encoded)
@@ -133,22 +110,8 @@ func (s *MassMigrationTestSuite) TestDecodeMassMigrationFromCommitment() {
 
 func (s *MassMigrationTestSuite) TestSerializeMassMigrations() {
 	massMigrations := []models.MassMigration{
-		{
-			TransactionBase: models.TransactionBase{
-				FromStateID: 1,
-				Amount:      models.MakeUint256(50),
-				Fee:         models.MakeUint256(10),
-			},
-			SpokeID: 2,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				FromStateID: 2,
-				Amount:      models.MakeUint256(200),
-				Fee:         models.MakeUint256(10),
-			},
-			SpokeID: 3,
-		},
+		testutils.MakeMassMigration(1, 2, 1, 50),
+		testutils.MakeMassMigration(2, 3, 1, 200),
 	}
 
 	serialized, err := SerializeMassMigrations(massMigrations)
