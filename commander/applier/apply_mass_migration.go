@@ -31,3 +31,35 @@ func (a *Applier) ApplyMassMigration(tx models.GenericTransaction, commitmentTok
 
 	return &ApplySingleMassMigrationResult{tx: tx.ToMassMigration()}, nil, nil
 }
+
+func (a *Applier) ApplyMassMigrationForSync(
+	tx models.GenericTransaction,
+	commitmentTokenID models.Uint256,
+) (synced *SyncedGenericTransaction, txErr, appErr error) {
+	senderLeaf, appErr := a.storage.StateTree.Leaf(tx.GetFromStateID())
+	if appErr != nil {
+		return nil, nil, appErr
+	}
+
+	synced = NewSenderPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState)
+
+	newSenderState, txErr := calculateSenderStateAfterTx(senderLeaf.UserState, tx)
+	if txErr != nil {
+		return a.fillSenderWitness(synced, txErr)
+	}
+
+	senderWitness, appErr := a.storage.StateTree.Set(tx.GetFromStateID(), newSenderState)
+	if appErr != nil {
+		return nil, nil, appErr
+	}
+	synced.SenderStateProof.Witness = senderWitness
+
+	txErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if txErr != nil {
+		return synced, txErr, nil
+	}
+
+	synced.Tx.SetNonce(senderLeaf.Nonce)
+
+	return synced, nil, nil
+}

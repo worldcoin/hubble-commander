@@ -28,3 +28,17 @@ func NewPartialSyncedGenericTransaction(
 		},
 	}
 }
+
+func NewSenderPartialSyncedGenericTransaction(
+	tx models.GenericTransaction,
+	senderUserState *models.UserState,
+) *SyncedGenericTransaction {
+	return &SyncedGenericTransaction{
+		Tx: tx,
+		Proofs: Proofs{
+			SenderStateProof: models.StateMerkleProof{
+				UserState: senderUserState,
+			},
+		},
+	}
+}
