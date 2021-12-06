@@ -7,16 +7,13 @@ type Proofs struct {
 	ReceiverStateProof models.StateMerkleProof
 }
 
-type SyncedGenericTransaction struct {
+type SyncedTxWithProofs struct {
 	Tx models.GenericTransaction
 	Proofs
 }
 
-func NewPartialSyncedGenericTransaction(
-	tx models.GenericTransaction,
-	senderUserState, receiverUserState *models.UserState,
-) *SyncedGenericTransaction {
-	return &SyncedGenericTransaction{
+func NewSyncedTxWithProofs(tx models.GenericTransaction, senderUserState, receiverUserState *models.UserState) *SyncedTxWithProofs {
+	return &SyncedTxWithProofs{
 		Tx: tx,
 		Proofs: Proofs{
 			SenderStateProof: models.StateMerkleProof{
@@ -29,11 +26,8 @@ func NewPartialSyncedGenericTransaction(
 	}
 }
 
-func NewSenderPartialSyncedGenericTransaction(
-	tx models.GenericTransaction,
-	senderUserState *models.UserState,
-) *SyncedGenericTransaction {
-	return &SyncedGenericTransaction{
+func NewSyncedTxWithSenderProof(tx models.GenericTransaction, senderUserState *models.UserState) *SyncedTxWithProofs {
+	return &SyncedTxWithProofs{
 		Tx: tx,
 		Proofs: Proofs{
 			SenderStateProof: models.StateMerkleProof{

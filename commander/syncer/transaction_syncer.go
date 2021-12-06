@@ -20,7 +20,7 @@ type TransactionSyncer interface {
 	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
 	ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-		synced *applier.SyncedGenericTransaction, txError, appError error,
+		synced *applier.SyncedTxWithProofs, txError, appError error,
 	)
 	ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 		stateProof *models.StateMerkleProof, commitmentError, appError error,
@@ -74,7 +74,7 @@ func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byt
 }
 
 func (s *TransferSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-	synced *applier.SyncedGenericTransaction, txError, appError error,
+	synced *applier.SyncedTxWithProofs, txError, appError error,
 ) {
 	return s.applier.ApplyTransferForSync(syncedTx.Tx(), commitmentTokenID)
 }
@@ -133,7 +133,7 @@ func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, er
 }
 
 func (s *C2TSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-	synced *applier.SyncedGenericTransaction, txError, appError error,
+	synced *applier.SyncedTxWithProofs, txError, appError error,
 ) {
 	return s.applier.ApplyCreate2TransferForSync(syncedTx.Tx().ToCreate2Transfer(), syncedTx.PubKeyID(), commitmentTokenID)
 }

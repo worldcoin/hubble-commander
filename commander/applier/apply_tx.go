@@ -61,13 +61,13 @@ func (a *Applier) applyTxForSync(
 	tx models.GenericTransaction,
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedGenericTransaction, txError, appError error) {
+) (synced *SyncedTxWithProofs, txError, appError error) {
 	senderLeaf, appError := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError
 	}
 
-	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
+	synced = NewSyncedTxWithProofs(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
 
 	newSenderState, newReceiverState, txErr := calculateStateAfterTx(senderLeaf.UserState, receiverLeaf.UserState, tx)
 	if txErr != nil {
@@ -104,7 +104,7 @@ func (a *Applier) applyTxForSync(
 	return synced, nil, nil
 }
 
-func (a *Applier) fillSenderWitness(synced *SyncedGenericTransaction, tErr error) (*SyncedGenericTransaction, error, error) {
+func (a *Applier) fillSenderWitness(synced *SyncedTxWithProofs, tErr error) (*SyncedTxWithProofs, error, error) {
 	witness, appError := a.storage.StateTree.GetLeafWitness(synced.Tx.GetFromStateID())
 	if appError != nil {
 		return nil, nil, appError

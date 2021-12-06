@@ -35,13 +35,13 @@ func (a *Applier) ApplyMassMigration(tx models.GenericTransaction, commitmentTok
 func (a *Applier) ApplyMassMigrationForSync(
 	tx models.GenericTransaction,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedGenericTransaction, txErr, appErr error) {
+) (synced *SyncedTxWithProofs, txErr, appErr error) {
 	senderLeaf, appErr := a.storage.StateTree.Leaf(tx.GetFromStateID())
 	if appErr != nil {
 		return nil, nil, appErr
 	}
 
-	synced = NewSenderPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState)
+	synced = NewSyncedTxWithSenderProof(tx.Copy(), &senderLeaf.UserState)
 
 	newSenderState, txErr := calculateSenderStateAfterTx(senderLeaf.UserState, tx)
 	if txErr != nil {
