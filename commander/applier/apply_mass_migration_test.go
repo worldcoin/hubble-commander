@@ -35,7 +35,7 @@ func (s *ApplyMassMigrationTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, nil)
+	s.applier = NewApplier(s.storage.Storage)
 
 	_, err = s.storage.StateTree.Set(senderState.PubKeyID, &senderState)
 	s.NoError(err)

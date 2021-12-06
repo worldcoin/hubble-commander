@@ -155,7 +155,7 @@ func calculateStateAfterTx(
 	}
 
 	if tx.GetFromStateID() == *tx.GetToStateID() {
-		newReceiverState = calculateReceiverStateAfterTx(tx, *newSenderState.Copy())
+		newReceiverState = calculateReceiverStateAfterTx(*newSenderState.Copy(), tx)
 	} else {
 		newReceiverState = calculateReceiverStateAfterTx(receiverState, tx)
 	}

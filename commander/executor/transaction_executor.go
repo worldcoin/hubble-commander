@@ -29,11 +29,11 @@ type TransactionExecutor interface {
 func CreateTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
 	switch batchType {
 	case batchtype.Transfer:
-		return NewTransferExecutor(executionCtx.storage)
+		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.Create2Transfer:
-		return NewC2TExecutor(executionCtx.storage)
+		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.MassMigration:
-		return NewMassMigrationExecutor(executionCtx.storage)
+		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
 	case batchtype.Genesis, batchtype.Deposit:
 		log.Fatal("Invalid batch type")
 		return nil
@@ -48,7 +48,7 @@ type TransferExecutor struct {
 	applier *applier.Applier
 }
 
-func NewTransferExecutor(storage *st.Storage) *TransferExecutor {
+func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
 		client:  client,
@@ -117,7 +117,7 @@ type C2TExecutor struct {
 	applier *applier.Applier
 }
 
-func NewC2TExecutor(storage *st.Storage) *C2TExecutor {
+func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
 		client:  client,
@@ -194,7 +194,7 @@ type MassMigrationExecutor struct {
 	applier *applier.Applier
 }
 
-func NewMassMigrationExecutor(storage *st.Storage) *MassMigrationExecutor {
+func NewMassMigrationExecutor(storage *st.Storage, client *eth.Client) *MassMigrationExecutor {
 	return &MassMigrationExecutor{
 		storage: storage,
 		client:  client,
