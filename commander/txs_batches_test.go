@@ -59,7 +59,7 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
+	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)

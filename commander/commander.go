@@ -38,8 +38,8 @@ var (
 type Commander struct {
 	cfg                 *config.Config
 	workersContext      context.Context
-	stopWorkers         context.CancelFunc
-	workers             sync.WaitGroup
+	stopWorkersContext  context.CancelFunc
+	workersWaitGroup    sync.WaitGroup
 	workersErr          error
 	workersStopped      bool
 	releaseStartAndWait context.CancelFunc
@@ -98,7 +98,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.workersContext, c.stopWorkers = context.WithCancel(context.Background())
+	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
 
 	c.startWorker(func() error {
 		err = c.apiServer.ListenAndServe()
@@ -124,13 +124,13 @@ func (c *Commander) Start() (err error) {
 }
 
 func (c *Commander) startWorker(fn func() error) {
-	c.workers.Add(1)
+	c.workersWaitGroup.Add(1)
 	go func() {
 		if err := fn(); err != nil {
 			c.workersErr = err
-			c.stopWorkers()
+			c.stopWorkersContext()
 		}
-		c.workers.Done()
+		c.workersWaitGroup.Done()
 	}()
 }
 
@@ -180,8 +180,8 @@ func (c *Commander) stop() error {
 	if err := c.metricsServer.Close(); err != nil {
 		return err
 	}
-	c.stopWorkers()
-	c.workers.Wait()
+	c.stopWorkersContext()
+	c.workersWaitGroup.Wait()
 	return c.storage.Close()
 }
 
