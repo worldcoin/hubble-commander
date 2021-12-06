@@ -185,7 +185,11 @@ func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
 
-func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction, decodeCommitments decodeCommitmentsFunc) (DecodedBatch, error) {
+func (c *Client) getTxBatch(
+	batchEvent *rollup.RollupNewBatch,
+	tx *types.Transaction,
+	decodeCommitments decodeCommitmentsFunc,
+) (DecodedBatch, error) {
 	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
 		return nil, err
@@ -258,7 +262,7 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	return models.NewTimestamp(utcTime), nil
 }
 
-func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.GenericCommitment) error {
+func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.Commitment) error {
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
 		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))

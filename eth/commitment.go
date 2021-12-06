@@ -5,30 +5,20 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type decodeCommitmentsFunc func(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error)
+type decodeCommitmentsFunc func(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error)
 
-func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error) {
+func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
 	commitments, err := encoder.DecodeBatchCalldata(rollupABI, calldata)
 	if err != nil {
 		return nil, err
 	}
-
-	result := make([]encoder.GenericCommitment, 0, len(commitments))
-	for i := range commitments {
-		result = append(result, &commitments[i])
-	}
-	return result, nil
+	return encoder.DecodedCommitmentsToCommitments(commitments...), nil
 }
 
-func decodedMMCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.GenericCommitment, error) {
+func decodedMMCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
 	commitments, err := encoder.DecodeMMBatchCalldata(rollupABI, calldata)
 	if err != nil {
 		return nil, err
 	}
-
-	result := make([]encoder.GenericCommitment, 0, len(commitments))
-	for i := range commitments {
-		result = append(result, &commitments[i])
-	}
-	return result, nil
+	return encoder.DecodedMMCommitmentsToCommitments(commitments...), nil
 }

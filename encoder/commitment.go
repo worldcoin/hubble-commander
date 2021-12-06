@@ -10,10 +10,27 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-type GenericCommitment interface {
+type Commitment interface {
 	ToDecodedCommitment() *DecodedCommitment
+	GetStateRoot() common.Hash
 	BodyHash(accountRoot common.Hash) *common.Hash
 	LeafHash(accountRoot common.Hash) common.Hash
+}
+
+func DecodedCommitmentsToCommitments(commitments ...DecodedCommitment) []Commitment {
+	result := make([]Commitment, 0, len(commitments))
+	for i := range commitments {
+		result = append(result, &commitments[i])
+	}
+	return result
+}
+
+func DecodedMMCommitmentsToCommitments(commitments ...DecodedMMCommitment) []Commitment {
+	result := make([]Commitment, 0, len(commitments))
+	for i := range commitments {
+		result = append(result, &commitments[i])
+	}
+	return result
 }
 
 type DecodedCommitment struct {
@@ -26,6 +43,10 @@ type DecodedCommitment struct {
 
 func (c *DecodedCommitment) ToDecodedCommitment() *DecodedCommitment {
 	return c
+}
+
+func (c *DecodedCommitment) GetStateRoot() common.Hash {
+	return c.StateRoot
 }
 
 func (c *DecodedCommitment) BodyHash(accountRoot common.Hash) *common.Hash {
@@ -51,6 +72,10 @@ type DecodedMMCommitment struct {
 
 func (c *DecodedMMCommitment) ToDecodedCommitment() *DecodedCommitment {
 	return &c.DecodedCommitment
+}
+
+func (c *DecodedMMCommitment) GetStateRoot() common.Hash {
+	return c.StateRoot
 }
 
 func (c *DecodedMMCommitment) BodyHash(accountRoot common.Hash) *common.Hash {

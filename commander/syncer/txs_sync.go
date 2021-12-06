@@ -13,7 +13,7 @@ func (c *TxsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 	batch := remoteBatch.ToDecodedTxBatch()
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
-		err := c.syncCommitment(batch, &batch.Commitments[i])
+		err := c.syncCommitment(batch, batch.Commitments[i].ToDecodedCommitment())
 
 		var disputableErr *DisputableError
 		if errors.As(err, &disputableErr) {

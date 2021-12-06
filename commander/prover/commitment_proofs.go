@@ -24,7 +24,7 @@ func (c *Context) PreviousCommitmentInclusionProof(
 	return createCommitmentInclusionProof(
 		leafHashes,
 		uint32(previousCommitmentIndex),
-		batch.Commitments[previousCommitmentIndex].StateRoot,
+		batch.Commitments[previousCommitmentIndex].GetStateRoot(),
 		*batch.Commitments[previousCommitmentIndex].BodyHash(batch.AccountTreeRoot),
 	)
 }
@@ -117,7 +117,7 @@ func (c *Context) TargetCommitmentInclusionProof(
 		Depth: tree.Depth(),
 	}
 
-	commitment := batch.Commitments[commitmentIndex]
+	commitment := batch.Commitments[commitmentIndex].ToDecodedCommitment()
 	return &models.TransferCommitmentInclusionProof{
 		StateRoot: commitment.StateRoot,
 		Body: &models.TransferBody{

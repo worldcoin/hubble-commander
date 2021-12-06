@@ -50,7 +50,7 @@ func (c *Context) disputeCreate2TransferSignature(
 	commitmentIndex int,
 	stateProofs []models.StateMerkleProof,
 ) error {
-	signatureProof, err := c.proverCtx.SignatureProofWithReceiver(&batch.Commitments[commitmentIndex], stateProofs)
+	signatureProof, err := c.proverCtx.SignatureProofWithReceiver(batch.Commitments[commitmentIndex].ToDecodedCommitment(), stateProofs)
 	if err != nil {
 		return err
 	}

@@ -57,7 +57,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 
 type DecodedTxBatch struct {
 	DecodedBatchBase
-	Commitments []encoder.GenericCommitment
+	Commitments []encoder.Commitment
 }
 
 func (b *DecodedTxBatch) GetID() models.Uint256 {
