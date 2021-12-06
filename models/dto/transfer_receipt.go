@@ -14,3 +14,8 @@ type Create2TransferReceipt struct {
 	models.Create2TransferWithBatchDetails
 	Status txstatus.TransactionStatus
 }
+
+type MassMigrationReceipt struct {
+	models.MassMigrationWithBatchDetails
+	Status txstatus.TransactionStatus
+}

@@ -29,11 +29,19 @@ func (a *API) unsafeGetTransaction(hash common.Hash) (interface{}, error) {
 		return a.returnTransferReceipt(transfer)
 	}
 
-	transaction, err := a.storage.GetCreate2TransferWithBatchDetails(hash)
+	create2transfer, err := a.storage.GetCreate2TransferWithBatchDetails(hash)
+	if err != nil && !storage.IsNotFoundError(err) {
+		return nil, err
+	}
+	if create2transfer != nil {
+		return a.returnCreate2TransferReceipt(create2transfer)
+	}
+
+	massMigration, err := a.storage.GetMassMigrationWithBatchDetails(hash)
 	if err != nil {
 		return nil, err
 	}
-	return a.returnCreate2TransferReceipt(transaction)
+	return a.returnMassMigrationReceipt(massMigration)
 }
 
 func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (*dto.TransferReceipt, error) {
@@ -48,14 +56,26 @@ func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (
 	}, nil
 }
 
-func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithBatchDetails) (*dto.Create2TransferReceipt, error) {
-	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
+func (a *API) returnCreate2TransferReceipt(create2Transfer *models.Create2TransferWithBatchDetails) (*dto.Create2TransferReceipt, error) {
+	status, err := CalculateTransactionStatus(a.storage, &create2Transfer.TransactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.Create2TransferReceipt{
-		Create2TransferWithBatchDetails: *transfer,
+		Create2TransferWithBatchDetails: *create2Transfer,
 		Status:                          *status,
+	}, nil
+}
+
+func (a *API) returnMassMigrationReceipt(massMigration *models.MassMigrationWithBatchDetails) (*dto.MassMigrationReceipt, error) {
+	status, err := CalculateTransactionStatus(a.storage, &massMigration.TransactionBase, a.storage.GetLatestBlockNumber())
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.MassMigrationReceipt{
+		MassMigrationWithBatchDetails: *massMigration,
+		Status:                        *status,
 	}, nil
 }
