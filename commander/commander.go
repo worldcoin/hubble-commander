@@ -32,16 +32,21 @@ var (
 	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
 	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
-	errNotRunning                = fmt.Errorf("commander is not running")
 )
 
+type worker struct {
+	name string
+	err  error
+}
+
 type Commander struct {
-	cfg                 *config.Config
-	workersContext      context.Context
-	stopWorkersContext  context.CancelFunc
-	workersWaitGroup    sync.WaitGroup
-	workersErr          error
-	workersStopped      bool
+	cfg                *config.Config
+	workersContext     context.Context
+	stopWorkersContext context.CancelFunc
+	workersWaitGroup   sync.WaitGroup
+	workers            []*worker
+
+	manualStop          bool
 	releaseStartAndWait context.CancelFunc
 
 	invalidBatchID    *models.Uint256
@@ -99,22 +104,23 @@ func (c *Commander) Start() (err error) {
 	}
 
 	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
+	c.workers = make([]*worker, 0)
 
-	c.startWorker(func() error {
+	c.startWorker("API Server", func() error {
 		err = c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
-	c.startWorker(func() error {
+	c.startWorker("Metrics Server", func() error {
 		err = c.metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
-	c.startWorker(func() error { return c.newBlockLoop() })
+	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()
 
@@ -123,11 +129,14 @@ func (c *Commander) Start() (err error) {
 	return nil
 }
 
-func (c *Commander) startWorker(fn func() error) {
+func (c *Commander) startWorker(name string, fn func() error) {
 	c.workersWaitGroup.Add(1)
+	worker := worker{name: name}
+	c.workers = append(c.workers, &worker)
 	go func() {
+		// TODO catch panics
 		if err := fn(); err != nil {
-			c.workersErr = err
+			worker.err = err
 			c.stopWorkersContext()
 		}
 		c.workersWaitGroup.Done()
@@ -136,13 +145,23 @@ func (c *Commander) startWorker(fn func() error) {
 
 func (c *Commander) handleWorkerError() {
 	<-c.workersContext.Done()
-	if c.workersErr == nil || c.workersStopped {
+	if c.manualStop {
 		return
 	}
 	if err := c.stop(); err != nil {
-		log.Errorf("Error while stopping: %+v", err)
+		log.Panicf("Stop caused by:\n%s\nfailed with: %+v", c.gatherWorkersErrors(), err)
 	}
-	log.Panicf("%+v", c.workersErr)
+	log.Panicf("%s", c.gatherWorkersErrors())
+}
+
+func (c *Commander) gatherWorkersErrors() string {
+	errString := ""
+	for _, worker := range c.workers {
+		if worker.err != nil {
+			errString += fmt.Sprintf("%s: %s\n", worker.name, worker.err.Error())
+		}
+	}
+	return errString
 }
 
 func (c *Commander) StartAndWait() error {
@@ -157,8 +176,19 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Stop() error {
+	if !c.IsRunning() {
+		return nil
+	}
+
+	c.manualStop = true
+
 	if err := c.stop(); err != nil {
 		return err
+	}
+
+	workersErrors := c.gatherWorkersErrors()
+	if workersErrors != "" {
+		log.Errorf("Errors while stopping:\n%s", workersErrors)
 	}
 
 	log.Warningln("Commander stopped.")
@@ -169,11 +199,6 @@ func (c *Commander) Stop() error {
 }
 
 func (c *Commander) stop() error {
-	c.workersStopped = true
-	if !c.IsRunning() {
-		return errNotRunning
-	}
-
 	if err := c.apiServer.Close(); err != nil {
 		return err
 	}

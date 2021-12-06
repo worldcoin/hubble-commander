@@ -104,7 +104,7 @@ func (s *CommanderTestSuite) TestStop_NotPanicWithWorkerErrorAfterManuallyStop()
 		err := s.cmd.Stop()
 		s.NoError(err)
 	}()
-	s.cmd.startWorker(func() error {
+	s.cmd.startWorker("", func() error {
 		return testErr // any error
 	})
 
