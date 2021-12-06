@@ -16,6 +16,6 @@ func newDepositsContext(storage *st.Storage, client *eth.Client) *DepositsContex
 	return &DepositsContext{
 		storage: storage,
 		client:  client,
-		applier: applier.NewApplier(storage, client),
+		applier: applier.NewApplier(storage),
 	}
 }

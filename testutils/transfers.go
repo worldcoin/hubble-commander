@@ -38,6 +38,20 @@ func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKe
 	return c2t
 }
 
+func MakeMassMigration(from, spokeID uint32, nonce, amount uint64) models.MassMigration {
+	return models.MassMigration{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.MassMigration,
+			FromStateID: from,
+			Amount:      models.MakeUint256(amount),
+			Fee:         models.MakeUint256(10),
+			Nonce:       models.MakeUint256(nonce),
+		},
+		SpokeID: spokeID,
+	}
+}
+
 func GenerateValidCreate2Transfers(transfersAmount uint32) models.Create2TransferArray {
 	transfers := make(models.Create2TransferArray, 0, transfersAmount)
 	for i := 0; i < int(transfersAmount); i++ {
@@ -114,4 +128,23 @@ func GenerateInvalidTransfers(transfersAmount uint64) []models.Transfer {
 		transfers = append(transfers, transfer)
 	}
 	return transfers
+}
+
+func GenerateValidMassMigrations(massMigrationsAmount uint32) models.MassMigrationArray {
+	massMigrations := make([]models.MassMigration, 0, massMigrationsAmount)
+	for i := 0; i < int(massMigrationsAmount); i++ {
+		massMigration := models.MassMigration{
+			TransactionBase: models.TransactionBase{
+				Hash:        utils.RandomHash(),
+				TxType:      txtype.MassMigration,
+				FromStateID: 1,
+				Amount:      models.MakeUint256(1),
+				Fee:         models.MakeUint256(1),
+				Nonce:       models.MakeUint256(uint64(i)),
+			},
+			SpokeID: 2,
+		}
+		massMigrations = append(massMigrations, massMigration)
+	}
+	return massMigrations
 }

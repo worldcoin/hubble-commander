@@ -1,58 +1,18 @@
 package storage
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	bh "github.com/timshannon/badgerhold/v4"
-)
-
-var (
-	transferTransaction = models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        common.BigToHash(big.NewInt(1234)),
-			TxType:      txtype.Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(1000),
-			Fee:         models.MakeUint256(100),
-			Nonce:       models.MakeUint256(0),
-			Signature:   models.MakeRandomSignature(),
-		},
-		ToStateID: 2,
-	}
-	create2TransferTransaction = models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:        common.BigToHash(big.NewInt(5678)),
-			TxType:      txtype.Create2Transfer,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(1000),
-			Fee:         models.MakeUint256(100),
-			Nonce:       models.MakeUint256(0),
-			Signature:   models.MakeRandomSignature(),
-		},
-		ToPublicKey: models.PublicKey{1, 2, 3},
-	}
-	massMigrationTransaction = models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.MassMigration,
-			FromStateID: 1,
-			Amount:      models.MakeUint256(1000),
-			Fee:         models.MakeUint256(100),
-			Nonce:       models.MakeUint256(0),
-			Signature:   models.MakeRandomSignature(),
-		},
-		SpokeID: models.MakeUint256(5),
-	}
 )
 
 type StoredTransactionTestSuite struct {
@@ -77,54 +37,54 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 }
 
 func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
-	err := s.storage.AddTransfer(&transferTransaction)
+	err := s.storage.AddTransfer(&transfer)
 	s.NoError(err)
-	err = s.storage.AddCreate2Transfer(&create2TransferTransaction)
+	err = s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)
-	err = s.storage.AddMassMigration(&massMigrationTransaction)
+	err = s.storage.AddMassMigration(&massMigration)
 	s.NoError(err)
 
 	transferError := models.TxError{
-		TxHash:       transferTransaction.Hash,
+		TxHash:       transfer.Hash,
 		ErrorMessage: "Quack",
 	}
 
 	c2tError := models.TxError{
-		TxHash:       create2TransferTransaction.Hash,
+		TxHash:       create2Transfer.Hash,
 		ErrorMessage: "C2T Quack",
 	}
 
 	mmError := models.TxError{
-		TxHash:       massMigrationTransaction.Hash,
+		TxHash:       massMigration.Hash,
 		ErrorMessage: "MM Quack",
 	}
 
 	err = s.storage.SetTransactionErrors(transferError, c2tError, mmError)
 	s.NoError(err)
 
-	storedTransfer, err := s.storage.GetTransfer(transferTransaction.Hash)
+	storedTransfer, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
 	s.Equal(transferError.ErrorMessage, *storedTransfer.ErrorMessage)
 
-	storedC2T, err := s.storage.GetCreate2Transfer(create2TransferTransaction.Hash)
+	storedC2T, err := s.storage.GetCreate2Transfer(create2Transfer.Hash)
 	s.NoError(err)
 	s.Equal(c2tError.ErrorMessage, *storedC2T.ErrorMessage)
 
-	storedMM, err := s.storage.GetMassMigration(massMigrationTransaction.Hash)
+	storedMM, err := s.storage.GetMassMigration(massMigration.Hash)
 	s.NoError(err)
 	s.Equal(mmError.ErrorMessage, *storedMM.ErrorMessage)
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfInsertionOrder() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(3)
 
-	tx2 := transferTransaction
+	tx2 := transfer
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(5)
 
-	tx3 := transferTransaction
+	tx3 := transfer
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(1)
 
@@ -140,15 +100,15 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighes
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighestNonceRegardlessOfTxType() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(3)
 
-	tx2 := create2TransferTransaction
+	tx2 := create2Transfer
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(5)
 
-	tx3 := massMigrationTransaction
+	tx3 := massMigration
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(4)
 
@@ -165,16 +125,16 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_ReturnsHighes
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTransactionsFromOtherStateIDs() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(3)
 
-	tx2 := transferTransaction
+	tx2 := transfer
 	tx2.FromStateID = 10
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(5)
 
-	tx3 := transferTransaction
+	tx3 := transfer
 	tx3.FromStateID = 20
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(7)
@@ -191,15 +151,15 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsTra
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFailedTransactions() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.Hash = utils.RandomHash()
 	tx1.Nonce = models.MakeUint256(1)
 
-	tx2 := transferTransaction
+	tx2 := transfer
 	tx2.Hash = utils.RandomHash()
 	tx2.Nonce = models.MakeUint256(2)
 
-	tx3 := transferTransaction
+	tx3 := transfer
 	tx3.Hash = utils.RandomHash()
 	tx3.Nonce = models.MakeUint256(3)
 	tx3.ErrorMessage = ref.String("error")
@@ -216,7 +176,7 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_DisregardsFai
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransactionsForGivenStateID() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.FromStateID = 10
 
 	err := s.storage.AddTransfer(&tx1)
@@ -228,7 +188,7 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoTransaction
 }
 
 func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoValidTransactionsForGivenStateID() {
-	tx1 := transferTransaction
+	tx1 := transfer
 	tx1.ErrorMessage = ref.String("error")
 
 	err := s.storage.AddTransfer(&tx1)
@@ -242,7 +202,7 @@ func (s *StoredTransactionTestSuite) TestGetLatestTransactionNonce_NoValidTransa
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
-		txs[i] = transferTransaction
+		txs[i] = transfer
 		txs[i].Hash = utils.RandomHash()
 		txs[i].CommitmentID = &models.CommitmentID{
 			BatchID:      models.MakeUint256(5),
@@ -277,21 +237,21 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	err = s.storage.AddTxCommitment(&commitmentInBatch)
 	s.NoError(err)
 
-	transferInCommitment := transferTransaction
+	transferInCommitment := transfer
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
 	transferInCommitment.CommitmentID = &commitmentInBatch.ID
 	err = s.storage.AddTransfer(&transferInCommitment)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&transferTransaction)
+	err = s.storage.AddTransfer(&transfer)
 	s.NoError(err)
 
-	c2t := create2TransferTransaction
+	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
 	c2t.CommitmentID = &commitmentInBatch.ID
 	err = s.storage.AddCreate2Transfer(&c2t)
 	s.NoError(err)
 
-	mm := massMigrationTransaction
+	mm := massMigration
 	mm.Hash = common.Hash{6, 7, 8}
 	mm.CommitmentID = &commitmentInBatch.ID
 	err = s.storage.AddMassMigration(&mm)
@@ -313,9 +273,9 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 	expectedHashes := make([]common.Hash, 0, 4)
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
-		transfers[0] = transferTransaction
+		transfers[0] = transfer
 		transfers[0].Hash = utils.RandomHash()
-		transfers[1] = transferTransaction
+		transfers[1] = transfer
 		transfers[1].Hash = utils.RandomHash()
 		s.addTransfersInCommitment(&batchIDs[i], transfers)
 		expectedHashes = append(expectedHashes, transfers[0].Hash, transfers[1].Hash)
@@ -331,8 +291,8 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 
 func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
-	transfers[0] = transferTransaction
-	transfers[1] = transferTransaction
+	transfers[0] = transfer
+	transfers[1] = transfer
 	transfers[1].Hash = utils.RandomHash()
 	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 
@@ -531,22 +491,7 @@ func (s *StoredTransactionTestSuite) iterateIndex(
 	indexName string,
 	handleIndex func(encodedKey []byte, keyList bh.KeyList),
 ) {
-	indexPrefix := db.IndexKeyPrefix(typeName, indexName)
-	err := s.storage.database.Badger.Iterator(indexPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
-		// Get key value
-		encodedKeyValue := item.Key()[len(indexPrefix):]
-
-		// Decode value
-		var keyList bh.KeyList
-		err = item.Value(func(val []byte) error {
-			return db.Decode(val, &keyList)
-		})
-		s.NoError(err)
-
-		handleIndex(encodedKeyValue, keyList)
-		return false, nil
-	})
-	s.ErrorIs(err, db.ErrIteratorFinished)
+	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
 }
 
 func TestStoredTransactionTestSuite(t *testing.T) {

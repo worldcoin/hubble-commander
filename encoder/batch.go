@@ -46,7 +46,7 @@ func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitme
 	return commitments, nil
 }
 
-func CommitmentsToSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
+func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
 	bigBatchID *big.Int,
 	stateRoots [][32]byte,
 	signatures [][2]*big.Int,
@@ -66,6 +66,39 @@ func CommitmentsToSubmitBatchFields(batchID *models.Uint256, commitments []model
 		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
 		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
 		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
+		transactions = append(transactions, commitments[i].Transactions)
+	}
+	return
+}
+
+//nolint:gocritic
+func CommitmentsToSubmitMassMigrationBatchFields(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+	metas []models.MassMigrationMeta,
+	withdrawRoots []common.Hash,
+) (
+	bigBatchID *big.Int,
+	stateRoots [][32]byte,
+	signatures [][2]*big.Int,
+	meta [][4]*big.Int,
+	bytesWithdrawRoots [][32]byte,
+	transactions [][]byte,
+) {
+	count := len(commitments)
+
+	bigBatchID = batchID.ToBig()
+	stateRoots = make([][32]byte, 0, count)
+	signatures = make([][2]*big.Int, 0, count)
+	meta = make([][4]*big.Int, 0, count)
+	bytesWithdrawRoots = make([][32]byte, 0, count)
+	transactions = make([][]byte, 0, count)
+
+	for i := range commitments {
+		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
+		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
+		meta = append(meta, metas[i].BigInts())
+		bytesWithdrawRoots = append(bytesWithdrawRoots, withdrawRoots[i])
 		transactions = append(transactions, commitments[i].Transactions)
 	}
 	return

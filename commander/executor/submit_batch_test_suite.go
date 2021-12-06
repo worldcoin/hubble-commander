@@ -36,10 +36,11 @@ func (s *submitBatchTestSuite) setupUser() {
 	s.NoError(err)
 }
 
-func getCommitments(count int, batchID models.Uint256) []models.CommitmentWithTxs {
+func getCommitments(count int, batchID models.Uint256, batchType batchtype.BatchType) []models.CommitmentWithTxs {
 	commitments := make([]models.CommitmentWithTxs, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
+		commitment.Type = batchType
 		commitment.ID.BatchID = batchID
 		commitment.ID.IndexInBatch = uint8(i)
 

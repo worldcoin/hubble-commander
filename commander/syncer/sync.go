@@ -65,10 +65,10 @@ func (c *Context) syncExistingBatch(remoteDecodedBatch eth.DecodedBatch, localBa
 		if err != nil {
 			return err
 		}
-		log.Printf("Synced new existing batch. Batch ID: %v. Batch Hash: %v", remoteBatch.ID, remoteBatch.Hash)
+		log.Printf("Synced new existing batch. Batch ID: %s. Batch Hash: %s", remoteBatch.ID.String(), remoteBatch.Hash.String())
 	} else {
 		// This can happen when proposer slot ends before batch submission transaction gets mined
-		log.Warnf("Local batch with ID=%v was found inconsistent with remote batch", localBatch.ID)
+		log.Errorf("Local batch with ID=%s was found inconsistent with remote batch", localBatch.ID.String())
 		return NewInconsistentBatchError(localBatch)
 	}
 	return nil

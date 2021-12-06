@@ -28,7 +28,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
-	arg1, arg2, arg3, arg4, arg5 := CommitmentsToSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	arg1, arg2, arg3, arg4, arg5 := CommitmentsToTransferAndC2TSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
 	calldata, err := rollupABI.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 

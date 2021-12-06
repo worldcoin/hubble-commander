@@ -105,10 +105,12 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	case batchtype.Transfer:
 		*batchType = batchtype.Create2Transfer
 	case batchtype.Create2Transfer:
+		*batchType = batchtype.MassMigration
+	case batchtype.MassMigration:
 		*batchType = batchtype.Deposit
 	case batchtype.Deposit:
 		*batchType = batchtype.Transfer
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis:
 		panic("Not supported")
 	}
 }

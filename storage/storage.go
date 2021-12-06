@@ -33,7 +33,10 @@ func NewStorage(cfg *config.Config) (*Storage, error) {
 }
 
 func newStorageFromDatabase(database *Database) (*Storage, error) {
-	batchStorage := NewBatchStorage(database)
+	batchStorage, err := NewBatchStorage(database)
+	if err != nil {
+		return nil, err
+	}
 
 	commitmentStorage := NewCommitmentStorage(database)
 

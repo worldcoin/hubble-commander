@@ -24,7 +24,7 @@ func (s *ApplyDepositsTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.applier = NewApplier(s.storage.Storage, nil)
+	s.applier = NewApplier(s.storage.Storage)
 }
 
 func (s *ApplyDepositsTestSuite) TearDownTest() {

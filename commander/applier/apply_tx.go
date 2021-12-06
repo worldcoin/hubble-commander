@@ -62,9 +62,9 @@ func (a *Applier) applyTxForSync(
 	receiverLeaf *models.StateLeaf,
 	commitmentTokenID models.Uint256,
 ) (synced *SyncedGenericTransaction, txError, appError error) {
-	senderLeaf, err := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
-	if err != nil {
-		return nil, nil, err
+	senderLeaf, appError := a.storage.StateTree.LeafOrEmpty(tx.GetFromStateID())
+	if appError != nil {
+		return nil, nil, appError
 	}
 
 	synced = NewPartialSyncedGenericTransaction(tx.Copy(), &senderLeaf.UserState, &receiverLeaf.UserState)
@@ -80,18 +80,23 @@ func (a *Applier) applyTxForSync(
 	}
 	synced.SenderStateProof.Witness = senderWitness
 
-	if tErr := a.validateSenderTokenID(senderLeaf, commitmentTokenID); tErr != nil {
-		return synced, tErr, nil
+	txErr = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
+	if txErr != nil {
+		return synced, txErr, nil
 	}
 
 	receiverWitness, appError := a.storage.StateTree.Set(receiverLeaf.StateID, newReceiverState)
 	if appError != nil {
 		return nil, nil, appError
 	}
+	if senderLeaf.StateID == receiverLeaf.StateID {
+		synced.ReceiverStateProof.UserState = newSenderState
+	}
 	synced.ReceiverStateProof.Witness = receiverWitness
 
-	if tErr := a.validateReceiverTokenID(receiverLeaf, commitmentTokenID); tErr != nil {
-		return synced, tErr, nil
+	txErr = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
+	if txErr != nil {
+		return synced, txErr, nil
 	}
 
 	synced.Tx.SetNonce(senderLeaf.Nonce)
@@ -140,24 +145,54 @@ func calculateStateAfterTx(
 	newSenderState, newReceiverState *models.UserState,
 	err error,
 ) {
+	if tx.GetToStateID() == nil {
+		panic("transaction ToStateID is nil")
+	}
+
+	newSenderState, err = calculateSenderStateAfterTx(senderState, tx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if tx.GetFromStateID() == *tx.GetToStateID() {
+		newReceiverState = calculateReceiverStateAfterTx(*newSenderState.Copy(), tx)
+	} else {
+		newReceiverState = calculateReceiverStateAfterTx(receiverState, tx)
+	}
+
+	return newSenderState, newReceiverState, nil
+}
+
+func calculateSenderStateAfterTx(
+	senderState models.UserState, // nolint:gocritic
+	tx models.GenericTransaction,
+) (newSenderState *models.UserState, err error) {
 	fee := tx.GetFee()
 	amount := tx.GetAmount()
 
 	if amount.CmpN(0) <= 0 {
-		return nil, nil, errors.WithStack(ErrInvalidTokenAmount)
+		return nil, errors.WithStack(ErrInvalidTokenAmount)
 	}
 
 	totalAmount := amount.Add(&fee)
 	if senderState.Balance.Cmp(totalAmount) < 0 {
-		return nil, nil, errors.WithStack(ErrBalanceTooLow)
+		return nil, errors.WithStack(ErrBalanceTooLow)
 	}
 
 	newSenderState = &senderState
-	newReceiverState = &receiverState
 
 	newSenderState.Nonce = *newSenderState.Nonce.AddN(1)
 	newSenderState.Balance = *newSenderState.Balance.Sub(totalAmount)
-	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
 
-	return newSenderState, newReceiverState, nil
+	return newSenderState, nil
+}
+
+func calculateReceiverStateAfterTx(
+	receiverState models.UserState, // nolint:gocritic
+	tx models.GenericTransaction,
+) *models.UserState {
+	amount := tx.GetAmount()
+	newReceiverState := &receiverState
+	newReceiverState.Balance = *newReceiverState.Balance.Add(&amount)
+	return newReceiverState
 }

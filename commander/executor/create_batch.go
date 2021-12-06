@@ -13,17 +13,17 @@ func (c *TxsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
 		return nil, nil, err
 	}
 
-	commitments, err := c.CreateCommitments()
+	batchData, err := c.CreateCommitments()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = c.SubmitBatch(batch, commitments)
+	err = c.SubmitBatch(batch, batchData)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return batch, ref.Int(len(commitments)), nil
+	return batch, ref.Int(len(batchData.Commitments())), nil
 }
 
 func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*models.Batch, error) {

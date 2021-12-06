@@ -19,7 +19,7 @@ var (
 
 const Create2TransferLength = 16
 
-func EncodeCreate2TransferWithStateID(tx *models.Create2Transfer, toPubKeyID uint32) ([]byte, error) {
+func EncodeCreate2TransferWithStateID(create2Transfer *models.Create2Transfer, toPubKeyID uint32) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -31,16 +31,16 @@ func EncodeCreate2TransferWithStateID(tx *models.Create2Transfer, toPubKeyID uin
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
-		big.NewInt(int64(tx.FromStateID)),
-		big.NewInt(int64(*tx.ToStateID)),
+		big.NewInt(int64(create2Transfer.FromStateID)),
+		big.NewInt(int64(*create2Transfer.ToStateID)),
 		big.NewInt(int64(toPubKeyID)),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
-		tx.Nonce.ToBig(),
+		create2Transfer.Amount.ToBig(),
+		create2Transfer.Fee.ToBig(),
+		create2Transfer.Nonce.ToBig(),
 	)
 }
 
-func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
+func EncodeCreate2Transfer(create2Transfer *models.Create2Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -51,15 +51,15 @@ func EncodeCreate2Transfer(tx *models.Create2Transfer) ([]byte, error) {
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
-		big.NewInt(int64(tx.FromStateID)),
-		crypto.Keccak256Hash(tx.ToPublicKey.Bytes()),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
-		tx.Nonce.ToBig(),
+		big.NewInt(int64(create2Transfer.FromStateID)),
+		crypto.Keccak256Hash(create2Transfer.ToPublicKey.Bytes()),
+		create2Transfer.Amount.ToBig(),
+		create2Transfer.Fee.ToBig(),
+		create2Transfer.Nonce.ToBig(),
 	)
 }
 
-func EncodeCreate2TransferForSigning(tx *models.Create2Transfer) ([]byte, error) {
+func EncodeCreate2TransferForSigning(create2Transfer *models.Create2Transfer) ([]byte, error) {
 	arguments := abi.Arguments{
 		{Name: "txType", Type: tUint256},
 		{Name: "fromIndex", Type: tUint256},
@@ -70,30 +70,30 @@ func EncodeCreate2TransferForSigning(tx *models.Create2Transfer) ([]byte, error)
 	}
 	return arguments.Pack(
 		big.NewInt(int64(txtype.Create2Transfer)),
-		big.NewInt(int64(tx.FromStateID)),
-		crypto.Keccak256Hash(tx.ToPublicKey.Bytes()),
-		tx.Nonce.ToBig(),
-		tx.Amount.ToBig(),
-		tx.Fee.ToBig(),
+		big.NewInt(int64(create2Transfer.FromStateID)),
+		crypto.Keccak256Hash(create2Transfer.ToPublicKey.Bytes()),
+		create2Transfer.Nonce.ToBig(),
+		create2Transfer.Amount.ToBig(),
+		create2Transfer.Fee.ToBig(),
 	)
 }
 
 // Encodes a create2Transfer in compact format (without signatures) for the inclusion in the commitment
-func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubKeyID uint32) ([]byte, error) {
-	amount, err := EncodeDecimal(transfer.Amount)
+func EncodeCreate2TransferForCommitment(create2Transfer *models.Create2Transfer, toPubKeyID uint32) ([]byte, error) {
+	amount, err := EncodeDecimal(create2Transfer.Amount)
 	if err != nil {
 		return nil, err
 	}
 
-	fee, err := EncodeDecimal(transfer.Fee)
+	fee, err := EncodeDecimal(create2Transfer.Fee)
 	if err != nil {
 		return nil, err
 	}
 
 	arr := make([]byte, Create2TransferLength)
 
-	binary.BigEndian.PutUint32(arr[0:4], transfer.FromStateID)
-	binary.BigEndian.PutUint32(arr[4:8], *transfer.ToStateID)
+	binary.BigEndian.PutUint32(arr[0:4], create2Transfer.FromStateID)
+	binary.BigEndian.PutUint32(arr[4:8], *create2Transfer.ToStateID)
 	binary.BigEndian.PutUint32(arr[8:12], toPubKeyID)
 	binary.BigEndian.PutUint16(arr[12:14], amount)
 	binary.BigEndian.PutUint16(arr[14:16], fee)
@@ -101,7 +101,7 @@ func EncodeCreate2TransferForCommitment(transfer *models.Create2Transfer, toPubK
 	return arr, nil
 }
 
-func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2Transfer, toPubKeyID uint32, err error) {
+func DecodeCreate2TransferFromCommitment(data []byte) (create2Transfer *models.Create2Transfer, toPubKeyID uint32, err error) {
 	fromStateID := binary.BigEndian.Uint32(data[0:4])
 	toStateID := binary.BigEndian.Uint32(data[4:8])
 	toPubKeyID = binary.BigEndian.Uint32(data[8:12])
@@ -111,7 +111,7 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 	amount := DecodeDecimal(amountEncoded)
 	fee := DecodeDecimal(feeEncoded)
 
-	transfer = &models.Create2Transfer{
+	create2Transfer = &models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Create2Transfer,
 			FromStateID: fromStateID,
@@ -120,22 +120,17 @@ func DecodeCreate2TransferFromCommitment(data []byte) (transfer *models.Create2T
 		},
 		ToStateID: &toStateID,
 	}
-	transferHash, err := HashCreate2Transfer(transfer)
-	if err != nil {
-		return nil, 0, err
-	}
-	transfer.Hash = *transferHash
-	return transfer, toPubKeyID, nil
+	return create2Transfer, toPubKeyID, nil
 }
 
-func SerializeCreate2Transfers(transfers []models.Create2Transfer, pubKeyIDs []uint32) ([]byte, error) {
-	if len(transfers) != len(pubKeyIDs) {
+func SerializeCreate2Transfers(create2Transfers []models.Create2Transfer, pubKeyIDs []uint32) ([]byte, error) {
+	if len(create2Transfers) != len(pubKeyIDs) {
 		return nil, ErrInvalidSlicesLength
 	}
-	buf := make([]byte, 0, len(transfers)*Create2TransferLength)
+	buf := make([]byte, 0, len(create2Transfers)*Create2TransferLength)
 
-	for i := range transfers {
-		encoded, err := EncodeCreate2TransferForCommitment(&transfers[i], pubKeyIDs[i])
+	for i := range create2Transfers {
+		encoded, err := EncodeCreate2TransferForCommitment(&create2Transfers[i], pubKeyIDs[i])
 		if err != nil {
 			return nil, err
 		}
@@ -173,8 +168,8 @@ func DeserializeCreate2TransferPubKeyIDs(data []byte) []uint32 {
 	return pubKeyIDs
 }
 
-func HashCreate2Transfer(transfer *models.Create2Transfer) (*common.Hash, error) {
-	encodedTransfer, err := EncodeCreate2Transfer(transfer)
+func HashCreate2Transfer(create2Transfer *models.Create2Transfer) (*common.Hash, error) {
+	encodedTransfer, err := EncodeCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
 	}
