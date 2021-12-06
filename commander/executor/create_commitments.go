@@ -13,9 +13,6 @@ import (
 var (
 	ErrNotEnoughTxs = NewRollupError("not enough transactions")
 	mockPublicKey   = models.PublicKey{1, 2, 3}
-
-	// TODO support multiple tokens
-	commitmentTokenID = models.MakeUint256(0)
 )
 
 type FeeReceiver struct {
@@ -162,6 +159,7 @@ func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
+	commitmentTokenID := models.MakeUint256(0) // TODO support multiple tokens
 	feeReceiverState, err := c.storage.GetFeeReceiverStateLeaf(c.cfg.FeeReceiverPubKeyID, commitmentTokenID)
 	if err != nil {
 		return nil, err

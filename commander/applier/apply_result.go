@@ -54,10 +54,6 @@ type ApplySingleMassMigrationResult struct {
 	tx *models.MassMigration
 }
 
-func NewApplySingleMassMigrationResult(tx *models.MassMigration) *ApplySingleMassMigrationResult {
-	return &ApplySingleMassMigrationResult{tx: tx}
-}
-
 func (a *ApplySingleMassMigrationResult) AppliedTx() models.GenericTransaction {
 	return a.tx
 }
