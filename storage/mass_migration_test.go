@@ -2,8 +2,10 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -183,6 +185,45 @@ func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
 		s.NoError(err)
 		s.Equal(commitmentID, *tx.CommitmentID)
 	}
+}
+
+func (s *MassMigrationTestSuite) TestGetMassMigrationWithBatchDetails() {
+	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
+		Type:            batchtype.MassMigration,
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		SubmissionTime:  &models.Timestamp{Time: time.Unix(140, 0).UTC()},
+	}
+	err := s.storage.AddBatch(batch)
+	s.NoError(err)
+
+	massMigrationInBatch := massMigration
+	massMigrationInBatch.CommitmentID = &models.CommitmentID{
+		BatchID: batch.ID,
+	}
+	err = s.storage.AddMassMigration(&massMigrationInBatch)
+	s.NoError(err)
+
+	expected := models.MassMigrationWithBatchDetails{
+		MassMigration: massMigrationInBatch,
+		BatchHash:     batch.Hash,
+		BatchTime:     batch.SubmissionTime,
+	}
+	res, err := s.storage.GetMassMigrationWithBatchDetails(massMigrationInBatch.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
+}
+
+func (s *MassMigrationTestSuite) TestGetMassMigrationWithBatchDetails_WithoutBatch() {
+	err := s.storage.AddMassMigration(&massMigration)
+	s.NoError(err)
+
+	expected := models.MassMigrationWithBatchDetails{MassMigration: massMigration}
+
+	res, err := s.storage.GetMassMigrationWithBatchDetails(massMigration.Hash)
+	s.NoError(err)
+	s.Equal(expected, *res)
 }
 
 func TestMassMigrationTestSuite(t *testing.T) {

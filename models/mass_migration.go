@@ -2,11 +2,18 @@ package models
 
 import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type MassMigration struct {
 	TransactionBase
 	SpokeID uint32
+}
+
+type MassMigrationWithBatchDetails struct {
+	MassMigration
+	BatchHash *common.Hash
+	BatchTime *Timestamp
 }
 
 func (m *MassMigration) Type() txtype.TransactionType {
