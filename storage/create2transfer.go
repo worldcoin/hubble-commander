@@ -211,9 +211,9 @@ func (s *Storage) getMissingStoredTxsData(txs []stored.Tx, receiptHashes []commo
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := stored.NewTxReceiptFromCreate2Transfer(&txs[i])
-			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(txReceipt)
+			storedTxReceipt := stored.NewTxReceiptFromCreate2Transfer(&txs[i])
+			storedTxReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredTxReceipt(storedTxReceipt)
 			if err != nil {
 				return err
 			}

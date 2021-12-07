@@ -147,9 +147,9 @@ func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Bat
 // DeleteBatches uses for loop instead badgerhold.DeleteMatching because it's faster
 func (s *BatchStorage) DeleteBatches(batchIDs ...models.Uint256) error {
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		batch := stored.Batch{}
+		storedBatch := stored.Batch{}
 		for i := range batchIDs {
-			err := txDatabase.Badger.Delete(batchIDs[i], batch)
+			err := txDatabase.Badger.Delete(batchIDs[i], storedBatch)
 			if err == bh.ErrNotFound {
 				return errors.WithStack(NewNotFoundError("batch"))
 			}

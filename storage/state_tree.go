@@ -46,15 +46,15 @@ func (s *StateTree) Root() (*common.Hash, error) {
 }
 
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
-	var leaf stored.StateLeaf
-	err = s.database.Badger.Get(stateID, &leaf)
+	var storedLeaf stored.StateLeaf
+	err = s.database.Badger.Get(stateID, &storedLeaf)
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	if err != nil {
 		return nil, err
 	}
-	return leaf.ToModelsStateLeaf(), nil
+	return storedLeaf.ToModelsStateLeaf(), nil
 }
 
 func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
@@ -244,9 +244,9 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	var leaf stored.StateLeaf
+	var storedLeaf stored.StateLeaf
 	err := s.database.Badger.FindOne(
-		&leaf,
+		&storedLeaf,
 		bh.Where("TokenID").Eq(tokenID).
 			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
@@ -256,7 +256,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
-	return leaf.ToModelsStateLeaf(), nil
+	return storedLeaf.ToModelsStateLeaf(), nil
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
