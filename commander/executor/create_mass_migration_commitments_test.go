@@ -86,81 +86,6 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
-	massMigrations := testutils.GenerateValidMassMigrations(1)
-	s.addMassMigrations(massMigrations)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.MassMigrationForCommitmentLength * len(massMigrations)
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
-	massMigrations := testutils.GenerateValidMassMigrations(3)
-	s.addMassMigrations(massMigrations)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.MassMigrationForCommitmentLength * len(massMigrations)
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
-	s.txsCtx.cfg = &config.RollupConfig{
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    4,
-		FeeReceiverPubKeyID:    2,
-		MaxCommitmentsPerBatch: 3,
-	}
-
-	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
-
-	massMigrations := testutils.GenerateValidMassMigrations(9)
-	s.invalidateMassMigrations(massMigrations[7:9])
-
-	highNonceMassMigrations := []models.MassMigration{
-		testutils.MakeMassMigration(123, 1, 10, 1),
-		testutils.MakeMassMigration(123, 1, 11, 1),
-	}
-
-	massMigrations = append(massMigrations, highNonceMassMigrations...)
-	s.addMassMigrations(massMigrations)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 3)
-	s.Len(batchData.Commitments()[0].Transactions, s.maxTxBytesInCommitment)
-	s.Len(batchData.Commitments()[1].Transactions, s.maxTxBytesInCommitment)
-	s.Len(batchData.Commitments()[2].Transactions, encoder.MassMigrationForCommitmentLength)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[2].PostStateRoot, *postRoot)
-}
-
 func (s *MassMigrationCommitmentsTestSuite) invalidateMassMigrations(massMigrations []models.MassMigration) {
 	for i := range massMigrations {
 		tx := &massMigrations[i]
@@ -207,34 +132,6 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWh
 	s.Equal(preRoot, postRoot)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
-	massMigrationsCount := uint32(4)
-	s.preparePendingMassMigrations(massMigrationsCount)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.MassMigrationForCommitmentLength * int(massMigrationsCount)
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
-	s.Equal(batchData.Commitments()[0].FeeReceiver, uint32(2))
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
-	s.preparePendingMassMigrations(5)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-}
-
 func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_MarksMassMigrationsAsIncludedInCommitment() {
 	massMigrationsCount := uint32(4)
 	s.preparePendingMassMigrations(massMigrationsCount)
@@ -252,39 +149,6 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_MarksMassMigra
 		s.NoError(err)
 		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
 	}
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	validMassMigrationsCount := 4
-	s.preparePendingMassMigrations(uint32(validMassMigrationsCount))
-
-	nonceTooHighTx := testutils.GenerateValidMassMigrations(1)[0]
-	nonceTooHighTx.Nonce = models.MakeUint256(21)
-	err := s.storage.AddMassMigration(&nonceTooHighTx)
-	s.NoError(err)
-
-	pendingMassMigrations, err := s.storage.GetPendingMassMigrations()
-	s.NoError(err)
-	s.Len(pendingMassMigrations, validMassMigrationsCount+1)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-
-	for i := 0; i < validMassMigrationsCount; i++ {
-		var tx *models.MassMigration
-		tx, err = s.storage.GetMassMigration(pendingMassMigrations[i].Hash)
-		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
-	}
-
-	tx, err := s.storage.GetMassMigration(nonceTooHighTx.Hash)
-	s.NoError(err)
-	s.Nil(tx.CommitmentID)
-
-	pendingMassMigrations, err = s.storage.GetPendingMassMigrations()
-	s.NoError(err)
-	s.Len(pendingMassMigrations, 1)
 }
 
 func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
