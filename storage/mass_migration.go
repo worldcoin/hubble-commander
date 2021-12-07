@@ -126,7 +126,10 @@ func (s *Storage) GetMassMigrationWithBatchDetails(hash common.Hash) (*models.Ma
 			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
-		massMigrations, err = txStorage.massMigrationsToMassMigrationsWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredTxReceipt{txReceipt})
+		massMigrations, err = txStorage.massMigrationsToMassMigrationsWithBatchDetails(
+			[]models.StoredTx{*tx},
+			[]*models.StoredTxReceipt{txReceipt},
+		)
 		return err
 	})
 
