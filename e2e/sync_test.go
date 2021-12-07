@@ -55,10 +55,15 @@ func TestCommanderSync(t *testing.T) {
 	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
 	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
 
+	firstMassMigrationHash := testSendMassMigration(t, activeCommander.Client(), senderWallet, 64)
+	testGetTransaction(t, activeCommander.Client(), firstMassMigrationHash)
+	send31MoreMassMigrations(t, activeCommander.Client(), senderWallet, 65)
+
 	makeDeposits(t, activeCommander.Client())
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstMassMigrationHash)
 	waitForBatch(t, activeCommander.Client(), models.MakeUint256(3))
 
 	cfg.Bootstrap.Prune = true
