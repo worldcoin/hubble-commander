@@ -79,6 +79,33 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	return err
 }
 
+func (c *Client) DisputeTransitionMassMigration(
+	batchID *models.Uint256,
+	batchHash *common.Hash,
+	previous *models.CommitmentInclusionProof,
+	target *models.MMCommitmentInclusionProof,
+	proofs []models.StateMerkleProof,
+) error {
+	transaction, err := c.rollup().
+		WithGasLimit(*c.config.TransitionDisputeGasLimit).
+		DisputeTransitionMassMigration(
+			batchID.ToBig(),
+			*commitmentProofToCalldata(previous),
+			*massMigrationProofToCalldata(target),
+			stateMerkleProofsToCalldata(proofs),
+		)
+	if err != nil {
+		return handleDisputeTransitionError(err)
+	}
+
+	err = c.waitForDispute(batchID, batchHash, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
+}
+
 func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash, tx *types.Transaction) error {
 	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	if err != nil {
@@ -168,6 +195,26 @@ func transferProofToCalldata(proof *models.TransferCommitmentInclusionProof) *ro
 				Signature:   proof.Body.Signature.BigInts(),
 				FeeReceiver: new(big.Int).SetUint64(uint64(proof.Body.FeeReceiver)),
 				Txs:         proof.Body.Transactions,
+			},
+		},
+		Path:    new(big.Int).SetUint64(uint64(proof.Path.Path)),
+		Witness: proof.Witness.Bytes(),
+	}
+}
+
+func massMigrationProofToCalldata(proof *models.MMCommitmentInclusionProof) *rollup.TypesMMCommitmentInclusionProof {
+	return &rollup.TypesMMCommitmentInclusionProof{
+		Commitment: rollup.TypesMassMigrationCommitment{
+			StateRoot: proof.StateRoot,
+			Body: rollup.TypesMassMigrationBody{
+				AccountRoot:  proof.Body.AccountRoot,
+				Signature:    proof.Body.Signature.BigInts(),
+				SpokeID:      new(big.Int).SetUint64(uint64(proof.Body.Meta.SpokeID)),
+				WithdrawRoot: proof.Body.WithdrawRoot,
+				TokenID:      proof.Body.Meta.TokenID.ToBig(),
+				Amount:       proof.Body.Meta.Amount.ToBig(),
+				FeeReceiver:  new(big.Int).SetUint64(uint64(proof.Body.Meta.FeeReceiver)),
+				Txs:          proof.Body.Transactions,
 			},
 		},
 		Path:    new(big.Int).SetUint64(uint64(proof.Path.Path)),

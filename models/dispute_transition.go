@@ -25,6 +25,21 @@ type TransferBody struct {
 	Transactions []byte
 }
 
+type MMCommitmentInclusionProof struct {
+	StateRoot common.Hash
+	Body      *MMBody
+	Path      *MerklePath
+	Witness   Witness
+}
+
+type MMBody struct {
+	AccountRoot  common.Hash
+	Signature    Signature
+	Meta         MassMigrationMeta
+	WithdrawRoot common.Hash
+	Transactions []byte
+}
+
 type StateMerkleProof struct {
 	UserState *UserState
 	Witness   Witness
