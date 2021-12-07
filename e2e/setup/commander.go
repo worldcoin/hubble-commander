@@ -46,7 +46,7 @@ func NewConfiguredCommanderFromEnv(cfg *config.RollupConfig) (Commander, error) 
 func logRequiredConfig(cfg *config.RollupConfig) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
-		log.Fatalf("%+v", errors.WithStack(err))
+		log.Panicf("%+v", errors.WithStack(err))
 	}
 	log.Printf("Required Rollup config for this test: %s", string(jsonCfg))
 }
