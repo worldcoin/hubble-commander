@@ -64,7 +64,7 @@ func (s *GetMMBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetMMBatchesTestSuite) TestGetBatches() {
-	batch1, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
+	batch, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -74,8 +74,8 @@ func (s *GetMMBatchesTestSuite) TestGetBatches() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.EqualValues(batch1.ID, batches[0].GetID())
-	s.Equal(batch1.Type, batches[0].GetBase().Type)
+	s.EqualValues(batch.ID, batches[0].GetID())
+	s.Equal(batch.Type, batches[0].GetBase().Type)
 }
 
 func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
