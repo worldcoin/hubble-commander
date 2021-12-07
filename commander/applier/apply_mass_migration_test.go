@@ -78,6 +78,49 @@ func (s *ApplyMassMigrationTestSuite) TestApplyMassMigration_ValidatesNonce() {
 	s.NoError(appError)
 }
 
+func (s *ApplyMassMigrationTestSuite) TestApplyMassMigrationForSync_ValidatesNonce() {
+	setUserStatesInTree(s.Assertions, s.storage)
+
+	bigMassMigration := s.massMigration
+	bigMassMigration.Amount = models.MakeUint256(1_000_000)
+
+	synced, txError, appError := s.applier.ApplyMassMigrationForSync(&bigMassMigration, models.MakeUint256(1))
+	s.NotNil(synced)
+	s.ErrorIs(txError, ErrBalanceTooLow)
+	s.NoError(appError)
+
+	s.Equal(&bigMassMigration, synced.Tx.ToMassMigration())
+	s.Equal(senderState, *synced.SenderStateProof.UserState)
+	s.Len(synced.SenderStateProof.Witness, st.StateTreeDepth)
+}
+
+func (s *ApplyMassMigrationTestSuite) TestApplyTransferForSync_ValidatesSenderTokenID() {
+	setUserStatesInTree(s.Assertions, s.storage)
+
+	synced, txError, appError := s.applier.ApplyMassMigrationForSync(&s.massMigration, models.MakeUint256(3))
+	s.NotNil(synced)
+	s.ErrorIs(txError, ErrInvalidSenderTokenID)
+	s.NoError(appError)
+
+	s.Equal(&s.massMigration, synced.Tx.ToMassMigration())
+	s.Equal(senderState, *synced.SenderStateProof.UserState)
+	s.Len(synced.SenderStateProof.Witness, st.StateTreeDepth)
+}
+
+func (s *ApplyMassMigrationTestSuite) TestApplyTransferForSync_ReturnsTransferWithUpdatedNonce() {
+	setUserStatesInTree(s.Assertions, s.storage)
+
+	transferWithModifiedNonce := s.massMigration
+	transferWithModifiedNonce.Nonce = models.MakeUint256(1234)
+
+	synced, txError, appError := s.applier.ApplyMassMigrationForSync(&transferWithModifiedNonce, models.MakeUint256(1))
+	s.NoError(appError)
+	s.NoError(txError)
+
+	s.Equal(models.MakeUint256(1234), transferWithModifiedNonce.Nonce)
+	s.Equal(models.MakeUint256(0), synced.Tx.ToMassMigration().GetNonce())
+}
+
 func TestApplyMassMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplyMassMigrationTestSuite))
 }

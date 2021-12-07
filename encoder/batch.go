@@ -9,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DecodeBatchCalldata
+// DecodeTransferBatchCalldata
 //   uint256 batchID
 //   bytes32[] stateRoots,
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
+func DecodeTransferBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
 	unpacked, err := rollupABI.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -40,6 +40,50 @@ func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitme
 			CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),
 			FeeReceiver:       uint32(feeReceivers[i].Uint64()),
 			Transactions:      txss[i],
+		}
+	}
+
+	return commitments, nil
+}
+
+// DecodeMMBatchCalldata
+//	 uint256 batchID,
+//	 bytes32[] stateRoots,
+//	 uint256[2][] signatures,
+//	 uint256[4][] meta,
+//	 bytes32[] withdrawRoots,
+//	 bytes[] txss
+func DecodeMMBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMMCommitment, error) {
+	unpacked, err := rollupABI.Methods["submitMassMigration"].Inputs.Unpack(calldata[4:])
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	batchID := unpacked[0].(*big.Int)
+	stateRoots := unpacked[1].([][32]uint8)
+	signatures := unpacked[2].([][2]*big.Int)
+	meta := unpacked[3].([][4]*big.Int)
+	withdrawRoots := unpacked[4].([][32]uint8)
+	txss := unpacked[5].([][]uint8)
+
+	size := len(stateRoots)
+
+	commitments := make([]DecodedMMCommitment, size)
+	for i := 0; i < size; i++ {
+		mmMeta := models.NewMassMigrationMetaFromBigInts(meta[i])
+		commitments[i] = DecodedMMCommitment{
+			DecodedCommitment: DecodedCommitment{
+				ID: models.CommitmentID{
+					BatchID:      models.MakeUint256FromBig(*batchID),
+					IndexInBatch: uint8(i),
+				},
+				StateRoot:         common.BytesToHash(stateRoots[i][:]),
+				CombinedSignature: models.MakeSignatureFromBigInts(signatures[i]),
+				FeeReceiver:       mmMeta.FeeReceiver,
+				Transactions:      txss[i],
+			},
+			Meta:         mmMeta,
+			WithdrawRoot: common.BytesToHash(withdrawRoots[i][:]),
 		}
 	}
 

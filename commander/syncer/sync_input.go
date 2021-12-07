@@ -65,6 +65,32 @@ func (a *SyncedC2Ts) SetTxs(txs models.GenericTransactionArray) {
 	a.txs = txs.ToCreate2TransferArray()
 }
 
+type SyncedMMs struct {
+	txs models.MassMigrationArray
+}
+
+func NewSyncedMM(txs models.MassMigrationArray) *SyncedMMs {
+	return &SyncedMMs{txs: txs}
+}
+
+func (a *SyncedMMs) Txs() models.GenericTransactionArray {
+	return a.txs
+}
+
+func (a *SyncedMMs) PubKeyIDs() []uint32 {
+	panic("PubKeyIDs cannot be invoked on SyncedMMs")
+}
+
+func (a *SyncedMMs) TxAt(index int) SyncedTx {
+	return &SyncedMM{
+		tx: a.txs.At(index).ToMassMigration(),
+	}
+}
+
+func (a *SyncedMMs) SetTxs(txs models.GenericTransactionArray) {
+	a.txs = txs.ToMassMigrationArray()
+}
+
 type SyncedTx interface {
 	Tx() models.GenericTransaction
 	PubKeyID() uint32
@@ -93,4 +119,16 @@ func (a *SyncedC2T) Tx() models.GenericTransaction {
 
 func (a *SyncedC2T) PubKeyID() uint32 {
 	return a.pubKeyID
+}
+
+type SyncedMM struct {
+	tx *models.MassMigration
+}
+
+func (a *SyncedMM) Tx() models.GenericTransaction {
+	return a.tx
+}
+
+func (a *SyncedMM) PubKeyID() uint32 {
+	panic("PubKeyID cannot be invoked on SyncedMM")
 }

@@ -21,6 +21,15 @@ type MassMigrationMeta struct {
 	FeeReceiver uint32
 }
 
+func NewMassMigrationMetaFromBigInts(meta [4]*big.Int) *MassMigrationMeta {
+	return &MassMigrationMeta{
+		SpokeID:     uint32(meta[0].Uint64()),
+		TokenID:     MakeUint256FromBig(*meta[1]),
+		Amount:      MakeUint256FromBig(*meta[2]),
+		FeeReceiver: uint32(meta[3].Uint64()),
+	}
+}
+
 func (m *MassMigrationMeta) BigInts() [4]*big.Int {
 	return [4]*big.Int{
 		big.NewInt(int64(m.SpokeID)),

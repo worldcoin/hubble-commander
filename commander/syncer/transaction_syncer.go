@@ -19,13 +19,14 @@ type TransactionSyncer interface {
 	TxLength() int
 	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
+	NewStateChangeProofs(txsLength int) []models.StateMerkleProof
 	ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-		synced *applier.SyncedGenericTransaction, txError, appError error,
+		synced *applier.SyncedTxWithProofs, txError, appError error,
 	)
 	ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 		stateProof *models.StateMerkleProof, commitmentError, appError error,
 	)
-	SetPublicKeys(syncedTxs SyncedTxs) error
+	SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error
 	BatchAddTxs(txs models.GenericTransactionArray) error
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
@@ -36,7 +37,9 @@ func NewTransactionSyncer(storage *st.Storage, batchType batchtype.BatchType) Tr
 		return NewTransferSyncer(storage)
 	case batchtype.Create2Transfer:
 		return NewC2TSyncer(storage)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.MassMigration:
+		return NewMMSyncer(storage)
+	case batchtype.Genesis, batchtype.Deposit:
 		log.Fatal("Invalid tx type")
 		return nil
 	}
@@ -73,8 +76,12 @@ func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byt
 	return encoder.EncodeTransferForSigning(tx.ToTransfer())
 }
 
+func (s *TransferSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, 2*txsLength+1)
+}
+
 func (s *TransferSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-	synced *applier.SyncedGenericTransaction, txError, appError error,
+	synced *applier.SyncedTxWithProofs, txError, appError error,
 ) {
 	return s.applier.ApplyTransferForSync(syncedTx.Tx(), commitmentTokenID)
 }
@@ -85,7 +92,7 @@ func (s *TransferSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, 
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
-func (s *TransferSyncer) SetPublicKeys(_ SyncedTxs) error {
+func (s *TransferSyncer) SetMissingTxsData(_ encoder.Commitment, _ SyncedTxs) error {
 	return nil
 }
 
@@ -132,8 +139,12 @@ func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, er
 	return encoder.EncodeCreate2TransferForSigning(tx.ToCreate2Transfer())
 }
 
+func (s *C2TSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, 2*txsLength+1)
+}
+
 func (s *C2TSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
-	synced *applier.SyncedGenericTransaction, txError, appError error,
+	synced *applier.SyncedTxWithProofs, txError, appError error,
 ) {
 	return s.applier.ApplyCreate2TransferForSync(syncedTx.Tx().ToCreate2Transfer(), syncedTx.PubKeyID(), commitmentTokenID)
 }
@@ -144,7 +155,7 @@ func (s *C2TSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
-func (s *C2TSyncer) SetPublicKeys(syncedTxs SyncedTxs) error {
+func (s *C2TSyncer) SetMissingTxsData(_ encoder.Commitment, syncedTxs SyncedTxs) error {
 	txs := syncedTxs.Txs().ToCreate2TransferArray()
 	for i := range txs {
 		leaf, err := s.storage.AccountTree.Leaf(syncedTxs.PubKeyIDs()[i])
@@ -162,4 +173,66 @@ func (s *C2TSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
 
 func (s *C2TSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
 	return encoder.HashCreate2Transfer(tx.ToCreate2Transfer())
+}
+
+type MMSyncer struct {
+	storage *st.Storage
+	applier *applier.Applier
+}
+
+func NewMMSyncer(storage *st.Storage) *MMSyncer {
+	return &MMSyncer{
+		storage: storage,
+		applier: applier.NewApplier(storage),
+	}
+}
+
+func (s *MMSyncer) TxLength() int {
+	return encoder.MassMigrationForCommitmentLength
+}
+
+func (s *MMSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
+	txs, err := encoder.DeserializeMassMigrations(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SyncedMMs{txs: txs}, nil
+}
+
+func (s *MMSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
+	return encoder.EncodeMassMigrationForSigning(tx.ToMassMigration()), nil
+}
+
+func (s *MMSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, txsLength+1)
+}
+
+func (s *MMSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
+	synced *applier.SyncedTxWithProofs, txError, appError error,
+) {
+	return s.applier.ApplyMassMigrationForSync(syncedTx.Tx(), commitmentTokenID)
+}
+
+func (s *MMSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
+	stateProof *models.StateMerkleProof, commitmentError, appError error,
+) {
+	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
+}
+
+func (s *MMSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error {
+	mmCommitment := commitment.(*encoder.DecodedMMCommitment)
+	txs := syncedTxs.Txs().ToMassMigrationArray()
+	for i := range txs {
+		txs[i].SpokeID = mmCommitment.Meta.SpokeID
+	}
+	return nil
+}
+
+func (s *MMSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
+	return s.storage.BatchAddMassMigration(txs.ToMassMigrationArray())
+}
+
+func (s *MMSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
+	return encoder.HashMassMigration(tx.ToMassMigration())
 }
