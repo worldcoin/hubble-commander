@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
@@ -11,7 +12,7 @@ func (c *TxsContext) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 	error,
 ) {
 	appliedTxs := models.NewGenericTransactionArray(txtype.FromBatchType(c.BatchType), 0, txs.Txs().Len())
-	stateChangeProofs := make([]models.StateMerkleProof, 0, 2*txs.Txs().Len()+1)
+	stateChangeProofs := c.Syncer.NewStateChangeProofs(txs.Txs().Len())
 	combinedFee := models.NewUint256(0)
 
 	tokenID, err := c.getCommitmentTokenID(txs.Txs(), feeReceiverStateID)
@@ -24,11 +25,7 @@ func (c *TxsContext) SyncTxs(txs SyncedTxs, feeReceiverStateID uint32) (
 		if appError != nil {
 			return nil, nil, appError
 		}
-		stateChangeProofs = append(
-			stateChangeProofs,
-			synced.SenderStateProof,
-			synced.ReceiverStateProof,
-		)
+		stateChangeProofs = appendStateChangeProofs(stateChangeProofs, synced)
 		if txError != nil {
 			return nil, nil, NewDisputableErrorWithProofs(Transition, txError.Error(), stateChangeProofs)
 		}
@@ -66,4 +63,11 @@ func (c *TxsContext) getCommitmentTokenID(txs models.GenericTransactionArray, fe
 	}
 
 	return &leaf.TokenID, nil
+}
+
+func appendStateChangeProofs(proofs []models.StateMerkleProof, syncedTx *applier.SyncedTxWithProofs) []models.StateMerkleProof {
+	if syncedTx.ReceiverStateProof != nil {
+		return append(proofs, syncedTx.SenderStateProof, *syncedTx.ReceiverStateProof)
+	}
+	return append(proofs, syncedTx.SenderStateProof)
 }

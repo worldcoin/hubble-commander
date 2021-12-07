@@ -52,7 +52,7 @@ func (s *CommitmentProofsTestSuite) SetupSuite() {
 			FinalisationBlock: 10,
 			AccountTreeRoot:   utils.RandomHash(),
 		},
-		Commitments: s.decodedCommitments,
+		Commitments: encoder.DecodedCommitmentsToCommitments(s.decodedCommitments...),
 	}
 }
 

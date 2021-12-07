@@ -57,7 +57,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 
 type DecodedTxBatch struct {
 	DecodedBatchBase
-	Commitments []encoder.DecodedCommitment
+	Commitments []encoder.Commitment
 }
 
 func (b *DecodedTxBatch) GetID() models.Uint256 {
@@ -68,12 +68,12 @@ func (b *DecodedTxBatch) GetBase() *DecodedBatchBase {
 	return &b.DecodedBatchBase
 }
 
-func (b *DecodedTxBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
-	panic("ToDecodedDepositBatch cannot be invoked on DecodedTxBatch")
-}
-
 func (b *DecodedTxBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	return b
+}
+
+func (b *DecodedTxBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
+	panic("ToDecodedDepositBatch cannot be invoked on DecodedTxBatch")
 }
 
 func (b *DecodedTxBatch) GetCommitmentsLength() int {
@@ -94,12 +94,12 @@ func (b *DecodedDepositBatch) GetBase() *DecodedBatchBase {
 	return &b.DecodedBatchBase
 }
 
-func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
-	return b
-}
-
 func (b *DecodedDepositBatch) ToDecodedTxBatch() *DecodedTxBatch {
 	panic("ToDecodedTxBatch cannot be invoked on DecodedDepositBatch")
+}
+
+func (b *DecodedDepositBatch) ToDecodedDepositBatch() *DecodedDepositBatch {
+	return b
 }
 
 func (b *DecodedDepositBatch) GetCommitmentsLength() int {
