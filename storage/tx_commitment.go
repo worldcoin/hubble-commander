@@ -56,5 +56,5 @@ func (s *CommitmentStorage) GetTxCommitmentsByBatchID(batchID models.Uint256) ([
 }
 
 func (s *CommitmentStorage) isTxCommitmentType(commitmentType batchtype.BatchType) bool {
-	return commitmentType == batchtype.Transfer || commitmentType == batchtype.Create2Transfer
+	return commitmentType == batchtype.Transfer || commitmentType == batchtype.Create2Transfer || commitmentType == batchtype.MassMigration
 }

@@ -41,11 +41,12 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 	}
 	logBatchesCount(len(batchEvents))
 
+	var rolledBackBatchID *models.Uint256
 	depositIndex := 0
 	res := make([]DecodedBatch, 0, len(batchEvents))
 	for i := range batchEvents {
 		event := batchEvents[i]
-		if filters.FilterByBatchID != nil && !filters.FilterByBatchID(models.NewUint256FromBig(*event.BatchID)) {
+		if !isAcceptable(models.NewUint256FromBig(*event.BatchID), rolledBackBatchID, filters) {
 			continue
 		}
 
@@ -62,28 +63,36 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 
 		switch batchtype.BatchType(event.BatchType) {
 		case batchtype.Transfer, batchtype.Create2Transfer:
-			decodedBatch, err = c.getTxBatch(event, tx)
+			decodedBatch, err = c.getTxBatch(event, tx, decodeTxCommitments)
+		case batchtype.MassMigration:
+			decodedBatch, err = c.getTxBatch(event, tx, decodeMMCommitments)
 		case batchtype.Deposit:
 			decodedBatch, err = c.getDepositBatch(event, depositEvents[depositIndex], tx)
 			depositIndex++
-		case batchtype.MassMigration:
-			panic("syncing MassMigration batches is not supported yet")
 		case batchtype.Genesis:
 			panic("syncing genesis batch should have been skipped")
 		}
 
 		if errors.Is(err, errBatchAlreadyRolledBack) {
-			// TODO: handle deposit rollbacks after https://github.com/thehubbleproject/hubble-contracts/issues/671
+			rolledBackBatchID = models.NewUint256FromBig(*event.BatchID)
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
 
+		if rolledBackBatchID != nil && *rolledBackBatchID == decodedBatch.GetBase().ID {
+			rolledBackBatchID = nil
+		}
 		res = append(res, decodedBatch)
 	}
 
 	return res, nil
+}
+
+func isAcceptable(batchID, rolledBackBatchID *models.Uint256, filters *BatchesFilters) bool {
+	return (filters.FilterByBatchID == nil || filters.FilterByBatchID(batchID)) &&
+		(rolledBackBatchID == nil || batchID.Cmp(rolledBackBatchID) <= 0)
 }
 
 func (c *Client) getBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNewBatch, []*rollup.RollupDepositsFinalised, error) {
@@ -171,23 +180,29 @@ func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters) (*roll
 func (c *Client) isDirectBatchSubmission(tx *types.Transaction) bool {
 	methodID := tx.Data()[:4]
 	return bytes.Equal(methodID, c.Rollup.ABI.Methods["submitTransfer"].ID) ||
+		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitMassMigration"].ID) ||
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitCreate2Transfer"].ID) ||
 		bytes.Equal(methodID, c.Rollup.ABI.Methods["submitDeposits"].ID)
 }
 
-func (c *Client) getTxBatch(batchEvent *rollup.RollupNewBatch, tx *types.Transaction) (DecodedBatch, error) {
+func (c *Client) getTxBatch(
+	batchEvent *rollup.RollupNewBatch,
+	tx *types.Transaction,
+	decodeCommitments decodeCommitmentsFunc,
+) (DecodedBatch, error) {
 	batch, err := c.getBatchDetails(batchEvent)
 	if err != nil {
 		return nil, err
 	}
-	commitments, err := encoder.DecodeBatchCalldata(c.Rollup.ABI, tx.Data())
+	commitments, err := decodeCommitments(c.Rollup.ABI, tx.Data())
 	if err != nil {
 		return nil, err
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	if vErr := verifyBatchHash(*batch.Hash, accountRoot, commitments); vErr != nil {
-		return nil, vErr
+	err = verifyBatchHash(*batch.Hash, accountRoot, commitments)
+	if err != nil {
+		return nil, err
 	}
 
 	timestamp, err := c.getBlockTimestamp(batchEvent.Raw.BlockNumber)
@@ -247,7 +262,7 @@ func (c *Client) getBlockTimestamp(blockNumber uint64) (*models.Timestamp, error
 	return models.NewTimestamp(utcTime), nil
 }
 
-func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.DecodedCommitment) error {
+func verifyBatchHash(batchHash, accountRoot common.Hash, commitments []encoder.Commitment) error {
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
 		leafHashes = append(leafHashes, commitments[i].LeafHash(accountRoot))

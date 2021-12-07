@@ -18,7 +18,7 @@ func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool)
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		var ctx context.Context
 		ctx, cancel = context.WithCancel(c.workersContext)
-		c.startWorker(func() error { return c.rollupLoop(ctx) })
+		c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
 		c.rollupLoopRunning = true
 	} else if !isProposer && c.rollupLoopRunning {
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
@@ -105,10 +105,12 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	case batchtype.Transfer:
 		*batchType = batchtype.Create2Transfer
 	case batchtype.Create2Transfer:
+		*batchType = batchtype.MassMigration
+	case batchtype.MassMigration:
 		*batchType = batchtype.Deposit
 	case batchtype.Deposit:
 		*batchType = batchtype.Transfer
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis:
 		panic("Not supported")
 	}
 }

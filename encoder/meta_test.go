@@ -53,7 +53,7 @@ func (s *MetaTestSuite) TestDecodeMeta() {
 	output, err := s.testTypes.DecodeMeta(nil, input)
 	s.NoError(err)
 
-	expectedMeta := models.Meta{
+	expectedMeta := models.BatchMeta{
 		BatchType:  batchtype.BatchType(output.BatchType.Uint64()),
 		Size:       uint8(output.Size.Uint64()),
 		Committer:  output.Committer,

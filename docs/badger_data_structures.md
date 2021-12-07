@@ -205,7 +205,7 @@ Body: `stored.TxMassMigrationBody`
 
 ```go
 type TxMassMigrationBody struct {
-    SpokeID Uint256
+    SpokeID uint32
 }
 ```
 

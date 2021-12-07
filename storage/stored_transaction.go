@@ -336,7 +336,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransa
 	case txtype.Create2Transfer:
 		return s.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
 	case txtype.MassMigration:
-		panic("MassMigration not implemented")
+		return s.MarkMassMigrationsAsIncluded(txs.ToMassMigrationArray(), commitmentID)
 	}
 	return nil
 }

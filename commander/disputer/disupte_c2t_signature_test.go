@@ -152,7 +152,8 @@ func (s *DisputeC2TSignatureTestSuite) signC2TWithPublicKeyHash(
 }
 
 func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx models.GenericTransaction) {
-	pendingBatch, commitments := s.createBatch(tx)
+	pendingBatch, batchData := s.createBatch(tx)
+	commitments := batchData.Commitments()
 
 	c2t, _, err := encoder.DecodeCreate2TransferFromCommitment(commitments[0].Transactions)
 	s.NoError(err)
@@ -175,7 +176,7 @@ func (s *DisputeC2TSignatureTestSuite) submitBatchWithNonexistentAccount(tx mode
 	s.NoError(err)
 	commitments[0].Transactions = encodedC2T
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(pendingBatch, batchData)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

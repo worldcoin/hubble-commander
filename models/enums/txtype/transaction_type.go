@@ -12,7 +12,7 @@ type TransactionType uint8
 const (
 	Transfer        = TransactionType(batchtype.Transfer)
 	Create2Transfer = TransactionType(batchtype.Create2Transfer)
-	MassMigration   = TransactionType(batchtype.MassMigration)
+	MassMigration   = 5
 )
 
 var TransactionTypes = map[TransactionType]string{
@@ -55,4 +55,11 @@ func (s TransactionType) MarshalJSON() ([]byte, error) {
 		return nil, enumerr.NewUnsupportedError("transaction type")
 	}
 	return json.Marshal(msg)
+}
+
+func FromBatchType(batchType batchtype.BatchType) TransactionType {
+	if batchType == batchtype.MassMigration {
+		return MassMigration
+	}
+	return TransactionType(batchType)
 }

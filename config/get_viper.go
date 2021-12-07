@@ -21,10 +21,10 @@ func getStringOrNil(key string) *string {
 	return &value
 }
 
-func getStringOrThrow(key string) string {
+func getStringOrPanic(key string) string {
 	value := viper.GetString(key)
 	if value == "" {
-		log.Fatalf("%s config not specified", key)
+		log.Panicf("%s config not specified", key)
 	}
 	return value
 }
@@ -39,10 +39,10 @@ func getUint64(key string, fallback uint64) uint64 {
 	return viper.GetUint64(key)
 }
 
-func getUint64OrThrow(key string) uint64 {
+func getUint64OrPanic(key string) uint64 {
 	value, err := cast.ToUint64E(viper.Get(key))
 	if err != nil {
-		log.Fatalf("failed to read %s config: %v", key, err)
+		log.Panicf("failed to read %s config: %v", key, err)
 	}
 	return value
 }

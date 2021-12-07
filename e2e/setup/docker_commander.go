@@ -125,7 +125,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 	go func() {
 		_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, stream.Reader)
 		if err != nil {
-			log.Fatalf("%+v", err)
+			log.Panicf("%+v", err)
 		}
 	}()
 

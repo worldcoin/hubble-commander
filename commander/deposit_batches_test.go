@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -32,6 +34,7 @@ type DepositBatchesTestSuite struct {
 func (s *DepositBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = config.GetTestConfig()
+	s.cfg.Rollup.MinTxsPerCommitment = 1
 }
 
 func (s *DepositBatchesTestSuite) SetupTest() {
@@ -44,7 +47,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
+	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -76,7 +79,7 @@ func (s *DepositBatchesTestSuite) TearDownTest() {
 
 func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.prepareDeposits()
-	s.submitBatch()
+	s.submitDepositBatch(s.storage.Storage)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -94,11 +97,62 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.Equal(depositBatch.Type, batches[1].Type)
 }
 
-func (s *DepositBatchesTestSuite) submitBatch() {
+func (s *DepositBatchesTestSuite) TestUnsafeSyncBatches_OmitsRolledBackBatch() {
+	s.prepareDeposits()
+	s.submitInvalidBatches()
+
+	latestBlock, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	// trigger dispute on fraudulent batch
+	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	depositBatch := s.submitDepositBatch(s.storage.Storage)
+	latestBlock, err = s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	// try syncing already rolled back batch
+	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
+	s.NoError(err)
+
+	batches, err := s.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.Equal(depositBatch.TransactionHash, batches[1].TransactionHash)
+}
+
+func (s *DepositBatchesTestSuite) submitInvalidBatches() {
+	previousRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
+	defer txController.Rollback(nil)
+
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
+	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(commitment *models.CommitmentWithTxs) {
+		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
+	})
+	s.client.Blockchain.GetBackend().Commit()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, batchtype.Transfer)
+	err = txsSyncCtx.UpdateExistingBatch(remoteBatches[0], *previousRoot)
+	s.NoError(err)
+
+	s.submitDepositBatch(txStorage)
+}
+
+func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *models.Batch {
 	s.queueFourDeposits()
 
 	depositsCtx := executor.NewDepositsContext(
-		s.storage.Storage,
+		storage,
 		s.client.Client,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
@@ -106,10 +160,11 @@ func (s *DepositBatchesTestSuite) submitBatch() {
 	)
 	defer depositsCtx.Rollback(nil)
 
-	_, _, err := depositsCtx.CreateAndSubmitBatch()
+	batch, _, err := depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
+	return batch
 }
 
 func (s *DepositBatchesTestSuite) prepareDeposits() {

@@ -63,7 +63,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd.client = s.testClient.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
+	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	domain, err := s.testClient.GetDomain()
 	s.NoError(err)
@@ -153,7 +153,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
-	s.cmd.startWorker(func() error {
+	s.cmd.startWorker("", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
 		return nil
@@ -173,13 +173,13 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		err := txStorage.AddTransfer(tx)
 		s.NoError(err)
 
-		commitments, err := txsCtx.CreateCommitments()
+		batchData, err := txsCtx.CreateCommitments()
 		s.NoError(err)
-		s.Len(commitments, 1)
+		s.Len(batchData.Commitments(), 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, commitments)
+		err = txsCtx.SubmitBatch(batch, batchData)
 		s.NoError(err)
 		s.testClient.GetBackend().Commit()
 	})
@@ -257,11 +257,11 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 }
 
 func stopCommander(cmd *Commander) {
-	if !cmd.IsRunning() {
+	if !cmd.isRunning {
 		return
 	}
-	cmd.stopWorkers()
-	cmd.workers.Wait()
+	cmd.stopWorkersContext()
+	cmd.workersWaitGroup.Wait()
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {

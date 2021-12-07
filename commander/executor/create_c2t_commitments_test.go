@@ -33,182 +33,39 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
-	transfers := testutils.GenerateValidCreate2Transfers(1)
-	s.addCreate2Transfers(transfers)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, expectedTxsLength)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
-	transfers := testutils.GenerateValidCreate2Transfers(3)
-	s.addCreate2Transfers(transfers)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, expectedTxsLength)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
-	s.cfg = &config.RollupConfig{
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    4,
-		FeeReceiverPubKeyID:    2,
-		MaxCommitmentsPerBatch: 3,
-	}
-
-	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
-
-	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 124)
-
-	transfers := testutils.GenerateValidCreate2Transfers(9)
-	s.invalidateCreate2Transfers(transfers[7:9])
-
-	highNonceTransfers := []models.Create2Transfer{
-		testutils.MakeCreate2Transfer(124, nil, 10, 1, &models.PublicKey{5, 4, 3, 2, 1}),
-		testutils.MakeCreate2Transfer(124, nil, 11, 1, &models.PublicKey{5, 4, 3, 2, 1}),
-	}
-
-	transfers = append(transfers, highNonceTransfers...)
-	s.addCreate2Transfers(transfers)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 3)
-	s.Len(commitments[0].Transactions, s.maxTxBytesInCommitment)
-	s.Len(commitments[1].Transactions, s.maxTxBytesInCommitment)
-	s.Len(commitments[2].Transactions, encoder.Create2TransferLength)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[2].PostStateRoot, *postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfers []models.Create2Transfer) {
-	for i := range transfers {
-		tx := &transfers[i]
-		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
-	}
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughTxs)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preRoot, postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
-	s.cfg = &config.RollupConfig{
-		MinTxsPerCommitment:    32,
-		MaxTxsPerCommitment:    32,
-		FeeReceiverPubKeyID:    2,
-		MaxCommitmentsPerBatch: 1,
-		MinCommitmentsPerBatch: 1,
-	}
-
-	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
-
-	transfers := testutils.GenerateValidCreate2Transfers(2)
-	s.addCreate2Transfers(transfers)
-
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 2)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughTxs)
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preRoot, postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
-	transfersCount := uint32(4)
-	s.preparePendingCreate2Transfers(transfersCount)
-
-	preRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	expectedTxsLength := encoder.Create2TransferLength * int(transfersCount)
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, expectedTxsLength)
-	s.Equal(commitments[0].FeeReceiver, uint32(2))
-
-	postRoot, err := s.executionCtx.storage.StateTree.Root()
-	s.NoError(err)
-	s.NotEqual(preRoot, postRoot)
-	s.Equal(commitments[0].PostStateRoot, *postRoot)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
-	s.preparePendingCreate2Transfers(5)
-
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 	s.Len(pendingTransfers, 2)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(commitments, 1)
+	s.Len(batchData.Commitments(), 1)
 
 	for i := range pendingTransfers {
 		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ID, *tx.CommitmentID)
+		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
+}
+
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
+	transfers := testutils.GenerateValidCreate2Transfers(1)
+	s.addCreate2Transfers(transfers)
+
+	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(batchData.Commitments(), 1)
+	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
+
+	s.client.GetBackend().Commit()
+	accounts := s.getRegisteredAccounts(0)
+	s.Len(accounts, 16)
+	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsMissingToAccountTree() {
@@ -259,51 +116,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 	for i := 1; i < len(pendingAccounts); i++ {
 		s.Equal(mockPublicKey, registeredAccounts[i].PublicKey)
 	}
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
-	transfers := testutils.GenerateValidCreate2Transfers(1)
-	s.addCreate2Transfers(transfers)
-
-	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-	s.Len(commitments[0].Transactions, expectedTxsLength)
-
-	s.client.GetBackend().Commit()
-	accounts := s.getRegisteredAccounts(0)
-	s.Len(accounts, 16)
-	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	transfers := testutils.GenerateValidCreate2Transfers(3)
-	transfers[2].Nonce = models.MakeUint256(21)
-	s.addCreate2Transfers(transfers)
-
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 3)
-
-	commitments, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(commitments, 1)
-
-	for i := 0; i < 2; i++ {
-		var tx *models.Create2Transfer
-		tx, err = s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
-		s.NoError(err)
-		s.Equal(commitments[0].ID, *tx.CommitmentID)
-	}
-
-	tx, err := s.storage.GetCreate2Transfer(transfers[2].Hash)
-	s.NoError(err)
-	s.Nil(tx.CommitmentID)
-
-	pendingTransfers, err = s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 1)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {

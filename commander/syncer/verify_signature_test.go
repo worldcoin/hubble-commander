@@ -268,6 +268,13 @@ func signCreate2Transfer(t *testing.T, wallet *bls.Wallet, transfer *models.Crea
 	transfer.Signature = *signature.ModelsSignature()
 }
 
+func signMassMigration(t *testing.T, wallet *bls.Wallet, massMigration *models.MassMigration) {
+	encodedTransfer := encoder.EncodeMassMigrationForSigning(massMigration)
+	signature, err := wallet.Sign(encodedTransfer)
+	require.NoError(t, err)
+	massMigration.Signature = *signature.ModelsSignature()
+}
+
 func TestVerifySignatureTestSuite(t *testing.T) {
 	suite.Run(t, new(VerifySignatureTestSuite))
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 const MaxDepth = 32
@@ -123,14 +122,14 @@ func (m *MerkleTree) GetWitness(leafIndex uint32) models.Witness {
 	for leafPath.Depth > 0 {
 		sibling, err := leafPath.Sibling()
 		if err != nil {
-			log.Fatal(err) // Can not fail
+			panic(err) // Can not fail
 		}
 
 		witness[m.depth-leafPath.Depth-1] = m.GetNode(*sibling)
 
 		parent, err := leafPath.Parent()
 		if err != nil {
-			log.Fatal(err) // Can not fail
+			panic(err) // Can not fail
 		}
 		leafPath = *parent
 	}

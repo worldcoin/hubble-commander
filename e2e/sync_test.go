@@ -20,7 +20,7 @@ import (
 func TestCommanderSync(t *testing.T) {
 	cfg := config.GetConfig()
 	if cfg.Ethereum == nil {
-		log.Fatal("sync test cannot be run on simulator")
+		log.Panicf("sync test cannot be run on simulator")
 	}
 
 	cfg.Bootstrap.Prune = true

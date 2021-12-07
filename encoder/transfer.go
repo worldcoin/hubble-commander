@@ -91,11 +91,6 @@ func DecodeTransferFromCommitment(data []byte) (*models.Transfer, error) {
 		},
 		ToStateID: toStateID,
 	}
-	transferHash, err := HashTransfer(transfer)
-	if err != nil {
-		return nil, err
-	}
-	transfer.Hash = *transferHash
 	return transfer, nil
 }
 

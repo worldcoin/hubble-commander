@@ -2,9 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"math/big"
 
-	"github.com/Worldcoin/hubble-commander/contracts/frontend/generic"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -13,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
 )
@@ -283,23 +280,13 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
-	encodedState, err := encoder.EncodeUserState(toContractUserState(state))
+	dataHash, err := encoder.HashUserState(state)
 	if err != nil {
 		return nil, err
 	}
-	dataHash := crypto.Keccak256Hash(encodedState)
 	return &models.StateLeaf{
 		StateID:   stateID,
-		DataHash:  dataHash,
+		DataHash:  *dataHash,
 		UserState: *state,
 	}, nil
-}
-
-func toContractUserState(state *models.UserState) generic.TypesUserState {
-	return generic.TypesUserState{
-		PubkeyID: big.NewInt(int64(state.PubKeyID)),
-		TokenID:  state.TokenID.ToBig(),
-		Balance:  state.Balance.ToBig(),
-		Nonce:    state.Nonce.ToBig(),
-	}
 }

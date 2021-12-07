@@ -11,15 +11,16 @@ import (
 )
 
 const (
-	SimulatorChainID                        = 1337
-	DefaultTransferBatchSubmissionGasLimit  = uint64(400_000)
-	DefaultC2TBatchSubmissionGasLimit       = uint64(500_000)
-	DefaultDepositBatchSubmissionGasLimit   = uint64(220_000)
-	DefaultTransitionDisputeGasLimit        = uint64(5_000_000)
-	DefaultSignatureDisputeGasLimit         = uint64(7_500_000)
-	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
-	DefaultMetricsPort                      = "2112"
-	DefaultMetricsEndpoint                  = "/metrics"
+	SimulatorChainID                            = 1337
+	DefaultTransferBatchSubmissionGasLimit      = uint64(400_000)
+	DefaultC2TBatchSubmissionGasLimit           = uint64(500_000)
+	DefaultMassMigrationBatchSubmissionGasLimit = uint64(550_000)
+	DefaultDepositBatchSubmissionGasLimit       = uint64(220_000)
+	DefaultTransitionDisputeGasLimit            = uint64(5_000_000)
+	DefaultSignatureDisputeGasLimit             = uint64(7_500_000)
+	DefaultBatchAccountRegistrationGasLimit     = uint64(8_000_000)
+	DefaultMetricsPort                          = "2112"
+	DefaultMetricsEndpoint                      = "/metrics"
 )
 
 func GetConfig() *Config {
@@ -34,14 +35,18 @@ func GetConfig() *Config {
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
 		Rollup: &RollupConfig{
-			SyncSize:                         getUint32("rollup.sync_size", 50),
-			FeeReceiverPubKeyID:              getUint32("rollup.fee_receiver_pub_key_id", 0),
-			MinTxsPerCommitment:              getUint32("rollup.min_txs_per_commitment", 1),
-			MaxTxsPerCommitment:              getUint32("rollup.max_txs_per_commitment", 32),
-			MinCommitmentsPerBatch:           getUint32("rollup.min_commitments_per_batch", 1),
-			MaxCommitmentsPerBatch:           getUint32("rollup.max_commitments_per_batch", 32),
-			TransferBatchSubmissionGasLimit:  getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
-			C2TBatchSubmissionGasLimit:       getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
+			SyncSize:                        getUint32("rollup.sync_size", 50),
+			FeeReceiverPubKeyID:             getUint32("rollup.fee_receiver_pub_key_id", 0),
+			MinTxsPerCommitment:             getUint32("rollup.min_txs_per_commitment", 1),
+			MaxTxsPerCommitment:             getUint32("rollup.max_txs_per_commitment", 32),
+			MinCommitmentsPerBatch:          getUint32("rollup.min_commitments_per_batch", 1),
+			MaxCommitmentsPerBatch:          getUint32("rollup.max_commitments_per_batch", 32),
+			TransferBatchSubmissionGasLimit: getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:      getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
+			MassMigrationBatchSubmissionGasLimit: getUint64(
+				"rollup.mass_migration_batch_submission_gas_limit",
+				DefaultMassMigrationBatchSubmissionGasLimit,
+			),
 			DepositBatchSubmissionGasLimit:   getUint64("rollup.deposit_batch_submission_gas_limit", DefaultDepositBatchSubmissionGasLimit),
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
@@ -79,20 +84,21 @@ func GetTestConfig() *Config {
 			ChainSpecPath:    nil,
 		},
 		Rollup: &RollupConfig{
-			SyncSize:                         50,
-			FeeReceiverPubKeyID:              0,
-			MinTxsPerCommitment:              2,
-			MaxTxsPerCommitment:              2,
-			MinCommitmentsPerBatch:           1,
-			MaxCommitmentsPerBatch:           32,
-			TransferBatchSubmissionGasLimit:  DefaultTransferBatchSubmissionGasLimit,
-			C2TBatchSubmissionGasLimit:       DefaultC2TBatchSubmissionGasLimit,
-			DepositBatchSubmissionGasLimit:   DefaultDepositBatchSubmissionGasLimit,
-			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
-			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
-			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
-			BatchLoopInterval:                500 * time.Millisecond,
-			DisableSignatures:                true,
+			SyncSize:                             50,
+			FeeReceiverPubKeyID:                  0,
+			MinTxsPerCommitment:                  2,
+			MaxTxsPerCommitment:                  2,
+			MinCommitmentsPerBatch:               1,
+			MaxCommitmentsPerBatch:               32,
+			TransferBatchSubmissionGasLimit:      DefaultTransferBatchSubmissionGasLimit,
+			C2TBatchSubmissionGasLimit:           DefaultC2TBatchSubmissionGasLimit,
+			MassMigrationBatchSubmissionGasLimit: DefaultMassMigrationBatchSubmissionGasLimit,
+			DepositBatchSubmissionGasLimit:       DefaultDepositBatchSubmissionGasLimit,
+			TransitionDisputeGasLimit:            DefaultTransitionDisputeGasLimit,
+			SignatureDisputeGasLimit:             DefaultSignatureDisputeGasLimit,
+			BatchAccountRegistrationGasLimit:     DefaultBatchAccountRegistrationGasLimit,
+			BatchLoopInterval:                    500 * time.Millisecond,
+			DisableSignatures:                    true,
 		},
 		API: &APIConfig{
 			Version:            "dev-0.5.0-rc2",
@@ -120,7 +126,7 @@ func setupViper(configPath string) {
 		if strings.Contains(err.Error(), "no such file or directory") {
 			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
 		} else {
-			log.Fatalf("failed to read in config: %s", err)
+			log.Panicf("failed to read in config: %s", err)
 		}
 	}
 }
@@ -140,13 +146,13 @@ func getTestBadgerPath() string {
 func getLogConfig() *LogConfig {
 	level, err := log.ParseLevel(getString("log.level", "info"))
 	if err != nil {
-		log.Fatalf("invalid log level: %e", err)
+		log.Panicf("invalid log level: %e", err)
 	}
 
 	format := getString("log.format", LogFormatText)
 
 	if format != LogFormatText && format != LogFormatJSON {
-		log.Fatalf("invalid log format: %s", format)
+		log.Panicf("invalid log format: %s", format)
 	}
 
 	return &LogConfig{
@@ -173,7 +179,7 @@ func getEthereumConfig() *EthereumConfig {
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,
-		ChainID:    getUint64OrThrow("ethereum.chain_id"),
-		PrivateKey: getStringOrThrow("ethereum.private_key"),
+		ChainID:    getUint64OrPanic("ethereum.chain_id"),
+		PrivateKey: getStringOrPanic("ethereum.private_key"),
 	}
 }
