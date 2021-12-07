@@ -7,7 +7,7 @@ import (
 
 type decodeCommitmentsFunc func(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error)
 
-func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
+func decodeTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
 	commitments, err := encoder.DecodeTransferBatchCalldata(rollupABI, calldata)
 	if err != nil {
 		return nil, err
@@ -15,7 +15,7 @@ func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commit
 	return encoder.DecodedCommitmentsToCommitments(commitments...), nil
 }
 
-func decodedMMCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
+func decodeMMCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
 	commitments, err := encoder.DecodeMMBatchCalldata(rollupABI, calldata)
 	if err != nil {
 		return nil, err

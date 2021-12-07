@@ -63,9 +63,9 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 
 		switch batchtype.BatchType(event.BatchType) {
 		case batchtype.Transfer, batchtype.Create2Transfer:
-			decodedBatch, err = c.getTxBatch(event, tx, decodedTxCommitments)
+			decodedBatch, err = c.getTxBatch(event, tx, decodeTxCommitments)
 		case batchtype.MassMigration:
-			decodedBatch, err = c.getTxBatch(event, tx, decodedMMCommitments)
+			decodedBatch, err = c.getTxBatch(event, tx, decodeMMCommitments)
 		case batchtype.Deposit:
 			decodedBatch, err = c.getDepositBatch(event, depositEvents[depositIndex], tx)
 			depositIndex++
