@@ -70,13 +70,7 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-// TODO - fix
-// There are three saved batches with IDs 1, 2 and 3
-// GetBatches(0, 200) returns batches with IDs 1 and 2 but not batch with ID 3
-// Works correctly for GetBatches(0, 300)
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	s.T().Skip()
-
 	s.addBatches()
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(200))
