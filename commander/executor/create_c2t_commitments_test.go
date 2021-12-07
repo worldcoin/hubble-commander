@@ -33,7 +33,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransfers() {
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
@@ -50,6 +50,22 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransf
 		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 	}
+}
+
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
+	transfers := testutils.GenerateValidCreate2Transfers(1)
+	s.addCreate2Transfers(transfers)
+
+	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.NoError(err)
+	s.Len(batchData.Commitments(), 1)
+	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
+
+	s.client.GetBackend().Commit()
+	accounts := s.getRegisteredAccounts(0)
+	s.Len(accounts, 16)
+	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsMissingToAccountTree() {
@@ -100,22 +116,6 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 	for i := 1; i < len(pendingAccounts); i++ {
 		s.Equal(mockPublicKey, registeredAccounts[i].PublicKey)
 	}
-}
-
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
-	transfers := testutils.GenerateValidCreate2Transfers(1)
-	s.addCreate2Transfers(transfers)
-
-	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
-
-	s.client.GetBackend().Commit()
-	accounts := s.getRegisteredAccounts(0)
-	s.Len(accounts, 16)
-	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
 func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
