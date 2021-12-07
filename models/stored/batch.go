@@ -29,7 +29,7 @@ type Batch struct {
 	SubmissionTime    *models.Timestamp
 }
 
-func NewBatchFromBatch(b *models.Batch) *Batch {
+func NewBatchFromModelsBatch(b *models.Batch) *Batch {
 	return &Batch{
 		ID:                b.ID,
 		BType:             b.Type,
@@ -42,7 +42,7 @@ func NewBatchFromBatch(b *models.Batch) *Batch {
 	}
 }
 
-func (b *Batch) ToBatch() *models.Batch {
+func (b *Batch) ToModelsBatch() *models.Batch {
 	return &models.Batch{
 		ID:                b.ID,
 		Type:              b.BType,

@@ -246,7 +246,7 @@ func (t Tx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"FromStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTx(value)
+				v, err := interfaceToTx(value)
 				if err != nil {
 					return nil, err
 				}
@@ -255,7 +255,7 @@ func (t Tx) Indexes() map[string]bh.Index {
 		},
 		"ToStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTx(value)
+				v, err := interfaceToTx(value)
 				if err != nil {
 					return nil, err
 				}
@@ -270,7 +270,7 @@ func (t Tx) Indexes() map[string]bh.Index {
 	}
 }
 
-func interfaceToStoredTx(value interface{}) (*Tx, error) {
+func interfaceToTx(value interface{}) (*Tx, error) {
 	p, ok := value.(*Tx)
 	if ok {
 		return p, nil

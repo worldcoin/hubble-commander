@@ -34,7 +34,7 @@ func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
 }
 
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {
-	return s.database.Badger.Insert(batch.ID, *stored.NewBatchFromBatch(batch))
+	return s.database.Badger.Insert(batch.ID, *stored.NewBatchFromModelsBatch(batch))
 }
 
 func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
@@ -46,11 +46,11 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	if err != nil {
 		return nil, err
 	}
-	return storedBatch.ToBatch(), nil
+	return storedBatch.ToModelsBatch(), nil
 }
 
 func (s *BatchStorage) UpdateBatch(batch *models.Batch) error {
-	err := s.database.Badger.Update(batch.ID, *stored.NewBatchFromBatch(batch))
+	err := s.database.Badger.Update(batch.ID, *stored.NewBatchFromModelsBatch(batch))
 	if err == bh.ErrNotFound {
 		return errors.WithStack(NewNotFoundError("batch"))
 	}
@@ -81,7 +81,7 @@ func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, err
 		return nil, err
 	}
 
-	return storedBatch.ToBatch(), nil
+	return storedBatch.ToModelsBatch(), nil
 }
 
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {
@@ -139,7 +139,7 @@ func (s *BatchStorage) GetBatchesInRange(from, to *models.Uint256) ([]models.Bat
 
 	res := make([]models.Batch, 0, len(storedBatches))
 	for i := range storedBatches {
-		res = append(res, *storedBatches[i].ToBatch())
+		res = append(res, *storedBatches[i].ToModelsBatch())
 	}
 	return res, nil
 }
@@ -178,5 +178,5 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *stored.Batch) bo
 	if err != nil {
 		return nil, err
 	}
-	return storedBatch.ToBatch(), nil
+	return storedBatch.ToModelsBatch(), nil
 }

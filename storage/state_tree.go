@@ -54,7 +54,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 	if err != nil {
 		return nil, err
 	}
-	return leaf.StateLeaf(), nil
+	return leaf.ToModelsStateLeaf(), nil
 }
 
 func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
@@ -256,7 +256,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
-	return leaf.StateLeaf(), nil
+	return leaf.ToModelsStateLeaf(), nil
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {

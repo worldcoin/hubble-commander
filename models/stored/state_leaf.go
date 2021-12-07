@@ -29,7 +29,7 @@ func MakeStateLeaf(leaf *models.StateLeaf) StateLeaf {
 	}
 }
 
-func (l *StateLeaf) StateLeaf() *models.StateLeaf {
+func (l *StateLeaf) ToModelsStateLeaf() *models.StateLeaf {
 	return &models.StateLeaf{
 		StateID:  l.StateID,
 		DataHash: l.DataHash,
