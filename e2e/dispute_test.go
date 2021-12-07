@@ -174,6 +174,14 @@ func testSubmitC2TBatch(
 	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
 }
 
+func testSubmitMassMigrationBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	firstMassMigrationHash := testSendMassMigration(t, client, senderWallet, startNonce)
+	testGetTransaction(t, client, firstMassMigrationHash)
+	send31MoreMassMigrations(t, client, senderWallet, startNonce+1)
+
+	waitForTxToBeIncludedInBatch(t, client, firstMassMigrationHash)
+}
+
 func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
