@@ -94,7 +94,7 @@ func (t *Tx) Bytes() []byte {
 	copy(b[69:101], t.Fee.Bytes())
 	copy(b[101:133], t.Nonce.Bytes())
 	copy(b[133:197], t.Signature.Bytes())
-	copy(b[197:213], models.EncodeTimestampPointer(t.ReceiveTime))
+	copy(b[197:213], encodeTimestampPointer(t.ReceiveTime))
 	copy(b[213:], t.Body.Bytes())
 
 	return b
@@ -108,7 +108,7 @@ func (t *Tx) SetBytes(data []byte) error {
 	if err != nil {
 		return err
 	}
-	receiveTime, err := models.DecodeTimestampPointer(data[197:213])
+	receiveTime, err := decodeTimestampPointer(data[197:213])
 	if err != nil {
 		return err
 	}

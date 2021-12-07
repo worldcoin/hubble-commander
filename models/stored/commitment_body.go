@@ -41,7 +41,7 @@ func (c *TxCommitmentBody) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
 	binary.BigEndian.PutUint32(b[0:4], c.FeeReceiver)
 	copy(b[4:68], c.CombinedSignature.Bytes())
-	copy(b[68:101], models.EncodeHashPointer(c.BodyHash))
+	copy(b[68:101], EncodeHashPointer(c.BodyHash))
 	return b
 }
 
@@ -55,7 +55,7 @@ func (c *TxCommitmentBody) SetBytes(data []byte) error {
 	}
 
 	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
-	c.BodyHash = models.DecodeHashPointer(data[68:101])
+	c.BodyHash = decodeHashPointer(data[68:101])
 	return nil
 }
 

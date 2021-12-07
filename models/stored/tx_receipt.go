@@ -53,8 +53,8 @@ func (t *TxReceipt) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())
 	copy(b[32:66], models.EncodeCommitmentIDPointer(t.CommitmentID))
-	copy(b[66:71], models.EncodeUint32Pointer(t.ToStateID))
-	copy(b[71:], models.EncodeStringPointer(t.ErrorMessage))
+	copy(b[66:71], EncodeUint32Pointer(t.ToStateID))
+	copy(b[71:], encodeStringPointer(t.ErrorMessage))
 	return b
 }
 
@@ -69,8 +69,8 @@ func (t *TxReceipt) SetBytes(data []byte) error {
 
 	t.Hash.SetBytes(data[0:32])
 	t.CommitmentID = commitmentID
-	t.ToStateID = models.DecodeUint32Pointer(data[66:71])
-	t.ErrorMessage = models.DecodeStringPointer(data[71:])
+	t.ToStateID = decodeUint32Pointer(data[66:71])
+	t.ErrorMessage = decodeStringPointer(data[71:])
 	return nil
 }
 

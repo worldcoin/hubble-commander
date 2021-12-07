@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testMessage = "some message"
+
 func TestEncodeDataHash(t *testing.T) {
 	node := MerkleTreeNode{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),

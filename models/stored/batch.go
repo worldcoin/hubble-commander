@@ -60,11 +60,11 @@ func (b *Batch) Bytes() []byte {
 	copy(encoded[0:32], b.ID.Bytes())
 	encoded[32] = byte(b.BType)
 	copy(encoded[33:65], b.TransactionHash.Bytes())
-	copy(encoded[65:98], models.EncodeHashPointer(b.Hash))
-	copy(encoded[98:103], models.EncodeUint32Pointer(b.FinalisationBlock))
-	copy(encoded[103:136], models.EncodeHashPointer(b.AccountTreeRoot))
-	copy(encoded[136:169], models.EncodeHashPointer(b.PrevStateRoot))
-	copy(encoded[169:185], models.EncodeTimestampPointer(b.SubmissionTime))
+	copy(encoded[65:98], EncodeHashPointer(b.Hash))
+	copy(encoded[98:103], EncodeUint32Pointer(b.FinalisationBlock))
+	copy(encoded[103:136], EncodeHashPointer(b.AccountTreeRoot))
+	copy(encoded[136:169], EncodeHashPointer(b.PrevStateRoot))
+	copy(encoded[169:185], encodeTimestampPointer(b.SubmissionTime))
 
 	return encoded
 }
@@ -73,7 +73,7 @@ func (b *Batch) SetBytes(data []byte) error {
 	if len(data) != batchDataLength {
 		return models.ErrInvalidLength
 	}
-	timestamp, err := models.DecodeTimestampPointer(data[169:185])
+	timestamp, err := decodeTimestampPointer(data[169:185])
 	if err != nil {
 		return err
 	}
@@ -81,10 +81,10 @@ func (b *Batch) SetBytes(data []byte) error {
 	b.ID.SetBytes(data[0:32])
 	b.BType = batchtype.BatchType(data[32])
 	b.TransactionHash.SetBytes(data[33:65])
-	b.Hash = models.DecodeHashPointer(data[65:98])
-	b.FinalisationBlock = models.DecodeUint32Pointer(data[98:103])
-	b.AccountTreeRoot = models.DecodeHashPointer(data[103:136])
-	b.PrevStateRoot = models.DecodeHashPointer(data[136:169])
+	b.Hash = decodeHashPointer(data[65:98])
+	b.FinalisationBlock = decodeUint32Pointer(data[98:103])
+	b.AccountTreeRoot = decodeHashPointer(data[103:136])
+	b.PrevStateRoot = decodeHashPointer(data[136:169])
 	b.SubmissionTime = timestamp
 	return nil
 }

@@ -35,7 +35,7 @@ func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateL
 
 	stateLeaves = make([]models.StateLeaf, 0, len(flatStateLeaves))
 	for i := range flatStateLeaves {
-		stateLeaves = append(stateLeaves, *flatStateLeaves[i].StateLeaf())
+		stateLeaves = append(stateLeaves, *flatStateLeaves[i].ToModelsStateLeaf())
 	}
 
 	return stateLeaves, nil
