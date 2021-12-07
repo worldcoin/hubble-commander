@@ -283,7 +283,7 @@ func interfaceToTx(value interface{}) (*Tx, error) {
 }
 
 type TxBody interface {
-	models.ByteEncoder
+	ByteEncoder
 	BytesLen() int
 }
 

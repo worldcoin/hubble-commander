@@ -15,7 +15,7 @@ const (
 )
 
 type CommitmentBody interface {
-	models.ByteEncoder
+	ByteEncoder
 	BytesLen() int
 }
 

@@ -8,6 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type ByteEncoder interface {
+	Bytes() []byte
+	SetBytes(data []byte) error
+}
+
 func EncodeHashPointer(value *common.Hash) []byte {
 	b := make([]byte, 33)
 	if value == nil {

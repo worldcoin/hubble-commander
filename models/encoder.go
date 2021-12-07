@@ -4,11 +4,6 @@ import (
 	"reflect"
 )
 
-type ByteEncoder interface {
-	Bytes() []byte
-	SetBytes(data []byte) error
-}
-
 func GetBadgerHoldPrefix(dataType interface{}) []byte {
 	return []byte("bh_" + reflect.TypeOf(dataType).Name() + ":")
 }
