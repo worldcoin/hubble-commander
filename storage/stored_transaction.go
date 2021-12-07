@@ -172,7 +172,7 @@ func (s *TransactionStorage) GetLatestTransactionNonce(accountStateID uint32) (*
 	var latestNonce *models.Uint256
 
 	err := s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		indexKey := db.IndexKey(stored.TxName, "FromStateID", models.EncodeUint32(accountStateID))
+		indexKey := db.IndexKey(stored.TxName, "FromStateID", stored.EncodeUint32(accountStateID))
 		keyList, err := txStorage.getKeyList(indexKey)
 		if err != nil {
 			return err
@@ -379,7 +379,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := models.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
+		err := stored.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}

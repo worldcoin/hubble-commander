@@ -110,7 +110,7 @@ func (t TxReceipt) Indexes() map[string]bh.Index {
 				if v.ToStateID == nil {
 					return nil, nil
 				}
-				return models.EncodeUint32(*v.ToStateID), nil
+				return EncodeUint32(*v.ToStateID), nil
 			},
 		},
 	}

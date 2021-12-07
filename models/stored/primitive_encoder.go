@@ -1,4 +1,4 @@
-package models
+package stored
 
 import (
 	"encoding/binary"

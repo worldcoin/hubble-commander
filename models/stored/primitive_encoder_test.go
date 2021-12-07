@@ -1,16 +1,15 @@
-package models
+package stored
 
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
-const testMessage = "some message"
-
 func TestEncodeDataHash(t *testing.T) {
-	node := MerkleTreeNode{
+	node := models.MerkleTreeNode{
 		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
 	}
 

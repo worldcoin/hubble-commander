@@ -250,7 +250,7 @@ func (t Tx) Indexes() map[string]bh.Index {
 				if err != nil {
 					return nil, err
 				}
-				return models.EncodeUint32(v.FromStateID), nil
+				return EncodeUint32(v.FromStateID), nil
 			},
 		},
 		"ToStateID": {
@@ -264,7 +264,7 @@ func (t Tx) Indexes() map[string]bh.Index {
 				if !ok {
 					return nil, nil
 				}
-				return models.EncodeUint32(transferBody.ToStateID), nil
+				return EncodeUint32(transferBody.ToStateID), nil
 			},
 		},
 	}

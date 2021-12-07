@@ -18,7 +18,7 @@ var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:
-		return models.EncodeDataHash(&v.DataHash)
+		return stored.EncodeDataHash(&v.DataHash)
 	case *models.AccountNode:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.AccountLeaf:
@@ -54,7 +54,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case *models.NamespacedMerklePath:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.MerkleTreeNode:
-		return models.EncodeDataHash(&v.DataHash)
+		return stored.EncodeDataHash(&v.DataHash)
 	case *models.MerkleTreeNode:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.PublicKey:
@@ -90,15 +90,15 @@ func Encode(value interface{}) ([]byte, error) {
 	case *common.Hash:
 		return stored.EncodeHashPointer(v), nil
 	case string:
-		return models.EncodeString(v), nil
+		return stored.EncodeString(v), nil
 	case *string:
 		return nil, errors.WithStack(errPassedByPointer)
 	case uint32:
-		return models.EncodeUint32(v), nil
+		return stored.EncodeUint32(v), nil
 	case *uint32:
 		return stored.EncodeUint32Pointer(v), nil
 	case uint64:
-		return models.EncodeUint64(v), nil
+		return stored.EncodeUint64(v), nil
 	case *uint64:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.RegisteredToken:
@@ -116,7 +116,7 @@ func Encode(value interface{}) ([]byte, error) {
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.AccountNode:
-		return models.DecodeDataHash(data, &v.DataHash)
+		return stored.DecodeDataHash(data, &v.DataHash)
 	case *models.AccountLeaf:
 		return v.SetBytes(data)
 	case *models.ChainState:
@@ -134,7 +134,7 @@ func Decode(data []byte, value interface{}) error {
 	case *stored.Batch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
-		return models.DecodeDataHash(data, &v.DataHash)
+		return stored.DecodeDataHash(data, &v.DataHash)
 	case *models.PublicKey:
 		return v.SetBytes(data)
 	case *stored.StateLeaf:
@@ -153,11 +153,11 @@ func Decode(data []byte, value interface{}) error {
 	case *common.Hash:
 		return decodeHashPointer(data, &value, v)
 	case *string:
-		return models.DecodeString(data, v)
+		return stored.DecodeString(data, v)
 	case *uint32:
 		return decodeUint32Pointer(data, &value, v)
 	case *uint64:
-		return models.DecodeUint64(data, v)
+		return stored.DecodeUint64(data, v)
 	case *models.RegisteredToken:
 		v.Contract.SetBytes(data)
 		return nil
@@ -171,10 +171,10 @@ func Decode(data []byte, value interface{}) error {
 // nolint: gocritic
 func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
 	if len(data) == 32 {
-		return models.DecodeDataHash(data, dst)
+		return stored.DecodeDataHash(data, dst)
 	}
 	if data[0] == 1 {
-		return models.DecodeDataHash(data[1:], dst)
+		return stored.DecodeDataHash(data[1:], dst)
 	}
 	*value = nil
 	return nil
@@ -195,10 +195,10 @@ func decodeCommitmentIDPointer(data []byte, value *interface{}, dst *models.Comm
 // nolint: gocritic
 func decodeUint32Pointer(data []byte, value *interface{}, dst *uint32) error {
 	if len(data) == 4 {
-		return models.DecodeUint32(data, dst)
+		return stored.DecodeUint32(data, dst)
 	}
 	if data[0] == 1 {
-		return models.DecodeUint32(data[1:], dst)
+		return stored.DecodeUint32(data[1:], dst)
 	}
 	*value = nil
 	return nil
