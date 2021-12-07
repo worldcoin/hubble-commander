@@ -39,7 +39,7 @@
 - Badger does not support indices on fields of pointer types well.
   By default, it would add IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
 
-  `_bhIndex:StoredTxReceipt:ToStateID:nil -> bh.KeyList{ txHash1, txHash2, ... }`  
+  `_bhIndex:TxReceipt:ToStateID:nil -> bh.KeyList{ txHash1, txHash2, ... }`  
 
   Such index entry can quickly grow in size.
   Thus, for structs that have indices on fields of pointer type we implement `Indexes()` method and specify our own `IndexFunc`.
@@ -58,10 +58,10 @@
 
 Key: state ID `uint32`
 
-Value: `models.FlatStateLeaf`
+Value: `stored.StateLeaf`
 
 ```go
-type FlatStateLeaf struct {
+type StateLeaf struct {
     StateID  uint32
     DataHash common.Hash
     PubKeyID uint32
@@ -155,56 +155,56 @@ Value: node `common.Hash` (through clever encoding of `models.MerkleTreeNode`)
 
 Key: tx hash `common.Hash`
 
-Value: `models.StoredTx`
+Value: `stored.Tx`
 
 ```go
-type StoredTx struct {
+type Tx struct {
     Hash        common.Hash
     TxType      txtype.TransactionType
     FromStateID uint32
-    Amount      Uint256
-    Fee         Uint256
-    Nonce       Uint256
-    Signature   Signature
-    ReceiveTime *Timestamp
+    Amount      models.Uint256
+    Fee         models.Uint256
+    Nonce       models.Uint256
+    Signature   models.Signature
+    ReceiveTime *models.Timestamp
 
     Body TxBody // interface
 }
 ```
 
 #### Transfer
-Body: `models.StoredTxTransferBody`
+Body: `stored.TxTransferBody`
 
 ```go
-type StoredTxTransferBody struct {
+type TxTransferBody struct {
     ToStateID uint32
 }
 ```
 
 ##### Index on `ToStateID`
 
-- This index is updated only when storing transactions with `StoredTxTransferBody`
+- This index is updated only when storing transactions with `TxTransferBody`
 
 Key: to state ID `uint32`
 
-Prefix: `_bhIndex:StoredTx:ToStateID:`
+Prefix: `_bhIndex:Tx:ToStateID:`
 
 Value: list of tx hashes `bh.KeyList`
 
 #### Create2Transfer
-Body: `models.StoredTxCreate2TransferBody`
+Body: `stored.TxCreate2TransferBody`
 
 ```go
-type StoredTxCreate2TransferBody struct {
-    ToPublicKey PublicKey
+type TxCreate2TransferBody struct {
+    ToPublicKey models.PublicKey
 }
 ```
 
 #### MassMigration
-Body: `models.StoredTxMassMigrationBody`
+Body: `stored.TxMassMigrationBody`
 
 ```go
-type StoredTxMassMigrationBody struct {
+type TxMassMigrationBody struct {
     SpokeID Uint256
 }
 ```
@@ -213,7 +213,7 @@ type StoredTxMassMigrationBody struct {
 - This index is updated for all stored transactions
 Key: from state ID `uint32`
 
-Prefix: `_bhIndex:StoredTx:FromStateID:`
+Prefix: `_bhIndex:Tx:FromStateID:`
 
 Value: list of tx hashes `bh.KeyList`
 
@@ -222,12 +222,12 @@ Value: list of tx hashes `bh.KeyList`
 
 Key: tx hash `common.Hash`
 
-Value: `models.StoredTxReceipt`
+Value: `models.TxReceipt`
 
 ```go
-type StoredTxReceipt struct {
+type TxReceipt struct {
     Hash         common.Hash
-    CommitmentID *CommitmentID
+    CommitmentID *models.CommitmentID
     ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
     ErrorMessage *string
 }
@@ -236,14 +236,14 @@ type StoredTxReceipt struct {
 #### Index on `CommitmentID`
 Key: commitment ID `models.CommitmentID`
 
-Prefix: `_bhIndex:StoredTxReceipt:CommitmentID:`
+Prefix: `_bhIndex:TxReceipt:CommitmentID:`
 
 Value: list of tx hashes `bh.KeyList`
 
 #### Index on `ToStateID`
 Key: to state ID `uint32`
 
-Prefix: `_bhIndex:StoredTxReceipt:ToStateID:`
+Prefix: `_bhIndex:TxReceipt:ToStateID:`
 
 Value: list of tx hashes `bh.KeyList`
 
@@ -297,12 +297,12 @@ type PendingDepositSubTree struct {
 
 Key: {BatchID, IndexInBatch} `models.CommitmentID`
 
-Value: `models.StoredCommitment`
+Value: `stored.Commitment`
 
 ```go
-type StoredCommitment struct {
-    CommitmentBase
-    Body StoredCommitmentBody // interface
+type Commitment struct {
+    models.CommitmentBase
+    Body CommitmentBody // interface
 }
 
 type CommitmentBase struct {
@@ -319,12 +319,12 @@ type CommitmentID struct {
 
 #### Transaction Commitment
 
-Body: `models.StoredTxCommitmentBody`
+Body: `stored.TxCommitmentBody`
 
 ```go
-type StoredTxCommitmentBody struct {
+type TxCommitmentBody struct {
     FeeReceiver       uint32
-    CombinedSignature [64]byte
+    CombinedSignature models.Signature
     BodyHash          *common.Hash
 }
 ```
@@ -332,13 +332,13 @@ type StoredTxCommitmentBody struct {
 #### Deposit Commitment
 - When Deposit batch is created data is moved from **Pending Deposit SubTree** to **Stored Commitment**
 
-Body: `models.StoredDepositCommitmentBody`
+Body: `stored.DepositCommitmentBody`
 
 ```go
-type StoredDepositCommitmentBody struct {
+type DepositCommitmentBody struct {
     SubTreeID   Uint256
     SubTreeRoot common.Hash
-    Deposits    []PendingDeposit
+    Deposits    []models.PendingDeposit
 }
 ```
 
@@ -349,10 +349,10 @@ type StoredDepositCommitmentBody struct {
 
 Key: batch ID `models.Uint256`
 
-Value: `models.StoredBatch`
+Value: `stored.Batch`
 
 ```go
-type StoredBatch struct {
+type Batch struct {
     ID                Uint256
     BType             batchtype.BatchType // not named `Type` to avoid collision with Type() method needed to implement bh.Storer interface
     TransactionHash   common.Hash
@@ -360,7 +360,7 @@ type StoredBatch struct {
     FinalisationBlock *uint32
     AccountTreeRoot   *common.Hash
     PrevStateRoot     *common.Hash
-    SubmissionTime    *Timestamp
+    SubmissionTime    *models.Timestamp
 }
 ```
 
