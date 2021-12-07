@@ -14,6 +14,7 @@ import (
 )
 
 func TestDecodeBatchCalldata(t *testing.T) {
+	//goland:noinspection GoDeprecation
 	rollupABI, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 
@@ -33,7 +34,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	calldata, err := rollupABI.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 
-	decodedCommitments, err := DecodeBatchCalldata(&rollupABI, calldata)
+	decodedCommitments, err := DecodeTransferBatchCalldata(&rollupABI, calldata)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(decodedCommitments))
 
@@ -47,6 +48,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 }
 
 func TestDecodeMMBatchCalldata(t *testing.T) {
+	//goland:noinspection GoDeprecation
 	rollupABI, err := abi.JSON(strings.NewReader(rollup.RollupABI))
 	require.NoError(t, err)
 

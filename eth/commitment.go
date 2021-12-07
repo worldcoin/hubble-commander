@@ -8,7 +8,7 @@ import (
 type decodeCommitmentsFunc func(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error)
 
 func decodedTxCommitments(rollupABI *abi.ABI, calldata []byte) ([]encoder.Commitment, error) {
-	commitments, err := encoder.DecodeBatchCalldata(rollupABI, calldata)
+	commitments, err := encoder.DecodeTransferBatchCalldata(rollupABI, calldata)
 	if err != nil {
 		return nil, err
 	}

@@ -9,13 +9,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DecodeBatchCalldata
+// DecodeTransferBatchCalldata
 //   uint256 batchID
 //   bytes32[] stateRoots,
 //   uint256[2][] signatures,
 //   uint256[] feeReceivers,
 //   bytes[] txss
-func DecodeBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
+func DecodeTransferBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
 	unpacked, err := rollupABI.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
 		return nil, errors.WithStack(err)
