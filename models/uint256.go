@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
-	"github.com/timshannon/badgerhold/v4"
 )
 
 var (
@@ -147,12 +146,8 @@ func (u *Uint256) safeSetUint256FromString(str string) error {
 }
 
 func (u Uint256) Compare(other interface{}) (int, error) {
-	switch other.(type) {
+	switch o := other.(type) {
 	case Uint256:
-		o, ok := other.(Uint256)
-		if !ok {
-			return 0, &badgerhold.ErrTypeMismatch{Value: u, Other: other}
-		}
 		return u.Cmp(&o), nil
 	default:
 		return 0, ErrCompareDefaultCase
