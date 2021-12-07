@@ -4,7 +4,7 @@ import "github.com/Worldcoin/hubble-commander/models"
 
 type Proofs struct {
 	SenderStateProof   models.StateMerkleProof
-	ReceiverStateProof models.StateMerkleProof
+	ReceiverStateProof *models.StateMerkleProof
 }
 
 type SyncedTxWithProofs struct {
@@ -19,7 +19,7 @@ func NewSyncedTxWithProofs(tx models.GenericTransaction, senderUserState, receiv
 			SenderStateProof: models.StateMerkleProof{
 				UserState: senderUserState,
 			},
-			ReceiverStateProof: models.StateMerkleProof{
+			ReceiverStateProof: &models.StateMerkleProof{
 				UserState: receiverUserState,
 			},
 		},

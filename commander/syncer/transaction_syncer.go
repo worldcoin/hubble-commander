@@ -19,6 +19,7 @@ type TransactionSyncer interface {
 	TxLength() int
 	DeserializeTxs(data []byte) (SyncedTxs, error)
 	EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error)
+	NewStateChangeProofs(txsLength int) []models.StateMerkleProof
 	ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 		synced *applier.SyncedTxWithProofs, txError, appError error,
 	)
@@ -73,6 +74,10 @@ func (s *TransferSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 
 func (s *TransferSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
 	return encoder.EncodeTransferForSigning(tx.ToTransfer())
+}
+
+func (s *TransferSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, 2*txsLength+1)
 }
 
 func (s *TransferSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
@@ -134,6 +139,10 @@ func (s *C2TSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, er
 	return encoder.EncodeCreate2TransferForSigning(tx.ToCreate2Transfer())
 }
 
+func (s *C2TSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, 2*txsLength+1)
+}
+
 func (s *C2TSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (
 	synced *applier.SyncedTxWithProofs, txError, appError error,
 ) {
@@ -193,6 +202,10 @@ func (s *MMSyncer) DeserializeTxs(data []byte) (SyncedTxs, error) {
 
 func (s *MMSyncer) EncodeTxForSigning(tx models.GenericTransaction) ([]byte, error) {
 	return encoder.EncodeMassMigrationForSigning(tx.ToMassMigration()), nil
+}
+
+func (s *MMSyncer) NewStateChangeProofs(txsLength int) []models.StateMerkleProof {
+	return make([]models.StateMerkleProof, 0, txsLength+1)
 }
 
 func (s *MMSyncer) ApplyTx(syncedTx SyncedTx, commitmentTokenID models.Uint256) (

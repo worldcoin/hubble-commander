@@ -23,7 +23,6 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
 
-	//TODO-sync: rethink returned type here
 	commitments := s.submitBatch(&tx)
 	expectedCommitment := commitments[0].TxCommitment
 
@@ -41,9 +40,13 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Equal(models.MakeUint256(1), batches[0].ID)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
+	decodedBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(decodedBatches, 1)
+
 	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	commitment.BodyHash = nil //TODO-sync: calculate body hash
+	expectedCommitment.BodyHash = decodedBatches[0].ToDecodedTxBatch().Commitments[0].BodyHash(s.getAccountTreeRoot())
 	s.Equal(expectedCommitment, *commitment)
 
 	massMigration, err := s.storage.GetMassMigration(tx.Hash)
