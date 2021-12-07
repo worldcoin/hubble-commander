@@ -74,8 +74,8 @@ func (s *GetMMBatchesTestSuite) TestGetBatches() {
 	})
 	s.NoError(err)
 	s.Len(batches, 1)
-	s.EqualValues(batch.ID, batches[0].GetID())
-	s.Equal(batch.Type, batches[0].GetBase().Type)
+	s.Equal(batch.ID, batches[0].GetID())
+	s.Equal(batchtype.MassMigration, batches[0].GetBase().Type)
 }
 
 func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
