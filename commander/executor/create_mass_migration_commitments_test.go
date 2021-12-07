@@ -86,13 +86,6 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
 }
 
-func (s *MassMigrationCommitmentsTestSuite) invalidateMassMigrations(massMigrations []models.MassMigration) {
-	for i := range massMigrations {
-		tx := &massMigrations[i]
-		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
-	}
-}
-
 func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughPendingMassMigrations() {
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)

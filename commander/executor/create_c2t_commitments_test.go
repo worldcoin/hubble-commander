@@ -33,13 +33,6 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) invalidateCreate2Transfers(transfers []models.Create2Transfer) {
-	for i := range transfers {
-		tx := &transfers[i]
-		tx.Amount = *genesisBalances[tx.FromStateID].MulN(10)
-	}
-}
-
 func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdateTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
