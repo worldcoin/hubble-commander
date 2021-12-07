@@ -222,7 +222,7 @@ Value: list of tx hashes `bh.KeyList`
 
 Key: tx hash `common.Hash`
 
-Value: `models.TxReceipt`
+Value: `stored.TxReceipt`
 
 ```go
 type TxReceipt struct {
