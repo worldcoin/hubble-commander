@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	depositDataLength   = 132
+	DepositDataLength   = 132
 	depositIDDataLength = 64
 )
 
-var PendingDepositPrefix = getBadgerHoldPrefix(PendingDeposit{})
+var PendingDepositPrefix = GetBadgerHoldPrefix(PendingDeposit{})
 
 type DepositID struct {
 	SubtreeID    Uint256
@@ -42,7 +42,7 @@ func (d *DepositID) SetBytes(data []byte) error {
 }
 
 func (d *PendingDeposit) Bytes() []byte {
-	b := make([]byte, depositDataLength)
+	b := make([]byte, DepositDataLength)
 
 	copy(b[0:64], d.ID.Bytes())
 	binary.BigEndian.PutUint32(b[64:68], d.ToPubKeyID)
@@ -53,7 +53,7 @@ func (d *PendingDeposit) Bytes() []byte {
 }
 
 func (d *PendingDeposit) SetBytes(data []byte) error {
-	if len(data) != depositDataLength {
+	if len(data) != DepositDataLength {
 		return ErrInvalidLength
 	}
 

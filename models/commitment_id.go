@@ -1,6 +1,6 @@
 package models
 
-const commitmentIDDataLength = 33
+const CommitmentIDDataLength = 33
 
 type CommitmentID struct {
 	BatchID      Uint256
@@ -8,7 +8,7 @@ type CommitmentID struct {
 }
 
 func (c *CommitmentID) Bytes() []byte {
-	encoded := make([]byte, commitmentIDDataLength)
+	encoded := make([]byte, CommitmentIDDataLength)
 	copy(encoded[0:32], c.BatchID.Bytes())
 	encoded[32] = c.IndexInBatch
 
@@ -16,7 +16,7 @@ func (c *CommitmentID) Bytes() []byte {
 }
 
 func (c *CommitmentID) SetBytes(data []byte) error {
-	if len(data) != commitmentIDDataLength {
+	if len(data) != CommitmentIDDataLength {
 		return ErrInvalidLength
 	}
 
