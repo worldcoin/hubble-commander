@@ -3,20 +3,17 @@ package stored
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodeDataHash(t *testing.T) {
-	node := models.MerkleTreeNode{
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
+func TestEncodeHash(t *testing.T) {
+	dataHash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 
 	var decodedHash common.Hash
-	encodedDataHash, _ := EncodeDataHash(&node.DataHash)
+	encodedDataHash, _ := EncodeHash(&dataHash)
 	_ = DecodeDataHash(encodedDataHash, &decodedHash)
-	require.Equal(t, node.DataHash, decodedHash)
+	require.Equal(t, dataHash, decodedHash)
 }
 
 func TestEncodeUint32(t *testing.T) {

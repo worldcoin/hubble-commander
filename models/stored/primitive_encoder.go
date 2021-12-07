@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func EncodeDataHash(dataHash *common.Hash) ([]byte, error) {
-	return dataHash.Bytes(), nil
+func EncodeHash(hash *common.Hash) ([]byte, error) {
+	return hash.Bytes(), nil
 }
 
 func DecodeDataHash(data []byte, dataHash *common.Hash) error {

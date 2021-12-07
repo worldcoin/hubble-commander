@@ -18,7 +18,7 @@ var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:
-		return stored.EncodeDataHash(&v.DataHash)
+		return stored.EncodeHash(&v.DataHash)
 	case *models.AccountNode:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.AccountLeaf:
@@ -54,7 +54,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case *models.NamespacedMerklePath:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.MerkleTreeNode:
-		return stored.EncodeDataHash(&v.DataHash)
+		return stored.EncodeHash(&v.DataHash)
 	case *models.MerkleTreeNode:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.PublicKey:
