@@ -33,11 +33,6 @@ var (
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
-type worker struct {
-	name string
-	err  error
-}
-
 // nolint:structcheck
 type lifecycle struct {
 	isRunning           bool
@@ -47,7 +42,6 @@ type lifecycle struct {
 	workersContext     context.Context
 	stopWorkersContext context.CancelFunc
 	workersWaitGroup   sync.WaitGroup
-	workers            []*worker
 }
 
 type Commander struct {
@@ -118,7 +112,6 @@ func (c *Commander) Start() (err error) {
 	}
 
 	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
-	c.workers = make([]*worker, 0)
 
 	c.startWorker("API Server", func() error {
 		err = c.apiServer.ListenAndServe()
@@ -154,11 +147,6 @@ func (c *Commander) Stop() error {
 		return err
 	}
 
-	workersErrors := c.gatherWorkerErrors()
-	if workersErrors != "" {
-		log.Errorf("Errors while stopping:\n%s", workersErrors)
-	}
-
 	log.Warningln("Commander stopped.")
 
 	c.releaseStartAndWait()
@@ -168,8 +156,6 @@ func (c *Commander) Stop() error {
 
 func (c *Commander) startWorker(name string, fn func() error) {
 	c.workersWaitGroup.Add(1)
-	w := worker{name: name}
-	c.workers = append(c.workers, &w)
 	go func() {
 		var err error
 		defer func() {
@@ -181,7 +167,7 @@ func (c *Commander) startWorker(name string, fn func() error) {
 				}
 			}
 			if err != nil {
-				w.err = err
+				log.Errorf("%s worker failed with: %+v", name, err)
 				c.stopWorkersContext()
 			}
 			c.workersWaitGroup.Done()
@@ -196,20 +182,12 @@ func (c *Commander) handleWorkerError() {
 	if c.manualStop {
 		return
 	}
-	if err := c.stop(); err != nil {
-		log.Panicf("Stop caused by:\n%s\nfailed with: %+v", c.gatherWorkerErrors(), err)
-	}
-	log.Panicf("%s", c.gatherWorkerErrors())
-}
+	log.Warning("Stopping commander gracefully...")
 
-func (c *Commander) gatherWorkerErrors() string {
-	errString := ""
-	for _, w := range c.workers {
-		if w.err != nil {
-			errString += fmt.Sprintf("%s: %+v\n", w.name, w.err)
-		}
+	if err := c.stop(); err != nil {
+		log.Panicf("Failed to stop commander gracefully: %+v", err)
 	}
-	return errString
+	log.Panicln("Commander stopped by worker error")
 }
 
 func (c *Commander) stop() error {
