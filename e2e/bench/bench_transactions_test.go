@@ -45,6 +45,10 @@ func (s *BenchmarkTransactionsSuite) TestBenchCreate2TransfersCommander() {
 	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 1.0})
 }
 
+func (s *BenchmarkTransactionsSuite) TestBenchMassMigrationsCommander() {
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.MassMigration: 1.0})
+}
+
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
 	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8}) // 20% C2T, 80% transfers
 }
@@ -127,7 +131,7 @@ func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distributi
 
 			lastTxHash = s.sendC2T(senderWallet, senderStateID, to, nonce)
 		case txtype.MassMigration:
-			panic("Not supported")
+			lastTxHash = s.sendMassMigration(senderWallet, senderStateID, nonce)
 		}
 
 		return lastTxHash
