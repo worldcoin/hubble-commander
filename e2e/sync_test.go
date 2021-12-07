@@ -51,9 +51,9 @@ func TestCommanderSync(t *testing.T) {
 	firstC2TWallet := wallets[len(wallets)-32]
 	testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
-	testSubmitDepositBatch(t, activeCommander.Client())
-
 	testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
+
+	testSubmitDepositBatch(t, activeCommander.Client())
 
 	waitForBatch(t, activeCommander.Client(), models.MakeUint256(4))
 

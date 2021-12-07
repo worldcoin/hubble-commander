@@ -54,9 +54,9 @@ func TestCommander(t *testing.T) {
 	firstC2TWallet := wallets[len(wallets)-32]
 	testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
-	testSubmitDepositBatch(t, commander.Client())
-
 	testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
+
+	testSubmitDepositBatch(t, commander.Client())
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
