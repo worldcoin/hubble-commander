@@ -46,25 +46,16 @@ func TestCommanderSync(t *testing.T) {
 
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
-	firstTransferHash := testSendTransfer(t, activeCommander.Client(), senderWallet, 0)
-	testGetTransaction(t, activeCommander.Client(), firstTransferHash)
-	send31MoreTransfers(t, activeCommander.Client(), senderWallet, 1)
+	testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 
 	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, firstC2TWallet.PublicKey(), 32)
-	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
-	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
+	testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
 
-	firstMassMigrationHash := testSendMassMigration(t, activeCommander.Client(), senderWallet, 64)
-	testGetTransaction(t, activeCommander.Client(), firstMassMigrationHash)
-	send31MoreMassMigrations(t, activeCommander.Client(), senderWallet, 65)
+	testSubmitDepositBatch(t, activeCommander.Client())
 
-	makeDeposits(t, activeCommander.Client())
+	testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
 
-	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
-	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
-	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstMassMigrationHash)
-	waitForBatch(t, activeCommander.Client(), models.MakeUint256(3))
+	waitForBatch(t, activeCommander.Client(), models.MakeUint256(4))
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
