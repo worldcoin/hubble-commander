@@ -187,9 +187,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	return transfers, nil
 }
 
-func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
-	[]stored.Tx, []*stored.TxReceipt, error,
-) {
+func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) ([]stored.Tx, []*stored.TxReceipt, error) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
 	if IsNotFoundError(err) {
 		return nil, nil, nil

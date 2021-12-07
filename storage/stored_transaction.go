@@ -101,9 +101,7 @@ func (s *TransactionStorage) addStoredTxReceipt(txReceipt *stored.TxReceipt) err
 	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
 }
 
-func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (
-	storedTx *stored.Tx, txReceipt *stored.TxReceipt, err error,
-) {
+func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (storedTx *stored.Tx, txReceipt *stored.TxReceipt, err error) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		storedTx, err = txStorage.getStoredTx(hash)
 		if err != nil {

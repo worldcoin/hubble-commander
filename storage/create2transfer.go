@@ -119,9 +119,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	return transfers, nil
 }
 
-func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
-	[]*stored.Tx, []*stored.TxReceipt, error,
-) {
+func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]*stored.Tx, []*stored.TxReceipt, error) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
 	if IsNotFoundError(err) {
 		return nil, nil, nil
