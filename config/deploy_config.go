@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const DefaultBlocksToFinalise = uint32(7 * 24 * 60 * 4)
@@ -34,7 +34,7 @@ func getGenesisAccounts() []models.GenesisAccount {
 func readGenesisAccounts(filename string) []models.GenesisAccount {
 	genesisAccounts, err := readGenesisFile(filename)
 	if err != nil {
-		logrus.Fatalf("error reading genesis file: %s", err.Error())
+		log.Panicf("error reading genesis file: %s", err.Error())
 	}
 	return genesisAccounts
 }

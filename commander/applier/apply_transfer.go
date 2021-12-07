@@ -30,7 +30,7 @@ func (a *Applier) ApplyTransfer(tx models.GenericTransaction, commitmentTokenID 
 }
 
 func (a *Applier) ApplyTransferForSync(tx models.GenericTransaction, commitmentTokenID models.Uint256) (
-	synced *SyncedGenericTransaction,
+	synced *SyncedTxWithProofs,
 	txError, appError error,
 ) {
 	receiverLeaf, err := a.storage.StateTree.LeafOrEmpty(*tx.GetToStateID())

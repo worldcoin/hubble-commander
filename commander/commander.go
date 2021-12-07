@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -33,40 +33,57 @@ var (
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
-type Commander struct {
-	cfg                 *config.Config
-	workersContext      context.Context
-	stopWorkers         context.CancelFunc
-	workers             sync.WaitGroup
+// nolint:structcheck
+type lifecycle struct {
+	isRunning           bool
 	releaseStartAndWait context.CancelFunc
+	manualStop          bool
 
-	invalidBatchID    *models.Uint256
-	rollupLoopRunning bool
-	stateMutex        sync.Mutex
+	workersContext     context.Context
+	stopWorkersContext context.CancelFunc
+	workersWaitGroup   sync.WaitGroup
+}
 
+type Commander struct {
+	lifecycle
+
+	cfg        *config.Config
+	blockchain chain.Connection
+
+	metrics       *metrics.CommanderMetrics
 	storage       *st.Storage
 	client        *eth.Client
-	blockchain    chain.Connection
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	metrics *metrics.CommanderMetrics
+	stateMutex        sync.Mutex
+	rollupLoopRunning bool
+	invalidBatchID    *models.Uint256
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:                 cfg,
-		blockchain:          blockchain,
-		releaseStartAndWait: func() {}, // noop
+		cfg:        cfg,
+		blockchain: blockchain,
+		lifecycle: lifecycle{
+			releaseStartAndWait: func() {}, // noop
+		},
 	}
 }
 
-func (c *Commander) IsRunning() bool {
-	return c.workersContext != nil
+func (c *Commander) StartAndWait() error {
+	if err := c.Start(); err != nil {
+		return err
+	}
+	var stopContext context.Context
+	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
+
+	<-stopContext.Done()
+	return nil
 }
 
 func (c *Commander) Start() (err error) {
-	if c.IsRunning() {
+	if c.isRunning {
 		return nil
 	}
 
@@ -94,64 +111,39 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.workersContext, c.stopWorkers = context.WithCancel(context.Background())
+	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
 
-	c.startWorker(func() error {
+	c.startWorker("API Server", func() error {
 		err = c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
-	c.startWorker(func() error {
+	c.startWorker("Metrics Server", func() error {
 		err = c.metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
-	c.startWorker(func() error { return c.newBlockLoop() })
+	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
+
+	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-
-	return nil
-}
-
-func (c *Commander) startWorker(fn func() error) {
-	c.workers.Add(1)
-	go func() {
-		if err := fn(); err != nil {
-			log.Fatalf("%+v", err)
-		}
-		c.workers.Done()
-	}()
-}
-
-func (c *Commander) StartAndWait() error {
-	if err := c.Start(); err != nil {
-		return err
-	}
-	var stopContext context.Context
-	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
-
-	<-stopContext.Done()
+	c.isRunning = true
 	return nil
 }
 
 func (c *Commander) Stop() error {
-	if !c.IsRunning() {
+	if !c.isRunning {
 		return nil
 	}
 
-	if err := c.apiServer.Close(); err != nil {
-		return err
-	}
-	if err := c.metricsServer.Close(); err != nil {
-		return err
-	}
-	c.stopWorkers()
-	c.workers.Wait()
-	if err := c.storage.Close(); err != nil {
+	c.manualStop = true
+
+	if err := c.stop(); err != nil {
 		return err
 	}
 
@@ -162,18 +154,56 @@ func (c *Commander) Stop() error {
 	return nil
 }
 
-func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg, c.blockchain)
+func (c *Commander) startWorker(name string, fn func() error) {
+	c.workersWaitGroup.Add(1)
+	go func() {
+		var err error
+		defer func() {
+			if recoverErr := recover(); recoverErr != nil {
+				var ok bool
+				err, ok = recoverErr.(error)
+				if !ok {
+					err = fmt.Errorf("%+v", recoverErr)
+				}
+			}
+			if err != nil {
+				log.Errorf("%s worker failed with: %+v", name, err)
+				c.stopWorkersContext()
+			}
+			c.workersWaitGroup.Done()
+		}()
+
+		err = fn()
+	}()
 }
 
-func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
-	if cfg.RPCURL == "simulator" {
-		return simulator.NewConfiguredSimulator(simulator.Config{
-			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
-			AutomineEnabled:        ref.Bool(true),
-		})
+func (c *Commander) handleWorkerError() {
+	<-c.workersContext.Done()
+	if c.manualStop {
+		return
 	}
-	return chain.NewRPCCConnection(cfg)
+	log.Warning("Stopping commander gracefully...")
+
+	if err := c.stop(); err != nil {
+		log.Panicf("Failed to stop commander gracefully: %+v", err)
+	}
+	log.Panicln("Commander stopped by worker error")
+}
+
+func (c *Commander) stop() error {
+	if err := c.apiServer.Close(); err != nil {
+		return err
+	}
+	if err := c.metricsServer.Close(); err != nil {
+		return err
+	}
+	c.stopWorkersContext()
+	c.workersWaitGroup.Wait()
+	return c.storage.Close()
+}
+
+func (c *Commander) resetCommander() {
+	*c = *NewCommander(c.cfg, c.blockchain)
 }
 
 func getClient(
@@ -183,7 +213,7 @@ func getClient(
 	commanderMetrics *metrics.CommanderMetrics,
 ) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
-		log.Fatal("no Ethereum config")
+		return nil, errors.Errorf("Ethereum config missing")
 	}
 
 	dbChainState, err := storage.GetChainState()

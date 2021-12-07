@@ -146,13 +146,16 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.Commi
 }
 
 func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
-	if tx.Type() == txtype.Transfer {
-		err := s.storage.AddTransfer(tx.ToTransfer())
-		s.NoError(err)
-	} else {
-		err := s.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-		s.NoError(err)
+	var err error
+	switch tx.Type() {
+	case txtype.Transfer:
+		err = s.storage.AddTransfer(tx.ToTransfer())
+	case txtype.Create2Transfer:
+		err = s.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
+	case txtype.MassMigration:
+		err = s.storage.AddMassMigration(tx.ToMassMigration())
 	}
+	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)

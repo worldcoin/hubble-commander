@@ -53,7 +53,7 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.testStorage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkers = context.WithCancel(context.Background())
+	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
@@ -139,6 +139,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 	s.Equal(*batches[0].ToBatch(*root), *batch)
 
 	txBatch := batches[0].ToDecodedTxBatch()
+	decodedCommitment := txBatch.Commitments[0].ToDecodedCommitment()
 	expectedCommitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
@@ -146,10 +147,10 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 				IndexInBatch: 0,
 			},
 			Type:          batchtype.Transfer,
-			PostStateRoot: txBatch.Commitments[0].StateRoot,
+			PostStateRoot: decodedCommitment.StateRoot,
 		},
-		FeeReceiver:       txBatch.Commitments[0].FeeReceiver,
-		CombinedSignature: txBatch.Commitments[0].CombinedSignature,
+		FeeReceiver:       decodedCommitment.FeeReceiver,
+		CombinedSignature: decodedCommitment.CombinedSignature,
 	}
 	expectedCommitment.BodyHash = txBatch.Commitments[0].BodyHash(*batch.AccountTreeRoot)
 	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
@@ -489,7 +490,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentRec
 			TransactionHash: common.Hash{1, 2, 3},
 			AccountTreeRoot: common.Hash{1, 2, 3},
 		},
-		Commitments: []encoder.DecodedCommitment{{
+		Commitments: []encoder.Commitment{&encoder.DecodedCommitment{
 			StateRoot:         stateRoot,
 			CombinedSignature: *s.getTransferCombinedSignature(&transfer),
 			FeeReceiver:       0,

@@ -38,7 +38,7 @@ func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity in
 	case txtype.Create2Transfer:
 		return make(Create2TransferArray, size, capacity)
 	case txtype.MassMigration:
-		panic("MassMigration not implemented")
+		return make(MassMigrationArray, size, capacity)
 	}
 	return nil
 }

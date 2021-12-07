@@ -17,12 +17,13 @@ const (
 	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 
-func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) error {
-	if len(commitment.Transactions)%c.Syncer.TxLength() != 0 {
+func (c *TxsContext) syncTxCommitment(commitment encoder.Commitment) error {
+	decodedCommitment := commitment.ToDecodedCommitment()
+	if len(decodedCommitment.Transactions)%c.Syncer.TxLength() != 0 {
 		return ErrInvalidDataLength
 	}
 
-	syncedTxs, err := c.Syncer.DeserializeTxs(commitment.Transactions)
+	syncedTxs, err := c.Syncer.DeserializeTxs(decodedCommitment.Transactions)
 	if err != nil {
 		return err
 	}
@@ -31,18 +32,18 @@ func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) err
 		return ErrTooManyTxs
 	}
 
-	appliedTxs, stateProofs, err := c.SyncTxs(syncedTxs, commitment.FeeReceiver)
+	appliedTxs, stateProofs, err := c.SyncTxs(syncedTxs, decodedCommitment.FeeReceiver)
 	if err != nil {
 		return err
 	}
 	syncedTxs.SetTxs(appliedTxs)
 
-	err = c.verifyStateRoot(commitment.StateRoot, stateProofs)
+	err = c.verifyStateRoot(decodedCommitment.StateRoot, stateProofs)
 	if err != nil {
 		return err
 	}
 
-	err = c.Syncer.SetPublicKeys(syncedTxs)
+	err = c.Syncer.SetMissingTxsData(commitment, syncedTxs)
 	if st.IsNotFoundError(err) {
 		return c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
 	}
@@ -50,13 +51,13 @@ func (c *TxsContext) syncTxCommitment(commitment *encoder.DecodedCommitment) err
 		return err
 	}
 	if !c.cfg.DisableSignatures {
-		err = c.verifyTxSignature(commitment, syncedTxs.Txs())
+		err = c.verifyTxSignature(decodedCommitment, syncedTxs.Txs())
 		if err != nil {
 			return err
 		}
 	}
 
-	return c.addTxs(syncedTxs.Txs(), &commitment.ID)
+	return c.addTxs(syncedTxs.Txs(), &decodedCommitment.ID)
 }
 
 func (c *TxsContext) verifyStateRoot(commitmentPostState common.Hash, proofs []models.StateMerkleProof) error {

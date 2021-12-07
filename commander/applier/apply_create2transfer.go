@@ -56,7 +56,7 @@ func (a *Applier) ApplyCreate2TransferForSync(
 	create2Transfer *models.Create2Transfer,
 	pubKeyID uint32,
 	commitmentTokenID models.Uint256,
-) (synced *SyncedGenericTransaction, txError, appError error) {
+) (synced *SyncedTxWithProofs, txError, appError error) {
 	if create2Transfer.ToStateID == nil {
 		return nil, nil, errors.WithStack(ErrNilReceiverStateID)
 	}

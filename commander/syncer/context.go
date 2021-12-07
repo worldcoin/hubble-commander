@@ -49,11 +49,11 @@ func newContext(
 ) *Context {
 	var batchCtx batchContext
 	switch batchType {
-	case batchtype.Transfer, batchtype.Create2Transfer:
+	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
 		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
 	case batchtype.Deposit:
 		batchCtx = newDepositsContext(txStorage, client)
-	case batchtype.Genesis, batchtype.MassMigration:
+	case batchtype.Genesis:
 		panic("invalid batch type")
 	}
 	return &Context{
