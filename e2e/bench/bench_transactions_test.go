@@ -50,11 +50,19 @@ func (s *BenchmarkTransactionsSuite) TestBenchMassMigrationsCommander() {
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Transfer: 0.75, txtype.Create2Transfer: 0.2, txtype.MassMigration: 0.05}) // 75% transfers, 20% C2T, 5% MM
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	}) // 75% transfers, 20% C2T, 5% MM
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Transfer: 0.75, txtype.Create2Transfer: 0.2, txtype.MassMigration: 0.05})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	})
 	s.benchSyncing()
 }
 
