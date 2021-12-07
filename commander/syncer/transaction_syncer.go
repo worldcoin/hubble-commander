@@ -36,7 +36,9 @@ func NewTransactionSyncer(storage *st.Storage, batchType batchtype.BatchType) Tr
 		return NewTransferSyncer(storage)
 	case batchtype.Create2Transfer:
 		return NewC2TSyncer(storage)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.MassMigration:
+		return NewMMSyncer(storage)
+	case batchtype.Genesis, batchtype.Deposit:
 		log.Fatal("Invalid tx type")
 		return nil
 	}
