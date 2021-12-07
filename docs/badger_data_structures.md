@@ -205,7 +205,7 @@ Body: `models.StoredTxMassMigrationBody`
 
 ```go
 type StoredTxMassMigrationBody struct {
-    SpokeID Uint256
+    SpokeID uint32
 }
 ```
 

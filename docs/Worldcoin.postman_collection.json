@@ -58,7 +58,7 @@
                 "header": [],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"MASS_MIGRATION\",\n            \"FromStateID\": 1,\n            \"SpokeID\": \"2\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"MASS_MIGRATION\",\n            \"FromStateID\": 1,\n            \"SpokeID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
