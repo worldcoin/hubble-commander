@@ -6,10 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var (
-	FlatStateLeafPrefix = getBadgerHoldPrefix(FlatStateLeaf{})
-	StateUpdatePrefix   = getBadgerHoldPrefix(StateUpdate{})
-)
+var StateUpdatePrefix = GetBadgerHoldPrefix(StateUpdate{})
 
 type UserState struct {
 	PubKeyID uint32

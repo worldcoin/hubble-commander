@@ -1,4 +1,4 @@
-package models
+package stored
 
 import (
 	"testing"
@@ -7,15 +7,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodeDataHash(t *testing.T) {
-	node := MerkleTreeNode{
-		DataHash: common.BytesToHash([]byte{1, 2, 3, 4, 5}),
-	}
+func TestEncodeHash(t *testing.T) {
+	dataHash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 
 	var decodedHash common.Hash
-	encodedDataHash, _ := EncodeDataHash(&node.DataHash)
-	_ = DecodeDataHash(encodedDataHash, &decodedHash)
-	require.Equal(t, node.DataHash, decodedHash)
+	encodedDataHash, _ := EncodeHash(&dataHash)
+	_ = DecodeHash(encodedDataHash, &decodedHash)
+	require.Equal(t, dataHash, decodedHash)
 }
 
 func TestEncodeUint32(t *testing.T) {

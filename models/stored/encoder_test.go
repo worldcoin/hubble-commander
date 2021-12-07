@@ -1,9 +1,10 @@
-package models
+package stored
 
 import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,26 @@ func TestEncodeUint32Pointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
+func TestEncodeTimestampPointer(t *testing.T) {
+	timestamp := models.NewTimestamp(time.Unix(10, 0).UTC())
+	bytes := encodeTimestampPointer(timestamp)
+	require.EqualValues(t, 1, bytes[0])
+
+	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	require.NoError(t, err)
+	require.Equal(t, *timestamp, *decodedTimestamp)
+}
+
+func TestEncodeTimestampPointer_NilValue(t *testing.T) {
+	var timestamp *models.Timestamp
+	bytes := encodeTimestampPointer(timestamp)
+	require.EqualValues(t, 0, bytes[0])
+
+	decodedTimestamp, err := decodeTimestampPointer(bytes)
+	require.NoError(t, err)
+	require.Nil(t, decodedTimestamp)
+}
+
 func TestEncodeStringPointer(t *testing.T) {
 	bytes := encodeStringPointer(ref.String(testMessage))
 	require.EqualValues(t, 1, bytes[0])
@@ -64,29 +85,9 @@ func TestEncodeStringPointer_NilValue(t *testing.T) {
 	require.Nil(t, decodedValue)
 }
 
-func TestEncodeTimestampPointer(t *testing.T) {
-	timestamp := NewTimestamp(time.Unix(10, 0).UTC())
-	bytes := encodeTimestampPointer(timestamp)
-	require.EqualValues(t, 1, bytes[0])
-
-	decodedTimestamp, err := decodeTimestampPointer(bytes)
-	require.NoError(t, err)
-	require.Equal(t, *timestamp, *decodedTimestamp)
-}
-
-func TestEncodeTimestampPointer_NilValue(t *testing.T) {
-	var timestamp *Timestamp
-	bytes := encodeTimestampPointer(timestamp)
-	require.EqualValues(t, 0, bytes[0])
-
-	decodedTimestamp, err := decodeTimestampPointer(bytes)
-	require.NoError(t, err)
-	require.Nil(t, decodedTimestamp)
-}
-
 func TestEncodeCommitmentIDPointer(t *testing.T) {
-	id := &CommitmentID{
-		BatchID:      MakeUint256(5),
+	id := &models.CommitmentID{
+		BatchID:      models.MakeUint256(5),
 		IndexInBatch: 2,
 	}
 	bytes := EncodeCommitmentIDPointer(id)
@@ -98,7 +99,7 @@ func TestEncodeCommitmentIDPointer(t *testing.T) {
 }
 
 func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
-	var id *CommitmentID
+	var id *models.CommitmentID
 	bytes := EncodeCommitmentIDPointer(id)
 	require.EqualValues(t, 0, bytes[0])
 

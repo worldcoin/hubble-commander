@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -402,7 +403,7 @@ func (s *BatchTestSuite) TestBatch_Hash_FindUsingIndexWorksWhenThereAreOnlyValue
 func (s *BatchTestSuite) getHashIndexValues() map[common.Hash]bh.KeyList {
 	indexValues := make(map[common.Hash]bh.KeyList)
 
-	s.iterateIndex(models.StoredBatchName, "Hash", func(encodedKey []byte, keyList bh.KeyList) {
+	s.iterateIndex(stored.BatchName, "Hash", func(encodedKey []byte, keyList bh.KeyList) {
 		var batchHash common.Hash
 		err := db.Decode(encodedKey, &batchHash)
 		s.NoError(err)
