@@ -179,7 +179,7 @@ func getEthereumConfig() *EthereumConfig {
 	}
 	return &EthereumConfig{
 		RPCURL:     *rpcURL,
-		ChainID:    getUint64OrThrow("ethereum.chain_id"),
-		PrivateKey: getStringOrThrow("ethereum.private_key"),
+		ChainID:    getUint64OrPanic("ethereum.chain_id"),
+		PrivateKey: getStringOrPanic("ethereum.private_key"),
 	}
 }
