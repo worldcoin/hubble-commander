@@ -86,64 +86,6 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughPendingMassMigrations() {
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
-	s.ErrorIs(err, ErrNotEnoughTxs)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preRoot, postRoot)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughValidMassMigrations() {
-	s.txsCtx.cfg = &config.RollupConfig{
-		MinTxsPerCommitment:    32,
-		MaxTxsPerCommitment:    32,
-		FeeReceiverPubKeyID:    2,
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 1,
-	}
-
-	massMigrations := testutils.GenerateValidMassMigrations(2)
-	s.addMassMigrations(massMigrations)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
-	s.ErrorIs(err, ErrNotEnoughTxs)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preRoot, postRoot)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_MarksMassMigrationsAsIncludedInCommitment() {
-	massMigrationsCount := uint32(4)
-	s.preparePendingMassMigrations(massMigrationsCount)
-
-	pendingMassMigrations, err := s.storage.GetPendingMassMigrations()
-	s.NoError(err)
-	s.Len(pendingMassMigrations, int(massMigrationsCount))
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-
-	for i := range pendingMassMigrations {
-		tx, err := s.storage.GetMassMigration(pendingMassMigrations[i].Hash)
-		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
-	}
-}
-
 func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(MassMigrationCommitmentsTestSuite))
 }
@@ -151,11 +93,6 @@ func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
 func (s *MassMigrationCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
 	err := s.storage.BatchAddMassMigration(massMigrations)
 	s.NoError(err)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) preparePendingMassMigrations(massMigrationsAmount uint32) {
-	massMigrations := testutils.GenerateValidMassMigrations(massMigrationsAmount)
-	s.addMassMigrations(massMigrations)
 }
 
 func (s *MassMigrationCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {
