@@ -11,8 +11,8 @@ Pros:
 
 Cons:
 
-- We loose batch/tx history (or need to aggregate data from many deployments)
-- Requires admin / centralised
+- We lose batch/tx history (or need to aggregate data from many deployments)
+- Requires admin (centralisation)
     - need to disable new deposits and batch all pending deposits
     - need to transfer tokens to the new Vault SC
     - disable old deployment to prevent forking
@@ -47,5 +47,5 @@ Pros:
 Cons:
 
 - Users might decide/forget to not transfer to the new version
-- Most expensive on gas
+- Most expensive gas-wise
 - Need to implement mass-deposits
