@@ -161,7 +161,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
-		transfers, err = txStorage.transfersToTransfersWithBatchDetails([]stored.Tx{*tx}, []*stored.TxReceipt{txReceipt})
+		transfers, err = txStorage.txsToTransfersWithBatchDetails([]stored.Tx{*tx}, []*stored.TxReceipt{txReceipt})
 		return err
 	})
 
@@ -178,7 +178,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		if err != nil {
 			return err
 		}
-		transfers, err = txStorage.transfersToTransfersWithBatchDetails(txs, txReceipts)
+		transfers, err = txStorage.txsToTransfersWithBatchDetails(txs, txReceipts)
 		return err
 	})
 	if err != nil {
@@ -224,7 +224,7 @@ func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
 	return txs, txReceipts, nil
 }
 
-func (s *Storage) transfersToTransfersWithBatchDetails(txs []stored.Tx, txReceipts []*stored.TxReceipt) (
+func (s *Storage) txsToTransfersWithBatchDetails(txs []stored.Tx, txReceipts []*stored.TxReceipt) (
 	result []models.TransferWithBatchDetails,
 	err error,
 ) {
