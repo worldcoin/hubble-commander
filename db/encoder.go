@@ -36,7 +36,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return models.EncodeCommitmentIDPointer(v), nil
+		return stored.EncodeCommitmentIDPointer(v), nil
 	case models.PendingDeposit:
 		return v.Bytes(), nil
 	case *models.PendingDeposit:

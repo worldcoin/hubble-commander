@@ -84,3 +84,26 @@ func TestEncodeStringPointer_NilValue(t *testing.T) {
 	decodedValue := decodeStringPointer(bytes)
 	require.Nil(t, decodedValue)
 }
+
+func TestEncodeCommitmentIDPointer(t *testing.T) {
+	id := &models.CommitmentID{
+		BatchID:      models.MakeUint256(5),
+		IndexInBatch: 2,
+	}
+	bytes := EncodeCommitmentIDPointer(id)
+	require.EqualValues(t, 1, bytes[0])
+
+	decodedID, err := decodeCommitmentIDPointer(bytes)
+	require.NoError(t, err)
+	require.Equal(t, *id, *decodedID)
+}
+
+func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
+	var id *models.CommitmentID
+	bytes := EncodeCommitmentIDPointer(id)
+	require.EqualValues(t, 0, bytes[0])
+
+	decodedID, err := decodeCommitmentIDPointer(bytes)
+	require.NoError(t, err)
+	require.Nil(t, decodedID)
+}

@@ -12,7 +12,7 @@ import (
 const txReceiptBytesLength = 72
 
 var (
-	TxReceiptName                = models.GetTypeName(TxReceipt{})
+	TxReceiptName                = getTypeName(TxReceipt{})
 	TxReceiptPrefix              = models.GetBadgerHoldPrefix(TxReceipt{})
 	errInvalidTxReceiptIndexType = fmt.Errorf("invalid stored.TxReceipt index type")
 )
@@ -52,7 +52,7 @@ func NewTxReceiptFromMassMigration(m *models.MassMigration) *TxReceipt {
 func (t *TxReceipt) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())
-	copy(b[32:66], models.EncodeCommitmentIDPointer(t.CommitmentID))
+	copy(b[32:66], EncodeCommitmentIDPointer(t.CommitmentID))
 	copy(b[66:71], EncodeUint32Pointer(t.ToStateID))
 	copy(b[71:], encodeStringPointer(t.ErrorMessage))
 	return b
@@ -62,7 +62,7 @@ func (t *TxReceipt) SetBytes(data []byte) error {
 	if len(data) < txReceiptBytesLength {
 		return models.ErrInvalidLength
 	}
-	commitmentID, err := models.DecodeCommitmentIDPointer(data[32:66])
+	commitmentID, err := decodeCommitmentIDPointer(data[32:66])
 	if err != nil {
 		return err
 	}

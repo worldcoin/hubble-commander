@@ -2,6 +2,7 @@ package stored
 
 import (
 	"encoding/binary"
+	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -11,6 +12,10 @@ import (
 type ByteEncoder interface {
 	Bytes() []byte
 	SetBytes(data []byte) error
+}
+
+func getTypeName(dataType interface{}) []byte {
+	return []byte(reflect.TypeOf(dataType).Name())
 }
 
 func EncodeHashPointer(value *common.Hash) []byte {
@@ -85,4 +90,27 @@ func decodeTimestampPointer(data []byte) (*models.Timestamp, error) {
 		return nil, err
 	}
 	return &timestamp, nil
+}
+
+func EncodeCommitmentIDPointer(id *models.CommitmentID) []byte {
+	b := make([]byte, models.CommitmentIDDataLength+1)
+	if id == nil {
+		return b
+	}
+	b[0] = 1
+	copy(b[1:], id.Bytes())
+	return b
+}
+
+func decodeCommitmentIDPointer(data []byte) (*models.CommitmentID, error) {
+	if data[0] == 0 {
+		return nil, nil
+	}
+
+	var commitmentID models.CommitmentID
+	err := commitmentID.SetBytes(data[1:])
+	if err != nil {
+		return nil, err
+	}
+	return &commitmentID, nil
 }

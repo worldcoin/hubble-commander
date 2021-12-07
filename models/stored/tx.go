@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	TxName                = models.GetTypeName(Tx{})
+	TxName                = getTypeName(Tx{})
 	TxPrefix              = models.GetBadgerHoldPrefix(Tx{})
 	errInvalidTxIndexType = fmt.Errorf("invalid stored.Tx index type")
 )

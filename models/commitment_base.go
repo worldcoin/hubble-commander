@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const CommitmentBaseDataLength = commitmentIDDataLength + 1 + 32
+const CommitmentBaseDataLength = CommitmentIDDataLength + 1 + 32
 
 type CommitmentBase struct {
 	ID            CommitmentID

@@ -13,7 +13,7 @@ import (
 const batchDataLength = 185
 
 var (
-	BatchName                = models.GetTypeName(Batch{})
+	BatchName                = getTypeName(Batch{})
 	BatchPrefix              = models.GetBadgerHoldPrefix(Batch{})
 	errInvalidBatchIndexType = fmt.Errorf("invalid stored.Batch index type")
 )
