@@ -25,7 +25,7 @@ type TransactionSyncer interface {
 	ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 		stateProof *models.StateMerkleProof, commitmentError, appError error,
 	)
-	SetPublicKeys(syncedTxs SyncedTxs) error
+	SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error
 	BatchAddTxs(txs models.GenericTransactionArray) error
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
@@ -85,7 +85,7 @@ func (s *TransferSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, 
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
-func (s *TransferSyncer) SetPublicKeys(_ SyncedTxs) error {
+func (s *TransferSyncer) SetMissingTxsData(_ encoder.Commitment, _ SyncedTxs) error {
 	return nil
 }
 
@@ -144,7 +144,7 @@ func (s *C2TSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
-func (s *C2TSyncer) SetPublicKeys(syncedTxs SyncedTxs) error {
+func (s *C2TSyncer) SetMissingTxsData(_ encoder.Commitment, syncedTxs SyncedTxs) error {
 	txs := syncedTxs.Txs().ToCreate2TransferArray()
 	for i := range txs {
 		leaf, err := s.storage.AccountTree.Leaf(syncedTxs.PubKeyIDs()[i])
@@ -205,7 +205,12 @@ func (s *MMSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *m
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
-func (s *MMSyncer) SetPublicKeys(_ SyncedTxs) error {
+func (s *MMSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error {
+	mmCommitment := commitment.(*encoder.DecodedMMCommitment)
+	txs := syncedTxs.Txs().ToMassMigrationArray()
+	for i := range txs {
+		txs[i].SpokeID = mmCommitment.Meta.SpokeID
+	}
 	return nil
 }
 

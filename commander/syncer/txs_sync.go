@@ -13,7 +13,7 @@ func (c *TxsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 	batch := remoteBatch.ToDecodedTxBatch()
 	for i := range batch.Commitments {
 		log.WithFields(log.Fields{"batchID": batch.ID.String()}).Debugf("Syncing commitment #%d", i+1)
-		err := c.syncCommitment(batch, batch.Commitments[i].ToDecodedCommitment())
+		err := c.syncCommitment(batch, batch.Commitments[i])
 
 		var disputableErr *DisputableError
 		if errors.As(err, &disputableErr) {
@@ -46,7 +46,7 @@ func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 	return c.storage.UpdateCommitments(commitments)
 }
 
-func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment *encoder.DecodedCommitment) error {
+func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment encoder.Commitment) error {
 	err := c.syncTxCommitment(commitment)
 	if err != nil {
 		return err
@@ -55,8 +55,9 @@ func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment *encod
 	return c.addCommitment(batch, commitment)
 }
 
-func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, decodedCommitment *encoder.DecodedCommitment) error {
-	commitment := &models.TxCommitment{
+func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder.Commitment) error {
+	decodedCommitment := commitment.ToDecodedCommitment()
+	txCommitment := &models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID:            decodedCommitment.ID,
 			Type:          batch.Type,
@@ -64,8 +65,8 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, decodedCommitment 
 		},
 		FeeReceiver:       decodedCommitment.FeeReceiver,
 		CombinedSignature: decodedCommitment.CombinedSignature,
-		BodyHash:          decodedCommitment.BodyHash(batch.AccountTreeRoot),
+		BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
 	}
 
-	return c.storage.AddTxCommitment(commitment)
+	return c.storage.AddTxCommitment(txCommitment)
 }
