@@ -116,7 +116,7 @@ func Encode(value interface{}) ([]byte, error) {
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.AccountNode:
-		return stored.DecodeDataHash(data, &v.DataHash)
+		return stored.DecodeHash(data, &v.DataHash)
 	case *models.AccountLeaf:
 		return v.SetBytes(data)
 	case *models.ChainState:
@@ -134,7 +134,7 @@ func Decode(data []byte, value interface{}) error {
 	case *stored.Batch:
 		return v.SetBytes(data)
 	case *models.MerkleTreeNode:
-		return stored.DecodeDataHash(data, &v.DataHash)
+		return stored.DecodeHash(data, &v.DataHash)
 	case *models.PublicKey:
 		return v.SetBytes(data)
 	case *stored.StateLeaf:
@@ -171,10 +171,10 @@ func Decode(data []byte, value interface{}) error {
 // nolint: gocritic
 func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
 	if len(data) == 32 {
-		return stored.DecodeDataHash(data, dst)
+		return stored.DecodeHash(data, dst)
 	}
 	if data[0] == 1 {
-		return stored.DecodeDataHash(data[1:], dst)
+		return stored.DecodeHash(data[1:], dst)
 	}
 	*value = nil
 	return nil

@@ -379,7 +379,7 @@ func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, e
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := stored.DecodeDataHash(keyList[i][len(keyPrefix):], &hash)
+		err := stored.DecodeHash(keyList[i][len(keyPrefix):], &hash)
 		if err != nil {
 			return nil, err
 		}

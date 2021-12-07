@@ -12,7 +12,7 @@ func TestEncodeHash(t *testing.T) {
 
 	var decodedHash common.Hash
 	encodedDataHash, _ := EncodeHash(&dataHash)
-	_ = DecodeDataHash(encodedDataHash, &decodedHash)
+	_ = DecodeHash(encodedDataHash, &decodedHash)
 	require.Equal(t, dataHash, decodedHash)
 }
 

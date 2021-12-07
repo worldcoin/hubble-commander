@@ -10,8 +10,8 @@ func EncodeHash(hash *common.Hash) ([]byte, error) {
 	return hash.Bytes(), nil
 }
 
-func DecodeDataHash(data []byte, dataHash *common.Hash) error {
-	dataHash.SetBytes(data)
+func DecodeHash(data []byte, hash *common.Hash) error {
+	hash.SetBytes(data)
 	return nil
 }
 
