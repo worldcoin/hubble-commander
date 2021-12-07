@@ -114,7 +114,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	s.EqualValues(batch1.ID, batches[0].GetID())
 }
 
-func (s *GetBatchesTestSuite) TestGetTxBatch_BatchExists() {
+func (s *GetBatchesTestSuite) TestGetTxBatch() {
 	batchID := models.MakeUint256(1)
 	tx, err := s.client.SubmitTransfersBatch(&batchID, s.commitments)
 	s.NoError(err)
@@ -137,7 +137,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchExists() {
 	s.EqualValues(event.AccountRoot, decodedTxBatch.AccountTreeRoot)
 }
 
-func (s *GetBatchesTestSuite) TestGetTxBatch_BatchNotExists() {
+func (s *GetBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenBatchDoesNotExist() {
 	tx, err := s.client.SubmitTransfersBatch(models.NewUint256(1), s.commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
@@ -156,7 +156,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_BatchNotExists() {
 	s.ErrorIs(err, errBatchAlreadyRolledBack)
 }
 
-func (s *GetBatchesTestSuite) TestGetTxBatch_DifferentBatchHash() {
+func (s *GetBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenCurrentBatchHasDifferentHash() {
 	batchID := models.NewUint256(1)
 	tx, err := s.client.SubmitTransfersBatch(batchID, s.commitments)
 	s.NoError(err)

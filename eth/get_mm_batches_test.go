@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"math/big"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -78,7 +77,7 @@ func (s *GetMMBatchesTestSuite) TestGetBatches() {
 	s.Equal(batchtype.MassMigration, batches[0].GetBase().Type)
 }
 
-func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
+func (s *GetMMBatchesTestSuite) TestGetTxBatch() {
 	batchID := models.MakeUint256(1)
 	tx, err := s.client.SubmitMassMigrationsBatch(&batchID, s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
@@ -102,26 +101,7 @@ func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchExists() {
 	s.EqualValues(event.AccountRoot, decodedMMBatch.AccountTreeRoot)
 }
 
-func (s *GetMMBatchesTestSuite) TestGetMMBatch_BatchNotExists() {
-	tx, err := s.client.SubmitMassMigrationsBatch(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
-	s.NoError(err)
-	s.client.GetBackend().Commit()
-
-	transaction, _, err := s.client.Blockchain.GetBackend().TransactionByHash(context.Background(), tx.Hash())
-	s.NoError(err)
-
-	event := &rollup.RollupNewBatch{
-		BatchID:     big.NewInt(5),
-		AccountRoot: getAccountRoot(s.Assertions, s.client),
-		BatchType:   uint8(batchtype.MassMigration),
-	}
-
-	batch, err := s.client.getTxBatch(event, transaction, decodeMMCommitments)
-	s.Nil(batch)
-	s.ErrorIs(err, errBatchAlreadyRolledBack)
-}
-
-func (s *GetMMBatchesTestSuite) TestGetMMBatch_DifferentBatchHash() {
+func (s *GetMMBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenCurrentBatchHasDifferentHash() {
 	batchID := models.NewUint256(1)
 	tx, err := s.client.SubmitMassMigrationsBatch(batchID, s.commitments, s.metas, s.withdrawRoots)
 	s.NoError(err)
