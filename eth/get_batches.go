@@ -121,7 +121,8 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNew
 		events = append(events, it.Event)
 	}
 
-	if err = it.Error(); err != nil {
+	err = it.Error()
+	if err != nil {
 		return nil, err
 	}
 
@@ -145,7 +146,8 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.
 		events = append(events, it.Event)
 	}
 
-	if err = it.Error(); err != nil {
+	err = it.Error()
+	if err != nil {
 		return nil, err
 	}
 
