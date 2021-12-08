@@ -33,7 +33,7 @@ func (c *Context) disputeTransitionTransfer(
 	merkleProofs []models.StateMerkleProof,
 	previousCommitmentProof *models.CommitmentInclusionProof,
 ) error {
-	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (c *Context) disputeTransitionC2T(
 	merkleProofs []models.StateMerkleProof,
 	previousCommitmentProof *models.CommitmentInclusionProof,
 ) error {
-	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}

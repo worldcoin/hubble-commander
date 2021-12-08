@@ -37,7 +37,7 @@ func (c *Context) disputeTransferSignature(
 		return err
 	}
 
-	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *Context) disputeCreate2TransferSignature(
 		return err
 	}
 
-	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}

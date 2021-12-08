@@ -226,7 +226,7 @@ func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
-func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
+func (s *CommitmentProofsTestSuite) TestTargetTransferCommitmentInclusionProof() {
 	expected := models.TransferCommitmentInclusionProof{
 		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
 			StateRoot: s.decodedCommitments[1].StateRoot,
@@ -244,7 +244,7 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 		},
 	}
 
-	proof, err := s.proverCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
+	proof, err := s.proverCtx.TargetTransferCommitmentInclusionProof(&s.decodedBatch, 1)
 	s.NoError(err)
 	s.Equal(expected, *proof)
 }
