@@ -66,9 +66,9 @@ func (s *testSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchTyp
 
 func (s *testSuiteWithContexts) setGenesisState() {
 	userStates := []models.UserState{
-		*createUserState(0, 300, 0),
-		*createUserState(1, 200, 0),
-		*createUserState(2, 100, 0),
+		*createUserState(0, 300),
+		*createUserState(1, 200),
+		*createUserState(2, 100),
 	}
 
 	for i := range userStates {
