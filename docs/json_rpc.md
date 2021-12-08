@@ -128,7 +128,34 @@ Example result (CREATE2TRANSFER):
     "ToStateID": 0,
     "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc",
     "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
-    "BatchTime": 1633692591, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "BatchTime": 1633692591,
+    // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "Status": "FINALISED"
+}
+```
+
+Example result (MASS_MIGRATION):
+
+```json
+{
+    "Hash": "0x5e40559e87254b436245fa9723f1489e4328869d8cf1a960066c74e74750c2ae",
+    "TxType": "MASS_MIGRATION",
+    "FromStateID": 1,
+    "Amount": "50",
+    "Fee": "1",
+    "Nonce": "0",
+    "Signature": "0x1f49179e0dc59a3d7ce425f7379d80d0d8ffac2a9d9d2a915d5f21fec8a59e3816b5ec10ce3bd608116c0c18e4bd07a8206e2f6a66696982f0ff441a357e8300",
+    "ReceiveTime": 1625153276,
+    // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "CommitmentID": {
+        "BatchID": "1",
+        "IndexInBatch": 0
+    },
+    "ErrorMessage": null,
+    "SpokeID": 2,
+    "BatchHash": "0x9fc863e718defd9506764f4f623f2b0a63fa51dc1a2f85ca314846aaf5cf422c",
+    "BatchTime": 1633692591,
+    // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
     "Status": "FINALISED"
 }
 ```
@@ -141,7 +168,7 @@ Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given p
 
 ```json
 {
-      "StateID": 3,
+    "StateID": 3,
       "PubKeyID": 3,
       "TokenIndex": "0",
       "Balance": "1000000000000000000",
