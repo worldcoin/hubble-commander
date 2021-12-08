@@ -71,13 +71,15 @@ func (s *CommitmentProofsTestSuite) TearDownTest() {
 
 func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_CurrentBatch() {
 	expected := models.CommitmentInclusionProof{
-		StateRoot: s.decodedCommitments[0].StateRoot,
-		BodyRoot:  *s.decodedCommitments[0].BodyHash(s.decodedBatch.AccountTreeRoot),
-		Path: &models.MerklePath{
-			Path:  0,
-			Depth: 2,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: s.decodedCommitments[0].StateRoot,
+			Path: &models.MerklePath{
+				Path:  0,
+				Depth: 2,
+			},
+			Witness: []common.Hash{s.decodedCommitments[1].LeafHash(s.decodedBatch.AccountTreeRoot)},
 		},
-		Witness: []common.Hash{s.decodedCommitments[1].LeafHash(s.decodedBatch.AccountTreeRoot)},
+		BodyRoot: *s.decodedCommitments[0].BodyHash(s.decodedBatch.AccountTreeRoot),
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, 0)
@@ -131,13 +133,15 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 	}
 
 	expected := models.CommitmentInclusionProof{
-		StateRoot: commitments[1].PostStateRoot,
-		BodyRoot:  *commitments[1].BodyHash,
-		Path: &models.MerklePath{
-			Path:  1,
-			Depth: 2,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitments[1].PostStateRoot,
+			Path: &models.MerklePath{
+				Path:  1,
+				Depth: 2,
+			},
+			Witness: []common.Hash{commitments[0].LeafHash()},
 		},
-		Witness: []common.Hash{commitments[0].LeafHash()},
+		BodyRoot: *commitments[1].BodyHash,
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
@@ -183,13 +187,15 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 	s.NoError(err)
 
 	expected := models.CommitmentInclusionProof{
-		StateRoot: commitment.PostStateRoot,
-		BodyRoot:  commitment.GetBodyHash(),
-		Path: &models.MerklePath{
-			Path:  0,
-			Depth: 2,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitment.PostStateRoot,
+			Path: &models.MerklePath{
+				Path:  0,
+				Depth: 2,
+			},
+			Witness: []common.Hash{consts.ZeroHash},
 		},
-		Witness: []common.Hash{consts.ZeroHash},
+		BodyRoot: commitment.GetBodyHash(),
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)
@@ -202,13 +208,15 @@ func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 	zeroHash := merkletree.GetZeroHash(0)
 
 	expected := models.CommitmentInclusionProof{
-		StateRoot: *genesisBatch.PrevStateRoot,
-		BodyRoot:  zeroHash,
-		Path: &models.MerklePath{
-			Path:  0,
-			Depth: 2,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: *genesisBatch.PrevStateRoot,
+			Path: &models.MerklePath{
+				Path:  0,
+				Depth: 2,
+			},
+			Witness: []common.Hash{zeroHash},
 		},
-		Witness: []common.Hash{zeroHash},
+		BodyRoot: zeroHash,
 	}
 
 	firstBatch := s.decodedBatch
@@ -220,18 +228,20 @@ func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 
 func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 	expected := models.TransferCommitmentInclusionProof{
-		StateRoot: s.decodedCommitments[1].StateRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: s.decodedCommitments[1].StateRoot,
+			Path: &models.MerklePath{
+				Path:  1,
+				Depth: 2,
+			},
+			Witness: []common.Hash{s.decodedCommitments[0].LeafHash(s.decodedBatch.AccountTreeRoot)},
+		},
 		Body: &models.TransferBody{
 			AccountRoot:  s.decodedBatch.AccountTreeRoot,
 			Signature:    s.decodedCommitments[1].CombinedSignature,
 			FeeReceiver:  s.decodedCommitments[1].FeeReceiver,
 			Transactions: s.decodedCommitments[1].Transactions,
 		},
-		Path: &models.MerklePath{
-			Path:  1,
-			Depth: 2,
-		},
-		Witness: []common.Hash{s.decodedCommitments[0].LeafHash(s.decodedBatch.AccountTreeRoot)},
 	}
 
 	proof, err := s.proverCtx.TargetCommitmentInclusionProof(&s.decodedBatch, 1)
@@ -261,7 +271,14 @@ func (s *CommitmentProofsTestSuite) TestTargetMMCommitmentInclusionProof() {
 
 	mmCommitment := decodedMMBatch.Commitments[1].(*encoder.DecodedMMCommitment)
 	expected := models.MMCommitmentInclusionProof{
-		StateRoot: mmCommitment.StateRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: mmCommitment.StateRoot,
+			Path: &models.MerklePath{
+				Path:  1,
+				Depth: 2,
+			},
+			Witness: []common.Hash{decodedMMBatch.Commitments[0].LeafHash(decodedMMBatch.AccountTreeRoot)},
+		},
 		Body: &models.MMBody{
 			AccountRoot:  decodedMMBatch.AccountTreeRoot,
 			Signature:    mmCommitment.CombinedSignature,
@@ -269,11 +286,6 @@ func (s *CommitmentProofsTestSuite) TestTargetMMCommitmentInclusionProof() {
 			WithdrawRoot: mmCommitment.WithdrawRoot,
 			Transactions: mmCommitment.Transactions,
 		},
-		Path: &models.MerklePath{
-			Path:  1,
-			Depth: 2,
-		},
-		Witness: []common.Hash{decodedMMBatch.Commitments[0].LeafHash(decodedMMBatch.AccountTreeRoot)},
 	}
 
 	proof, err := s.proverCtx.TargetMMCommitmentInclusionProof(&decodedMMBatch, 1)

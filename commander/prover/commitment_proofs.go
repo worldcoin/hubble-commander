@@ -82,8 +82,10 @@ func createCommitmentInclusionProof(
 	commitmentStateRoot, commitmentBodyRoot common.Hash,
 ) (*models.CommitmentInclusionProof, error) {
 	proof := models.CommitmentInclusionProof{
-		StateRoot: commitmentStateRoot,
-		BodyRoot:  commitmentBodyRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitmentStateRoot,
+		},
+		BodyRoot: commitmentBodyRoot,
 	}
 
 	tree, err := merkletree.NewMerkleTree(leafHashes)
@@ -121,15 +123,17 @@ func (c *Context) TargetCommitmentInclusionProof(
 
 	commitment := batch.Commitments[commitmentIndex].ToDecodedCommitment()
 	return &models.TransferCommitmentInclusionProof{
-		StateRoot: commitment.StateRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitment.StateRoot,
+			Path:      path,
+			Witness:   tree.GetWitness(commitmentIndex),
+		},
 		Body: &models.TransferBody{
 			AccountRoot:  batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
 			FeeReceiver:  commitment.FeeReceiver,
 			Transactions: commitment.Transactions,
 		},
-		Path:    path,
-		Witness: tree.GetWitness(commitmentIndex),
 	}, nil
 }
 
@@ -153,7 +157,11 @@ func (c *Context) TargetMMCommitmentInclusionProof(
 
 	commitment := batch.Commitments[commitmentIndex].(*encoder.DecodedMMCommitment)
 	return &models.MMCommitmentInclusionProof{
-		StateRoot: commitment.StateRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitment.StateRoot,
+			Path:      path,
+			Witness:   tree.GetWitness(commitmentIndex),
+		},
 		Body: &models.MMBody{
 			AccountRoot:  batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
@@ -161,7 +169,5 @@ func (c *Context) TargetMMCommitmentInclusionProof(
 			WithdrawRoot: commitment.WithdrawRoot,
 			Transactions: commitment.Transactions,
 		},
-		Path:    path,
-		Witness: tree.GetWitness(commitmentIndex),
 	}, nil
 }
