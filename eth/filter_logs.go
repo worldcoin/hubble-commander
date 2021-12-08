@@ -19,11 +19,6 @@ func (c *Client) FilterLogs(contract *bind.BoundContract, eventName string, opts
 		sub  event.Subscription
 	)
 
-	err = it.Error()
-	if err != nil {
-		return err
-	}
-
 	duration, err := metrics.MeasureDuration(func() error {
 		logs, sub, err = contract.FilterLogs(opts, eventName)
 		return err
