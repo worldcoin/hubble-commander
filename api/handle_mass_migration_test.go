@@ -87,13 +87,13 @@ func (s *SendMassMigrationTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ReturnsNonNilHash() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ReturnsNonNilHash() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
 	s.NoError(err)
 	s.NotNil(hash)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooLow_NoTransactions() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesNonceTooLow_NoTransactions() {
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
@@ -104,7 +104,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesNonceTooLow_
 	s.Equal(APIErrNonceTooLow, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesFeeValue() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesFeeValue() {
 	massMigrationWithZeroFee := s.massMigration
 	massMigrationWithZeroFee.Fee = models.NewUint256(0)
 
@@ -112,7 +112,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesFeeValue() {
 	s.Equal(APIErrFeeTooLow, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesFeeEncodability() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesFeeEncodability() {
 	massMigrationWithBadFee := s.massMigration
 	massMigrationWithBadFee.Fee = models.NewUint256(66666666)
 
@@ -120,7 +120,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesFeeEncodabil
 	s.Equal(APINotDecimalEncodableFeeError, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountEncodability() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountEncodability() {
 	massMigrationWithBadAmount := s.massMigration
 	massMigrationWithBadAmount.Amount = models.NewUint256(66666666)
 
@@ -128,7 +128,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountEncoda
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSpokeID() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeID() {
 	massMigrationWithBadSpokeID := s.massMigration
 	massMigrationWithBadSpokeID.SpokeID = ref.Uint32(0)
 
@@ -136,7 +136,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSpokeID() {
 	s.Equal(APIErrInvalidSpokeID, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountValue() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountValue() {
 	massMigrationWithZeroAmount := s.massMigration
 	massMigrationWithZeroAmount.Amount = models.NewUint256(0)
 
@@ -144,7 +144,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesAmountValue(
 	s.Equal(APIErrInvalidAmount, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesBalance() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesBalance() {
 	massMigrationWithHugeAmount := s.massMigration
 	massMigrationWithHugeAmount.Amount = models.NewUint256(500)
 
@@ -152,7 +152,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesBalance() {
 	s.Equal(APIErrNotEnoughBalance, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSignature() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSignature() {
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
@@ -165,7 +165,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSignature() 
 	s.Equal(APIErrInvalidSignature, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSignature_DisabledSignatures() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSignature_DisabledSignatures() {
 	s.api.disableSignatures = true
 
 	wallet, err := bls.NewRandomWallet(*s.domain)
@@ -180,7 +180,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_ValidatesSignature_Di
 	s.NoError(err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_AddsMassMigrationToStorage() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_AddsMassMigrationToStorage() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
 	s.NoError(err)
 	s.NotNil(hash)
@@ -190,7 +190,7 @@ func (s *SendMassMigrationTestSuite) TestSendMassMigration_AddsMassMigrationToSt
 	s.NotNil(transfer)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendMassMigration_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
 	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
 	s.NoError(err)
 

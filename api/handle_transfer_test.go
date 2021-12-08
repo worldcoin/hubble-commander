@@ -110,13 +110,13 @@ func (s *SendTransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ReturnsNonNilHash() {
+func (s *SendTransferTestSuite) TestSendTransaction_ReturnsNonNilHash() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransactions() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesNonceTooLow_NoTransactions() {
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
@@ -127,7 +127,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesNonceTooLow_NoTransact
 	s.Equal(APIErrNonceTooLow, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeValue() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesFeeValue() {
 	transferWithZeroFee := s.transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
@@ -135,7 +135,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeValue() {
 	s.Equal(APIErrFeeTooLow, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeEncodability() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesFeeEncodability() {
 	transferWithBadFee := s.transfer
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
@@ -143,7 +143,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesFeeEncodability() {
 	s.Equal(APINotDecimalEncodableFeeError, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountEncodability() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesAmountEncodability() {
 	transferWithBadAmount := s.transfer
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
@@ -151,7 +151,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountEncodability() {
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountValue() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesAmountValue() {
 	transferWithZeroAmount := s.transfer
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
@@ -159,7 +159,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesAmountValue() {
 	s.Equal(APIErrInvalidAmount, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesBalance() {
 	transferWithHugeAmount := s.transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
 
@@ -167,7 +167,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_ValidatesBalance() {
 	s.Equal(APIErrNotEnoughBalance, err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_ValidatesSignature() {
+func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature() {
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
@@ -195,7 +195,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DisabledS
 	s.NoError(err)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_AddsTransferToStorage() {
+func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.NotNil(hash)
@@ -205,7 +205,7 @@ func (s *SendTransferTestSuite) TestSendTransfer_AddsTransferToStorage() {
 	s.NotNil(transfer)
 }
 
-func (s *SendTransferTestSuite) TestSendTransfer_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+func (s *SendTransferTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
 	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
@@ -227,6 +227,6 @@ func (s *SendTransferTestSuite) TestSendTransfer_RepeatedRequestDoesNotUpdateAlr
 	s.Equal(*expectedTx, *tx)
 }
 
-func TestSendTransactionTestSuite(t *testing.T) {
+func TestSendTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendTransferTestSuite))
 }
