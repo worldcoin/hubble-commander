@@ -5,10 +5,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,11 +15,7 @@ import (
 )
 
 type MassMigrationCommitmentsTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage                *st.TestStorage
-	cfg                    *config.RollupConfig
-	txsCtx                 *TxsContext
+	testSuiteWithTxsContext
 	maxTxBytesInCommitment int
 }
 
@@ -30,23 +24,17 @@ func (s *MassMigrationCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *MassMigrationCommitmentsTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.cfg = &config.RollupConfig{
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.MassMigration, &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
-	}
+	})
 	s.maxTxBytesInCommitment = encoder.MassMigrationForCommitmentLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage.Storage, genesisBalances)
+	err := populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
-
-	executionCtx := NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.MassMigration)
 }
 
 func (s *MassMigrationCommitmentsTestSuite) TearDownTest() {
