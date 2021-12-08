@@ -97,34 +97,6 @@ func (p *Peer) handleStream(stream network.Stream) {
 		server: server,
 		client: client,
 	})
-	//
-	//rw := bufio.NewReadWriter(c.Reader, c.Writer)
-	//
-	//
-	//go func() {
-	//	time.Sleep(100 * time.Millisecond)
-	//
-	//	println("WRITE")
-	//	_, err := rw.WriteString("Hello world!\n")
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//
-	//	err = rw.Flush()
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//
-	//	println("WRITE END")
-	//}()
-	//
-	//go func() {
-	//	for {
-	//		str, _ := rw.ReadString('\n')
-	//
-	//		fmt.Printf("got str: %s\n", str)
-	//	}
-	//}()
 
 	go server.ServeCodec(rpc.NewCodec(c), 0)
 }
@@ -156,7 +128,7 @@ func (p *Peer) Dial(destination string) error {
 
 	println("Dial end")
 
-	go p.handleStream(s)
+	p.handleStream(s)
 
 	return nil
 }

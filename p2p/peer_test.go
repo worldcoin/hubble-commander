@@ -14,13 +14,13 @@ type IntParam struct {
 	value int
 }
 
-func (t *TestRpc) Double(arg IntParam) (*IntParam, error) {
-	return &IntParam{arg.value * 2}, nil
+func (t *TestRpc) Double(arg IntParam) IntParam {
+	return IntParam{arg.value * 2}
 }
 
 func TestPeer(t *testing.T) {
 	alice, err := NewPeerWithRandomKey(0, func(conn Connection) {
-		err := conn.server.RegisterName("test", TestRpc{})
+		err := conn.server.RegisterName("test", &TestRpc{})
 		if err != nil {
 			panic(err)
 		}
@@ -28,8 +28,8 @@ func TestPeer(t *testing.T) {
 	require.NoError(t, err)
 
 	bob, err := NewPeerWithRandomKey(0, func(conn Connection) {
-		var res int
-		err := conn.client.Call("test_Double", 3, &res)
+		var res IntParam
+		err := conn.client.Call("test_Double", IntParam{3}, &res)
 		if err != nil {
 			panic(err)
 		}
