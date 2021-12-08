@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
@@ -30,6 +31,10 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 
 	transfer.SetReceiveTime()
 	err = a.storage.AddTransfer(transfer)
+	if errors.Is(err, bh.ErrKeyExists) {
+		logDuplicateTransaction(&transfer.Hash)
+		return &transfer.Hash, nil
+	}
 	if err != nil {
 		return nil, err
 	}

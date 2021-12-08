@@ -186,6 +186,28 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_AddsTransferToSto
 	s.NotNil(transfer)
 }
 
+func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+
+	err = s.storage.SetTransactionErrors(models.TxError{
+		TxHash:       *originalHash,
+		ErrorMessage: "some error",
+	})
+	s.NoError(err)
+
+	expectedTx, err := s.storage.GetCreate2Transfer(*originalHash)
+	s.NoError(err)
+
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+	s.Equal(*originalHash, *hash)
+
+	tx, err := s.storage.GetCreate2Transfer(*originalHash)
+	s.NoError(err)
+	s.Equal(*expectedTx, *tx)
+}
+
 func TestSendCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendCreate2TransferTestSuite))
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.Hash, error) {
@@ -30,6 +31,10 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 
 	massMigration.SetReceiveTime()
 	err = a.storage.AddMassMigration(massMigration)
+	if errors.Is(err, bh.ErrKeyExists) {
+		logDuplicateTransaction(&massMigration.Hash)
+		return &massMigration.Hash, nil
+	}
 	if err != nil {
 		return nil, err
 	}
