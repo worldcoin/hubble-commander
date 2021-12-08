@@ -19,7 +19,8 @@ func (c *Client) FilterLogs(contract *bind.BoundContract, eventName string, opts
 		sub  event.Subscription
 	)
 
-	if err = it.Error(); err != nil {
+	err = it.Error()
+	if err != nil {
 		return err
 	}
 
