@@ -21,7 +21,9 @@ func (c *Context) DisputeSignature(
 		return c.disputeTransferSignature(batch, commitmentIndex, stateProofs)
 	case batchtype.Create2Transfer:
 		return c.disputeCreate2TransferSignature(batch, commitmentIndex, stateProofs)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.MassMigration:
+		return c.disputeMassMigrationSignature(batch, commitmentIndex, stateProofs)
+	case batchtype.Genesis, batchtype.Deposit:
 		return errors.WithStack(ErrUnsupportedBatchType)
 	}
 	return nil
@@ -61,4 +63,22 @@ func (c *Context) disputeCreate2TransferSignature(
 	}
 
 	return c.client.DisputeSignatureCreate2Transfer(&batch.ID, &batch.Hash, targetCommitmentProof, signatureProof)
+}
+
+func (c *Context) disputeMassMigrationSignature(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex int,
+	stateProofs []models.StateMerkleProof,
+) error {
+	signatureProof, err := c.proverCtx.SignatureProof(stateProofs)
+	if err != nil {
+		return err
+	}
+
+	targetCommitmentProof, err := c.proverCtx.TargetMMCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
+	}
+
+	return c.client.DisputeSignatureMassMigration(&batch.ID, &batch.Hash, targetCommitmentProof, signatureProof)
 }

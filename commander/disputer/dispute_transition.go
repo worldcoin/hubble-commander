@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 )
 
 func (c *Context) DisputeTransition(
@@ -23,6 +24,8 @@ func (c *Context) DisputeTransition(
 		err = c.disputeTransitionC2T(batch, commitmentIndex, merkleProofs, previousCommitmentProof)
 	case batchtype.MassMigration:
 		err = c.disputeTransitionMM(batch, commitmentIndex, merkleProofs, previousCommitmentProof)
+	case batchtype.Genesis, batchtype.Deposit:
+		return errors.WithStack(ErrUnsupportedBatchType)
 	}
 	return err
 }
