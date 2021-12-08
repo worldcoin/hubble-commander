@@ -45,7 +45,9 @@ SUM: Count: 114882, Size: 10094035
 ```
 
 ### Create2Transfer batch (unrealistic)
-Measured with `TestBenchCreate2TransfersCommander`. 
+Measured with `TestBenchCreate2TransfersCommander` (
+at [`6b813227`](https://github.com/worldcoin/hubble-commander/commit/6b81322780bb73f21ce25c434265062fc72a44bd)).
+
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
