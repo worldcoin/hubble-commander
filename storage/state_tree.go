@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -19,8 +17,6 @@ const (
 	StateTreeDepth = merkletree.MaxDepth
 	StateTreeSize  = int64(1) << StateTreeDepth
 )
-
-var ErrUnexpectedRootAfterRollback = fmt.Errorf("unexpected state root after state update rollback")
 
 type StateTree struct {
 	database   *Database
@@ -152,18 +148,18 @@ func (s *StateTree) GetNodeWitness(path models.MerklePath) (models.Witness, erro
 }
 
 func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
+	currentRootHash, err := s.Root()
+	if err != nil {
+		return err
+	}
+	if *currentRootHash == targetRootHash {
+		return nil
+	}
+
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) (err error) {
 		stateTree := NewStateTree(txDatabase)
-		var currentRootHash *common.Hash
-		err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-			currentRootHash, err = stateTree.Root()
-			if err != nil {
-				return false, err
-			}
-			if *currentRootHash == targetRootHash {
-				return true, nil
-			}
 
+		err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 			var stateUpdate *models.StateUpdate
 			stateUpdate, err = decodeStateUpdate(item)
 			if err != nil {
@@ -174,11 +170,15 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			}
 
 			currentRootHash, err = stateTree.revertState(stateUpdate)
-			return false, err
+			if err != nil {
+				return false, err
+			}
+			return *currentRootHash == targetRootHash, nil
 		})
 		if err != nil && err != db.ErrIteratorFinished {
 			return errors.WithStack(err)
 		}
+
 		if *currentRootHash != targetRootHash {
 			return errors.WithStack(ErrNonexistentState)
 		}
@@ -268,7 +268,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		return nil, err
 	}
 	if *currentRootHash != stateUpdate.PrevRoot {
-		return nil, errors.WithStack(ErrUnexpectedRootAfterRollback)
+		panic("unexpected state root after state update rollback, this should never happen")
 	}
 
 	err = s.deleteStateUpdate(stateUpdate.ID)
