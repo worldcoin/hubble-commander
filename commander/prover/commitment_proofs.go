@@ -1,6 +1,7 @@
 package prover
 
 import (
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -99,6 +100,7 @@ func createCommitmentInclusionProof(
 	return &proof, nil
 }
 
+//TODO-dis: rename
 func (c *Context) TargetCommitmentInclusionProof(
 	batch *eth.DecodedTxBatch,
 	commitmentIndex uint32,
@@ -124,6 +126,39 @@ func (c *Context) TargetCommitmentInclusionProof(
 			AccountRoot:  batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
 			FeeReceiver:  commitment.FeeReceiver,
+			Transactions: commitment.Transactions,
+		},
+		Path:    path,
+		Witness: tree.GetWitness(commitmentIndex),
+	}, nil
+}
+
+func (c *Context) TargetMMCommitmentInclusionProof(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex uint32,
+) (*models.MMCommitmentInclusionProof, error) {
+	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
+	for i := range batch.Commitments {
+		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(batch.AccountTreeRoot))
+	}
+	tree, err := merkletree.NewMerkleTree(leafHashes)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	path := &models.MerklePath{
+		Path:  commitmentIndex,
+		Depth: tree.Depth(),
+	}
+
+	commitment := batch.Commitments[commitmentIndex].(*encoder.DecodedMMCommitment)
+	return &models.MMCommitmentInclusionProof{
+		StateRoot: commitment.StateRoot,
+		Body: &models.MMBody{
+			AccountRoot:  batch.AccountTreeRoot,
+			Signature:    commitment.CombinedSignature,
+			Meta:         commitment.Meta,
+			WithdrawRoot: commitment.WithdrawRoot,
 			Transactions: commitment.Transactions,
 		},
 		Path:    path,

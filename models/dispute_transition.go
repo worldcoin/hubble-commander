@@ -25,6 +25,7 @@ type TransferBody struct {
 	Transactions []byte
 }
 
+//TODO-dis: extract common part from this and TransferCommitmentInclusionProof
 type MMCommitmentInclusionProof struct {
 	StateRoot common.Hash
 	Body      *MMBody
@@ -35,7 +36,7 @@ type MMCommitmentInclusionProof struct {
 type MMBody struct {
 	AccountRoot  common.Hash
 	Signature    Signature
-	Meta         MassMigrationMeta
+	Meta         *MassMigrationMeta
 	WithdrawRoot common.Hash
 	Transactions []byte
 }

@@ -239,6 +239,48 @@ func (s *CommitmentProofsTestSuite) TestTargetCommitmentInclusionProof() {
 	s.Equal(expected, *proof)
 }
 
+func (s *CommitmentProofsTestSuite) TestTargetMMCommitmentInclusionProof() {
+	decodedMMBatch := s.decodedBatch
+	decodedMMBatch.Type = batchtype.MassMigration
+	decodedMMBatch.Commitments = make([]encoder.Commitment, 0, len(s.decodedCommitments))
+
+	for i := range s.decodedCommitments {
+		decodedMMBatch.Commitments = append(decodedMMBatch.Commitments,
+			&encoder.DecodedMMCommitment{
+				DecodedCommitment: s.decodedCommitments[i],
+				Meta: &models.MassMigrationMeta{
+					SpokeID:     uint32(i),
+					TokenID:     models.MakeUint256(1),
+					Amount:      models.MakeUint256(100),
+					FeeReceiver: 0,
+				},
+				WithdrawRoot: utils.RandomHash(),
+			},
+		)
+	}
+
+	mmCommitment := decodedMMBatch.Commitments[1].(*encoder.DecodedMMCommitment)
+	expected := models.MMCommitmentInclusionProof{
+		StateRoot: mmCommitment.StateRoot,
+		Body: &models.MMBody{
+			AccountRoot:  decodedMMBatch.AccountTreeRoot,
+			Signature:    mmCommitment.CombinedSignature,
+			Meta:         mmCommitment.Meta,
+			WithdrawRoot: mmCommitment.WithdrawRoot,
+			Transactions: mmCommitment.Transactions,
+		},
+		Path: &models.MerklePath{
+			Path:  1,
+			Depth: 2,
+		},
+		Witness: []common.Hash{decodedMMBatch.Commitments[0].LeafHash(decodedMMBatch.AccountTreeRoot)},
+	}
+
+	proof, err := s.proverCtx.TargetMMCommitmentInclusionProof(&decodedMMBatch, 1)
+	s.NoError(err)
+	s.Equal(expected, *proof)
+}
+
 func (s *CommitmentProofsTestSuite) addGenesisBatch() *models.Batch {
 	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
