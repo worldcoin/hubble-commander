@@ -14,16 +14,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MassMigrationCommitmentsTestSuite struct {
+type MMCommitmentsTestSuite struct {
 	testSuiteWithTxsContext
 	maxTxBytesInCommitment int
 }
 
-func (s *MassMigrationCommitmentsTestSuite) SetupSuite() {
+func (s *MMCommitmentsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *MassMigrationCommitmentsTestSuite) SetupTest() {
+func (s *MMCommitmentsTestSuite) SetupTest() {
 	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.MassMigration, &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -37,12 +37,12 @@ func (s *MassMigrationCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TearDownTest() {
+func (s *MMCommitmentsTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
@@ -61,7 +61,7 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 	s.Equal(targetFeeReceiver, batchData.Metas()[0].FeeReceiver)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
@@ -75,15 +75,15 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 }
 
 func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(MassMigrationCommitmentsTestSuite))
+	suite.Run(t, new(MMCommitmentsTestSuite))
 }
 
-func (s *MassMigrationCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
+func (s *MMCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
 	err := s.storage.BatchAddMassMigration(massMigrations)
 	s.NoError(err)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {
+func (s *MMCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {
 	hashes := make([]common.Hash, 0, len(massMigrations))
 
 	for i := range massMigrations {
