@@ -13,7 +13,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/multiformats/go-multiaddr"
-	"io"
 	netRpc "net/rpc"
 	"net/rpc/jsonrpc"
 	"strconv"
@@ -47,14 +46,16 @@ func NewPeer(port int, handleConnection func(conn Connection), privateKey crypto
 		return nil, err
 	}
 
-	h.SetStreamHandler("/worldcoin/1.0.0", func(stream network.Stream) {
+	p := &Peer{
+		host:             h,
+		handleConnection: handleConnection,
+	}
 
+	h.SetStreamHandler("/worldcoin/1.0.0", func(stream network.Stream) {
+		p.handleStream(stream)
 	})
 
-	return &Peer{
-		host: h,
-		handleConnection: handleConnection,
-	}, nil
+	return p, nil
 }
 
 func NewPeerWithRandomKey(port int, handleConnection func(conn Connection)) (*Peer, error) {
@@ -68,8 +69,8 @@ func NewPeerWithRandomKey(port int, handleConnection func(conn Connection)) (*Pe
 }
 
 type conn struct {
-	io.Reader
-	io.Writer
+	*bufio.Reader
+	*bufio.Writer
 }
 
 func (c conn) Close() error {
@@ -81,6 +82,8 @@ func (c conn) SetWriteDeadline(time time.Time) error {
 }
 
 func (p *Peer) handleStream(stream network.Stream) {
+	fmt.Println("handleStream")
+
 	server := rpc.NewServer()
 
 	c := conn{
@@ -94,6 +97,34 @@ func (p *Peer) handleStream(stream network.Stream) {
 		server: server,
 		client: client,
 	})
+	//
+	//rw := bufio.NewReadWriter(c.Reader, c.Writer)
+	//
+	//
+	//go func() {
+	//	time.Sleep(100 * time.Millisecond)
+	//
+	//	println("WRITE")
+	//	_, err := rw.WriteString("Hello world!\n")
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//
+	//	err = rw.Flush()
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//
+	//	println("WRITE END")
+	//}()
+	//
+	//go func() {
+	//	for {
+	//		str, _ := rw.ReadString('\n')
+	//
+	//		fmt.Printf("got str: %s\n", str)
+	//	}
+	//}()
 
 	go server.ServeCodec(rpc.NewCodec(c), 0)
 }
@@ -122,6 +153,8 @@ func (p *Peer) Dial(destination string) error {
 	if err != nil {
 		return err
 	}
+
+	println("Dial end")
 
 	go p.handleStream(s)
 

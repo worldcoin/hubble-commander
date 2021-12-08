@@ -3,14 +3,19 @@ package p2p
 import (
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 type TestRpc struct {
 
 }
 
-func (t *TestRpc) Double(arg int) (int, error) {
-	return arg * 2, nil
+type IntParam struct {
+	value int
+}
+
+func (t *TestRpc) Double(arg IntParam) (*IntParam, error) {
+	return &IntParam{arg.value * 2}, nil
 }
 
 func TestPeer(t *testing.T) {
@@ -35,6 +40,8 @@ func TestPeer(t *testing.T) {
 	err = bob.Dial(addr)
 	require.NoError(t, err)
 
-	require.NoError(t, alice.Close())
-	require.NoError(t, bob.Close())
+	time.Sleep(1 * time.Second)
+
+	//require.NoError(t, alice.Close())
+	//require.NoError(t, bob.Close())
 }
