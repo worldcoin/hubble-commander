@@ -1,7 +1,6 @@
 package p2p
 
 import (
-	"bufio"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/multiformats/go-multiaddr"
+	"io"
 	netRpc "net/rpc"
 	"net/rpc/jsonrpc"
 	"strconv"
@@ -69,8 +69,8 @@ func NewPeerWithRandomKey(port int, handleConnection func(conn Connection)) (*Pe
 }
 
 type conn struct {
-	*bufio.Reader
-	*bufio.Writer
+	io.Reader
+	io.Writer
 }
 
 func (c conn) Close() error {
@@ -87,8 +87,8 @@ func (p *Peer) handleStream(stream network.Stream) {
 	server := rpc.NewServer()
 
 	c := conn{
-		Reader: bufio.NewReader(stream),
-		Writer: bufio.NewWriter(stream),
+		Reader: stream,
+		Writer: stream,
 	}
 
 	client := jsonrpc.NewClient(c)
@@ -99,6 +99,8 @@ func (p *Peer) handleStream(stream network.Stream) {
 	})
 
 	go server.ServeCodec(rpc.NewCodec(c), 0)
+
+	println("handleStream end")
 }
 
 func (p *Peer) Dial(destination string) error {
@@ -129,6 +131,8 @@ func (p *Peer) Dial(destination string) error {
 	println("Dial end")
 
 	p.handleStream(s)
+
+	println("Handle end")
 
 	return nil
 }

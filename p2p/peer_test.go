@@ -1,7 +1,9 @@
 package p2p
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
+	"log"
 	"testing"
 	"time"
 )
@@ -29,9 +31,10 @@ func TestPeer(t *testing.T) {
 
 	bob, err := NewPeerWithRandomKey(0, func(conn Connection) {
 		var res IntParam
-		err := conn.client.Call("test_Double", IntParam{3}, &res)
+		err := conn.client.Call("test_double", IntParam{3}, &res)
+		fmt.Println(res.value)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	})
 	require.NoError(t, err)
