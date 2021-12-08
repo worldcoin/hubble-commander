@@ -1,9 +1,10 @@
-package models
+package stored
 
 import (
 	"encoding/binary"
 	"reflect"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -11,10 +12,6 @@ import (
 type ByteEncoder interface {
 	Bytes() []byte
 	SetBytes(data []byte) error
-}
-
-func getBadgerHoldPrefix(dataType interface{}) []byte {
-	return []byte("bh_" + reflect.TypeOf(dataType).Name() + ":")
 }
 
 func getTypeName(dataType interface{}) []byte {
@@ -72,7 +69,7 @@ func decodeStringPointer(data []byte) *string {
 	return ref.String(string(data[1:]))
 }
 
-func encodeTimestampPointer(timestamp *Timestamp) []byte {
+func encodeTimestampPointer(timestamp *models.Timestamp) []byte {
 	b := make([]byte, 16)
 	if timestamp == nil {
 		return b
@@ -82,12 +79,12 @@ func encodeTimestampPointer(timestamp *Timestamp) []byte {
 	return b
 }
 
-func decodeTimestampPointer(data []byte) (*Timestamp, error) {
+func decodeTimestampPointer(data []byte) (*models.Timestamp, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}
 
-	var timestamp Timestamp
+	var timestamp models.Timestamp
 	err := timestamp.SetBytes(data[1:])
 	if err != nil {
 		return nil, err
@@ -95,8 +92,8 @@ func decodeTimestampPointer(data []byte) (*Timestamp, error) {
 	return &timestamp, nil
 }
 
-func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
-	b := make([]byte, commitmentIDDataLength+1)
+func EncodeCommitmentIDPointer(id *models.CommitmentID) []byte {
+	b := make([]byte, models.CommitmentIDDataLength+1)
 	if id == nil {
 		return b
 	}
@@ -105,12 +102,12 @@ func EncodeCommitmentIDPointer(id *CommitmentID) []byte {
 	return b
 }
 
-func decodeCommitmentIDPointer(data []byte) (*CommitmentID, error) {
+func decodeCommitmentIDPointer(data []byte) (*models.CommitmentID, error) {
 	if data[0] == 0 {
 		return nil, nil
 	}
 
-	var commitmentID CommitmentID
+	var commitmentID models.CommitmentID
 	err := commitmentID.SetBytes(data[1:])
 	if err != nil {
 		return nil, err

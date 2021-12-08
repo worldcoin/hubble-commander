@@ -213,7 +213,7 @@ func getClient(
 	commanderMetrics *metrics.CommanderMetrics,
 ) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
-		log.Fatal("no Ethereum config")
+		return nil, errors.Errorf("Ethereum config missing")
 	}
 
 	dbChainState, err := storage.GetChainState()

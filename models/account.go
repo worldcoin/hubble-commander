@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var AccountLeafPrefix = getBadgerHoldPrefix(AccountLeaf{})
+var AccountLeafPrefix = GetBadgerHoldPrefix(AccountLeaf{})
 
 type AccountLeaf struct {
 	PubKeyID  uint32

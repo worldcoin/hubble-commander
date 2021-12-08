@@ -1,18 +1,19 @@
-package models
+package stored
 
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 )
 
-func TestStoredTxReceipt_Bytes(t *testing.T) {
-	txReceipt := StoredTxReceipt{
+func TestTxReceipt_Bytes(t *testing.T) {
+	txReceipt := TxReceipt{
 		Hash: utils.RandomHash(),
-		CommitmentID: &CommitmentID{
-			BatchID:      MakeUint256(10),
+		CommitmentID: &models.CommitmentID{
+			BatchID:      models.MakeUint256(10),
 			IndexInBatch: 2,
 		},
 		ToStateID:    ref.Uint32(12),
@@ -21,8 +22,8 @@ func TestStoredTxReceipt_Bytes(t *testing.T) {
 
 	bytes := txReceipt.Bytes()
 
-	decodedStoredTxReceipt := StoredTxReceipt{}
-	err := decodedStoredTxReceipt.SetBytes(bytes)
+	decodedTxReceipt := TxReceipt{}
+	err := decodedTxReceipt.SetBytes(bytes)
 	require.NoError(t, err)
-	require.EqualValues(t, txReceipt, decodedStoredTxReceipt)
+	require.EqualValues(t, txReceipt, decodedTxReceipt)
 }

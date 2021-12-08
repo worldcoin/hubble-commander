@@ -1,9 +1,10 @@
-package models
+package stored
 
 import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -11,33 +12,33 @@ import (
 )
 
 const (
-	storedTxBytesLength               = 213
-	storedTxTransferBodyLength        = 4
-	storedTxCreate2TransferBodyLength = PublicKeyLength
-	storedTxMassMigrationBodyLength   = 4
+	txBytesLength               = 213
+	txTransferBodyLength        = 4
+	txCreate2TransferBodyLength = models.PublicKeyLength
+	txMassMigrationBodyLength   = 4
 )
 
 var (
-	StoredTxName                = getTypeName(StoredTx{})
-	StoredTxPrefix              = getBadgerHoldPrefix(StoredTx{})
-	errInvalidStoredTxIndexType = fmt.Errorf("invalid StoredTx index type")
+	TxName                = getTypeName(Tx{})
+	TxPrefix              = models.GetBadgerHoldPrefix(Tx{})
+	errInvalidTxIndexType = fmt.Errorf("invalid stored.Tx index type")
 )
 
-type StoredTx struct {
+type Tx struct {
 	Hash        common.Hash
 	TxType      txtype.TransactionType
 	FromStateID uint32
-	Amount      Uint256
-	Fee         Uint256
-	Nonce       Uint256
-	Signature   Signature
-	ReceiveTime *Timestamp
+	Amount      models.Uint256
+	Fee         models.Uint256
+	Nonce       models.Uint256
+	Signature   models.Signature
+	ReceiveTime *models.Timestamp
 
 	Body TxBody
 }
 
-func NewStoredTxFromTransfer(t *Transfer) *StoredTx {
-	return &StoredTx{
+func NewTxFromTransfer(t *models.Transfer) *Tx {
+	return &Tx{
 		Hash:        t.Hash,
 		TxType:      t.TxType,
 		FromStateID: t.FromStateID,
@@ -46,14 +47,14 @@ func NewStoredTxFromTransfer(t *Transfer) *StoredTx {
 		Nonce:       t.Nonce,
 		Signature:   t.Signature,
 		ReceiveTime: t.ReceiveTime,
-		Body: &StoredTxTransferBody{
+		Body: &TxTransferBody{
 			ToStateID: t.ToStateID,
 		},
 	}
 }
 
-func NewStoredTxFromCreate2Transfer(t *Create2Transfer) *StoredTx {
-	return &StoredTx{
+func NewTxFromCreate2Transfer(t *models.Create2Transfer) *Tx {
+	return &Tx{
 		Hash:        t.Hash,
 		TxType:      t.TxType,
 		FromStateID: t.FromStateID,
@@ -62,14 +63,14 @@ func NewStoredTxFromCreate2Transfer(t *Create2Transfer) *StoredTx {
 		Nonce:       t.Nonce,
 		Signature:   t.Signature,
 		ReceiveTime: t.ReceiveTime,
-		Body: &StoredTxCreate2TransferBody{
+		Body: &TxCreate2TransferBody{
 			ToPublicKey: t.ToPublicKey,
 		},
 	}
 }
 
-func NewStoredTxFromMassMigration(m *MassMigration) *StoredTx {
-	return &StoredTx{
+func NewTxFromMassMigration(m *models.MassMigration) *Tx {
+	return &Tx{
 		Hash:        m.Hash,
 		TxType:      m.TxType,
 		FromStateID: m.FromStateID,
@@ -78,13 +79,13 @@ func NewStoredTxFromMassMigration(m *MassMigration) *StoredTx {
 		Nonce:       m.Nonce,
 		Signature:   m.Signature,
 		ReceiveTime: m.ReceiveTime,
-		Body: &StoredTxMassMigrationBody{
+		Body: &TxMassMigrationBody{
 			SpokeID: m.SpokeID,
 		},
 	}
 }
 
-func (t *StoredTx) Bytes() []byte {
+func (t *Tx) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())
 	b[32] = byte(t.TxType)
@@ -99,9 +100,9 @@ func (t *StoredTx) Bytes() []byte {
 	return b
 }
 
-func (t *StoredTx) SetBytes(data []byte) error {
-	if len(data) < storedTxBytesLength {
-		return ErrInvalidLength
+func (t *Tx) SetBytes(data []byte) error {
+	if len(data) < txBytesLength {
+		return models.ErrInvalidLength
 	}
 	err := t.Signature.SetBytes(data[133:197])
 	if err != nil {
@@ -129,18 +130,18 @@ func (t *StoredTx) SetBytes(data []byte) error {
 	return nil
 }
 
-func (t *StoredTx) BytesLen() int {
-	return storedTxBytesLength + t.Body.BytesLen()
+func (t *Tx) BytesLen() int {
+	return txBytesLength + t.Body.BytesLen()
 }
 
-func (t *StoredTx) ToTransfer(txReceipt *StoredTxReceipt) *Transfer {
-	transferBody, ok := t.Body.(*StoredTxTransferBody)
+func (t *Tx) ToTransfer(txReceipt *TxReceipt) *models.Transfer {
+	transferBody, ok := t.Body.(*TxTransferBody)
 	if !ok {
 		panic("invalid transfer body type")
 	}
 
-	transfer := &Transfer{
-		TransactionBase: TransactionBase{
+	transfer := &models.Transfer{
+		TransactionBase: models.TransactionBase{
 			Hash:        t.Hash,
 			TxType:      t.TxType,
 			FromStateID: t.FromStateID,
@@ -160,14 +161,14 @@ func (t *StoredTx) ToTransfer(txReceipt *StoredTxReceipt) *Transfer {
 	return transfer
 }
 
-func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfer {
-	c2tBody, ok := t.Body.(*StoredTxCreate2TransferBody)
+func (t *Tx) ToCreate2Transfer(txReceipt *TxReceipt) *models.Create2Transfer {
+	c2tBody, ok := t.Body.(*TxCreate2TransferBody)
 	if !ok {
 		panic("invalid create2Transfer body type")
 	}
 
-	transfer := &Create2Transfer{
-		TransactionBase: TransactionBase{
+	transfer := &models.Create2Transfer{
+		TransactionBase: models.TransactionBase{
 			Hash:        t.Hash,
 			TxType:      t.TxType,
 			FromStateID: t.FromStateID,
@@ -188,14 +189,14 @@ func (t *StoredTx) ToCreate2Transfer(txReceipt *StoredTxReceipt) *Create2Transfe
 	return transfer
 }
 
-func (t *StoredTx) ToMassMigration(txReceipt *StoredTxReceipt) *MassMigration {
-	massMigrationBody, ok := t.Body.(*StoredTxMassMigrationBody)
+func (t *Tx) ToMassMigration(txReceipt *TxReceipt) *models.MassMigration {
+	massMigrationBody, ok := t.Body.(*TxMassMigrationBody)
 	if !ok {
 		panic("invalid mass migration body type")
 	}
 
-	massMigration := &MassMigration{
-		TransactionBase: TransactionBase{
+	massMigration := &models.MassMigration{
+		TransactionBase: models.TransactionBase{
 			Hash:        t.Hash,
 			TxType:      t.TxType,
 			FromStateID: t.FromStateID,
@@ -218,15 +219,15 @@ func (t *StoredTx) ToMassMigration(txReceipt *StoredTxReceipt) *MassMigration {
 func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error) {
 	switch transactionType {
 	case txtype.Transfer:
-		body := new(StoredTxTransferBody)
+		body := new(TxTransferBody)
 		err := body.SetBytes(data)
 		return body, err
 	case txtype.Create2Transfer:
-		body := new(StoredTxCreate2TransferBody)
+		body := new(TxCreate2TransferBody)
 		err := body.SetBytes(data)
 		return body, err
 	case txtype.MassMigration:
-		body := new(StoredTxMassMigrationBody)
+		body := new(TxMassMigrationBody)
 		err := body.SetBytes(data)
 		return body, err
 	}
@@ -235,17 +236,17 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 
 // nolint:gocritic
 // Type implements badgerhold.Storer
-func (t StoredTx) Type() string {
-	return string(StoredTxName)
+func (t Tx) Type() string {
+	return string(TxName)
 }
 
 // nolint:gocritic
 // Indexes implements badgerhold.Storer
-func (t StoredTx) Indexes() map[string]bh.Index {
+func (t Tx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"FromStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTx(value)
+				v, err := interfaceToTx(value)
 				if err != nil {
 					return nil, err
 				}
@@ -254,12 +255,12 @@ func (t StoredTx) Indexes() map[string]bh.Index {
 		},
 		"ToStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTx(value)
+				v, err := interfaceToTx(value)
 				if err != nil {
 					return nil, err
 				}
 
-				transferBody, ok := v.Body.(*StoredTxTransferBody)
+				transferBody, ok := v.Body.(*TxTransferBody)
 				if !ok {
 					return nil, nil
 				}
@@ -269,16 +270,16 @@ func (t StoredTx) Indexes() map[string]bh.Index {
 	}
 }
 
-func interfaceToStoredTx(value interface{}) (*StoredTx, error) {
-	p, ok := value.(*StoredTx)
+func interfaceToTx(value interface{}) (*Tx, error) {
+	p, ok := value.(*Tx)
 	if ok {
 		return p, nil
 	}
-	v, ok := value.(StoredTx)
+	v, ok := value.(Tx)
 	if ok {
 		return &v, nil
 	}
-	return nil, errors.WithStack(errInvalidStoredTxIndexType)
+	return nil, errors.WithStack(errInvalidTxIndexType)
 }
 
 type TxBody interface {
@@ -286,56 +287,56 @@ type TxBody interface {
 	BytesLen() int
 }
 
-type StoredTxTransferBody struct {
+type TxTransferBody struct {
 	ToStateID uint32
 }
 
-func (t *StoredTxTransferBody) Bytes() []byte {
-	b := make([]byte, storedTxTransferBodyLength)
+func (t *TxTransferBody) Bytes() []byte {
+	b := make([]byte, txTransferBodyLength)
 	binary.BigEndian.PutUint32(b, t.ToStateID)
 	return b
 }
 
-func (t *StoredTxTransferBody) SetBytes(data []byte) error {
+func (t *TxTransferBody) SetBytes(data []byte) error {
 	t.ToStateID = binary.BigEndian.Uint32(data)
 	return nil
 }
 
-func (t *StoredTxTransferBody) BytesLen() int {
-	return storedTxTransferBodyLength
+func (t *TxTransferBody) BytesLen() int {
+	return txTransferBodyLength
 }
 
-type StoredTxCreate2TransferBody struct {
-	ToPublicKey PublicKey
+type TxCreate2TransferBody struct {
+	ToPublicKey models.PublicKey
 }
 
-func (t *StoredTxCreate2TransferBody) Bytes() []byte {
+func (t *TxCreate2TransferBody) Bytes() []byte {
 	return t.ToPublicKey.Bytes()
 }
 
-func (t *StoredTxCreate2TransferBody) SetBytes(data []byte) error {
+func (t *TxCreate2TransferBody) SetBytes(data []byte) error {
 	return t.ToPublicKey.SetBytes(data)
 }
 
-func (t *StoredTxCreate2TransferBody) BytesLen() int {
-	return storedTxCreate2TransferBodyLength
+func (t *TxCreate2TransferBody) BytesLen() int {
+	return txCreate2TransferBodyLength
 }
 
-type StoredTxMassMigrationBody struct {
+type TxMassMigrationBody struct {
 	SpokeID uint32
 }
 
-func (t *StoredTxMassMigrationBody) Bytes() []byte {
-	b := make([]byte, storedTxMassMigrationBodyLength)
+func (t *TxMassMigrationBody) Bytes() []byte {
+	b := make([]byte, txMassMigrationBodyLength)
 	binary.BigEndian.PutUint32(b, t.SpokeID)
 	return b
 }
 
-func (t *StoredTxMassMigrationBody) SetBytes(data []byte) error {
+func (t *TxMassMigrationBody) SetBytes(data []byte) error {
 	t.SpokeID = binary.BigEndian.Uint32(data)
 	return nil
 }
 
-func (t *StoredTxMassMigrationBody) BytesLen() int {
-	return storedTxMassMigrationBodyLength
+func (t *TxMassMigrationBody) BytesLen() int {
+	return txMassMigrationBodyLength
 }

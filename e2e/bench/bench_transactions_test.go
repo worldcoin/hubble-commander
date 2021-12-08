@@ -17,7 +17,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -152,8 +151,7 @@ func pickTxType(distribution TxTypeDistribution) txtype.TransactionType {
 		}
 	}
 
-	log.Fatal("Unreachable")
-	return txtype.Transfer
+	panic("unreachable")
 }
 
 func randomInt(n int) int {
