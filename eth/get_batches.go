@@ -121,12 +121,16 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNew
 		events = append(events, it.Event)
 	}
 
+	if err = it.Error(); err != nil {
+		return nil, err
+	}
+
 	// Sort for sanity
 	sort.Slice(events, func(i, j int) bool {
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	return events, it.Error()
+	return events, nil
 }
 
 func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.RollupDepositsFinalised, error) {
@@ -141,12 +145,16 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.
 		events = append(events, it.Event)
 	}
 
+	if err = it.Error(); err != nil {
+		return nil, err
+	}
+
 	// Sort for sanity
 	sort.Slice(events, func(i, j int) bool {
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	return events, it.Error()
+	return events, nil
 }
 
 func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBatchIterator, error) {
