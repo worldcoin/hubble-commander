@@ -115,7 +115,14 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[0])
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[1])
 
-	tempTxsCtx := NewTxsContext(s.txsCtx.storage, s.txsCtx.client, s.cfg, metrics.NewCommanderMetrics(), context.Background(), batchtype.Transfer)
+	tempTxsCtx := NewTxsContext(
+		s.txsCtx.storage,
+		s.txsCtx.client,
+		s.cfg,
+		metrics.NewCommanderMetrics(),
+		context.Background(),
+		batchtype.Transfer,
+	)
 	batchData, err := tempTxsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Equal(batchData.Len(), 1)
