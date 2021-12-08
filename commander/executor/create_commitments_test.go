@@ -34,10 +34,6 @@ func (s *CreateCommitmentsTestSuite) SetupSuite() {
 }
 
 func (s *CreateCommitmentsTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-
 	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Transfer, &config.RollupConfig{
 		MinTxsPerCommitment:    2,
 		MaxTxsPerCommitment:    4,
