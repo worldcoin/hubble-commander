@@ -90,7 +90,7 @@ func (s *TransactionStorage) unsafeGetPendingMassMigrations() ([]models.MassMigr
 func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.CommitmentID) ([]models.MassMigration, error) {
 	massMigrations := make([]models.MassMigration, 0, 1)
 
-	err := s.iterateTxsByCommitmentID(id, func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt) {
+	err := s.iterateTxsByCommitmentID(id, func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt) {
 		if storedTx.TxType == txtype.MassMigration {
 			massMigrations = append(massMigrations, *storedTx.ToMassMigration(storedTxReceipt))
 		}
@@ -128,8 +128,8 @@ func (s *Storage) GetMassMigrationWithBatchDetails(hash common.Hash) (*models.Ma
 		}
 
 		massMigrations, err = txStorage.massMigrationsToMassMigrationsWithBatchDetails(
-			[]models.StoredTx{*tx},
-			[]*models.StoredTxReceipt{txReceipt},
+			[]stored.Tx{*tx},
+			[]*stored.TxReceipt{txReceipt},
 		)
 		return err
 	})
@@ -140,7 +140,7 @@ func (s *Storage) GetMassMigrationWithBatchDetails(hash common.Hash) (*models.Ma
 	return &massMigrations[0], nil
 }
 
-func (s *Storage) massMigrationsToMassMigrationsWithBatchDetails(txs []models.StoredTx, txReceipts []*models.StoredTxReceipt) (
+func (s *Storage) massMigrationsToMassMigrationsWithBatchDetails(txs []stored.Tx, txReceipts []*stored.TxReceipt) (
 	result []models.MassMigrationWithBatchDetails,
 	err error,
 ) {
