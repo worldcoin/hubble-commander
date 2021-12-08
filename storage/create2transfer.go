@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -15,12 +16,12 @@ import (
 func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-			err := txStorage.addStoredTxReceipt(models.NewStoredTxReceiptFromCreate2Transfer(t))
+			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromCreate2Transfer(t))
 			if err != nil {
 				return err
 			}
 		}
-		return txStorage.addStoredTx(models.NewStoredTxFromCreate2Transfer(t))
+		return txStorage.addStoredTx(stored.NewTxFromCreate2Transfer(t))
 	})
 }
 
@@ -64,8 +65,8 @@ func (s *TransactionStorage) GetPendingCreate2Transfers() (txs models.Create2Tra
 
 func (s *TransactionStorage) unsafeGetPendingCreate2Transfers() ([]models.Create2Transfer, error) {
 	txs := make([]models.Create2Transfer, 0, 32)
-	var storedTx models.StoredTx
-	err := s.database.Badger.Iterator(models.StoredTxPrefix, db.KeyIteratorOpts,
+	var storedTx stored.Tx
+	err := s.database.Badger.Iterator(stored.TxPrefix, db.KeyIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			skip, err := s.getStoredTxFromItem(item, &storedTx)
 			if err != nil || skip {
@@ -90,7 +91,7 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers() ([]models.Create
 func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.CommitmentID) ([]models.Create2Transfer, error) {
 	transfers := make([]models.Create2Transfer, 0, 1)
 
-	err := s.iterateTxsByCommitmentID(id, func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt) {
+	err := s.iterateTxsByCommitmentID(id, func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt) {
 		if storedTx.TxType == txtype.Create2Transfer {
 			transfers = append(transfers, *storedTx.ToCreate2Transfer(storedTxReceipt))
 		}
@@ -118,9 +119,7 @@ func (s *Storage) GetCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([
 	return transfers, nil
 }
 
-func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
-	[]*models.StoredTx, []*models.StoredTxReceipt, error,
-) {
+func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) ([]*stored.Tx, []*stored.TxReceipt, error) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
 	if IsNotFoundError(err) {
 		return nil, nil, nil
@@ -136,7 +135,7 @@ func (s *Storage) getCreate2TransfersByPublicKey(publicKey *models.PublicKey) (
 		toStateIDs = append(toStateIDs, leaves[i].StateID)
 	}
 
-	txs := make([]models.StoredTx, 0, 1)
+	txs := make([]stored.Tx, 0, 1)
 	err = s.database.Badger.Find(
 		&txs,
 		bh.Where("FromStateID").In(fromStateIDs...).Index("FromStateID").
@@ -162,8 +161,8 @@ func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common
 			if err != nil {
 				return err
 			}
-			indexKey := db.IndexKey(models.StoredTxReceiptName, "ToStateID", encodedStateID)
-			hashes, err := getTxHashesByIndexKey(txn, indexKey, models.StoredTxReceiptPrefix)
+			indexKey := db.IndexKey(stored.TxReceiptName, "ToStateID", encodedStateID)
+			hashes, err := getTxHashesByIndexKey(txn, indexKey, stored.TxReceiptPrefix)
 			if err == bdg.ErrKeyNotFound {
 				continue
 			}
@@ -180,8 +179,8 @@ func (s *TransactionStorage) getC2THashesByStateIDs(stateIDs []uint32) ([]common
 	return results, nil
 }
 
-func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes []common.Hash) (
-	[]*models.StoredTx, []*models.StoredTxReceipt, error,
+func (s *Storage) getMissingStoredTxsData(txs []stored.Tx, receiptHashes []common.Hash) (
+	[]*stored.Tx, []*stored.TxReceipt, error,
 ) {
 	hashes := make(map[common.Hash]struct{}, len(txs))
 
@@ -193,8 +192,8 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes [
 		hashes[txs[i].Hash] = struct{}{}
 	}
 
-	resultTxs := make([]*models.StoredTx, 0, len(hashes))
-	resultReceipts := make([]*models.StoredTxReceipt, 0, len(hashes))
+	resultTxs := make([]*stored.Tx, 0, len(hashes))
+	resultReceipts := make([]*stored.TxReceipt, 0, len(hashes))
 	for hash := range hashes {
 		tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 		if err != nil {
@@ -210,9 +209,9 @@ func (s *Storage) getMissingStoredTxsData(txs []models.StoredTx, receiptHashes [
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := models.NewStoredTxReceiptFromCreate2Transfer(&txs[i])
-			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(txReceipt)
+			storedTxReceipt := stored.NewTxReceiptFromCreate2Transfer(&txs[i])
+			storedTxReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredTxReceipt(storedTxReceipt)
 			if err != nil {
 				return err
 			}
@@ -232,7 +231,7 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
-		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*models.StoredTx{tx}, []*models.StoredTxReceipt{txReceipt})
+		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*stored.Tx{tx}, []*stored.TxReceipt{txReceipt})
 		return err
 	})
 	if err != nil {
@@ -241,7 +240,7 @@ func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.
 	return &transfers[0], nil
 }
 
-func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*models.StoredTx, txReceipts []*models.StoredTxReceipt) (
+func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*stored.Tx, txReceipts []*stored.TxReceipt) (
 	result []models.Create2TransferWithBatchDetails,
 	err error,
 ) {

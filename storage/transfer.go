@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,12 +17,12 @@ import (
 func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		if t.CommitmentID != nil || t.ErrorMessage != nil {
-			err := txStorage.addStoredTxReceipt(models.NewStoredTxReceiptFromTransfer(t))
+			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromTransfer(t))
 			if err != nil {
 				return err
 			}
 		}
-		return txStorage.addStoredTx(models.NewStoredTxFromTransfer(t))
+		return txStorage.addStoredTx(stored.NewTxFromTransfer(t))
 	})
 }
 
@@ -65,8 +66,8 @@ func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, er
 
 func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, error) {
 	txs := make([]models.Transfer, 0, 32)
-	var storedTx models.StoredTx
-	err := s.database.Badger.Iterator(models.StoredTxPrefix, db.KeyIteratorOpts,
+	var storedTx stored.Tx
+	err := s.database.Badger.Iterator(stored.TxPrefix, db.KeyIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
 			skip, err := s.getStoredTxFromItem(item, &storedTx)
 			if err != nil || skip {
@@ -91,7 +92,7 @@ func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, err
 func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
 	transfers := make([]models.Transfer, 0, 1)
 
-	err := s.iterateTxsByCommitmentID(id, func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt) {
+	err := s.iterateTxsByCommitmentID(id, func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt) {
 		if storedTx.TxType == txtype.Transfer {
 			transfers = append(transfers, *storedTx.ToTransfer(storedTxReceipt))
 		}
@@ -105,7 +106,7 @@ func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) 
 
 func (s *TransactionStorage) iterateTxsByCommitmentID(
 	id models.CommitmentID,
-	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+	handleTx func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt),
 ) error {
 	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		return txStorage.unsafeIterateTxsByCommitmentID(id, handleTx)
@@ -114,9 +115,9 @@ func (s *TransactionStorage) iterateTxsByCommitmentID(
 
 func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
 	id models.CommitmentID,
-	handleTx func(storedTx *models.StoredTx, storedTxReceipt *models.StoredTxReceipt),
+	handleTx func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt),
 ) error {
-	receipts := make([]models.StoredTxReceipt, 0, 1)
+	receipts := make([]stored.TxReceipt, 0, 1)
 	err := s.database.Badger.Find(
 		&receipts,
 		bh.Where("CommitmentID").Eq(id).Index("CommitmentID"),
@@ -138,7 +139,7 @@ func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txs {
-			txReceipt := models.NewStoredTxReceiptFromTransfer(&txs[i])
+			txReceipt := stored.NewTxReceiptFromTransfer(&txs[i])
 			txReceipt.CommitmentID = commitmentID
 			err := txStorage.addStoredTxReceipt(txReceipt)
 			if err != nil {
@@ -160,7 +161,7 @@ func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.Transfe
 			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 
-		transfers, err = txStorage.transfersToTransfersWithBatchDetails([]models.StoredTx{*tx}, []*models.StoredTxReceipt{txReceipt})
+		transfers, err = txStorage.txsToTransfersWithBatchDetails([]stored.Tx{*tx}, []*stored.TxReceipt{txReceipt})
 		return err
 	})
 
@@ -177,7 +178,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 		if err != nil {
 			return err
 		}
-		transfers, err = txStorage.transfersToTransfersWithBatchDetails(txs, txReceipts)
+		transfers, err = txStorage.txsToTransfersWithBatchDetails(txs, txReceipts)
 		return err
 	})
 	if err != nil {
@@ -186,9 +187,7 @@ func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models
 	return transfers, nil
 }
 
-func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
-	[]models.StoredTx, []*models.StoredTxReceipt, error,
-) {
+func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) ([]stored.Tx, []*stored.TxReceipt, error) {
 	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
 	if IsNotFoundError(err) {
 		return nil, nil, nil
@@ -198,7 +197,7 @@ func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
 	}
 	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
 
-	txs := make([]models.StoredTx, 0, 1)
+	txs := make([]stored.Tx, 0, 1)
 	toStateIDCondition := bh.Where("ToStateID").In(stateIDs...).Index("ToStateID").
 		And("TxType").Eq(txtype.Transfer)
 	fromStateIDCondition := bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
@@ -211,7 +210,7 @@ func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
 		return nil, nil, err
 	}
 
-	txReceipts := make([]*models.StoredTxReceipt, 0, len(txs))
+	txReceipts := make([]*stored.TxReceipt, 0, len(txs))
 	for i := range txs {
 		txReceipt, err := s.getStoredTxReceipt(txs[i].Hash)
 		if err != nil {
@@ -223,7 +222,7 @@ func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) (
 	return txs, txReceipts, nil
 }
 
-func (s *Storage) transfersToTransfersWithBatchDetails(txs []models.StoredTx, txReceipts []*models.StoredTxReceipt) (
+func (s *Storage) txsToTransfersWithBatchDetails(txs []stored.Tx, txReceipts []*stored.TxReceipt) (
 	result []models.TransferWithBatchDetails,
 	err error,
 ) {

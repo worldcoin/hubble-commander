@@ -1,38 +1,39 @@
-package models
+package stored
 
 import (
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-const storedTxReceiptBytesLength = 72
+const txReceiptBytesLength = 72
 
 var (
-	StoredTxReceiptName                = getTypeName(StoredTxReceipt{})
-	StoredTxReceiptPrefix              = getBadgerHoldPrefix(StoredTxReceipt{})
-	errInvalidStoredTxReceiptIndexType = fmt.Errorf("invalid StoredTxReceipt index type")
+	TxReceiptName                = getTypeName(TxReceipt{})
+	TxReceiptPrefix              = models.GetBadgerHoldPrefix(TxReceipt{})
+	errInvalidTxReceiptIndexType = fmt.Errorf("invalid stored.TxReceipt index type")
 )
 
-type StoredTxReceipt struct {
+type TxReceipt struct {
 	Hash         common.Hash
-	CommitmentID *CommitmentID
+	CommitmentID *models.CommitmentID
 	ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
 	ErrorMessage *string
 }
 
-func NewStoredTxReceiptFromTransfer(t *Transfer) *StoredTxReceipt {
-	return &StoredTxReceipt{
+func NewTxReceiptFromTransfer(t *models.Transfer) *TxReceipt {
+	return &TxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ErrorMessage: t.ErrorMessage,
 	}
 }
 
-func NewStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) *StoredTxReceipt {
-	return &StoredTxReceipt{
+func NewTxReceiptFromCreate2Transfer(t *models.Create2Transfer) *TxReceipt {
+	return &TxReceipt{
 		Hash:         t.Hash,
 		CommitmentID: t.CommitmentID,
 		ToStateID:    t.ToStateID,
@@ -40,15 +41,15 @@ func NewStoredTxReceiptFromCreate2Transfer(t *Create2Transfer) *StoredTxReceipt 
 	}
 }
 
-func NewStoredTxReceiptFromMassMigration(m *MassMigration) *StoredTxReceipt {
-	return &StoredTxReceipt{
+func NewTxReceiptFromMassMigration(m *models.MassMigration) *TxReceipt {
+	return &TxReceipt{
 		Hash:         m.Hash,
 		CommitmentID: m.CommitmentID,
 		ErrorMessage: m.ErrorMessage,
 	}
 }
 
-func (t *StoredTxReceipt) Bytes() []byte {
+func (t *TxReceipt) Bytes() []byte {
 	b := make([]byte, t.BytesLen())
 	copy(b[0:32], t.Hash.Bytes())
 	copy(b[32:66], EncodeCommitmentIDPointer(t.CommitmentID))
@@ -57,9 +58,9 @@ func (t *StoredTxReceipt) Bytes() []byte {
 	return b
 }
 
-func (t *StoredTxReceipt) SetBytes(data []byte) error {
-	if len(data) < storedTxReceiptBytesLength {
-		return ErrInvalidLength
+func (t *TxReceipt) SetBytes(data []byte) error {
+	if len(data) < txReceiptBytesLength {
+		return models.ErrInvalidLength
 	}
 	commitmentID, err := decodeCommitmentIDPointer(data[32:66])
 	if err != nil {
@@ -73,24 +74,24 @@ func (t *StoredTxReceipt) SetBytes(data []byte) error {
 	return nil
 }
 
-func (t *StoredTxReceipt) BytesLen() int {
+func (t *TxReceipt) BytesLen() int {
 	if t.ErrorMessage != nil {
-		return storedTxReceiptBytesLength + len(*t.ErrorMessage)
+		return txReceiptBytesLength + len(*t.ErrorMessage)
 	}
-	return storedTxReceiptBytesLength
+	return txReceiptBytesLength
 }
 
 // Type implements badgerhold.Storer
-func (t StoredTxReceipt) Type() string {
-	return string(StoredTxReceiptName)
+func (t TxReceipt) Type() string {
+	return string(TxReceiptName)
 }
 
 // Indexes implements badgerhold.Storer
-func (t StoredTxReceipt) Indexes() map[string]bh.Index {
+func (t TxReceipt) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"CommitmentID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTxReceipt(value)
+				v, err := interfaceToTxReceipt(value)
 				if err != nil {
 					return nil, err
 				}
@@ -102,7 +103,7 @@ func (t StoredTxReceipt) Indexes() map[string]bh.Index {
 		},
 		"ToStateID": {
 			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToStoredTxReceipt(value)
+				v, err := interfaceToTxReceipt(value)
 				if err != nil {
 					return nil, err
 				}
@@ -115,14 +116,14 @@ func (t StoredTxReceipt) Indexes() map[string]bh.Index {
 	}
 }
 
-func interfaceToStoredTxReceipt(value interface{}) (*StoredTxReceipt, error) {
-	p, ok := value.(*StoredTxReceipt)
+func interfaceToTxReceipt(value interface{}) (*TxReceipt, error) {
+	p, ok := value.(*TxReceipt)
 	if ok {
 		return p, nil
 	}
-	v, ok := value.(StoredTxReceipt)
+	v, ok := value.(TxReceipt)
 	if ok {
 		return &v, nil
 	}
-	return nil, errors.WithStack(errInvalidStoredTxReceiptIndexType)
+	return nil, errors.WithStack(errInvalidTxReceiptIndexType)
 }

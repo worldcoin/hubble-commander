@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var PendingDepositSubTreePrefix = getBadgerHoldPrefix(PendingDepositSubTree{})
+var PendingDepositSubTreePrefix = GetBadgerHoldPrefix(PendingDepositSubTree{})
 
 type PendingDepositSubTree struct {
 	ID       Uint256
@@ -13,13 +13,13 @@ type PendingDepositSubTree struct {
 }
 
 func (d *PendingDepositSubTree) Bytes() []byte {
-	b := make([]byte, common.HashLength+depositDataLength*len(d.Deposits))
+	b := make([]byte, common.HashLength+DepositDataLength*len(d.Deposits))
 
 	copy(b[0:common.HashLength], d.Root.Bytes())
 
 	for i := range d.Deposits {
-		start := common.HashLength + i*depositDataLength
-		end := start + depositDataLength
+		start := common.HashLength + i*DepositDataLength
+		end := start + DepositDataLength
 		copy(b[start:end], d.Deposits[i].Bytes())
 	}
 
@@ -29,13 +29,13 @@ func (d *PendingDepositSubTree) Bytes() []byte {
 func (d *PendingDepositSubTree) SetBytes(data []byte) error {
 	dataLength := len(data)
 
-	if dataLength < common.HashLength || (dataLength-common.HashLength)%depositDataLength != 0 {
+	if dataLength < common.HashLength || (dataLength-common.HashLength)%DepositDataLength != 0 {
 		return ErrInvalidLength
 	}
 
 	d.Root.SetBytes(data[0:common.HashLength])
 
-	leafCount := (dataLength - common.HashLength) / depositDataLength
+	leafCount := (dataLength - common.HashLength) / DepositDataLength
 
 	if leafCount > 0 {
 		d.Deposits = make([]PendingDeposit, 0, leafCount)
@@ -44,8 +44,8 @@ func (d *PendingDepositSubTree) SetBytes(data []byte) error {
 	}
 
 	for i := 0; i < leafCount; i++ {
-		start := common.HashLength + i*depositDataLength
-		end := start + depositDataLength
+		start := common.HashLength + i*DepositDataLength
+		end := start + DepositDataLength
 		leaf := PendingDeposit{}
 		err := leaf.SetBytes(data[start:end])
 		if err != nil {
