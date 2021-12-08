@@ -73,7 +73,7 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 		}
 	}
 
-	return &newTokensCount, nil
+	return &newTokensCount, it.Error()
 }
 
 func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistry.RegisteredTokenIterator, error) {

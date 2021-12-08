@@ -126,7 +126,7 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNew
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	return events, nil
+	return events, it.Error()
 }
 
 func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.RollupDepositsFinalised, error) {
@@ -146,7 +146,7 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
 	})
 
-	return events, nil
+	return events, it.Error()
 }
 
 func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBatchIterator, error) {

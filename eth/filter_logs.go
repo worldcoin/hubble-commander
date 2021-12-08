@@ -10,6 +10,7 @@ import (
 
 type Iterator interface {
 	SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription)
+	Error() error
 }
 
 func (c *Client) FilterLogs(contract *bind.BoundContract, eventName string, opts *bind.FilterOpts, it Iterator) (err error) {
@@ -17,6 +18,10 @@ func (c *Client) FilterLogs(contract *bind.BoundContract, eventName string, opts
 		logs chan types.Log
 		sub  event.Subscription
 	)
+
+	if err = it.Error(); err != nil {
+		return err
+	}
 
 	duration, err := metrics.MeasureDuration(func() error {
 		logs, sub, err = contract.FilterLogs(opts, eventName)
