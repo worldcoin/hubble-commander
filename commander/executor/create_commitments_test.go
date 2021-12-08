@@ -1,12 +1,14 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -44,17 +46,9 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	preStateRoot, err := s.storage.StateTree.Root()
-	s.NoError(err)
-
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.Nil(batchData)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
-
-	postStateRoot, err := s.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preStateRoot, postStateRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNotCreateEnoughCommitments() {
@@ -85,6 +79,68 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	s.Len(s.txsCtx.txErrorsToStore, 1)
 	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].TxHash)
 	s.Equal(applier.ErrNonexistentReceiver.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWhenNotNecessary() {
+	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
+	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
+	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+
+	preStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.Nil(batchData)
+	s.ErrorIs(err, ErrNotEnoughCommitments)
+
+	postStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	s.NotEqual(preStateRoot, postStateRoot)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNecessary() {
+	validTransfers := []models.Transfer{
+		testutils.MakeTransfer(1, 2, 0, 100),
+		testutils.MakeTransfer(1, 2, 1, 100),
+		testutils.MakeTransfer(1, 2, 2, 100),
+	}
+	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
+
+	// Calculate state root after applying 2 valid transfers
+	s.cfg.MinTxsPerCommitment = 2
+	s.cfg.MinCommitmentsPerBatch = 1
+
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[0])
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[1])
+
+	tempTxsCtx := NewTxsContext(s.txsCtx.storage, s.txsCtx.client, s.cfg, metrics.NewCommanderMetrics(), context.Background(), batchtype.Transfer)
+	batchData, err := tempTxsCtx.CreateCommitments()
+	s.NoError(err)
+	s.Equal(batchData.Len(), 1)
+
+	expectedPostStateRoot, err := tempTxsCtx.storage.StateTree.Root()
+	s.NoError(err)
+
+	tempTxsCtx.Rollback(nil)
+
+	// Do the test
+	s.cfg.MinTxsPerCommitment = 2
+	s.cfg.MaxTxsPerCommitment = 2
+	s.cfg.MinCommitmentsPerBatch = 1
+
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[2])
+	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+
+	batchData, err = s.txsCtx.CreateCommitments()
+	s.NoError(err)
+	s.Equal(batchData.Len(), 1)
+
+	stateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	s.Equal(expectedPostStateRoot, stateRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
