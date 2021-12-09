@@ -22,7 +22,7 @@ func higherPriority(leftTx, rightTx models.GenericTransaction) bool {
 	return nonceComparison < 0 // lowest nonce first
 }
 
-func earlierTimestamp(left *models.Timestamp, right *models.Timestamp) bool {
+func earlierTimestamp(left, right *models.Timestamp) bool {
 	if left == nil {
 		return false
 	}
