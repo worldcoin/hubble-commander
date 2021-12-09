@@ -6,12 +6,12 @@ This is mostly for tracking whether we don't hit Badger txn limits.
 ## Rollup loop
 
 ### Transfer batch
-```
+```ignore
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
 
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
 Key: bh_StateUpdate, Count: 2080, Size: 505440
@@ -25,11 +25,11 @@ SUM: Count: 79042, Size: 7159849
 
 ### Create2Transfer batch (realistic)
 Measured with `TestBenchPubKeysRegistration`. Batch with 1024 public key registrations.
-```
+```ignore
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 102432, Size: 7442688
 Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
 Key: bh_StateUpdate, Count: 2080, Size: 505440
@@ -46,7 +46,7 @@ SUM: Count: 114882, Size: 10094035
 
 ### Create2Transfer batch (unrealistic)
 Measured with `TestBenchCreate2TransfersCommander`. 
-```
+```ignore
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
@@ -58,7 +58,7 @@ As a result `_bhIndex:FlatStateLeaf:PubKeyID` index grows with every batch.
 
 
 First batch:
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 980392
 Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
@@ -72,7 +72,7 @@ SUM: Count: 79042, Size: 7992881
 ```
 
 Second batch:
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 2549209
 Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
@@ -86,7 +86,7 @@ SUM: Count: 79042, Size: 9561698
 ```
 
 Third batch:
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 4241675
 Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
@@ -103,7 +103,7 @@ SUM: Count: 79042, Size: 11254164
 
 ### Transfer batch
 Measured with `TestBenchSyncCommander` set to send and sync only Transfer batches.
-```
+```ignore
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
@@ -111,7 +111,7 @@ The test sends an enormous number of Transfers using just a bunch of User States
 As a result `_bhIndex:Tx:FromStateID` and `_bhIndex:Tx:ToStateID` grow with every batch.
 
 First batch:
-```
+```ignore
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 3938404
 Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 3922632
@@ -127,7 +127,7 @@ Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
 SUM: Count: 82115, Size: 15300562
 ```
 Second batch:
-```
+```ignore
 Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 11643552
 Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 11612160
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
@@ -143,7 +143,7 @@ Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
 SUM: Count: 82115, Size: 30695238
 ```
 Third batch:
-```
+```ignore
 Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 19301688
 Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 19294712
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
@@ -158,4 +158,3 @@ Key: bh_Batch, Count: 1, Size: 244
 Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
 SUM: Count: 82115, Size: 46035926
 ```
-

@@ -1,0 +1,16 @@
+# Summary
+
+[Introduction](Readme.md)
+- [Badger data structures](badger_data_structures.md)
+- [Badger operations](badger_operations.md)
+- [Batch Structure and Fraud Proofs](batch_structure.md)
+- [Benchmarks & profiling](benchmarks_and_profiling.md)
+- [Commitment loop](commitment_loop.md)
+- [Contracts upgradeability](contracts-upgradeability.md)
+- [Data schema](data_schema.md)
+- [Deposits](deposits.md)
+- [JSON RPC](json_rpc.md)
+- [Mass Migrations](mass_migration.md)
+- [Naming](naming.md)
+- [State Rent](state_rent.md)
+- [Transaction Structure](transaction_structure.md)
