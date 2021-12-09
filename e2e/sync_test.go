@@ -10,7 +10,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	log "github.com/sirupsen/logrus"
@@ -54,8 +53,6 @@ func TestCommanderSync(t *testing.T) {
 	testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
 
 	testSubmitDepositBatch(t, activeCommander.Client())
-
-	waitForBatch(t, activeCommander.Client(), models.MakeUint256(4))
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
