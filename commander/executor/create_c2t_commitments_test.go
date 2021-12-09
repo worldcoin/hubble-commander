@@ -33,22 +33,20 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTransfers() {
-	s.preparePendingCreate2Transfers(2)
-
-	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 2)
+func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
+	transfers := testutils.GenerateValidCreate2Transfers(2)
+	s.addCreate2Transfers(transfers)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(batchData.Commitments(), 1)
 
-	for i := range pendingTransfers {
-		tx, err := s.storage.GetCreate2Transfer(pendingTransfers[i].Hash)
+	for i := range transfers {
+		tx, err := s.storage.GetCreate2Transfer(transfers[i].Hash)
 		s.NoError(err)
 		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
 		s.Equal(uint32(i+3), *tx.ToStateID)
+		s.Nil(tx.ErrorMessage)
 	}
 }
 
@@ -142,9 +140,4 @@ func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
 func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
 	err := s.storage.BatchAddCreate2Transfer(transfers)
 	s.NoError(err)
-}
-
-func (s *Create2TransferCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
-	transfers := testutils.GenerateValidCreate2Transfers(transfersAmount)
-	s.addCreate2Transfers(transfers)
 }
