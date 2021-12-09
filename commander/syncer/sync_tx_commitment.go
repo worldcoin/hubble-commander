@@ -16,6 +16,7 @@ const (
 	InvalidCommitmentStateRootMessage = "invalid commitment post state root"
 	InvalidTotalAmountMessage         = "invalid commitment total amount"
 	InvalidWithdrawRootMessage        = "invalid commitment withdraw root"
+	InvalidTokenID                    = "invalid commitment token id"
 	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 

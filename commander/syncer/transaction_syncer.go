@@ -251,10 +251,13 @@ func (s *MMSyncer) VerifyAmountAndWithdrawRoots(
 		if err != nil {
 			return err
 		}
+		if i == 0 && mmCommitment.Meta.TokenID != senderLeaf.TokenID {
+			return NewDisputableErrorWithProofs(Transition, InvalidTokenID, proofs)
+		}
 
 		hash, err := encoder.HashUserState(&models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
-			TokenID:  mmCommitment.Meta.TokenID, //TODO-dis: verify TokenID
+			TokenID:  mmCommitment.Meta.TokenID,
 			Balance:  txs.At(i).GetAmount(),
 			Nonce:    models.MakeUint256(0),
 		})

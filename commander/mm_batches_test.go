@@ -79,7 +79,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.Equal(batchtype.MassMigration, batches[1].Type)
 }
 
-func (s *MMBatchesTestSuite) TestUnsafeSyncBatches_DisputesBatchWithMismatchedTotalAmount() {
+func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithMismatchedTotalAmount() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 
 	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
@@ -97,7 +97,7 @@ func (s *MMBatchesTestSuite) TestUnsafeSyncBatches_DisputesBatchWithMismatchedTo
 	s.Equal(result.MismatchedAmount, getDisputeResult(s.Assertions, s.client))
 }
 
-func (s *MMBatchesTestSuite) TestUnsafeSyncBatches_DisputesBatchWithInvalidWithdrawRoot() {
+func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidWithdrawRoot() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 
 	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
@@ -113,6 +113,24 @@ func (s *MMBatchesTestSuite) TestUnsafeSyncBatches_DisputesBatchWithInvalidWithd
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
 	s.Equal(result.BadWithdrawRoot, getDisputeResult(s.Assertions, s.client))
+}
+
+func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenID() {
+	tx := testutils.MakeMassMigration(0, 1, 0, 100)
+
+	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
+		batchData.Metas()[0].TokenID = models.MakeUint256(110)
+	})
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	s.Equal(result.BadFromTokenID, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifier func(batchData executor.BatchData)) {
