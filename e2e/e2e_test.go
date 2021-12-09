@@ -133,10 +133,10 @@ func testSendCreate2Transfer(
 }
 
 func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
-	var txReceipt dto.TransferReceipt
+	var txReceipt dto.TransactionReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 	require.NoError(t, err)
-	require.Equal(t, txHash, txReceipt.Hash)
+	require.Equal(t, txHash, txReceipt.BatchHash)
 	require.Equal(t, txstatus.Pending, txReceipt.Status)
 }
 
@@ -188,7 +188,7 @@ func send31MoreCreate2Transfers(
 
 func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
 	require.Eventually(t, func() bool {
-		var txReceipt dto.TransferReceipt
+		var txReceipt dto.TransactionReceipt
 		err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 		require.NoError(t, err)
 		return txReceipt.Status == txstatus.InBatch
