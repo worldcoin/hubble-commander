@@ -24,7 +24,7 @@ SUM: Count: 79042, Size: 7159849
 ```
 
 ### Create2Transfer batch (realistic)
-Measured with `TestBenchPubKeysRegistration`. Batch with 1024 public key registrations.
+Measured with `TestBenchCreate2TransfersCommander`. Batch with 1024 public key registrations.
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
