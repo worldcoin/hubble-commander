@@ -110,7 +110,6 @@ jobs:
       - e2e-benchmarks-1
       - e2e-benchmarks-2
       - e2e-benchmarks-3
-      - e2e-benchmarks-4
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
