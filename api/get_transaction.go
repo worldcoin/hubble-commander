@@ -11,7 +11,7 @@ var getTransactionAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(10000, "transaction not found"),
 }
 
-func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
+func (a *API) GetTransaction(hash common.Hash) (*dto.TransactionReceipt, error) {
 	transaction, err := a.unsafeGetTransaction(hash)
 	if err != nil {
 		return nil, sanitizeError(err, getTransactionAPIErrors)
@@ -20,42 +20,30 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 	return transaction, nil
 }
 
-func (a *API) unsafeGetTransaction(hash common.Hash) (interface{}, error) {
-	transfer, err := a.storage.GetTransferWithBatchDetails(hash)
-	if err != nil && !storage.IsNotFoundError(err) {
-		return nil, err
-	}
-	if transfer != nil {
-		return a.returnTransferReceipt(transfer)
-	}
-
-	transaction, err := a.storage.GetCreate2TransferWithBatchDetails(hash)
-	if err != nil {
-		return nil, err
-	}
-	return a.returnCreate2TransferReceipt(transaction)
-}
-
-func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (*dto.TransferReceipt, error) {
-	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
+func (a *API) unsafeGetTransaction(hash common.Hash) (*dto.TransactionReceipt, error) {
+	transaction, err := a.storage.GetTransactionWithBatchDetails(hash)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto.TransferReceipt{
-		TransferWithBatchDetails: *transfer,
-		Status:                   *status,
-	}, nil
-}
+	var transactionBase models.TransactionBase
 
-func (a *API) returnCreate2TransferReceipt(transfer *models.Create2TransferWithBatchDetails) (*dto.Create2TransferReceipt, error) {
-	status, err := CalculateTransactionStatus(a.storage, &transfer.TransactionBase, a.storage.GetLatestBlockNumber())
+	switch tx := transaction.Transaction.(type) {
+	case *models.Transfer:
+		transactionBase = tx.TransactionBase
+	case *models.Create2Transfer:
+		transactionBase = tx.TransactionBase
+	case *models.MassMigration:
+		transactionBase = tx.TransactionBase
+	}
+
+	status, err := CalculateTransactionStatus(a.storage, &transactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto.Create2TransferReceipt{
-		Create2TransferWithBatchDetails: *transfer,
-		Status:                          *status,
+	return &dto.TransactionReceipt{
+		TransactionWithBatchDetails: *transaction,
+		Status:                      *status,
 	}, nil
 }

@@ -115,3 +115,17 @@ func TestUint256_Div(t *testing.T) {
 	four := NewUint256(4)
 	require.Equal(t, two, four.Div(two))
 }
+
+func TestUint256_Compare(t *testing.T) {
+	base := MakeUint256(10)
+
+	other1 := MakeUint256(1)
+	result, err := base.Compare(other1)
+	require.Equal(t, 1, result)
+	require.NoError(t, err)
+
+	other2 := int64(1)
+	result, err = base.Compare(other2)
+	require.Equal(t, 0, result)
+	require.ErrorIs(t, ErrCompareDefaultCase, err)
+}

@@ -91,6 +91,9 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 
 		executeResult, err = c.executeTxsForCommitment(txQueue, feeReceiver)
 		if errors.Is(err, ErrNotEnoughTxs) {
+			if uint32(commitmentID.IndexInBatch+1) <= c.cfg.MinCommitmentsPerBatch {
+				return err // No need to revert the StateTree in this case as the DB tx will be rolled back anyway
+			}
 			if revertErr := c.storage.StateTree.RevertTo(*initialStateRoot); revertErr != nil {
 				return revertErr
 			}

@@ -83,7 +83,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 		}
 	}
 
-	return newAccountsCount, nil
+	return newAccountsCount, it.Error()
 }
 
 func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
@@ -119,7 +119,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 		}
 	}
 
-	return newAccountsCount, nil
+	return newAccountsCount, it.Error()
 }
 
 func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {

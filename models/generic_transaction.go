@@ -1,6 +1,9 @@
 package models
 
-import "github.com/Worldcoin/hubble-commander/models/enums/txtype"
+import (
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type GenericTransaction interface {
 	Type() txtype.TransactionType
@@ -29,6 +32,12 @@ type GenericTransactionArray interface {
 	ToTransferArray() TransferArray
 	ToCreate2TransferArray() Create2TransferArray
 	ToMassMigrationArray() MassMigrationArray
+}
+
+type TransactionWithBatchDetails struct {
+	Transaction interface{}
+	BatchHash   *common.Hash
+	BatchTime   *Timestamp
 }
 
 func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {
@@ -90,10 +99,6 @@ func (t TransferArray) ToMassMigrationArray() MassMigrationArray {
 }
 
 type Create2TransferArray []Create2Transfer
-
-func MakeCreate2TransferArray(create2Transfers ...Create2Transfer) Create2TransferArray {
-	return create2Transfers
-}
 
 func (t Create2TransferArray) Len() int {
 	return len(t)
