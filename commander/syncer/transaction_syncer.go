@@ -254,7 +254,7 @@ func (s *MMSyncer) VerifyAmountAndWithdrawRoots(
 
 		hash, err := encoder.HashUserState(&models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
-			TokenID:  mmCommitment.Meta.TokenID,
+			TokenID:  mmCommitment.Meta.TokenID, //TODO-dis: verify TokenID
 			Balance:  txs.At(i).GetAmount(),
 			Nonce:    models.MakeUint256(0),
 		})
