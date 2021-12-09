@@ -11,7 +11,7 @@ var getTransactionAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(10000, "transaction not found"),
 }
 
-func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
+func (a *API) GetTransaction(hash common.Hash) (*dto.TransactionReceipt, error) {
 	transaction, err := a.unsafeGetTransaction(hash)
 	if err != nil {
 		return nil, sanitizeError(err, getTransactionAPIErrors)
@@ -20,7 +20,7 @@ func (a *API) GetTransaction(hash common.Hash) (interface{}, error) {
 	return transaction, nil
 }
 
-func (a *API) unsafeGetTransaction(hash common.Hash) (interface{}, error) {
+func (a *API) unsafeGetTransaction(hash common.Hash) (*dto.TransactionReceipt, error) {
 	transaction, err := a.storage.GetTransactionWithBatchDetails(hash)
 	if err != nil {
 		return nil, err
