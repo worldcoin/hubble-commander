@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -148,6 +149,41 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.NoError(err)
 
 	s.Equal(expectedPostStateRoot, stateRoot)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionReplacement() {
+	// Mine the transaction with higher fee in case there are two txs from the same sender with the same nonce
+	s.cfg.MinTxsPerCommitment = 1
+
+	transfer := testutils.MakeTransfer(1, 2, 0, 100)
+	transfer.Hash = common.BytesToHash([]byte{1})
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	higherFeeTransfer := transfer
+	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
+	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
+	err = s.storage.AddTransfer(&higherFeeTransfer)
+	s.NoError(err)
+
+	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
+
+	_, err = s.txsCtx.CreateCommitments()
+	s.NoError(err)
+
+	s.Len(s.txsCtx.txErrorsToStore, 1)
+	txErr := s.txsCtx.txErrorsToStore[0]
+	s.Equal(transfer.Hash, txErr.TxHash)
+	s.Equal(applier.ErrNonceTooLow.Error(), txErr.ErrorMessage)
+
+	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
+	s.NoError(err)
+
+	expectedCommitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentID)
 }
 
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
