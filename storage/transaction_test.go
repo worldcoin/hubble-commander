@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -53,10 +52,9 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_WithoutBatch()
 		Transaction: transfer.Copy(),
 	}
 
-	res, txType, err := s.storage.GetTransactionWithBatchDetails(transfer.Hash)
+	res, err := s.storage.GetTransactionWithBatchDetails(transfer.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
-	s.Equal(txtype.Transfer, *txType)
 }
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
@@ -72,10 +70,9 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
 		BatchHash:   s.batch.Hash,
 		BatchTime:   s.batch.SubmissionTime,
 	}
-	res, txType, err := s.storage.GetTransactionWithBatchDetails(transferInBatch.Hash)
+	res, err := s.storage.GetTransactionWithBatchDetails(transferInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
-	s.Equal(txtype.Transfer, *txType)
 }
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfer() {
@@ -91,10 +88,9 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfe
 		BatchHash:   s.batch.Hash,
 		BatchTime:   s.batch.SubmissionTime,
 	}
-	res, txType, err := s.storage.GetTransactionWithBatchDetails(create2TransferInBatch.Hash)
+	res, err := s.storage.GetTransactionWithBatchDetails(create2TransferInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
-	s.Equal(txtype.Create2Transfer, *txType)
 }
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration() {
@@ -110,10 +106,9 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 		BatchHash:   s.batch.Hash,
 		BatchTime:   s.batch.SubmissionTime,
 	}
-	res, txType, err := s.storage.GetTransactionWithBatchDetails(massMigrationInBatch.Hash)
+	res, err := s.storage.GetTransactionWithBatchDetails(massMigrationInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
-	s.Equal(txtype.MassMigration, *txType)
 }
 
 func TestTransactionTestSuite(t *testing.T) {
