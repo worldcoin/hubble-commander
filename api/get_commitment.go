@@ -50,7 +50,9 @@ func (a *API) getTransactionsForCommitment(commitment *models.TxCommitment) (int
 		return a.getTransfersForCommitment(commitment.ID)
 	case batchtype.Create2Transfer:
 		return a.getCreate2TransfersForCommitment(commitment.ID)
-	case batchtype.Genesis, batchtype.MassMigration, batchtype.Deposit:
+	case batchtype.MassMigration:
+		return a.getMassMigrationsForCommitment(commitment.ID)
+	case batchtype.Genesis, batchtype.Deposit:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
@@ -78,6 +80,19 @@ func (a *API) getCreate2TransfersForCommitment(id models.CommitmentID) (interfac
 	txs := make([]dto.Create2TransferForCommitment, 0, len(transfers))
 	for i := range transfers {
 		txs = append(txs, dto.MakeCreate2TransferForCommitment(&transfers[i]))
+	}
+	return txs, nil
+}
+
+func (a *API) getMassMigrationsForCommitment(id models.CommitmentID) (interface{}, error) {
+	massMigrations, err := a.storage.GetMassMigrationsByCommitmentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]dto.MassMigrationForCommitment, 0, len(massMigrations))
+	for i := range massMigrations {
+		txs = append(txs, dto.MakeMassMigrationForCommitment(&massMigrations[i]))
 	}
 	return txs, nil
 }

@@ -21,7 +21,7 @@ type GetBatchesTestSuite struct {
 	api        *API
 	storage    *st.TestStorage
 	testClient *eth.TestClient
-	batch      models.Batch
+	batches    []models.Batch
 }
 
 func (s *GetBatchesTestSuite) SetupSuite() {
@@ -36,13 +36,31 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
 
-	s.batch = models.Batch{
-		ID:                models.MakeUint256(1),
-		Type:              batchtype.Transfer,
-		TransactionHash:   utils.RandomHash(),
-		Hash:              utils.NewRandomHash(),
-		FinalisationBlock: ref.Uint32(42000),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+	s.batches = []models.Batch{
+		{
+			ID:                models.MakeUint256(1),
+			Type:              batchtype.Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(42000),
+			SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		},
+		{
+			ID:                models.MakeUint256(2),
+			Type:              batchtype.Create2Transfer,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(43000),
+			SubmissionTime:    models.NewTimestamp(time.Unix(150, 0).UTC()),
+		},
+		{
+			ID:                models.MakeUint256(3),
+			Type:              batchtype.MassMigration,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(44000),
+			SubmissionTime:    models.NewTimestamp(time.Unix(160, 0).UTC()),
+		},
 	}
 }
 
@@ -53,24 +71,26 @@ func (s *GetBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches() {
-	err := s.storage.AddBatch(&s.batch)
-	s.NoError(err)
+	s.addBatches()
 
-	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
+	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(200))
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result, 1)
-	s.Equal(s.batch.ID, result[0].ID)
-	s.Equal(s.batch.Hash, result[0].Hash)
-	s.Equal(s.batch.Type, result[0].Type)
-	s.Equal(s.batch.TransactionHash, result[0].TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result[0].SubmissionBlock)
-	s.Equal(s.batch.FinalisationBlock, result[0].FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result[0].SubmissionTime)
+	s.Len(result, 3)
+
+	for i := range s.batches {
+		s.Equal(s.batches[i].ID, result[i].ID)
+		s.Equal(s.batches[i].Hash, result[i].Hash)
+		s.Equal(s.batches[i].Type, result[i].Type)
+		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
+		s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, result[i].SubmissionBlock)
+		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
+		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
+	}
 }
 
 func (s *GetBatchesTestSuite) TestGetBatches_PendingBatch() {
-	pendingBatch := s.batch
+	pendingBatch := s.batches[0]
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
 	err := s.storage.AddBatch(&pendingBatch)
@@ -87,6 +107,13 @@ func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 0)
+}
+
+func (s *GetBatchesTestSuite) addBatches() {
+	for i := range s.batches {
+		err := s.storage.AddBatch(&s.batches[i])
+		s.NoError(err)
+	}
 }
 
 func TestGetBatchesTestSuite(t *testing.T) {

@@ -160,6 +160,48 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	s.Equal(expectedCommitmentProof, commitmentProof)
 }
 
+func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType() {
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	s.commitment.Type = batchtype.MassMigration
+	err = s.storage.AddTxCommitment(&s.commitment)
+	s.NoError(err)
+
+	s.addStateLeaf()
+
+	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
+	massMigration.CommitmentID = &s.commitment.ID
+	err = s.storage.AddMassMigration(&massMigration)
+	s.NoError(err)
+
+	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
+	s.NoError(err)
+
+	path := &models.MerklePath{
+		Path:  uint32(s.commitment.ID.IndexInBatch),
+		Depth: tree.Depth(),
+	}
+
+	expectedCommitmentProof := &dto.CommitmentInclusionProof{
+		StateRoot: s.commitment.PostStateRoot,
+		Body: &dto.CommitmentProofBody{
+			AccountRoot: *s.batch.AccountTreeRoot,
+			Signature:   s.commitment.CombinedSignature,
+			FeeReceiver: s.commitment.FeeReceiver,
+			Transactions: []dto.MassMigrationForCommitment{
+				dto.MakeMassMigrationForCommitment(&massMigration),
+			},
+		},
+		Path:    path,
+		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
+	}
+
+	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
+	s.NoError(err)
+	s.Equal(expectedCommitmentProof, commitmentProof)
+}
+
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	pendingBatch := s.batch
 	pendingBatch.Hash = nil

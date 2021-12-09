@@ -3,10 +3,8 @@ package storage
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -98,49 +96,6 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 		s.NoError(err)
 		s.Equal(txs[i], *tx)
 	}
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails() {
-	batch := &models.Batch{
-		ID:              models.MakeUint256(1),
-		Type:            batchtype.Create2Transfer,
-		TransactionHash: utils.RandomHash(),
-		Hash:            utils.NewRandomHash(),
-		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},
-	}
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	commitmentInBatch := txCommitment
-	commitmentInBatch.ID.BatchID = batch.ID
-	commitmentInBatch.ID.IndexInBatch = 0
-	err = s.storage.AddTxCommitment(&commitmentInBatch)
-	s.NoError(err)
-
-	transferInBatch := create2Transfer
-	transferInBatch.CommitmentID = &txCommitment.ID
-	err = s.storage.AddCreate2Transfer(&transferInBatch)
-	s.NoError(err)
-
-	expected := models.Create2TransferWithBatchDetails{
-		Create2Transfer: transferInBatch,
-		BatchHash:       batch.Hash,
-		BatchTime:       batch.SubmissionTime,
-	}
-	res, err := s.storage.GetCreate2TransferWithBatchDetails(transferInBatch.Hash)
-	s.NoError(err)
-	s.Equal(expected, *res)
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransferWithBatchDetails_WithoutBatch() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
-	s.NoError(err)
-
-	expected := models.Create2TransferWithBatchDetails{Create2Transfer: create2Transfer}
-
-	res, err := s.storage.GetCreate2TransferWithBatchDetails(create2Transfer.Hash)
-	s.NoError(err)
-	s.Equal(expected, *res)
 }
 
 func (s *Create2TransferTestSuite) TestBatchAddCreate2Transfer() {
