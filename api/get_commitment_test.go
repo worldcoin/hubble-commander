@@ -150,6 +150,50 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.Equal(expectedCommitment, commitment)
 }
 
+func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	s.commitment.Type = batchtype.MassMigration
+	err = s.storage.AddTxCommitment(&s.commitment)
+	s.NoError(err)
+
+	massMigration := models.MassMigration{
+		TransactionBase: models.TransactionBase{
+			Hash:         utils.RandomHash(),
+			TxType:       txtype.MassMigration,
+			FromStateID:  1,
+			Amount:       models.MakeUint256(50),
+			Fee:          models.MakeUint256(10),
+			Nonce:        models.MakeUint256(0),
+			CommitmentID: &s.commitment.ID,
+		},
+		SpokeID: 2,
+	}
+	err = s.storage.AddMassMigration(&massMigration)
+	s.NoError(err)
+
+	expectedCommitment := &dto.Commitment{
+		TxCommitment: s.commitment,
+		Status:       txstatus.InBatch,
+		BatchTime:    s.batch.SubmissionTime,
+		Transactions: []dto.MassMigrationForCommitment{{
+			Hash:        massMigration.Hash,
+			FromStateID: massMigration.FromStateID,
+			Amount:      massMigration.Amount,
+			Fee:         massMigration.Fee,
+			Nonce:       massMigration.Nonce,
+			Signature:   massMigration.Signature,
+			ReceiveTime: massMigration.ReceiveTime,
+			SpokeID:     massMigration.SpokeID,
+		}},
+	}
+
+	commitment, err := s.api.GetCommitment(s.commitment.ID)
+	s.NoError(err)
+	s.Equal(expectedCommitment, commitment)
+}
+
 func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	pendingBatch := s.batch
 	pendingBatch.Hash = nil

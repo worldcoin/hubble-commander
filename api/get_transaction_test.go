@@ -18,11 +18,13 @@ import (
 type GetTransactionTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api      *API
-	transfer dto.Transfer
-	wallet   *bls.Wallet
-	storage  *st.TestStorage
-	domain   *bls.Domain
+	api             *API
+	transfer        dto.Transfer
+	create2Transfer dto.Create2Transfer
+	massMigration   dto.MassMigration
+	wallet          *bls.Wallet
+	storage         *st.TestStorage
+	domain          *bls.Domain
 }
 
 func (s *GetTransactionTestSuite) SetupSuite() {
@@ -62,12 +64,29 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)
+	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
+	s.massMigration = s.signMassMigration(massMigrationWithoutSignature)
 }
 
 func (s *GetTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
 	signedTransfer, err := SignTransfer(s.wallet, transfer)
 	s.NoError(err)
 	return *signedTransfer
+}
+
+func (s *GetTransactionTestSuite) signCreate2Transfer(create2Transfer dto.Create2Transfer) dto.Create2Transfer {
+	randomWallet, err := bls.NewRandomWallet(*s.domain)
+	s.NoError(err)
+	create2Transfer.ToPublicKey = randomWallet.PublicKey()
+	signedCreate2Transfer, err := SignCreate2Transfer(s.wallet, create2Transfer)
+	s.NoError(err)
+	return *signedCreate2Transfer
+}
+
+func (s *GetTransactionTestSuite) signMassMigration(massMigration dto.MassMigration) dto.MassMigration {
+	signedMassMigration, err := SignMassMigration(s.wallet, massMigration)
+	s.NoError(err)
+	return *signedMassMigration
 }
 
 func (s *GetTransactionTestSuite) TearDownTest() {
@@ -82,29 +101,42 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	transfer, ok := res.(*dto.TransferReceipt)
+	receipt, ok := res.(*dto.TransactionReceipt)
 	s.True(ok)
-	s.Equal(txstatus.Pending, transfer.Status)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.Transfer)
+	s.True(ok)
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
-	receiverWallet, err := bls.NewRandomWallet(*s.domain)
-	s.NoError(err)
-
-	c2t := create2TransferWithoutSignature
-	c2t.ToPublicKey = receiverWallet.PublicKey()
-	signedTransfer, err := SignCreate2Transfer(s.wallet, c2t)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(*signedTransfer))
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
 	s.NoError(err)
 
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	transfer, ok := res.(*dto.Create2TransferReceipt)
+	receipt, ok := res.(*dto.TransactionReceipt)
 	s.True(ok)
-	s.Equal(txstatus.Pending, transfer.Status)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.Create2Transfer)
+	s.True(ok)
+}
+
+func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
+	s.NoError(err)
+
+	res, err := s.api.GetTransaction(*hash)
+	s.NoError(err)
+
+	receipt, ok := res.(*dto.TransactionReceipt)
+	s.True(ok)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.MassMigration)
+	s.True(ok)
 }
 
 func TestGetTransactionTestSuite(t *testing.T) {

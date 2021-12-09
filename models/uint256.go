@@ -9,7 +9,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrUnmarshalUint256 = errors.New("error unmarshalling Uint256")
+var (
+	ErrUnmarshalUint256   = errors.New("error unmarshalling Uint256")
+	ErrCompareDefaultCase = errors.New("uint256.Compare(interface{}) accepts only uint256")
+)
 
 type Uint256 struct {
 	uint256.Int
@@ -140,4 +143,13 @@ func (u *Uint256) safeSetUint256FromString(str string) error {
 	}
 
 	return nil
+}
+
+func (u Uint256) Compare(other interface{}) (int, error) {
+	switch o := other.(type) {
+	case Uint256:
+		return u.Cmp(&o), nil
+	default:
+		return 0, ErrCompareDefaultCase
+	}
 }

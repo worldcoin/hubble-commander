@@ -106,45 +106,6 @@ func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 	}
 }
 
-func (s *TransferTestSuite) TestGetTransferWithBatchDetails() {
-	batch := &models.Batch{
-		ID:              models.MakeUint256(1),
-		Type:            batchtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-		Hash:            utils.NewRandomHash(),
-		SubmissionTime:  &models.Timestamp{Time: time.Unix(140, 0).UTC()},
-	}
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	transferInBatch := transfer
-	transferInBatch.CommitmentID = &models.CommitmentID{
-		BatchID: batch.ID,
-	}
-	err = s.storage.AddTransfer(&transferInBatch)
-	s.NoError(err)
-
-	expected := models.TransferWithBatchDetails{
-		Transfer:  transferInBatch,
-		BatchHash: batch.Hash,
-		BatchTime: batch.SubmissionTime,
-	}
-	res, err := s.storage.GetTransferWithBatchDetails(transferInBatch.Hash)
-	s.NoError(err)
-	s.Equal(expected, *res)
-}
-
-func (s *TransferTestSuite) TestGetTransferWithBatchDetails_WithoutBatch() {
-	err := s.storage.AddTransfer(&transfer)
-	s.NoError(err)
-
-	expected := models.TransferWithBatchDetails{Transfer: transfer}
-
-	res, err := s.storage.GetTransferWithBatchDetails(transfer.Hash)
-	s.NoError(err)
-	s.Equal(expected, *res)
-}
-
 func (s *TransferTestSuite) TestBatchAddTransfer() {
 	txs := make([]models.Transfer, 2)
 	txs[0] = transfer
