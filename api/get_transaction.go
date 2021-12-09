@@ -30,7 +30,9 @@ func (a *API) unsafeGetTransaction(hash common.Hash) (interface{}, error) {
 
 	switch tx := transaction.Transaction.(type) {
 	case *models.Transfer:
+		transactionBase = tx.TransactionBase
 	case *models.Create2Transfer:
+		transactionBase = tx.TransactionBase
 	case *models.MassMigration:
 		transactionBase = tx.TransactionBase
 	}
