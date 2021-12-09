@@ -13,11 +13,11 @@ var (
 )
 
 const (
-	InvalidCommitmentStateRootMessage = "invalid commitment post state root"
-	InvalidTotalAmountMessage         = "invalid commitment total amount"
-	InvalidWithdrawRootMessage        = "invalid commitment withdraw root"
-	InvalidTokenID                    = "invalid commitment token id"
-	NonexistentReceiverMessage        = "nonexistent receiver"
+	invalidStateRootMessage      = "invalid commitment post state root"
+	invalidWithdrawRootMessage   = "invalid commitment withdraw root"
+	invalidTokenID               = "invalid commitment token id"
+	mismatchedTotalAmountMessage = "mismatched commitment total amount"
+	nonexistentReceiverMessage   = "nonexistent receiver"
 )
 
 func (c *TxsContext) syncTxCommitment(commitment encoder.Commitment) error {
@@ -53,7 +53,7 @@ func (c *TxsContext) syncTxCommitment(commitment encoder.Commitment) error {
 
 	err = c.Syncer.SetMissingTxsData(commitment, syncedTxs)
 	if st.IsNotFoundError(err) {
-		return c.createDisputableSignatureError(NonexistentReceiverMessage, syncedTxs.Txs())
+		return c.createDisputableSignatureError(nonexistentReceiverMessage, syncedTxs.Txs())
 	}
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (c *TxsContext) verifyStateRoot(commitmentPostState common.Hash, proofs []m
 		return err
 	}
 	if *postStateRoot != commitmentPostState {
-		return NewDisputableErrorWithProofs(Transition, InvalidCommitmentStateRootMessage, proofs)
+		return NewDisputableErrorWithProofs(Transition, invalidStateRootMessage, proofs)
 	}
 	return nil
 }

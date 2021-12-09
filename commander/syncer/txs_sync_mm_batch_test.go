@@ -76,7 +76,7 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTotalAmount() {
 	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(InvalidTotalAmountMessage, disputableErr.Reason)
+	s.Equal(mismatchedTotalAmountMessage, disputableErr.Reason)
 }
 
 func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentWithdrawRoot() {
@@ -97,7 +97,7 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentWithdrawRoot() {
 	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(InvalidWithdrawRootMessage, disputableErr.Reason)
+	s.Equal(invalidWithdrawRootMessage, disputableErr.Reason)
 }
 
 func (s *SyncMMBatchTestSuite) submitInvalidBatch(tx models.GenericTransaction, modifier func(batchData executor.BatchData)) {

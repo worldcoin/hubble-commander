@@ -252,7 +252,7 @@ func (s *MMSyncer) VerifyAmountAndWithdrawRoots(
 			return err
 		}
 		if i == 0 && mmCommitment.Meta.TokenID != senderLeaf.TokenID {
-			return NewDisputableErrorWithProofs(Transition, InvalidTokenID, proofs)
+			return NewDisputableErrorWithProofs(Transition, invalidTokenID, proofs)
 		}
 
 		hash, err := encoder.HashUserState(&models.UserState{
@@ -276,10 +276,10 @@ func (s *MMSyncer) VerifyAmountAndWithdrawRoots(
 	}
 
 	if !totalAmount.Eq(&mmCommitment.Meta.Amount) {
-		return NewDisputableErrorWithProofs(Transition, InvalidTotalAmountMessage, proofs)
+		return NewDisputableErrorWithProofs(Transition, mismatchedTotalAmountMessage, proofs)
 	}
 	if merkleTree.Root() != mmCommitment.WithdrawRoot {
-		return NewDisputableErrorWithProofs(Transition, InvalidWithdrawRootMessage, proofs)
+		return NewDisputableErrorWithProofs(Transition, invalidWithdrawRootMessage, proofs)
 	}
 	return nil
 }
