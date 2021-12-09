@@ -18,6 +18,9 @@ import (
 
 func TestCommanderSync(t *testing.T) {
 	cfg := config.GetConfig()
+	cfg.Rollup.MinTxsPerCommitment = 32
+	cfg.Rollup.MaxTxsPerCommitment = 32
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 	if cfg.Ethereum == nil {
 		log.Panicf("sync test cannot be run on simulator")
 	}
