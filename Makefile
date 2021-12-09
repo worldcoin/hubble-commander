@@ -82,6 +82,12 @@ bench-e2e-ci-part-3: clean-testcache
 bench-e2e-ci-part-4: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkPubKeyRegistrationSuite/TestBenchPubKeysRegistration ./e2e/bench
 
+run-docs:
+	mdbook serve
+
+clean-docs:
+	mdbook clean
+
 .PHONY:
 	install
 	clean
@@ -110,3 +116,5 @@ bench-e2e-ci-part-4: clean-testcache
 	bench-e2e-ci-part-2
 	bench-e2e-ci-part-3
 	bench-e2e-ci-part-4
+	run-docs
+	clean-docs
