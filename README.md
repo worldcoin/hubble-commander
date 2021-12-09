@@ -118,6 +118,8 @@ There is a number of scripts defined in the Makefile:
 * `make bench-e2e-locally` - run an E2E benchmark on a local commander instance (set `TEST` env var to the name of the test)
 * `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
 * `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
+* `make run-docs` - render and preview docs by serving it via HTTP
+* `make clean-docs` - delete the generated docs and any other build artifacts
 
 Other scripts defined in the Makefile file are used on the CI.
 
