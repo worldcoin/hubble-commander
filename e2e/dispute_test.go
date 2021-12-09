@@ -91,7 +91,9 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
-	testSubmitTransferBatch(t, client, senderWallet, 0)
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitTransferBatch(t, client, senderWallet, 0)
+	})
 
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
@@ -103,7 +105,9 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 
 	testBatchesAfterDispute(t, client, 2)
 
-	testSubmitTransferBatch(t, client, senderWallet, 32)
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitTransferBatch(t, client, senderWallet, 32)
+	})
 }
 
 func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -136,7 +140,9 @@ func testDisputeTransitionC2T(
 
 	testBatchesAfterDispute(t, client, 3)
 
-	testSubmitC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+	})
 }
 
 func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
@@ -149,37 +155,6 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 4)
-}
-
-func testSubmitTransferBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
-	firstTransferHash := testSendTransfer(t, client, senderWallet, startNonce)
-	testGetTransaction(t, client, firstTransferHash)
-	send31MoreTransfers(t, client, senderWallet, startNonce+1)
-
-	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
-}
-
-func testSubmitC2TBatch(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	senderWallet bls.Wallet,
-	wallets []bls.Wallet,
-	targetPublicKey *models.PublicKey,
-	startNonce uint64,
-) {
-	firstTransferHash := testSendCreate2Transfer(t, client, senderWallet, targetPublicKey, startNonce)
-	testGetTransaction(t, client, firstTransferHash)
-	send31MoreCreate2Transfers(t, client, senderWallet, wallets, startNonce+1)
-
-	waitForTxToBeIncludedInBatch(t, client, firstTransferHash)
-}
-
-func testSubmitMassMigrationBatch(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
-	firstMassMigrationHash := testSendMassMigration(t, client, senderWallet, startNonce)
-	testGetTransaction(t, client, firstMassMigrationHash)
-	send31MoreMassMigrations(t, client, senderWallet, startNonce+1)
-
-	waitForTxToBeIncludedInBatch(t, client, firstMassMigrationHash)
 }
 
 func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -48,14 +49,8 @@ func TestCommanderSync(t *testing.T) {
 
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
-	testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 
-	firstC2TWallet := wallets[len(wallets)-32]
-	testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
-
-	testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
-
-	testSubmitDepositBatch(t, activeCommander.Client())
+	submitBatchesAndWait(t, activeCommander, senderWallet, wallets)
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
@@ -87,4 +82,15 @@ func TestCommanderSync(t *testing.T) {
 	testSenderStateAfterTransfers(t, passiveCommander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, passiveCommander.Client(), feeReceiverWallet)
 	testGetBatches(t, passiveCommander.Client())
+}
+
+func submitBatchesAndWait(t *testing.T, activeCommander *setup.InProcessCommander, senderWallet bls.Wallet, wallets []bls.Wallet) {
+	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
+	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
+	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
+	testSubmitDepositBatchAndWait(t, activeCommander.Client())
+
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstMMHash)
 }

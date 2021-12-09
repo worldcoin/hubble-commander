@@ -48,14 +48,21 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
 
-	firstC2TWallet := wallets[len(wallets)-32]
-	testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		return testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
+	})
 
-	testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		firstC2TWallet := wallets[len(wallets)-32]
+		return testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+	})
 
-	testSubmitDepositBatch(t, commander.Client())
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		return testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
+	})
+
+	testSubmitDepositBatchAndWait(t, commander.Client())
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
