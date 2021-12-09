@@ -19,7 +19,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -264,7 +263,6 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
-	log.Printf("%+v", batches)
 	require.NoError(t, err)
 	require.Len(t, batches, 5)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
