@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -45,4 +46,28 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 	result.BatchTime = batch.SubmissionTime
 
 	return result, nil
+}
+
+func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
+	switch tx.Type() {
+	case txtype.Transfer:
+		return s.AddTransfer(tx.ToTransfer())
+	case txtype.Create2Transfer:
+		return s.AddCreate2Transfer(tx.ToCreate2Transfer())
+	case txtype.MassMigration:
+		return s.AddMassMigration(tx.ToMassMigration())
+	}
+	return nil
+}
+
+func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionArray) error {
+	switch txs.Type() {
+	case txtype.Transfer:
+		return s.BatchAddTransfer(txs.ToTransferArray())
+	case txtype.Create2Transfer:
+		return s.BatchAddCreate2Transfer(txs.ToCreate2TransferArray())
+	case txtype.MassMigration:
+		return s.BatchAddMassMigration(txs.ToMassMigrationArray())
+	}
+	return nil
 }
