@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"sort"
-
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -80,10 +78,6 @@ func (s *TransactionStorage) unsafeGetPendingCreate2Transfers() ([]models.Create
 	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err
 	}
-
-	sort.SliceStable(txs, func(i, j int) bool {
-		return txs[i].Nonce.Cmp(&txs[j].Nonce) < 0
-	})
 
 	return txs, nil
 }

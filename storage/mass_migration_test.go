@@ -123,45 +123,6 @@ func (s *MassMigrationTestSuite) TestGetPendingMassMigrations() {
 	s.Contains(res, massMigrations[1])
 }
 
-func (s *MassMigrationTestSuite) TestGetPendingMassMigration_OrdersMassMigrationsByNonceAndTxHashAscending() {
-	massMigration.Nonce = models.MakeUint256(1)
-	massMigration.Hash = utils.RandomHash()
-	massMigration2 := massMigration
-	massMigration2.Nonce = models.MakeUint256(4)
-	massMigration2.Hash = utils.RandomHash()
-	massMigration3 := massMigration
-	massMigration3.Nonce = models.MakeUint256(7)
-	massMigration3.Hash = utils.RandomHash()
-	massMigration4 := massMigration
-	massMigration4.Nonce = models.MakeUint256(5)
-	massMigration4.Hash = common.Hash{66, 66, 66, 66}
-	massMigration5 := massMigration
-	massMigration5.Nonce = models.MakeUint256(5)
-	massMigration5.Hash = common.Hash{65, 65, 65, 65}
-
-	massMigrations := []models.MassMigration{
-		massMigration,
-		massMigration2,
-		massMigration3,
-		massMigration4,
-		massMigration5,
-	}
-
-	err := s.storage.BatchAddMassMigration(massMigrations)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingMassMigrations()
-	s.NoError(err)
-
-	s.Equal(models.MassMigrationArray{
-		massMigration,
-		massMigration2,
-		massMigration5,
-		massMigration4,
-		massMigration3,
-	}, res)
-}
-
 func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
 	txs := make([]models.MassMigration, 2)
 	for i := 0; i < len(txs); i++ {

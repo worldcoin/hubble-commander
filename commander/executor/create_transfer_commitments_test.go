@@ -252,9 +252,11 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 	err := s.storage.AddTransfer(&nonceTooHighTx)
 	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+	txQueue, err := s.txsCtx.queryPendingTxs()
 	s.NoError(err)
-	s.Len(pendingTransfers, validTransfersCount+1)
+
+	pendingTxs := txQueue.PickTxsForCommitment()
+	s.Len(pendingTxs, validTransfersCount+1)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -262,7 +264,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 
 	for i := 0; i < validTransfersCount; i++ {
 		var tx *models.Transfer
-		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
+		tx, err = s.storage.GetTransfer(pendingTxs.At(i).GetBase().Hash)
 		s.NoError(err)
 		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
 	}
@@ -270,10 +272,7 @@ func (s *TransferCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx
 	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
 	s.NoError(err)
 	s.Nil(tx.CommitmentID)
-
-	pendingTransfers, err = s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 1)
+	s.Nil(tx.ErrorMessage)
 }
 
 func TestTransferCommitmentsTestSuite(t *testing.T) {
