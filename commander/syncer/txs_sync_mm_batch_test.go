@@ -3,10 +3,12 @@ package syncer
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -54,6 +56,59 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	massMigration.Signature = tx.Signature
 	tx.CommitmentID = &commitment.ID
 	s.Equal(tx, *massMigration)
+}
+
+func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTotalAmount() {
+	tx := testutils.MakeMassMigration(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+
+	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
+		batchData.Metas()[0].Amount = models.MakeUint256(100)
+	})
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(InvalidTotalAmountMessage, disputableErr.Reason)
+}
+
+func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentWithdrawRoot() {
+	tx := testutils.MakeMassMigration(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+
+	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
+		batchData.WithdrawRoots()[0] = common.Hash{1, 2, 3}
+	})
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(InvalidWithdrawRootMessage, disputableErr.Reason)
+}
+
+func (s *SyncMMBatchTestSuite) submitInvalidBatch(tx models.GenericTransaction, modifier func(batchData executor.BatchData)) {
+	pendingBatch, batchData := s.createBatch(tx)
+
+	modifier(batchData)
+
+	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	s.NoError(err)
+
+	s.client.GetBackend().Commit()
 }
 
 func (s *SyncMMBatchTestSuite) setTxHash(tx *models.MassMigration) {
