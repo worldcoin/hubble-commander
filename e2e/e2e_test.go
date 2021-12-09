@@ -136,8 +136,10 @@ func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Ha
 	var txReceipt dto.TransactionReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 	require.NoError(t, err)
-	require.Equal(t, txHash, txReceipt.BatchHash)
 	require.Equal(t, txstatus.Pending, txReceipt.Status)
+
+	tx := txReceipt.Transaction.(map[string]interface{})
+	require.Equal(t, txHash.String(), tx["Hash"])
 }
 
 func send31MoreTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
