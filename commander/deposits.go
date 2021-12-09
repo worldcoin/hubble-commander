@@ -78,7 +78,7 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 		}
 	}
 
-	return nil
+	return it.Error()
 }
 
 func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
@@ -108,7 +108,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 		depositSubTrees = append(depositSubTrees, subTree)
 	}
 
-	return depositSubTrees, nil
+	return depositSubTrees, it.Error()
 }
 
 func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {

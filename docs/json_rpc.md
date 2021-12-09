@@ -95,7 +95,8 @@ Example result (TRANSFER):
     "Fee": "1",
     "Nonce": "0",
     "Signature": "0x19721d261934684e37c582a1cbd69eb406eb430e56c1865e0bd071d350728c5225fc666aeb79165b6b29616a1018aabf0d317d60b0feb5668e372d7810081d96",
-    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "ReceiveTime": 1625153276,
     "CommitmentID": {
         "BatchID": "1",
         "IndexInBatch": 0
@@ -103,7 +104,8 @@ Example result (TRANSFER):
     "ErrorMessage": null,
     "ToStateID": 2,
     "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
-    "BatchTime": 1633692591, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "BatchTime": 1633692591,
     "Status": "FINALISED"
 }
 ```
@@ -119,7 +121,8 @@ Example result (CREATE2TRANSFER):
     "Fee": "1",
     "Nonce": "0",
     "Signature": "0x06e788fb9494da058be2c6d3e078d4833401fcf992f410ffe98ff88a02b833d828f399d33b5368ccd3f03c6d6d1aa6b7b36f398210abf056434b4b15b3462c59",
-    "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "ReceiveTime": 1625153276,
     "CommitmentID": {
         "BatchID": "1",
         "IndexInBatch": 0
@@ -128,7 +131,34 @@ Example result (CREATE2TRANSFER):
     "ToStateID": 0,
     "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc",
     "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
-    "BatchTime": 1633692591, // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "BatchTime": 1633692591,
+    "Status": "FINALISED"
+}
+```
+
+Example result (MASS_MIGRATION):
+
+```json
+{
+    "Hash": "0x5e40559e87254b436245fa9723f1489e4328869d8cf1a960066c74e74750c2ae",
+    "TxType": "MASS_MIGRATION",
+    "FromStateID": 1,
+    "Amount": "50",
+    "Fee": "1",
+    "Nonce": "0",
+    "Signature": "0x1f49179e0dc59a3d7ce425f7379d80d0d8ffac2a9d9d2a915d5f21fec8a59e3816b5ec10ce3bd608116c0c18e4bd07a8206e2f6a66696982f0ff441a357e8300",
+    // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+    "ReceiveTime": 1625153276,
+    "CommitmentID": {
+        "BatchID": "1",
+        "IndexInBatch": 0
+    },
+    "ErrorMessage": null,
+    "SpokeID": 2,
+    "BatchHash": "0x9fc863e718defd9506764f4f623f2b0a63fa51dc1a2f85ca314846aaf5cf422c",
+    // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
+    "BatchTime": 1633692591,
     "Status": "FINALISED"
 }
 ```
@@ -141,12 +171,12 @@ Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given p
 
 ```json
 {
-      "StateID": 3,
-      "PubKeyID": 3,
-      "TokenIndex": "0",
-      "Balance": "1000000000000000000",
-      "Nonce": "0"
-  }
+    "StateID": 3,
+    "PubKeyID": 3,
+    "TokenIndex": "0",
+    "Balance": "1000000000000000000",
+    "Nonce": "0"
+}
 ```
 
 ### `hubble_getUserStates(pubKey)`
@@ -272,7 +302,8 @@ Example result:
             "Fee": "1",
             "Nonce": "0",
             "Signature": "0x28c71cc24191b4fd335bc5b2045d27e723820dc1071ad20882f2ec4347cccfff302d354a7adb570b1a53aebd6a59537271648391eb20e72c8fe4d83a2e6e4df6",
-            "ReceiveTime": 1625153276, // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            "ReceiveTime": 1625153276,
             "ToStateID": 2
         }
     ]
@@ -283,22 +314,24 @@ Example result:
 
 ## Sending a transaction
 
-1. Call `hubble_getUserStates(senderPubkey)` to list sender's accounts. Pick one with an appropriate token index and balance.
-2. Call `hubble_getUserStates(recipientPubkey)` to list recipients accounts pick one with an appropriate token index.
+1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
+2. Call `hubble_getUserStates(recipientPubKey)` to list recipients accounts pick one with an appropriate token index.
 3. Call `hubble_sendTransaction` with `txType=TRANSFER` using the state indexes from steps 1 & 2 and nonce from step 1.
 4. Call `hubble_getTransfer(Hash)` with the hash from step 3 to monitor transaction progress.
 
 ## Alternative: Recipient doesn't have a state leaf for a given token
 
-1. Call `hubble_getUserStates(senderPubkey)` to list sender's accounts. Pick one with an appropriate token index and balance.
-2. Call `hubble_sendTransaction` with `txType=CREATE2TRANSFER` with the recipient's pubkey. The commander will decide the appropriate account index and state index for the recipient.
+1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
+2. Call `hubble_sendTransaction` with `txType=CREATE2TRANSFER` with the recipient's pubKey. The commander will decide the appropriate
+   account index and state index for the recipient.
 3. Call `hubble_getTransaction(Hash)` with the hash from step 2 to monitor transaction progress.
 
 DRAFT:
 
 ### `hubble_getBatchByNumber(batchNumber)`
 
-Returns the information about the batch (hash, id) as well as the included commitments. Should this include transactions? Should hash and id be the same thing?
+Returns the information about the batch (hash, id) as well as the included commitments. Should this include transactions? Should hash and id
+be the same thing?
 
 ### `hubble_getAccounts(PublicKey)`
 
@@ -310,8 +343,8 @@ Returns the index of the token. Figure out if the tokens actually do have indice
 
 ### `hubble_getBalanceByAddress(Address, Token)`
 
-Returns the user's balance in the specified token.
-Potentially in the future extend this with the ability to see the current balance, committed balance and finalized (non-disputable) balance.
+Returns the user's balance in the specified token. Potentially in the future extend this with the ability to see the current balance,
+committed balance and finalized (non-disputable) balance.
 
 ### `hubble_getTransactionCount(Address)`
 

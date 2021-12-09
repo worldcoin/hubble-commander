@@ -5,6 +5,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 )
 
+type TransactionReceipt struct {
+	models.TransactionWithBatchDetails
+	Status txstatus.TransactionStatus
+}
+
 type TransferReceipt struct {
 	models.TransferWithBatchDetails
 	Status txstatus.TransactionStatus

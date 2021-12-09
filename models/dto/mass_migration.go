@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type MassMigration struct {
@@ -55,4 +56,28 @@ func (m *MassMigration) UnmarshalJSON(bytes []byte) error {
 		Signature:   massMigration.Signature,
 	}
 	return nil
+}
+
+type MassMigrationForCommitment struct {
+	Hash        common.Hash
+	FromStateID uint32
+	Amount      models.Uint256
+	Fee         models.Uint256
+	Nonce       models.Uint256
+	Signature   models.Signature
+	ReceiveTime *models.Timestamp
+	SpokeID     uint32
+}
+
+func MakeMassMigrationForCommitment(massMigration *models.MassMigration) MassMigrationForCommitment {
+	return MassMigrationForCommitment{
+		Hash:        massMigration.Hash,
+		FromStateID: massMigration.FromStateID,
+		Amount:      massMigration.Amount,
+		Fee:         massMigration.Fee,
+		Nonce:       massMigration.Nonce,
+		Signature:   massMigration.Signature,
+		ReceiveTime: massMigration.ReceiveTime,
+		SpokeID:     massMigration.SpokeID,
+	}
 }

@@ -12,7 +12,7 @@ type TransactionType uint8
 const (
 	Transfer        = TransactionType(batchtype.Transfer)
 	Create2Transfer = TransactionType(batchtype.Create2Transfer)
-	MassMigration   = 5
+	MassMigration   = TransactionType(5)
 )
 
 var TransactionTypes = map[TransactionType]string{
