@@ -101,9 +101,12 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	transfer, ok := res.(*dto.TransferReceipt)
+	receipt, ok := res.(*dto.TransactionReceipt)
 	s.True(ok)
-	s.Equal(txstatus.Pending, transfer.Status)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.Transfer)
+	s.True(ok)
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
@@ -113,9 +116,12 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	create2Transfer, ok := res.(*dto.Create2TransferReceipt)
+	receipt, ok := res.(*dto.TransactionReceipt)
 	s.True(ok)
-	s.Equal(txstatus.Pending, create2Transfer.Status)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.Create2Transfer)
+	s.True(ok)
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
@@ -125,9 +131,12 @@ func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
 	res, err := s.api.GetTransaction(*hash)
 	s.NoError(err)
 
-	massMigration, ok := res.(*dto.MassMigrationReceipt)
+	receipt, ok := res.(*dto.TransactionReceipt)
 	s.True(ok)
-	s.Equal(txstatus.Pending, massMigration.Status)
+	s.Equal(txstatus.Pending, receipt.Status)
+
+	_, ok = receipt.Transaction.(*models.MassMigration)
+	s.True(ok)
 }
 
 func TestGetTransactionTestSuite(t *testing.T) {
