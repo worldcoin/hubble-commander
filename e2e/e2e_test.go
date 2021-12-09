@@ -48,12 +48,21 @@ func TestCommander(t *testing.T) {
 	testGetVersion(t, commander.Client())
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
-	testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
 
-	firstC2TWallet := wallets[len(wallets)-32]
-	testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		return testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
+	})
 
-	testSubmitDepositBatch(t, commander.Client())
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		firstC2TWallet := wallets[len(wallets)-32]
+		return testSubmitC2TBatch(t, commander.Client(), senderWallet, wallets, firstC2TWallet.PublicKey(), 32)
+	})
+
+	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
+		return testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
+	})
+
+	testSubmitDepositBatchAndWait(t, commander.Client())
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
@@ -132,6 +141,41 @@ func testSendCreate2Transfer(
 	return txHash
 }
 
+func testSendMassMigration(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, nonce uint64) common.Hash {
+	massMigration, err := api.SignMassMigration(&senderWallet, dto.MassMigration{
+		FromStateID: ref.Uint32(1),
+		SpokeID:     ref.Uint32(1),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(nonce),
+	})
+	require.NoError(t, err)
+
+	var txHash common.Hash
+	err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*massMigration})
+	require.NoError(t, err)
+	require.NotZero(t, txHash)
+	return txHash
+}
+
+func send31MoreMassMigrations(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	for nonce := startNonce; nonce < startNonce+31; nonce++ {
+		transfer, err := api.SignMassMigration(&senderWallet, dto.MassMigration{
+			FromStateID: ref.Uint32(1),
+			SpokeID:     ref.Uint32(1),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(nonce),
+		})
+		require.NoError(t, err)
+
+		var txHash common.Hash
+		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
+		require.NoError(t, err)
+		require.NotZero(t, txHash)
+	}
+}
+
 func testGetTransaction(t *testing.T, client jsonrpc.RPCClient, txHash common.Hash) {
 	var txReceipt dto.TransactionReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
@@ -206,8 +250,8 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, models.MakeUint256(32+32), senderState.Nonce)
-	require.Equal(t, *initialBalance.SubN(32*100 + 32*100), senderState.Balance)
+	require.Equal(t, models.MakeUint256(32+32+32), senderState.Nonce)
+	require.Equal(t, *initialBalance.SubN(32*100 + 32*100 + 32*100), senderState.Balance)
 }
 
 func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
@@ -219,20 +263,20 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.AddN(32*10 + 32*10), feeReceiverState.Balance)
+	require.Equal(t, *initialBalance.AddN(32*10 + 32*10 + 32*10), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
 
 func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
-
 	require.NoError(t, err)
-	require.Len(t, batches, 4)
+	require.Len(t, batches, 5)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type, batches[3].Type}
+	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type, batches[3].Type, batches[4].Type}
 	require.Contains(t, batchTypes, batchtype.Transfer)
 	require.Contains(t, batchTypes, batchtype.Create2Transfer)
+	require.Contains(t, batchTypes, batchtype.MassMigration)
 	require.Contains(t, batchTypes, batchtype.Deposit)
 }
 
@@ -240,7 +284,7 @@ func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet 
 	err := commander.Restart()
 	require.NoError(t, err)
 
-	testSendTransfer(t, commander.Client(), senderWallet, 64)
+	testSendTransfer(t, commander.Client(), senderWallet, 96)
 }
 
 func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserStateWithID, error) {
