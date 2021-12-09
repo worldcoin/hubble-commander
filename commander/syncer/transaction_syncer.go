@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
@@ -25,6 +26,7 @@ type TransactionSyncer interface {
 	ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *models.Uint256) (
 		stateProof *models.StateMerkleProof, commitmentError, appError error,
 	)
+	VerifyAmountAndWithdrawRoots(commitment encoder.Commitment, txs models.GenericTransactionArray, proofs []models.StateMerkleProof) error
 	SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error
 	BatchAddTxs(txs models.GenericTransactionArray) error
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
@@ -90,6 +92,14 @@ func (s *TransferSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, 
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
 }
 
+func (s *TransferSyncer) VerifyAmountAndWithdrawRoots(
+	_ encoder.Commitment,
+	_ models.GenericTransactionArray,
+	_ []models.StateMerkleProof,
+) error {
+	return nil
+}
+
 func (s *TransferSyncer) SetMissingTxsData(_ encoder.Commitment, _ SyncedTxs) error {
 	return nil
 }
@@ -151,6 +161,14 @@ func (s *C2TSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *
 	stateProof *models.StateMerkleProof, commitmentError, appError error,
 ) {
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
+}
+
+func (s *C2TSyncer) VerifyAmountAndWithdrawRoots(
+	_ encoder.Commitment,
+	_ models.GenericTransactionArray,
+	_ []models.StateMerkleProof,
+) error {
+	return nil
 }
 
 func (s *C2TSyncer) SetMissingTxsData(_ encoder.Commitment, syncedTxs SyncedTxs) error {
@@ -216,6 +234,51 @@ func (s *MMSyncer) ApplyFee(feeReceiverStateID uint32, commitmentTokenID, fee *m
 	stateProof *models.StateMerkleProof, commitmentError, appError error,
 ) {
 	return s.applier.ApplyFeeForSync(feeReceiverStateID, commitmentTokenID, fee)
+}
+
+func (s *MMSyncer) VerifyAmountAndWithdrawRoots(
+	commitment encoder.Commitment,
+	txs models.GenericTransactionArray,
+	proofs []models.StateMerkleProof,
+) error {
+	hashes := make([]common.Hash, 0, txs.Len())
+	totalAmount := models.MakeUint256(0)
+
+	mmCommitment := commitment.(*encoder.DecodedMMCommitment)
+
+	for i := 0; i < txs.Len(); i++ {
+		senderLeaf, err := s.storage.StateTree.Leaf(txs.At(i).GetFromStateID())
+		if err != nil {
+			return err
+		}
+
+		hash, err := encoder.HashUserState(&models.UserState{
+			PubKeyID: senderLeaf.PubKeyID,
+			TokenID:  mmCommitment.Meta.TokenID,
+			Balance:  txs.At(i).GetAmount(),
+			Nonce:    models.MakeUint256(0),
+		})
+		if err != nil {
+			return err
+		}
+		hashes = append(hashes, *hash)
+
+		txAmount := txs.At(i).GetAmount()
+		totalAmount = *totalAmount.Add(&txAmount)
+	}
+
+	merkleTree, err := merkletree.NewMerkleTree(hashes)
+	if err != nil {
+		return err
+	}
+
+	if !totalAmount.Eq(&mmCommitment.Meta.Amount) {
+		return NewDisputableErrorWithProofs(Transition, InvalidTotalAmountMessage, proofs)
+	}
+	if merkleTree.Root() != mmCommitment.WithdrawRoot {
+		return NewDisputableErrorWithProofs(Transition, InvalidWithdrawRootMessage, proofs)
+	}
+	return nil
 }
 
 func (s *MMSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error {

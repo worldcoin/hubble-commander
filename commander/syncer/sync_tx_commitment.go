@@ -14,6 +14,8 @@ var (
 
 const (
 	InvalidCommitmentStateRootMessage = "invalid commitment post state root"
+	InvalidTotalAmountMessage         = "invalid commitment total amount"
+	InvalidWithdrawRootMessage        = "invalid commitment withdraw root"
 	NonexistentReceiverMessage        = "nonexistent receiver"
 )
 
@@ -39,6 +41,11 @@ func (c *TxsContext) syncTxCommitment(commitment encoder.Commitment) error {
 	syncedTxs.SetTxs(appliedTxs)
 
 	err = c.verifyStateRoot(decodedCommitment.StateRoot, stateProofs)
+	if err != nil {
+		return err
+	}
+
+	err = c.Syncer.VerifyAmountAndWithdrawRoots(commitment, appliedTxs, stateProofs)
 	if err != nil {
 		return err
 	}
