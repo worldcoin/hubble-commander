@@ -226,19 +226,25 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	log.Println("Registering WithdrawManager as a spoke in SpokeRegistry")
-	spokeRegistrationTx, err := spokeRegistry.RegisterSpoke(c.GetAccount(), withdrawManagerAddress)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
 	log.Println("Deploying TestCustomToken")
 	exampleTokenAddress, exampleTokenTx, _, err := customtoken.DeployTestCustomToken(c.GetAccount(), c.GetBackend(), "ExampleToken", "EXP")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *exampleTokenTx, *withdrawManagerTx, *spokeRegistrationTx)
+	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *withdrawManagerTx, *exampleTokenTx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Stage 7
+	log.Println("Registering WithdrawManager as a spoke in SpokeRegistry")
+	spokeRegistrationTx, err := spokeRegistry.RegisterSpoke(c.GetAccount(), withdrawManagerAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *spokeRegistrationTx)
 	if err != nil {
 		return nil, err
 	}
