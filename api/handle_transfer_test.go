@@ -30,6 +30,7 @@ var (
 		AccountRegistryDeploymentBlock: 9483,
 		TokenRegistry:                  utils.RandomAddress(),
 		DepositManager:                 utils.RandomAddress(),
+		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		SyncedBlock:                    11293,
 		GenesisAccounts: []models.PopulatedGenesisAccount{
