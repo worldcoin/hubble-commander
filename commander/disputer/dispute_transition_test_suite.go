@@ -41,13 +41,11 @@ func (s *disputeTransitionTestSuite) getValidBatchStateProofs(syncedTxs syncer.S
 	return stateProofs
 }
 
-func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTransactionArray) {
+func (s *disputeTransitionTestSuite) submitInvalidBatch(txs models.GenericTransactionArray) {
 	s.beginTransaction()
 	defer s.rollback()
-	for i := range txs {
-		err := s.disputeCtx.storage.BatchAddTransaction(txs[i])
-		s.NoError(err)
-	}
+	err := s.disputeCtx.storage.BatchAddTransaction(txs)
+	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)

@@ -19,17 +19,12 @@ func (s *DisputeMMTransitionTestSuite) SetupTest() {
 }
 
 func (s *DisputeMMTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	txs := []models.GenericTransactionArray{
-		models.MassMigrationArray{
-			testutils.MakeMassMigration(0, 1, 0, 100),
-			testutils.MakeMassMigration(1, 1, 0, 100),
-		},
-		models.MassMigrationArray{
-			testutils.MakeMassMigration(2, 1, 0, 20),
-			testutils.MakeMassMigration(2, 1, 1, 20),
-		},
+	txs := models.MassMigrationArray{
+		testutils.MakeMassMigration(0, 1, 0, 100),
+		testutils.MakeMassMigration(1, 1, 0, 100),
+		testutils.MakeMassMigration(2, 1, 0, 20),
+		testutils.MakeMassMigration(2, 1, 1, 20),
 	}
-
 	s.submitInvalidBatch(txs)
 
 	remoteBatches, err := s.client.GetAllBatches()

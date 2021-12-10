@@ -23,18 +23,13 @@ func (s *DisputeCT2TransitionTestSuite) SetupTest() {
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
 	wallets := s.setAccounts(&bls.TestDomain)
 
-	commitmentTxs := []models.GenericTransactionArray{
-		models.Create2TransferArray{
-			testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey()),
-			testutils.MakeCreate2Transfer(1, nil, 0, 100, wallets[0].PublicKey()),
-		},
-		models.Create2TransferArray{
-			testutils.MakeCreate2Transfer(2, nil, 0, 20, wallets[0].PublicKey()),
-			testutils.MakeCreate2Transfer(2, nil, 1, 20, wallets[0].PublicKey()),
-		},
+	txs := models.Create2TransferArray{
+		testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey()),
+		testutils.MakeCreate2Transfer(1, nil, 0, 100, wallets[0].PublicKey()),
+		testutils.MakeCreate2Transfer(2, nil, 0, 20, wallets[0].PublicKey()),
+		testutils.MakeCreate2Transfer(2, nil, 1, 20, wallets[0].PublicKey()),
 	}
-
-	s.submitInvalidBatch(commitmentTxs)
+	s.submitInvalidBatch(txs)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -50,11 +45,8 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
 	wallets := s.setAccounts(&bls.TestDomain)
 
-	commitmentTxs := []models.GenericTransactionArray{
-		models.Create2TransferArray{testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[1].PublicKey())},
-	}
-
-	s.submitInvalidBatch(commitmentTxs)
+	txs := models.Create2TransferArray{testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[1].PublicKey())}
+	s.submitInvalidBatch(txs)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)

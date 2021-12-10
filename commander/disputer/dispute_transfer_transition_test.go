@@ -19,17 +19,12 @@ func (s *DisputeTransferTransitionTestSuite) SetupTest() {
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	commitmentTxs := []models.GenericTransactionArray{
-		models.TransferArray{
-			testutils.MakeTransfer(0, 2, 0, 100),
-			testutils.MakeTransfer(1, 0, 0, 100),
-		},
-		models.TransferArray{
-			testutils.MakeTransfer(2, 0, 0, 20),
-			testutils.MakeTransfer(2, 0, 1, 20),
-		},
+	commitmentTxs := models.TransferArray{
+		testutils.MakeTransfer(0, 2, 0, 100),
+		testutils.MakeTransfer(1, 0, 0, 100),
+		testutils.MakeTransfer(2, 0, 0, 20),
+		testutils.MakeTransfer(2, 0, 1, 20),
 	}
-
 	s.submitInvalidBatch(commitmentTxs)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -44,10 +39,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvali
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_FirstCommitment() {
-	commitmentTxs := []models.GenericTransactionArray{
-		models.TransferArray{testutils.MakeTransfer(0, 2, 0, 100)},
-	}
-
+	commitmentTxs := models.TransferArray{testutils.MakeTransfer(0, 2, 0, 100)}
 	s.submitInvalidBatch(commitmentTxs)
 
 	remoteBatches, err := s.client.GetAllBatches()
