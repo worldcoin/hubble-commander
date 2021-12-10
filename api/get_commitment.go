@@ -37,10 +37,15 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 	}
 
 	return &dto.Commitment{
-		TxCommitment: *commitment,
-		Status:       *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
-		BatchTime:    batch.SubmissionTime,
-		Transactions: transactions,
+		ID:                *dto.MakeCommitmentID(&commitment.ID),
+		Type:              commitment.Type,
+		PostStateRoot:     commitment.PostStateRoot,
+		FeeReceiver:       commitment.FeeReceiver,
+		CombinedSignature: commitment.CombinedSignature,
+		BodyHash:          commitment.BodyHash,
+		Status:            *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
+		BatchTime:         batch.SubmissionTime,
+		Transactions:      transactions,
 	}, nil
 }
 

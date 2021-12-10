@@ -84,9 +84,14 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		TxCommitment: s.commitment,
-		Status:       txstatus.InBatch,
-		BatchTime:    s.batch.SubmissionTime,
+		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
+		Type:              s.commitment.Type,
+		PostStateRoot:     s.commitment.PostStateRoot,
+		FeeReceiver:       s.commitment.FeeReceiver,
+		CombinedSignature: s.commitment.CombinedSignature,
+		BodyHash:          s.commitment.BodyHash,
+		Status:            txstatus.InBatch,
+		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
@@ -129,9 +134,14 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		TxCommitment: s.commitment,
-		Status:       txstatus.InBatch,
-		BatchTime:    s.batch.SubmissionTime,
+		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
+		Type:              s.commitment.Type,
+		PostStateRoot:     s.commitment.PostStateRoot,
+		FeeReceiver:       s.commitment.FeeReceiver,
+		CombinedSignature: s.commitment.CombinedSignature,
+		BodyHash:          s.commitment.BodyHash,
+		Status:            txstatus.InBatch,
+		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.Create2TransferForCommitment{{
 			Hash:        transfer.Hash,
 			FromStateID: transfer.FromStateID,
@@ -174,9 +184,14 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		TxCommitment: s.commitment,
-		Status:       txstatus.InBatch,
-		BatchTime:    s.batch.SubmissionTime,
+		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
+		Type:              s.commitment.Type,
+		PostStateRoot:     s.commitment.PostStateRoot,
+		FeeReceiver:       s.commitment.FeeReceiver,
+		CombinedSignature: s.commitment.CombinedSignature,
+		BodyHash:          s.commitment.BodyHash,
+		Status:            txstatus.InBatch,
+		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.MassMigrationForCommitment{{
 			Hash:        massMigration.Hash,
 			FromStateID: massMigration.FromStateID,

@@ -57,7 +57,7 @@ func (a *API) returnTransferReceipt(transfer *models.TransferWithBatchDetails) (
 	}
 
 	return &dto.TransferReceipt{
-		TransferWithBatchDetails: *transfer,
+		TransferWithBatchDetails: dto.MakeTransferWithBatchDetails(transfer),
 		Status:                   *status,
 	}, nil
 }
@@ -69,7 +69,7 @@ func (a *API) returnCreate2TransferReceipt(create2Transfer *models.Create2Transf
 	}
 
 	return &dto.Create2TransferReceipt{
-		Create2TransferWithBatchDetails: *create2Transfer,
+		Create2TransferWithBatchDetails: dto.MakeCreate2TransferWithBatchDetails(create2Transfer),
 		Status:                          *status,
 	}, nil
 }
