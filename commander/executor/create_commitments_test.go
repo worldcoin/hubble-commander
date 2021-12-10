@@ -224,55 +224,48 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsMan
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
-	transfersCount := uint32(4)
-	s.preparePendingTransfers(transfersCount)
-
-	pendingTransfers, err := s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, int(transfersCount))
+	transfers := testutils.GenerateValidTransfers(4)
+	s.addTransfers(transfers)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(batchData.Commitments(), 1)
+	commitment := &batchData.Commitments()[0]
 
-	for i := range pendingTransfers {
-		tx, err := s.storage.GetTransfer(pendingTransfers[i].Hash)
+	for i := range transfers {
+		tx, err := s.storage.GetTransfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
+		s.Equal(commitment.ID, *tx.CommitmentID)
+		s.Nil(tx.ErrorMessage)
 	}
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	validTransfersCount := 4
-	s.preparePendingTransfers(uint32(validTransfersCount))
-
-	nonceTooHighTx := testutils.GenerateValidTransfers(1)[0]
+	txs := testutils.GenerateValidTransfers(5)
+	validTxs := txs[:4]
+	nonceTooHighTx := &txs[4]
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
-	err := s.storage.AddTransfer(&nonceTooHighTx)
-	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+	s.addTransfers(validTxs)
+	err := s.storage.AddTransfer(nonceTooHighTx)
 	s.NoError(err)
-	s.Len(pendingTransfers, validTransfersCount+1)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(batchData.Commitments(), 1)
+	commitment := &batchData.Commitments()[0]
 
-	for i := 0; i < validTransfersCount; i++ {
+	for i := range validTxs {
 		var tx *models.Transfer
-		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
+		tx, err = s.storage.GetTransfer(validTxs[i].Hash)
 		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
+		s.Equal(commitment.ID, *tx.CommitmentID)
 	}
 
 	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
 	s.NoError(err)
 	s.Nil(tx.CommitmentID)
-
-	pendingTransfers, err = s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 1)
+	s.Nil(tx.ErrorMessage)
 }
 
 func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
