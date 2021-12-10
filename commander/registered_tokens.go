@@ -1,9 +1,6 @@
 package commander
 
 import (
-	"bytes"
-	"context"
-
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -48,15 +45,6 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 	defer func() { _ = it.Close() }()
 
 	for it.Next() {
-		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		if err != nil {
-			return nil, err
-		}
-
-		if !bytes.Equal(tx.Data()[:4], c.client.TokenRegistry.ABI.Methods["finaliseRegistration"].ID) {
-			continue // TODO handle internal transactions
-		}
-
 		tokenID := models.MakeUint256FromBig(*it.Event.TokenID)
 		contract := it.Event.TokenContract
 		registeredToken := &models.RegisteredToken{
