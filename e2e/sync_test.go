@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	log "github.com/sirupsen/logrus"
@@ -19,6 +19,9 @@ import (
 
 func TestCommanderSync(t *testing.T) {
 	cfg := config.GetConfig()
+	cfg.Rollup.MinTxsPerCommitment = 32
+	cfg.Rollup.MaxTxsPerCommitment = 32
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 	if cfg.Ethereum == nil {
 		log.Panicf("sync test cannot be run on simulator")
 	}
@@ -46,20 +49,8 @@ func TestCommanderSync(t *testing.T) {
 
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
-	firstTransferHash := testSendTransfer(t, activeCommander.Client(), senderWallet, 0)
-	testGetTransaction(t, activeCommander.Client(), firstTransferHash)
-	send31MoreTransfers(t, activeCommander.Client(), senderWallet, 1)
 
-	firstC2TWallet := wallets[len(wallets)-32]
-	firstCreate2TransferHash := testSendCreate2Transfer(t, activeCommander.Client(), senderWallet, firstC2TWallet.PublicKey(), 32)
-	testGetTransaction(t, activeCommander.Client(), firstCreate2TransferHash)
-	send31MoreCreate2Transfers(t, activeCommander.Client(), senderWallet, wallets, 33)
-
-	makeDeposits(t, activeCommander.Client())
-
-	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
-	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstCreate2TransferHash)
-	waitForBatch(t, activeCommander.Client(), models.MakeUint256(3))
+	submitBatchesAndWait(t, activeCommander, senderWallet, wallets)
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
@@ -91,4 +82,15 @@ func TestCommanderSync(t *testing.T) {
 	testSenderStateAfterTransfers(t, passiveCommander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, passiveCommander.Client(), feeReceiverWallet)
 	testGetBatches(t, passiveCommander.Client())
+}
+
+func submitBatchesAndWait(t *testing.T, activeCommander *setup.InProcessCommander, senderWallet bls.Wallet, wallets []bls.Wallet) {
+	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
+	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
+	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
+	testSubmitDepositBatchAndWait(t, activeCommander.Client())
+
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)
+	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstMMHash)
 }

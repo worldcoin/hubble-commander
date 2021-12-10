@@ -150,27 +150,6 @@ func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, comm
 	})
 }
 
-func (s *Storage) GetTransferWithBatchDetails(hash common.Hash) (*models.TransferWithBatchDetails, error) {
-	var transfers []models.TransferWithBatchDetails
-	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
-		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
-		if err != nil {
-			return err
-		}
-		if tx.TxType != txtype.Transfer {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-
-		transfers, err = txStorage.txsToTransfersWithBatchDetails([]stored.Tx{*tx}, []*stored.TxReceipt{txReceipt})
-		return err
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return &transfers[0], nil
-}
-
 func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
 	var transfers []models.TransferWithBatchDetails
 	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {

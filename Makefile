@@ -71,16 +71,13 @@ bench-sync-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 
 bench-e2e-ci-part-1: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander)" ./e2e/bench
+	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
 
 bench-e2e-ci-part-2: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
 
 bench-e2e-ci-part-3: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
-
-bench-e2e-ci-part-4: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkPubKeyRegistrationSuite/TestBenchPubKeysRegistration ./e2e/bench
 
 run-docs:
 	mdbook serve
@@ -115,6 +112,5 @@ clean-docs:
 	bench-e2e-ci-part-1
 	bench-e2e-ci-part-2
 	bench-e2e-ci-part-3
-	bench-e2e-ci-part-4
 	run-docs
 	clean-docs

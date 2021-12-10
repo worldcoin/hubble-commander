@@ -216,6 +216,21 @@ func (t *Tx) ToMassMigration(txReceipt *TxReceipt) *models.MassMigration {
 	return massMigration
 }
 
+func (t *Tx) ToTypedTxInterface(txReceipt *TxReceipt) interface{} {
+	var tx interface{}
+
+	switch t.TxType {
+	case txtype.Transfer:
+		tx = t.ToTransfer(txReceipt)
+	case txtype.Create2Transfer:
+		tx = t.ToCreate2Transfer(txReceipt)
+	case txtype.MassMigration:
+		tx = t.ToMassMigration(txReceipt)
+	}
+
+	return tx
+}
+
 func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error) {
 	switch transactionType {
 	case txtype.Transfer:

@@ -220,26 +220,6 @@ func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2
 	})
 }
 
-func (s *Storage) GetCreate2TransferWithBatchDetails(hash common.Hash) (*models.Create2TransferWithBatchDetails, error) {
-	var transfers []models.Create2TransferWithBatchDetails
-	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
-		tx, txReceipt, err := txStorage.getStoredTxWithReceipt(hash)
-		if err != nil {
-			return err
-		}
-		if tx.TxType != txtype.Create2Transfer {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-
-		transfers, err = txStorage.create2TransferToTransfersWithBatchDetails([]*stored.Tx{tx}, []*stored.TxReceipt{txReceipt})
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &transfers[0], nil
-}
-
 func (s *Storage) create2TransferToTransfersWithBatchDetails(txs []*stored.Tx, txReceipts []*stored.TxReceipt) (
 	result []models.Create2TransferWithBatchDetails,
 	err error,
