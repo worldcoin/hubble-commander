@@ -133,7 +133,7 @@ func (s *C2TCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64)
 	return registeredAccounts
 }
 
-func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
+func TestC2TCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(C2TCommitmentsTestSuite))
 }
 
