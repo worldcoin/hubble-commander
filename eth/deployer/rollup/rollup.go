@@ -67,6 +67,7 @@ type RollupContracts struct {
 	Vault                  *vault.Vault
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerAddress  common.Address
+	WithdrawManagerAddress common.Address
 	Transfer               *transfer.Transfer
 	MassMigration          *massmigration.MassMigration
 	Create2Transfer        *create2transfer.Create2Transfer
@@ -272,6 +273,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		Vault:                  vaultContract,
 		DepositManager:         depositManager,
 		DepositManagerAddress:  depositManagerAddress,
+		WithdrawManagerAddress: withdrawManagerAddress,
 		Transfer:               txHelpers.Transfer,
 		MassMigration:          txHelpers.MassMigration,
 		Create2Transfer:        txHelpers.Create2Transfer,
