@@ -52,12 +52,24 @@ func (s *BenchmarkTransactionsSuite) TestBenchCreate2TransfersCommander() {
 	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 1.0})
 }
 
+func (s *BenchmarkTransactionsSuite) TestBenchMassMigrationsCommander() {
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.MassMigration: 1.0})
+}
+
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8}) // 20% C2T, 80% transfers
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	}) // 75% transfers, 20% C2T, 5% MM
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	})
 	s.benchSyncing()
 }
 
@@ -137,7 +149,7 @@ func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distributi
 
 			lastTxHash = s.sendC2T(senderWallet, senderStateID, to, nonce)
 		case txtype.MassMigration:
-			panic("Not supported")
+			lastTxHash = s.sendMassMigration(senderWallet, senderStateID, nonce)
 		}
 
 		return lastTxHash
