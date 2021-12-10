@@ -58,6 +58,27 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Equal(tx, *massMigration)
 }
 
+func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTokenID() {
+	tx := testutils.MakeMassMigration(0, 1, 0, 400)
+	s.setTxHashAndSign(&tx)
+
+	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
+		batchData.Metas()[0].TokenID = models.MakeUint256(1234)
+	})
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	var disputableErr *DisputableError
+	err = s.syncCtx.SyncBatch(remoteBatches[0])
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(Transition, disputableErr.Type)
+	s.Equal(invalidTokenID, disputableErr.Reason)
+}
+
 func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTotalAmount() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
