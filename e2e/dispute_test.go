@@ -435,6 +435,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		TokenRegistry:                  info.TokenRegistry,
 		SpokeRegistry:                  info.SpokeRegistry,
 		DepositManager:                 info.DepositManager,
+		WithdrawManager:                info.WithdrawManager,
 		Rollup:                         info.Rollup,
 	}
 
