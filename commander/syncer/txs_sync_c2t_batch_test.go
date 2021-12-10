@@ -78,7 +78,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	err = s.syncCtx.SyncBatch(remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(InvalidCommitmentStateRootMessage, disputableErr.Reason)
+	s.Equal(invalidStateRootMessage, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].GetID())
 	s.NoError(err)
@@ -124,7 +124,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_NonexistentReceiverPublicKey() {
 	err = s.syncCtx.SyncBatch(remoteBatches[0])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Signature, disputableErr.Type)
-	s.Equal(NonexistentReceiverMessage, disputableErr.Reason)
+	s.Equal(nonexistentReceiverMessage, disputableErr.Reason)
 	s.Equal(0, disputableErr.CommitmentIndex)
 }
 

@@ -49,21 +49,25 @@ func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevert
 
 	merklePath := models.MakeMerklePathFromLeafID(1)
 	previousCommitmentProof := &models.CommitmentInclusionProof{
-		StateRoot: utils.RandomHash(),
-		BodyRoot:  utils.RandomHash(),
-		Path:      &merklePath,
-		Witness:   []common.Hash{},
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: utils.RandomHash(),
+			Path:      &merklePath,
+			Witness:   []common.Hash{},
+		},
+		BodyRoot: utils.RandomHash(),
 	}
 	targetCommitmentProof := &models.TransferCommitmentInclusionProof{
-		StateRoot: common.Hash{},
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: common.Hash{},
+			Path:      &merklePath,
+			Witness:   []common.Hash{},
+		},
 		Body: &models.TransferBody{
 			AccountRoot:  utils.RandomHash(),
 			Signature:    models.Signature{},
 			FeeReceiver:  0,
 			Transactions: nil,
 		},
-		Path:    &merklePath,
-		Witness: []common.Hash{},
 	}
 
 	err = s.client.DisputeTransitionTransfer(

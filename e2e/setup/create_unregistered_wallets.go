@@ -13,7 +13,7 @@ func CreateUnregisteredWalletsForBenchmark(txAmount int64, domain bls.Domain) ([
 
 	registeredAccounts := 0
 	for _, account := range accounts {
-		if account.Balance.CmpN(InitialGenesisBalance) == 0 {
+		if account.Balance.EqN(InitialGenesisBalance) {
 			registeredAccounts++
 		}
 	}

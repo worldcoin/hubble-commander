@@ -186,8 +186,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() 
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.TooManyTx, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.TooManyTx, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
@@ -211,8 +211,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.Ok, s.getDisputeResult()) // invalid post state root emits Result.Ok
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
@@ -230,8 +230,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithT
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.NotEnoughTokenBalance, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.NotEnoughTokenBalance, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
@@ -252,8 +252,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidS
 	err = s.cmd.syncRemoteBatch(remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].GetID())
-	s.Equal(result.BadSignature, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	s.Equal(result.BadSignature, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatureInBadFormat() {
@@ -274,8 +274,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatur
 	err = s.cmd.syncRemoteBatch(remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].GetID())
-	s.Equal(result.BadPrecompileCall, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	s.Equal(result.BadPrecompileCall, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
@@ -305,8 +305,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.BadCompression, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.BadCompression, getDisputeResult(s.Assertions, s.client))
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
 }
@@ -327,8 +327,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAf
 	err = s.cmd.syncRemoteBatch(remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[0].GetID())
-	s.Equal(result.BadCompression, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	s.Equal(result.BadCompression, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
@@ -362,8 +362,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidF
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.BadToTokenID, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.BadToTokenID, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTransfersAndInvalidPostStateRoot() {
@@ -389,8 +389,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTrans
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.Ok, s.getDisputeResult()) // invalid post state root emits Result.Ok
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexistentSender() {
@@ -419,8 +419,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.NotEnoughTokenBalance, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.NotEnoughTokenBalance, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
@@ -470,8 +470,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	err = s.cmd.syncRemoteBatch(remoteBatches[1])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	s.checkBatchAfterDispute(remoteBatches[1].GetID())
-	s.Equal(result.NonexistentReceiver, s.getDisputeResult())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[1].GetID())
+	s.Equal(result.NonexistentReceiver, getDisputeResult(s.Assertions, s.client))
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
@@ -707,18 +707,18 @@ func (s *TxsBatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedTxBat
 	s.NoError(err)
 }
 
-func (s *TxsBatchesTestSuite) checkBatchAfterDispute(batchID models.Uint256) {
-	_, err := s.client.GetBatch(&batchID)
+func checkBatchAfterDispute(s *require.Assertions, cmd *Commander, batchID models.Uint256) {
+	_, err := cmd.client.GetBatch(&batchID)
 	s.Error(err)
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
 
-	batch, err := s.cmd.storage.GetBatch(batchID)
+	batch, err := cmd.storage.GetBatch(batchID)
 	s.Nil(batch)
 	s.True(st.IsNotFoundError(err))
 }
 
-func (s *TxsBatchesTestSuite) getDisputeResult() result.DisputeResult {
-	it, err := s.client.Rollup.FilterRollbackTriggered(nil)
+func getDisputeResult(s *require.Assertions, client *eth.TestClient) result.DisputeResult {
+	it, err := client.Rollup.FilterRollbackTriggered(nil)
 	s.NoError(err)
 	it.Next()
 	s.NoError(it.Error())

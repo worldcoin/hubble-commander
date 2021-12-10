@@ -222,7 +222,7 @@ func getClient(
 	}
 
 	if dbChainState != nil {
-		if dbChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
+		if !dbChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 			return nil, errors.WithStack(errInconsistentDBChainID)
 		}
 	}
@@ -313,7 +313,7 @@ func bootstrapFromRemoteState(
 		return nil, err
 	}
 
-	if fetchedChainState.ChainID.CmpN(cfg.Ethereum.ChainID) != 0 {
+	if !fetchedChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 

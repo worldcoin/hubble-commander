@@ -50,9 +50,9 @@ func (s *disputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 
 func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domain) []bls.Wallet {
 	userStates := []models.UserState{
-		*createUserState(0, 300, 0),
-		*createUserState(1, 200, 0),
-		*createUserState(2, 100, 0),
+		*createUserState(0, 300),
+		*createUserState(1, 200),
+		*createUserState(2, 100),
 	}
 
 	wallets := testutils.GenerateWallets(s, domain, len(userStates))
@@ -67,12 +67,12 @@ func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domai
 	return wallets
 }
 
-func createUserState(pubKeyID uint32, balance, nonce uint64) *models.UserState {
+func createUserState(pubKeyID uint32, balance uint64) *models.UserState {
 	return &models.UserState{
 		PubKeyID: pubKeyID,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(balance),
-		Nonce:    models.MakeUint256(nonce),
+		Nonce:    models.MakeUint256(0),
 	}
 }
 

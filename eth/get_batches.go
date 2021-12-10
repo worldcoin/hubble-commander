@@ -81,7 +81,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		if rolledBackBatchID != nil && *rolledBackBatchID == decodedBatch.GetBase().ID {
+		if rolledBackBatchID != nil && rolledBackBatchID.Eq(&decodedBatch.GetBase().ID) {
 			rolledBackBatchID = nil
 		}
 		res = append(res, decodedBatch)
