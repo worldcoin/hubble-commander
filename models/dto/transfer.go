@@ -81,3 +81,35 @@ func MakeTransferForCommitment(transfer *models.Transfer) TransferForCommitment 
 		ToStateID:   transfer.ToStateID,
 	}
 }
+
+type TransferWithBatchDetails struct {
+	TransactionBase
+	ToStateID uint32
+	BatchHash *common.Hash
+	BatchTime *models.Timestamp
+}
+
+func MakeTransferWithBatchDetails(transfer *models.TransferWithBatchDetails) TransferWithBatchDetails {
+	out := MakeTransferWithBatchDetailsFromTransfer(transfer.ToTransfer())
+	out.BatchHash = transfer.BatchHash
+	out.BatchTime = transfer.BatchTime
+	return out
+}
+
+func MakeTransferWithBatchDetailsFromTransfer(transfer *models.Transfer) TransferWithBatchDetails {
+	return TransferWithBatchDetails{
+		TransactionBase: TransactionBase{
+			CommitmentID: MakeCommitmentID(transfer.CommitmentID),
+			Hash:         transfer.Hash,
+			TxType:       transfer.TxType,
+			FromStateID:  transfer.FromStateID,
+			Amount:       transfer.Amount,
+			Fee:          transfer.Fee,
+			Nonce:        transfer.Nonce,
+			Signature:    transfer.Signature,
+			ReceiveTime:  transfer.ReceiveTime,
+			ErrorMessage: transfer.ErrorMessage,
+		},
+		ToStateID: transfer.ToStateID,
+	}
+}
