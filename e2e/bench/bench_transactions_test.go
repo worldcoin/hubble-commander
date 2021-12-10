@@ -26,6 +26,8 @@ type TxTypeDistribution = map[txtype.TransactionType]float32
 
 type BenchmarkTransactionsSuite struct {
 	benchmarkTestSuite
+
+	unregisteredWallets []bls.Wallet
 }
 
 func (s *BenchmarkTransactionsSuite) SetupTest() {
@@ -35,6 +37,11 @@ func (s *BenchmarkTransactionsSuite) SetupTest() {
 		MaxQueuedBatchesAmount: 20,
 		MaxConcurrentWorkers:   4,
 	})
+
+	unregisteredWallets, err := setup.CreateUnregisteredWalletsForBenchmark(s.benchConfig.TxAmount, s.domain)
+	s.NoError(err)
+
+	s.unregisteredWallets = unregisteredWallets
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchTransfersCommander() {
@@ -45,12 +52,24 @@ func (s *BenchmarkTransactionsSuite) TestBenchCreate2TransfersCommander() {
 	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 1.0})
 }
 
+func (s *BenchmarkTransactionsSuite) TestBenchMassMigrationsCommander() {
+	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.MassMigration: 1.0})
+}
+
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8}) // 20% C2T, 80% transfers
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	}) // 75% transfers, 20% C2T, 5% MM
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
-	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.Create2Transfer: 0.2, txtype.Transfer: 0.8})
+	s.sendTransactionsWithDistribution(TxTypeDistribution{
+		txtype.Transfer:        0.75,
+		txtype.Create2Transfer: 0.2,
+		txtype.MassMigration:   0.05,
+	})
 	s.benchSyncing()
 }
 
@@ -107,6 +126,8 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 }
 
 func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distribution TxTypeDistribution) {
+	unregisteredWalletsIndex := 0
+
 	s.sendTransactions(func(senderWallet bls.Wallet, senderStateID uint32, nonce models.Uint256) common.Hash {
 		var lastTxHash common.Hash
 
@@ -122,12 +143,13 @@ func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distributi
 
 			lastTxHash = s.sendTransfer(senderWallet, senderStateID, to, nonce)
 		case txtype.Create2Transfer:
-			// Pick random receiver pubkey
-			to := s.wallets[randomInt(len(s.wallets))].PublicKey()
+			// Pick random unregistered receiver pubkey
+			to := s.unregisteredWallets[unregisteredWalletsIndex].PublicKey()
+			unregisteredWalletsIndex++
 
 			lastTxHash = s.sendC2T(senderWallet, senderStateID, to, nonce)
 		case txtype.MassMigration:
-			panic("Not supported")
+			lastTxHash = s.sendMassMigration(senderWallet, senderStateID, nonce)
 		}
 
 		return lastTxHash

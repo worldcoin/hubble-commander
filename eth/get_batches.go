@@ -121,6 +121,11 @@ func (c *Client) getNewBatchEvents(filters *BatchesFilters) ([]*rollup.RollupNew
 		events = append(events, it.Event)
 	}
 
+	err = it.Error()
+	if err != nil {
+		return nil, err
+	}
+
 	// Sort for sanity
 	sort.Slice(events, func(i, j int) bool {
 		return utils.EventBefore(&events[i].Raw, &events[j].Raw)
@@ -139,6 +144,11 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.
 	events := make([]*rollup.RollupDepositsFinalised, 0)
 	for it.Next() {
 		events = append(events, it.Event)
+	}
+
+	err = it.Error()
+	if err != nil {
+		return nil, err
 	}
 
 	// Sort for sanity
