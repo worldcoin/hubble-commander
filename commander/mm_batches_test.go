@@ -56,7 +56,7 @@ func (s *MMBatchesTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
+func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsBatch() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 	err := s.storage.AddMassMigration(&tx)
 	s.NoError(err)
