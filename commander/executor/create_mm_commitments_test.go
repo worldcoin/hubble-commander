@@ -37,11 +37,6 @@ func (s *MMCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *MMCommitmentsTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
-}
-
 func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)

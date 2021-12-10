@@ -68,11 +68,6 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 	return nil
 }
 
-func (s *CreateCommitmentsTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
-	s.NoError(err)
-}
-
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 1
