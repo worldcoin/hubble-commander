@@ -14,6 +14,7 @@ var testChainState = ChainState{
 	TokenRegistry:                  utils.RandomAddress(),
 	SpokeRegistry:                  utils.RandomAddress(),
 	DepositManager:                 utils.RandomAddress(),
+	WithdrawManager:                utils.RandomAddress(),
 	Rollup:                         utils.RandomAddress(),
 	SyncedBlock:                    8001,
 	GenesisAccounts: GenesisAccounts{
