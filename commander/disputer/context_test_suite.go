@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -129,15 +128,7 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 }
 
 func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
-	var err error
-	switch tx.Type() {
-	case txtype.Transfer:
-		err = s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
-	case txtype.Create2Transfer:
-		err = s.disputeCtx.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-	case txtype.MassMigration:
-		err = s.disputeCtx.storage.AddMassMigration(tx.ToMassMigration())
-	}
+	err := s.disputeCtx.storage.AddTransaction(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
