@@ -1,11 +1,14 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
@@ -28,6 +31,10 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 
 	create2Transfer.SetReceiveTime()
 	err = a.storage.AddCreate2Transfer(create2Transfer)
+	if errors.Is(err, bh.ErrKeyExists) {
+		logDuplicateTransaction(&create2Transfer.Hash)
+		return &create2Transfer.Hash, nil
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -223,55 +224,48 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsMan
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
-	transfersCount := uint32(4)
-	s.preparePendingTransfers(transfersCount)
-
-	pendingTransfers, err := s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, int(transfersCount))
+	transfers := testutils.GenerateValidTransfers(4)
+	s.addTransfers(transfers)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(batchData.Commitments(), 1)
+	commitment := &batchData.Commitments()[0]
 
-	for i := range pendingTransfers {
-		tx, err := s.storage.GetTransfer(pendingTransfers[i].Hash)
+	for i := range transfers {
+		tx, err := s.storage.GetTransfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
+		s.Equal(commitment.ID, *tx.CommitmentID)
+		s.Nil(tx.ErrorMessage)
 	}
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	validTransfersCount := 4
-	s.preparePendingTransfers(uint32(validTransfersCount))
-
-	nonceTooHighTx := testutils.GenerateValidTransfers(1)[0]
+	txs := testutils.GenerateValidTransfers(5)
+	validTxs := txs[:4]
+	nonceTooHighTx := &txs[4]
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
-	err := s.storage.AddTransfer(&nonceTooHighTx)
-	s.NoError(err)
 
-	pendingTransfers, err := s.storage.GetPendingTransfers()
+	s.addTransfers(validTxs)
+	err := s.storage.AddTransfer(nonceTooHighTx)
 	s.NoError(err)
-	s.Len(pendingTransfers, validTransfersCount+1)
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(batchData.Commitments(), 1)
+	commitment := &batchData.Commitments()[0]
 
-	for i := 0; i < validTransfersCount; i++ {
+	for i := range validTxs {
 		var tx *models.Transfer
-		tx, err = s.storage.GetTransfer(pendingTransfers[i].Hash)
+		tx, err = s.storage.GetTransfer(validTxs[i].Hash)
 		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
+		s.Equal(commitment.ID, *tx.CommitmentID)
 	}
 
 	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
 	s.NoError(err)
 	s.Nil(tx.CommitmentID)
-
-	pendingTransfers, err = s.storage.GetPendingTransfers()
-	s.NoError(err)
-	s.Len(pendingTransfers, 1)
+	s.Nil(tx.ErrorMessage)
 }
 
 func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
@@ -392,6 +386,41 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.NoError(err)
 
 	s.Equal(expectedPostStateRoot, stateRoot)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionReplacement() {
+	// Mine the transaction with higher fee in case there are two txs from the same sender with the same nonce
+	s.cfg.MinTxsPerCommitment = 1
+
+	transfer := testutils.MakeTransfer(1, 2, 0, 100)
+	transfer.Hash = common.BytesToHash([]byte{1})
+	err := s.storage.AddTransfer(&transfer)
+	s.NoError(err)
+
+	higherFeeTransfer := transfer
+	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
+	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
+	err = s.storage.AddTransfer(&higherFeeTransfer)
+	s.NoError(err)
+
+	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
+
+	_, err = s.txsCtx.CreateCommitments()
+	s.NoError(err)
+
+	s.Len(s.txsCtx.txErrorsToStore, 1)
+	txErr := s.txsCtx.txErrorsToStore[0]
+	s.Equal(transfer.Hash, txErr.TxHash)
+	s.Equal(applier.ErrNonceTooLow.Error(), txErr.ErrorMessage)
+
+	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
+	s.NoError(err)
+
+	expectedCommitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentID)
 }
 
 func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 
+	"github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,4 +16,8 @@ func logReceivedTransaction(tx interface{}) {
 		}
 		log.Debugf("API: received new transaction: %s", string(jsonTx))
 	}
+}
+
+func logDuplicateTransaction(txHash *common.Hash) {
+	log.WithField("txHash", txHash).Debug("API: received transaction already exists")
 }

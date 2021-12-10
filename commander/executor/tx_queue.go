@@ -1,17 +1,22 @@
 package executor
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"sort"
+
+	"github.com/Worldcoin/hubble-commander/models"
+)
 
 type TxQueue struct {
 	transactions models.GenericTransactionArray
 }
 
 func NewTxQueue(transactions models.GenericTransactionArray) *TxQueue {
+	sort.Slice(byPriority(transactions))
 	return &TxQueue{transactions: transactions}
 }
 
 func (q *TxQueue) PickTxsForCommitment() models.GenericTransactionArray {
-	//TODO: implement logic to return MM grouped and sorted by spokeID
+	// TODO: implement logic to return MM grouped and sorted by spokeID
 	return q.transactions
 }
 
