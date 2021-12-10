@@ -1,7 +1,10 @@
 package disputer
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -46,6 +49,55 @@ func (s *disputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
 	s.NoError(err)
 	_, err = s.disputeCtx.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
 	s.NoError(err)
+}
+
+func (s *disputeTransitionTestSuite) getInvalidBatchStateProofs(remoteBatch eth.DecodedBatch) []models.StateMerkleProof {
+	s.beginTransaction()
+	defer s.rollback()
+
+	err := s.syncCtx.SyncCommitments(remoteBatch)
+	s.Error(err)
+
+	var disputableErr *syncer.DisputableError
+	s.ErrorAs(err, &disputableErr)
+	s.Equal(syncer.Transition, disputableErr.Type)
+	return disputableErr.Proofs
+}
+
+func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTransactionArray) *models.Batch {
+	s.beginTransaction()
+	defer s.rollback()
+	for i := range txs {
+		err := s.disputeCtx.storage.BatchAddTransaction(txs[i])
+		s.NoError(err)
+	}
+
+	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
+	s.NoError(err)
+	fmt.Println(*pendingBatch.PrevStateRoot)
+
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.NoError(err)
+
+	batchData.Commitments()[batchData.Len()-1].PostStateRoot = common.Hash{1, 2, 3}
+
+	err = s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	s.NoError(err)
+
+	s.client.GetBackend().Commit()
+	return pendingBatch
+}
+
+func (s *disputeTransitionTestSuite) getValidBatchStateProofs(syncedTxs syncer.SyncedTxs) []models.StateMerkleProof {
+	feeReceiverStateID := uint32(0)
+
+	s.beginTransaction()
+	defer s.rollback()
+
+	_, stateProofs, err := s.syncCtx.SyncTxs(syncedTxs, feeReceiverStateID)
+	s.NoError(err)
+
+	return stateProofs
 }
 
 func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domain) []bls.Wallet {
