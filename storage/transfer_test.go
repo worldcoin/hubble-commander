@@ -156,39 +156,6 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	s.Contains(res, transfers[1])
 }
 
-func (s *TransferTestSuite) TestGetPendingTransfers_OrdersTransfersByNonceAndTxHashAscending() {
-	transfer.Nonce = models.MakeUint256(1)
-	transfer.Hash = utils.RandomHash()
-	transfer2 := transfer
-	transfer2.Nonce = models.MakeUint256(4)
-	transfer2.Hash = utils.RandomHash()
-	transfer3 := transfer
-	transfer3.Nonce = models.MakeUint256(7)
-	transfer3.Hash = utils.RandomHash()
-	transfer4 := transfer
-	transfer4.Nonce = models.MakeUint256(5)
-	transfer4.Hash = common.Hash{66, 66, 66, 66}
-	transfer5 := transfer
-	transfer5.Nonce = models.MakeUint256(5)
-	transfer5.Hash = common.Hash{65, 65, 65, 65}
-
-	transfers := []models.Transfer{
-		transfer,
-		transfer2,
-		transfer3,
-		transfer4,
-		transfer5,
-	}
-
-	err := s.storage.BatchAddTransfer(transfers)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingTransfers()
-	s.NoError(err)
-
-	s.Equal(models.TransferArray{transfer, transfer2, transfer5, transfer4, transfer3}, res)
-}
-
 func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
 	accounts := []models.AccountLeaf{
 		{

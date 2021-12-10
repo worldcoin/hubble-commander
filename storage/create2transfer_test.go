@@ -160,39 +160,6 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	s.Contains(res, create2Transfer2)
 }
 
-func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers_OrdersTransfersByNonceAndTxHashAscending() {
-	create2Transfer.TransactionBase.Nonce = models.MakeUint256(1)
-	create2Transfer.Hash = utils.RandomHash()
-	create2Transfer2 := create2Transfer
-	create2Transfer2.TransactionBase.Nonce = models.MakeUint256(4)
-	create2Transfer2.Hash = utils.RandomHash()
-	create2Transfer3 := create2Transfer
-	create2Transfer3.TransactionBase.Nonce = models.MakeUint256(7)
-	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer4 := create2Transfer
-	create2Transfer4.TransactionBase.Nonce = models.MakeUint256(5)
-	create2Transfer4.Hash = common.Hash{66, 66, 66, 66}
-	create2Transfer5 := create2Transfer
-	create2Transfer5.TransactionBase.Nonce = models.MakeUint256(5)
-	create2Transfer5.Hash = common.Hash{65, 65, 65, 65}
-
-	create2transfers := []models.Create2Transfer{
-		create2Transfer,
-		create2Transfer2,
-		create2Transfer3,
-		create2Transfer4,
-		create2Transfer5,
-	}
-
-	err := s.storage.BatchAddCreate2Transfer(create2transfers)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-
-	s.Equal(models.Create2TransferArray{create2Transfer, create2Transfer2, create2Transfer5, create2Transfer4, create2Transfer3}, res)
-}
-
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)

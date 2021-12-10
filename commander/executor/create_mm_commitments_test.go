@@ -69,7 +69,7 @@ func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoo
 	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
 }
 
-func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
+func TestMMCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(MMCommitmentsTestSuite))
 }
 
