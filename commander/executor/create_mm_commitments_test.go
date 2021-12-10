@@ -5,10 +5,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,45 +14,30 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MassMigrationCommitmentsTestSuite struct {
-	*require.Assertions
-	suite.Suite
-	storage                *st.TestStorage
-	cfg                    *config.RollupConfig
-	txsCtx                 *TxsContext
+type MMCommitmentsTestSuite struct {
+	testSuiteWithTxsContext
 	maxTxBytesInCommitment int
 }
 
-func (s *MassMigrationCommitmentsTestSuite) SetupSuite() {
+func (s *MMCommitmentsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *MassMigrationCommitmentsTestSuite) SetupTest() {
-	var err error
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
-	s.cfg = &config.RollupConfig{
+func (s *MMCommitmentsTestSuite) SetupTest() {
+	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.MassMigration, &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
-	}
+	})
 	s.maxTxBytesInCommitment = encoder.MassMigrationForCommitmentLength * int(s.cfg.MaxTxsPerCommitment)
 
-	err = populateAccounts(s.storage.Storage, genesisBalances)
-	s.NoError(err)
-
-	executionCtx := NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.MassMigration)
-}
-
-func (s *MassMigrationCommitmentsTestSuite) TearDownTest() {
-	err := s.storage.Teardown()
+	err := populateAccounts(s.storage.Storage, genesisBalances)
 	s.NoError(err)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
@@ -73,7 +56,7 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 	s.Equal(targetFeeReceiver, batchData.Metas()[0].FeeReceiver)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
@@ -87,15 +70,15 @@ func (s *MassMigrationCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrect
 }
 
 func TestMassMigrationCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(MassMigrationCommitmentsTestSuite))
+	suite.Run(t, new(MMCommitmentsTestSuite))
 }
 
-func (s *MassMigrationCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
+func (s *MMCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
 	err := s.storage.BatchAddMassMigration(massMigrations)
 	s.NoError(err)
 }
 
-func (s *MassMigrationCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {
+func (s *MMCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {
 	hashes := make([]common.Hash, 0, len(massMigrations))
 
 	for i := range massMigrations {

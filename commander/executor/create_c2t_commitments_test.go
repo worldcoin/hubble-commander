@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type Create2TransferCommitmentsTestSuite struct {
+type C2TCommitmentsTestSuite struct {
 	testSuiteWithTxsContext
 	maxTxBytesInCommitment int
 }
 
-func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
+func (s *C2TCommitmentsTestSuite) SetupTest() {
 	s.testSuiteWithTxsContext.SetupTestWithConfig(batchtype.Create2Transfer, &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
@@ -33,7 +33,7 @@ func (s *Create2TransferCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTransfers() {
+func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransfers() {
 	s.preparePendingCreate2Transfers(2)
 
 	pendingTransfers, err := s.storage.GetPendingCreate2Transfers()
@@ -52,7 +52,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_UpdatesTrans
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
+func (s *C2TCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	transfers := testutils.GenerateValidCreate2Transfers(1)
 	s.addCreate2Transfers(transfers)
 
@@ -68,7 +68,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestCreateCommitments_RegistersAcc
 	s.Equal(transfers[0].ToPublicKey, accounts[0].PublicKey)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsMissingToAccountTree() {
+func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsAndAddsMissingToAccountTree() {
 	pendingAccounts := make([]models.AccountLeaf, st.AccountBatchSize-5)
 	for i := 0; i < len(pendingAccounts); i++ {
 		pendingAccounts[i] = models.AccountLeaf{
@@ -99,7 +99,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_Regist
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccounts() {
+func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccounts() {
 	pendingAccounts := []models.AccountLeaf{
 		{
 			PubKeyID:  st.AccountBatchOffset,
@@ -118,7 +118,7 @@ func (s *Create2TransferCommitmentsTestSuite) TestRegisterPendingAccounts_FillsM
 	}
 }
 
-func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
+func (s *C2TCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64) []models.AccountLeaf {
 	it, err := s.client.AccountRegistry.FilterBatchPubkeyRegistered(&bind.FilterOpts{Start: startBlockNumber})
 	s.NoError(err)
 
@@ -136,15 +136,15 @@ func (s *Create2TransferCommitmentsTestSuite) getRegisteredAccounts(startBlockNu
 }
 
 func TestCreate2TransferCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(Create2TransferCommitmentsTestSuite))
+	suite.Run(t, new(C2TCommitmentsTestSuite))
 }
 
-func (s *Create2TransferCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
+func (s *C2TCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
 	err := s.storage.BatchAddCreate2Transfer(transfers)
 	s.NoError(err)
 }
 
-func (s *Create2TransferCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
+func (s *C2TCommitmentsTestSuite) preparePendingCreate2Transfers(transfersAmount uint32) {
 	transfers := testutils.GenerateValidCreate2Transfers(transfersAmount)
 	s.addCreate2Transfers(transfers)
 }
