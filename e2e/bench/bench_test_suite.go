@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -123,6 +124,24 @@ func (s *benchmarkTestSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.
 	s.NotNil(transferHash)
 
 	return transferHash
+}
+
+func (s *benchmarkTestSuite) sendMassMigration(wallet bls.Wallet, from uint32, nonce models.Uint256) common.Hash {
+	massMigration, err := api.SignMassMigration(&wallet, dto.MassMigration{
+		FromStateID: &from,
+		SpokeID:     ref.Uint32(1),
+		Amount:      models.NewUint256(1),
+		Fee:         models.NewUint256(1),
+		Nonce:       &nonce,
+	})
+	s.NoError(err)
+
+	var massMigrationHash common.Hash
+	err = s.commander.Client().CallFor(&massMigrationHash, "hubble_sendTransaction", []interface{}{*massMigration})
+	s.NoError(err)
+	s.NotNil(massMigrationHash)
+
+	return massMigrationHash
 }
 
 func (s *benchmarkTestSuite) sendTransactions(
