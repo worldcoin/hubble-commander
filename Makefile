@@ -71,7 +71,7 @@ bench-sync-profile: clean-testcache
 	HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 
 bench-e2e-ci-part-1: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander)" ./e2e/bench
+	HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
 
 bench-e2e-ci-part-2: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
