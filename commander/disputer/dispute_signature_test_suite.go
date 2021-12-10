@@ -21,6 +21,14 @@ func (s *disputeSignatureTestSuite) setupTest() {
 	s.NoError(err)
 }
 
+func (s *disputeSignatureTestSuite) signTx(wallet *bls.Wallet, tx models.GenericTransaction) {
+	encodedTx, err := s.syncCtx.Syncer.EncodeTxForSigning(tx)
+	s.NoError(err)
+	signature, err := wallet.Sign(encodedTx)
+	s.NoError(err)
+	tx.GetBase().Signature = *signature.ModelsSignature()
+}
+
 func (s *disputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
 	wallets := setUserStates(s.Assertions, s.disputeCtx, s.domain)
 	for i := range wallets {

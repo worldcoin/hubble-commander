@@ -18,39 +18,6 @@ type disputeTransitionTestSuite struct {
 	testSuiteWithContexts
 }
 
-func (s *disputeTransitionTestSuite) applyTransfer(
-	tx models.GenericTransaction,
-	invalidTxHash common.Hash,
-	combinedFee models.Uint256,
-	receiverLeaf *models.StateLeaf,
-) models.Uint256 {
-	if tx.GetBase().Hash != invalidTxHash {
-		txError, appError := s.txsCtx.Applier.ApplyTx(tx, receiverLeaf, models.MakeUint256(0))
-		s.NoError(txError)
-		s.NoError(appError)
-	} else {
-		senderLeaf, err := s.disputeCtx.storage.StateTree.Leaf(tx.GetFromStateID())
-		s.NoError(err)
-		s.calculateStateAfterInvalidTransfer(senderLeaf, receiverLeaf, tx)
-	}
-
-	fee := tx.GetFee()
-	return *combinedFee.Add(&fee)
-}
-
-func (s *disputeTransitionTestSuite) calculateStateAfterInvalidTransfer(
-	senderState, receiverState *models.StateLeaf,
-	invalidTransfer models.GenericTransaction,
-) {
-	senderState.Nonce = *senderState.Nonce.AddN(1)
-	amount := invalidTransfer.GetAmount()
-	receiverState.Balance = *receiverState.Balance.Add(&amount)
-	_, err := s.disputeCtx.storage.StateTree.Set(invalidTransfer.GetFromStateID(), &senderState.UserState)
-	s.NoError(err)
-	_, err = s.disputeCtx.storage.StateTree.Set(*invalidTransfer.GetToStateID(), &receiverState.UserState)
-	s.NoError(err)
-}
-
 func (s *disputeTransitionTestSuite) getInvalidBatchStateProofs(remoteBatch eth.DecodedBatch) []models.StateMerkleProof {
 	s.beginTransaction()
 	defer s.rollback()
@@ -64,7 +31,7 @@ func (s *disputeTransitionTestSuite) getInvalidBatchStateProofs(remoteBatch eth.
 	return disputableErr.Proofs
 }
 
-func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTransactionArray) *models.Batch {
+func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTransactionArray) {
 	s.beginTransaction()
 	defer s.rollback()
 	for i := range txs {
@@ -85,7 +52,6 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTran
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-	return pendingBatch
 }
 
 func (s *disputeTransitionTestSuite) getValidBatchStateProofs(syncedTxs syncer.SyncedTxs) []models.StateMerkleProof {

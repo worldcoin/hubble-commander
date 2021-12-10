@@ -79,7 +79,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInv
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey())
-	s.signCreate2Transfer(&wallets[1], &transfer)
+	s.signTx(&wallets[1], &transfer)
 
 	s.submitBatch(&transfer)
 
@@ -115,7 +115,7 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[2].PublicKey())
-	s.signCreate2Transfer(&wallets[0], &transfer)
+	s.signTx(&wallets[0], &transfer)
 
 	s.submitBatch(&transfer)
 
@@ -127,14 +127,6 @@ func (s *DisputeC2TSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
-}
-
-func (s *DisputeC2TSignatureTestSuite) signCreate2Transfer(wallet *bls.Wallet, transfer *models.Create2Transfer) {
-	encodedTransfer, err := encoder.EncodeCreate2TransferForSigning(transfer)
-	s.NoError(err)
-	signature, err := wallet.Sign(encodedTransfer)
-	s.NoError(err)
-	transfer.Signature = *signature.ModelsSignature()
 }
 
 func (s *DisputeC2TSignatureTestSuite) signC2TWithPublicKeyHash(

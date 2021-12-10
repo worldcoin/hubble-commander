@@ -3,12 +3,9 @@ package disputer
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,6 +18,7 @@ func (s *DisputeTransferSignatureTestSuite) SetupTest() {
 	s.disputeSignatureTestSuite.setupTest()
 }
 
+//TODO-ref: move to correct package
 func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {
 	s.setUserStatesAndAddAccounts()
 
@@ -57,7 +55,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWi
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
-	signTransfer(s.T(), &wallets[0], &transfer)
+	s.signTx(&wallets[0], &transfer)
 
 	s.submitBatch(&transfer)
 
@@ -75,7 +73,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	wallets := s.setUserStatesAndAddAccounts()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
-	signTransfer(s.T(), &wallets[1], &transfer)
+	s.signTx(&wallets[1], &transfer)
 
 	s.submitBatch(&transfer)
 
@@ -87,14 +85,6 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
-}
-
-func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
-	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
-	require.NoError(t, err)
-	signature, err := wallet.Sign(encodedTransfer)
-	require.NoError(t, err)
-	transfer.Signature = *signature.ModelsSignature()
 }
 
 func TestDisputeTransferSignatureTestSuite(t *testing.T) {
