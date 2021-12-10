@@ -79,9 +79,6 @@ bench-e2e-ci-part-2: clean-testcache
 bench-e2e-ci-part-3: clean-testcache
 	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 
-bench-e2e-ci-part-4: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkPubKeyRegistrationSuite/TestBenchPubKeysRegistration ./e2e/bench
-
 .PHONY:
 	install
 	clean
@@ -109,4 +106,3 @@ bench-e2e-ci-part-4: clean-testcache
 	bench-e2e-ci-part-1
 	bench-e2e-ci-part-2
 	bench-e2e-ci-part-3
-	bench-e2e-ci-part-4
