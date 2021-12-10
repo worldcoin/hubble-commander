@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -18,17 +17,11 @@ type DisputeCT2TransitionTestSuite struct {
 }
 
 func (s *DisputeCT2TransitionTestSuite) SetupTest() {
-	s.SetupTestWithConfig(batchtype.Create2Transfer, &config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    2,
-		DisableSignatures:      true,
-	})
+	s.disputeTransitionTestSuite.SetupTest(batchtype.Create2Transfer, true)
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(&bls.TestDomain)
 
 	commitmentTxs := []models.GenericTransactionArray{
 		models.Create2TransferArray{
@@ -55,7 +48,7 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_RemovesInvalidBatc
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(&bls.TestDomain)
 
 	commitmentTxs := []models.GenericTransactionArray{
 		models.Create2TransferArray{testutils.MakeCreate2Transfer(0, nil, 0, 100, wallets[1].PublicKey())},
@@ -75,14 +68,12 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_FirstCommitment() 
 }
 
 func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(&bls.TestDomain)
 	tx := testutils.MakeCreate2Transfer(0, ref.Uint32(3), 0, 50, wallets[1].PublicKey())
 
 	proofs := s.getValidBatchStateProofs(syncer.NewSyncedC2Ts(models.Create2TransferArray{tx}, []uint32{1}))
 
 	tx.ToStateID = nil
-	s.beginTransaction()
-	defer s.commitTransaction()
 	s.submitBatch(&tx)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -93,18 +84,6 @@ func (s *DisputeCT2TransitionTestSuite) TestDisputeTransition_ValidBatch() {
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
-}
-
-func (s *DisputeCT2TransitionTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
-	wallets := setUserStates(s.Assertions, s.disputeCtx, &bls.TestDomain)
-	for i := range wallets {
-		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
-			PubKeyID:  uint32(i),
-			PublicKey: *wallets[i].PublicKey(),
-		})
-		s.NoError(err)
-	}
-	return wallets
 }
 
 func TestDisputeCT2TransitionTestSuite(t *testing.T) {

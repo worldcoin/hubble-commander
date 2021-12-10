@@ -3,11 +3,9 @@ package disputer
 import (
 	"fmt"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +29,18 @@ func (s *disputeTransitionTestSuite) getInvalidBatchStateProofs(remoteBatch eth.
 	return disputableErr.Proofs
 }
 
+func (s *disputeTransitionTestSuite) getValidBatchStateProofs(syncedTxs syncer.SyncedTxs) []models.StateMerkleProof {
+	feeReceiverStateID := uint32(0)
+
+	s.beginTransaction()
+	defer s.rollback()
+
+	_, stateProofs, err := s.syncCtx.SyncTxs(syncedTxs, feeReceiverStateID)
+	s.NoError(err)
+
+	return stateProofs
+}
+
 func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTransactionArray) {
 	s.beginTransaction()
 	defer s.rollback()
@@ -52,37 +62,6 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs []models.GenericTran
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-}
-
-func (s *disputeTransitionTestSuite) getValidBatchStateProofs(syncedTxs syncer.SyncedTxs) []models.StateMerkleProof {
-	feeReceiverStateID := uint32(0)
-
-	s.beginTransaction()
-	defer s.rollback()
-
-	_, stateProofs, err := s.syncCtx.SyncTxs(syncedTxs, feeReceiverStateID)
-	s.NoError(err)
-
-	return stateProofs
-}
-
-func setUserStates(s *require.Assertions, disputeCtx *Context, domain *bls.Domain) []bls.Wallet {
-	userStates := []models.UserState{
-		*createUserState(0, 300),
-		*createUserState(1, 200),
-		*createUserState(2, 100),
-	}
-
-	wallets := testutils.GenerateWallets(s, domain, len(userStates))
-	for i := range userStates {
-		pubKeyID, err := disputeCtx.client.RegisterAccountAndWait(wallets[i].PublicKey())
-		s.NoError(err)
-		s.Equal(userStates[i].PubKeyID, *pubKeyID)
-
-		_, err = disputeCtx.storage.StateTree.Set(uint32(i), &userStates[i])
-		s.NoError(err)
-	}
-	return wallets
 }
 
 func createUserState(pubKeyID uint32, balance uint64) *models.UserState {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -16,13 +15,7 @@ type DisputeTransferTransitionTestSuite struct {
 }
 
 func (s *DisputeTransferTransitionTestSuite) SetupTest() {
-	s.SetupTestWithConfig(batchtype.Transfer, &config.RollupConfig{
-		MinCommitmentsPerBatch: 1,
-		MaxCommitmentsPerBatch: 32,
-		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    2,
-		DisableSignatures:      true,
-	})
+	s.disputeTransitionTestSuite.SetupTest(batchtype.Transfer, true)
 }
 
 func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_RemovesInvalidBatch() {
@@ -72,8 +65,6 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() 
 	tx := testutils.MakeTransfer(0, 2, 0, 50)
 	proofs := s.getValidBatchStateProofs(syncer.NewSyncedTransfers(models.TransferArray{tx}))
 
-	s.beginTransaction()
-	defer s.commitTransaction()
 	s.submitBatch(&tx)
 
 	remoteBatches, err := s.client.GetAllBatches()

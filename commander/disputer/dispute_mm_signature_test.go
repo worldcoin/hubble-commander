@@ -14,12 +14,12 @@ type DisputeMMSignatureTestSuite struct {
 }
 
 func (s *DisputeMMSignatureTestSuite) SetupTest() {
-	s.testSuiteWithContexts.SetupTest(batchtype.MassMigration)
+	s.testSuiteWithContexts.SetupTest(batchtype.MassMigration, false)
 	s.disputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInvalidSignature() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
 	s.signTx(&wallets[0], &massMigration)
@@ -37,7 +37,7 @@ func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInva
 }
 
 func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_ValidBatch() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
 	s.signTx(&wallets[1], &massMigration)

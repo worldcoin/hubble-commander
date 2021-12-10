@@ -29,18 +29,6 @@ func (s *disputeSignatureTestSuite) signTx(wallet *bls.Wallet, tx models.Generic
 	tx.GetBase().Signature = *signature.ModelsSignature()
 }
 
-func (s *disputeSignatureTestSuite) setUserStatesAndAddAccounts() []bls.Wallet {
-	wallets := setUserStates(s.Assertions, s.disputeCtx, s.domain)
-	for i := range wallets {
-		err := s.storage.AccountTree.SetSingle(&models.AccountLeaf{
-			PubKeyID:  uint32(i),
-			PublicKey: *wallets[i].PublicKey(),
-		})
-		s.NoError(err)
-	}
-	return wallets
-}
-
 func (s *disputeSignatureTestSuite) disputeSignature(
 	batch *eth.DecodedTxBatch,
 	transfers models.GenericTransactionArray,

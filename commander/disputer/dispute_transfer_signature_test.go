@@ -14,13 +14,13 @@ type DisputeTransferSignatureTestSuite struct {
 }
 
 func (s *DisputeTransferSignatureTestSuite) SetupTest() {
-	s.testSuiteWithContexts.SetupTest(batchtype.Transfer)
+	s.testSuiteWithContexts.SetupTest(batchtype.Transfer, false)
 	s.disputeSignatureTestSuite.setupTest()
 }
 
 //TODO-ref: move to correct package
 func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {
-	s.setUserStatesAndAddAccounts()
+	s.setAccounts(s.domain)
 
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(1, 2, 0, 50),
@@ -52,7 +52,7 @@ func (s *DisputeTransferSignatureTestSuite) TestSignatureProof() {
 }
 
 func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInvalidSignature() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	s.signTx(&wallets[0], &transfer)
@@ -70,7 +70,7 @@ func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_DisputesBatchWi
 }
 
 func (s *DisputeTransferSignatureTestSuite) TestDisputeSignature_ValidBatch() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	s.signTx(&wallets[1], &transfer)
