@@ -440,7 +440,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	}
 
 	cfg := config.GetConfig()
-	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
 	backend := blockchain.GetBackend()
