@@ -415,3 +415,18 @@ type RegisteredToken struct {
     Contract common.Address
 }
 ```
+
+### Registered Spoke
+
+- Holds spokeID - spoke contract address mapping
+
+Key: spoke ID `models.Uint256`
+
+Value: spoke contract address `common.Address` (through clever encoding of `models.RegisteredSpoke`)
+
+```go
+type RegisteredSpoke struct {
+    ID       models.Uint256
+    Contract common.Address
+}
+```
