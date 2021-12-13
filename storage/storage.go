@@ -13,6 +13,7 @@ type Storage struct {
 	*TransactionStorage
 	*DepositStorage
 	*RegisteredTokenStorage
+	*RegisteredSpokeStorage
 	StateTree           *StateTree
 	AccountTree         *AccountTree
 	database            *Database
@@ -51,6 +52,8 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	registeredTokenStorage := NewRegisteredTokenStorage(database)
 
+	registeredSpokeStorage := NewRegisteredSpokeStorage(database)
+
 	return &Storage{
 		BatchStorage:           batchStorage,
 		CommitmentStorage:      commitmentStorage,
@@ -58,6 +61,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 		DepositStorage:         depositStorage,
 		ChainStateStorage:      chainStateStorage,
 		RegisteredTokenStorage: registeredTokenStorage,
+		RegisteredSpokeStorage: registeredSpokeStorage,
 		StateTree:              NewStateTree(database),
 		AccountTree:            NewAccountTree(database),
 		database:               database,
