@@ -126,7 +126,6 @@ jobs:
   deploy-stage-us-east-1-manual:
     name: Manual deploy to stage us-east-1
     runs-on: ubuntu-latest
-#    needs: [ test, build_and_push ]
     environment: stage-manual
     env:
       CLUSTER_NAME: crypto
@@ -155,7 +154,6 @@ jobs:
           helm upgrade --install hubble-commander -n hubble-commander ./deploy
           --atomic
           --timeout 60s
-#          --set image.tag="${{ github.sha }}"
           --set image.tag="latest"
           --set image.pullSecret=ghcr-secret
           --set environment=stage
