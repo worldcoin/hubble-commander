@@ -1,5 +1,5 @@
 image:
-  image: "ghcr.io/worldcoin/signup-sequencer"
+  image: "ghcr.io/worldcoin/hubble-commander"
   tag: # Defaults to `v` + appVersion
   arch: amd64 # Either amd64 or arm64
   pullSecret:
