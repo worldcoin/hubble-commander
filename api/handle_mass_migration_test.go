@@ -74,6 +74,11 @@ func (s *SendMassMigrationTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.massMigration = s.signMassMigration(massMigrationWithoutSignature)
+
+	err = s.storage.AddRegisteredSpoke(&models.RegisteredSpoke{
+		ID: models.MakeUint256(2),
+	})
+	s.NoError(err)
 }
 
 func (s *SendMassMigrationTestSuite) signMassMigration(massMigration dto.MassMigration) dto.MassMigration {
@@ -134,6 +139,14 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeID() {
 
 	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithBadSpokeID))
 	s.Equal(APIErrInvalidSpokeID, err)
+}
+
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeExists() {
+	massMigrationWithDoesNotExistSpoke := s.massMigration
+	massMigrationWithDoesNotExistSpoke.SpokeID = ref.Uint32(1)
+
+	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithDoesNotExistSpoke))
+	s.Equal(APIErrSpokeDoesNotExist, err)
 }
 
 func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountValue() {

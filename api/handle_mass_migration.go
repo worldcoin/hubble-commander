@@ -88,6 +88,9 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	if vErr := validateSpokeID(massMigration.SpokeID); vErr != nil {
 		return vErr
 	}
+	if vErr := a.validateSpokeExists(massMigration.SpokeID); vErr != nil {
+		return vErr
+	}
 
 	senderState, err := a.storage.StateTree.Leaf(massMigration.FromStateID)
 	if storage.IsNotFoundError(err) {
@@ -115,6 +118,18 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 func validateSpokeID(spokeID uint32) error {
 	if spokeID < 1 {
 		return errors.WithStack(ErrInvalidSpokeID)
+	}
+	return nil
+}
+
+func (a *API) validateSpokeExists(spokeID uint32) error {
+	uint256SpokeID := models.MakeUint256(uint64(spokeID))
+	_, err := a.storage.GetRegisteredSpoke(uint256SpokeID)
+	if storage.IsNotFoundError(err) {
+		return errors.WithStack(ErrSpokeDoesNotExist)
+	}
+	if err != nil {
+		return err
 	}
 	return nil
 }

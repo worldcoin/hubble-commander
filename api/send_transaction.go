@@ -20,6 +20,7 @@ var (
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
 	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
 	ErrInvalidSpokeID    = fmt.Errorf("spoke ID must be greater than 0")
+	ErrSpokeDoesNotExist = fmt.Errorf("spoke with given ID does not exist")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -65,6 +66,10 @@ var (
 		10013,
 		"spoke ID must be greater than 0",
 	)
+	APIErrSpokeDoesNotExist = NewAPIError(
+		10014,
+		"spoke with given ID does not exist",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
@@ -79,6 +84,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 	ErrInvalidSpokeID:                     APIErrInvalidSpokeID,
+	ErrSpokeDoesNotExist:                  APIErrSpokeDoesNotExist,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
