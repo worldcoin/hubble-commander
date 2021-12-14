@@ -151,7 +151,7 @@ jobs:
           -o yaml --dry-run=client | kubectl apply -n signup-sequencer -f -
       - name: Helm install
         run: >-
-          helm upgrade --install hubble-commander -n hubble-commander ./deployg
+          helm upgrade --install hubble-commander -n hubble-commander ./deploy
           --timeout 60s
           --set image.tag="latest"
           --set image.pullSecret=ghcr-secret
