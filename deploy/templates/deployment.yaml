@@ -28,6 +28,21 @@ spec:
       nodeSelector:
         beta.kubernetes.io/arch: {{ .Values.image.arch }}
       containers:
+        - name: geth
+          image: ethereum/client-go:stable
+          ports:
+            - name: a
+              containerPort: 8545
+              protocol: TCP
+            - name: b
+              containerPort: 8546
+              protocol: TCP
+          args:
+            - "--dev"
+            - "--http"
+            - "--http.addr=0.0.0.0"
+            - "--ws"
+            - "--ws.addr=0.0.0.0"
         - name: app
           image: "{{ .Values.image.image }}:{{ .Values.image.tag | default (print "v" .Chart.AppVersion)}}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
@@ -61,6 +76,10 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: "/config"
+              readOnly: true
           securityContext:
             capabilities:
               add:
@@ -90,3 +109,15 @@ spec:
            timeoutSeconds: 10
            successThreshold: 1
            failureThreshold: 2
+      volumes:
+        # You set volumes at the Pod level, then mount them into containers inside that Pod
+        - name: config
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: game-demo
+            # An array of keys from the ConfigMap to create as files
+            items:
+              - key: "game.properties"
+                path: "game.properties"
+              - key: "user-interface.properties"
+                path: "user-interface.properties"
