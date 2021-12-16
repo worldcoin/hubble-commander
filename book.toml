@@ -8,3 +8,9 @@ title = "hubble-commander Documentation"
 create-missing = false
 
 [preprocessor.index]
+
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
+marker = "<!-- toc -->"
+max-level = 4
