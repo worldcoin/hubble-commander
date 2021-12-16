@@ -197,3 +197,19 @@ Run E2E benchmarks:
 ```shell
 make bench-e2e-in-process
 ```
+
+## mdBook documentation
+The documentation server requires Rust and mdBook to be installed.
+
+To install Rust and Cargo on MacOS, type the following:
+```shell
+brew install rust
+```
+Then install mdBook with Cargo:
+```shell
+cargo install mdbook
+```
+Afterwards, run the server:
+```shell
+make run-docs
+```
