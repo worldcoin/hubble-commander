@@ -13,6 +13,7 @@ type ChainState struct {
 	AccountRegistry                common.Address
 	AccountRegistryDeploymentBlock uint64
 	TokenRegistry                  common.Address
+	SpokeRegistry                  common.Address
 	DepositManager                 common.Address
 	Rollup                         common.Address
 	SyncedBlock                    uint64

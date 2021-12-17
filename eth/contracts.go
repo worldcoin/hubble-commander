@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -31,5 +32,10 @@ type TokenRegistry struct {
 
 type DepositManager struct {
 	*depositmanager.DepositManager
+	Contract
+}
+
+type SpokeRegistry struct {
+	*spokeregistry.SpokeRegistry
 	Contract
 }
