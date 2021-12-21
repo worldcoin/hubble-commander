@@ -1,0 +1,10 @@
+[book]
+language = "en"
+multilingual = false
+src = "docs"
+title = "hubble-commander Documentation"
+
+[build]
+create-missing = false
+
+[preprocessor.index]
