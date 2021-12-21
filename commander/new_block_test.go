@@ -254,6 +254,14 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 		Nonce:    models.MakeUint256(0),
 	})
 	require.NoError(t, err)
+
+	_, err = storage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(2),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
+	require.NoError(t, err)
 }
 
 func stopCommander(cmd *Commander) {
