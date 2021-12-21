@@ -118,7 +118,6 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 	root, err := s.cmd.storage.StateTree.Root()
 	s.NoError(err)
 
-	//TODO-ref: change to different function
 	s.createTransferBatch(&txs[1])
 
 	batches, err := s.client.GetAllBatches()
@@ -354,13 +353,13 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	// Register public keys added to the account tree for signature disputes to work
 	s.registerAccounts([]uint32{0, 1})
 
-	c2t := testutils.MakeCreate2Transfer(0, nil, 0, 100, s.wallets[0].PublicKey())
-	s.submitInvalidBatchInTx(&c2t, func(storage *st.Storage, commitment *models.CommitmentWithTxs) {
+	tx := testutils.MakeCreate2Transfer(0, nil, 0, 100, s.wallets[0].PublicKey())
+	s.submitInvalidBatchInTx(&tx, func(storage *st.Storage, commitment *models.CommitmentWithTxs) {
 		// Fix post state root
 		_, err := storage.StateTree.Set(3, &models.UserState{
 			PubKeyID: 1234,
 			TokenID:  models.MakeUint256(0),
-			Balance:  c2t.Amount,
+			Balance:  tx.Amount,
 			Nonce:    models.MakeUint256(0),
 		})
 		s.NoError(err)
@@ -369,8 +368,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 		commitment.PostStateRoot = *root
 
 		// Replace toStateID and toPubKeyID in C2T
-		c2t.ToStateID = ref.Uint32(3)
-		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&c2t, 1234)
+		tx.ToStateID = ref.Uint32(3)
+		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&tx, 1234)
 		s.NoError(err)
 		commitment.Transactions = encodedTx
 	})
@@ -387,6 +386,23 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
+	tx := s.submitTransferToNonexistentReceiver()
+
+	s.syncAllBlocks()
+
+	expectedReceiverState := models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  tx.Amount,
+		Nonce:    models.MakeUint256(0),
+	}
+
+	leaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
+	s.NoError(err)
+	s.Equal(expectedReceiverState, leaf.UserState)
+}
+
+func (s *TxsBatchesTestSuite) submitTransferToNonexistentReceiver() models.Transfer {
 	tx := testutils.MakeTransfer(0, 3, 0, 100)
 	s.setTransferHashAndSign(&tx)
 
@@ -404,18 +420,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentRec
 
 	s.submitBatch(txStorage, txsCtx, &tx)
 
-	s.syncAllBlocks()
-
-	expectedReceiverState := models.UserState{
-		PubKeyID: 0,
-		TokenID:  models.MakeUint256(0),
-		Balance:  tx.Amount,
-		Nonce:    models.MakeUint256(0),
-	}
-
-	leaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
-	s.NoError(err)
-	s.Equal(expectedReceiverState, leaf.UserState)
+	return tx
 }
 
 func (s *TxsBatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne() {

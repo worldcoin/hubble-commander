@@ -13,7 +13,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
@@ -23,12 +22,12 @@ import (
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd         *Commander
-	testStorage *st.TestStorage
-	testClient  *eth.TestClient
-	cfg         *config.Config
-	transfer    models.Transfer
-	wallets     []bls.Wallet
+	cmd      *Commander
+	storage  *st.TestStorage
+	client   *eth.TestClient
+	cfg      *config.Config
+	transfer models.Transfer
+	wallets  []bls.Wallet
 }
 
 func (s *NewBlockLoopTestSuite) SetupSuite() {
@@ -40,42 +39,35 @@ func (s *NewBlockLoopTestSuite) SetupSuite() {
 	s.cfg.Rollup.MaxTxsPerCommitment = 1
 	s.cfg.Rollup.DisableSignatures = false
 
-	s.transfer = models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(0),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
-	}
+	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 }
 
 func (s *NewBlockLoopTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorage()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.testClient, err = eth.NewTestClient()
-	s.NoError(err)
+	s.client = newClientWithGenesisState(s.T(), s.storage)
 
 	s.cmd = NewCommander(s.cfg, nil)
-	s.cmd.client = s.testClient.Client
-	s.cmd.storage = s.testStorage.Storage
+	s.cmd.client = s.client.Client
+	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
-	domain, err := s.testClient.GetDomain()
+	err = s.cmd.addGenesisBatch()
+	s.NoError(err)
+
+	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-	seedDB(s.T(), s.testStorage.Storage, s.wallets)
+	s.setAccountsAndChainState()
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
-	s.testClient.Close()
-	err := s.testStorage.Teardown()
+	s.client.Close()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -86,7 +78,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 		return s.cmd.rollupLoopRunning
 	}, 1*time.Second, 100*time.Millisecond)
 
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 	blockNumber := s.cmd.storage.GetLatestBlockNumber()
 	s.Equal(*latestBlockNumber, uint64(blockNumber))
@@ -99,7 +91,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	tokenID := *RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
+	tokenID := *RegisterSingleToken(s.Assertions, s.client, s.client.ExampleTokenAddress)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
@@ -113,11 +105,11 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
 
 	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
 	s.NoError(err)
-	s.Equal(s.testClient.ExampleTokenAddress, syncedToken.Contract)
+	s.Equal(s.client.ExampleTokenAddress, syncedToken.Contract)
 	s.Equal(tokenID, syncedToken.ID)
 }
 
@@ -131,7 +123,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	tokenID := *RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
+	tokenID := *RegisterSingleToken(s.Assertions, s.client, s.client.ExampleTokenAddress)
 
 	s.waitForLatestBlockSync()
 
@@ -144,11 +136,11 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
-	s.Len(batches, 1)
+	s.Len(batches, 2)
 
 	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
 	s.NoError(err)
-	s.Equal(s.testClient.ExampleTokenAddress, syncedToken.Contract)
+	s.Equal(s.client.ExampleTokenAddress, syncedToken.Contract)
 	s.Equal(tokenID, syncedToken.ID)
 }
 
@@ -162,7 +154,7 @@ func (s *NewBlockLoopTestSuite) startBlockLoop() {
 
 func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) {
 	for i := range accounts {
-		pubKeyID, err := s.testClient.RegisterAccountAndWait(&accounts[i].PublicKey)
+		pubKeyID, err := s.client.RegisterAccountAndWait(&accounts[i].PublicKey)
 		s.NoError(err)
 		accounts[i].PubKeyID = *pubKeyID
 	}
@@ -181,21 +173,21 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		s.NoError(err)
 		err = txsCtx.SubmitBatch(batch, batchData)
 		s.NoError(err)
-		s.testClient.GetBackend().Commit()
+		s.client.GetBackend().Commit()
 	})
 }
 
 func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *executor.TxsContext)) {
-	txController, txStorage := s.testStorage.BeginTransaction(st.TxOptions{})
+	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.testClient.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	handler(txStorage, txsCtx)
 }
 
 func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
-	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
 	s.Eventually(func() bool {
@@ -205,23 +197,22 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
+func (s *NewBlockLoopTestSuite) setAccountsAndChainState() {
+	err := s.storage.SetChainState(&models.ChainState{
+		ChainID:     models.MakeUint256(1337),
+		SyncedBlock: 0,
+	})
+	s.NoError(err)
+
+	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+}
+
 func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
 	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
 	require.NoError(t, err)
 	signature, err := wallet.Sign(encodedTransfer)
 	require.NoError(t, err)
 	transfer.Signature = *signature.ModelsSignature()
-}
-
-func seedDB(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
-	err := storage.SetChainState(&models.ChainState{
-		ChainID:     models.MakeUint256(1337),
-		SyncedBlock: 0,
-	})
-	require.NoError(t, err)
-
-	setAccountLeaves(t, storage, wallets)
-	setStateLeaves(t, storage)
 }
 
 func setAccountLeaves(t *testing.T, storage *st.Storage, wallets []bls.Wallet) {
