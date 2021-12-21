@@ -51,36 +51,6 @@ func (s *RegisteredTokenTestSuite) TestGetRegisteredToken_NonexistentToken() {
 	s.Nil(res)
 }
 
-func (s *RegisteredTokenTestSuite) TestDeleteRegisteredTokens() {
-	registeredTokens := []models.RegisteredToken{
-		{
-			ID:       models.MakeUint256(1),
-			Contract: common.BytesToAddress(utils.NewRandomHash().Bytes()),
-		},
-		{
-			ID:       models.MakeUint256(2),
-			Contract: common.BytesToAddress(utils.NewRandomHash().Bytes()),
-		},
-	}
-	for i := range registeredTokens {
-		err := s.storage.AddRegisteredToken(&registeredTokens[i])
-		s.NoError(err)
-	}
-
-	err := s.storage.DeleteRegisteredTokens(registeredTokens[0].ID, registeredTokens[1].ID)
-	s.NoError(err)
-
-	for i := range registeredTokens {
-		_, err := s.storage.GetRegisteredToken(registeredTokens[i].ID)
-		s.ErrorIs(err, NewNotFoundError("registered token"))
-	}
-}
-
-func (s *RegisteredTokenTestSuite) TestDeleteRegisteredTokens_NonexistentToken() {
-	err := s.storage.DeleteRegisteredTokens(models.MakeUint256(1))
-	s.ErrorIs(err, NewNotFoundError("registered token"))
-}
-
 func TestRegisteredTokenTestSuite(t *testing.T) {
 	suite.Run(t, new(RegisteredTokenTestSuite))
 }
