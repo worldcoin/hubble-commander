@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 )
 
 func (c *Context) DisputeTransition(
@@ -15,15 +16,57 @@ func (c *Context) DisputeTransition(
 	if err != nil {
 		return err
 	}
-	targetCommitmentProof, err := c.proverCtx.TargetCommitmentInclusionProof(batch, uint32(commitmentIndex))
+
+	switch batch.Type {
+	case batchtype.Transfer:
+		err = c.disputeTransitionTransfer(batch, commitmentIndex, merkleProofs, previousCommitmentProof)
+	case batchtype.Create2Transfer:
+		err = c.disputeTransitionC2T(batch, commitmentIndex, merkleProofs, previousCommitmentProof)
+	case batchtype.MassMigration:
+		err = c.disputeTransitionMM(batch, commitmentIndex, merkleProofs, previousCommitmentProof)
+	case batchtype.Genesis, batchtype.Deposit:
+		return errors.WithStack(ErrUnsupportedBatchType)
+	}
+	return err
+}
+
+func (c *Context) disputeTransitionTransfer(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex int,
+	merkleProofs []models.StateMerkleProof,
+	previousCommitmentProof *models.CommitmentInclusionProof,
+) error {
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
 	if err != nil {
 		return err
 	}
 
-	if batch.Type == batchtype.Transfer {
-		err = c.client.DisputeTransitionTransfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
-	} else {
-		err = c.client.DisputeTransitionCreate2Transfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+	return c.client.DisputeTransitionTransfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+}
+
+func (c *Context) disputeTransitionC2T(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex int,
+	merkleProofs []models.StateMerkleProof,
+	previousCommitmentProof *models.CommitmentInclusionProof,
+) error {
+	targetCommitmentProof, err := c.proverCtx.TargetTransferCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
 	}
-	return err
+
+	return c.client.DisputeTransitionCreate2Transfer(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
+}
+
+func (c *Context) disputeTransitionMM(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex int,
+	merkleProofs []models.StateMerkleProof,
+	previousCommitmentProof *models.CommitmentInclusionProof,
+) error {
+	targetCommitmentProof, err := c.proverCtx.TargetMMCommitmentInclusionProof(batch, uint32(commitmentIndex))
+	if err != nil {
+		return err
+	}
+	return c.client.DisputeTransitionMassMigration(&batch.ID, &batch.Hash, previousCommitmentProof, targetCommitmentProof, merkleProofs)
 }

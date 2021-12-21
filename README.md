@@ -46,7 +46,7 @@ MarkdownTableWriter(
 
 ## Prerequisites
 
-### Bindings
+### Contract bindings
 
 In order to generate Go bindings for smart contracts `abigen` tool needs to be installed locally. 
 It comes along with Geth which can be installed on macOS using:
@@ -62,22 +62,43 @@ You also need python3 installed: <https://www.python.org/>
 
 ### golangci-lint
 
-For the lint script to work `golangci-lint` must be installed locally.
-On macOS run:
+For the lint script to work `golangci-lint` must be installed locally. On macOS run:
 
 ```shell
 brew install golangci-lint
 brew upgrade golangci-lint
 ```
 
+### mdBook documentation
+
+The documentation server requires Rust and mdBook to be installed.
+
+To install Rust and Cargo on MacOS, type the following:
+
+```shell
+brew install rust
+```
+
+Then install mdBook with Cargo:
+
+```shell
+cargo install mdbook
+```
+
+Afterwards, run the server:
+
+```shell
+make run-docs
+```
+
 For other environments refer to: <https://golangci-lint.run/usage/install/#local-installation>
 
 ## Running the commander
 
-The commander can be started by running the binary with a `start` subcommand, e.g. `commander start`,
-and it requires deployed smart contracts to work. It can connect to said smart contracts by fetching
-their addresses either from a chain spec file or from an already running commander. The path to a chain spec file
-and the url of a remote commander node can be set in the config file (see `commander-config.example.yaml` file for reference)
+The commander can be started by running the binary with a `start` subcommand, e.g. `commander start`, and it requires deployed smart
+contracts to work. It can connect to said smart contracts by fetching their addresses either from a chain spec file or from an already
+running commander. The path to a chain spec file and the url of a remote commander node can be set in the config file (
+see `commander-config.example.yaml` file for reference)
 or with env variables:
 
 ```shell
@@ -118,6 +139,8 @@ There is a number of scripts defined in the Makefile:
 * `make bench-e2e-locally` - run an E2E benchmark on a local commander instance (set `TEST` env var to the name of the test)
 * `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
 * `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
+* `make run-docs` - render and preview docs by serving it via HTTP
+* `make clean-docs` - delete the generated docs and any other build artifacts
 
 Other scripts defined in the Makefile file are used on the CI.
 

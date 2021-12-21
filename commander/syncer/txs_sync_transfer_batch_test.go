@@ -184,7 +184,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	err = s.syncCtx.SyncBatch(remoteBatches[1])
 	s.ErrorAs(err, &disputableErr)
 	s.Equal(Transition, disputableErr.Type)
-	s.Equal(InvalidCommitmentStateRootMessage, disputableErr.Reason)
+	s.Equal(invalidStateRootMessage, disputableErr.Reason)
 
 	_, err = s.storage.GetBatch(remoteBatches[0].GetID())
 	s.NoError(err)

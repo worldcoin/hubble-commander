@@ -68,7 +68,7 @@ GetUserStateByPubKeyIDAndTokenIndex
 **Not necessary**
 GetStateLeafByHash
 
-```
+```sql
 CREATE TABLE state_leaf (
     state_id    BYTEA PRIMARY KEY,
     pub_key_id  BIGINT,
@@ -76,7 +76,8 @@ CREATE TABLE state_leaf (
     balance     NUMERIC(78) NOT NULL,
     nonce       NUMERIC(78) NOT NULL
 );
-
+```
+```ignore
 GetByStateID: (stateID) -> state_leaf
 GetStatesByPubkeyId: (pubkeyId) -> state_leaf[]
 # GetStatesByPubkeyIdAndToken: (pubkeyId, token) -> state_leaf[]

@@ -59,6 +59,31 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	return err
 }
 
+func (c *Client) DisputeSignatureMassMigration(
+	batchID *models.Uint256,
+	batchHash *common.Hash,
+	targetProof *models.MMCommitmentInclusionProof,
+	signatureProof *models.SignatureProof,
+) error {
+	transaction, err := c.rollup().
+		WithGasLimit(*c.config.SignatureDisputeGasLimit).
+		DisputeSignatureMassMigration(
+			batchID.ToBig(),
+			*massMigrationProofToCalldata(targetProof),
+			*signatureProofToCalldata(signatureProof),
+		)
+	if err != nil {
+		return handleDisputeSignatureError(err)
+	}
+
+	err = c.waitForDispute(batchID, batchHash, transaction)
+	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+		log.Info(err)
+		return nil
+	}
+	return err
+}
+
 func handleDisputeSignatureError(err error) error {
 	errMsg := getGasEstimateErrorMessage(err)
 	if errMsg == msgSignatureMissingBatch || errMsg == msgBatchAlreadyDisputed {

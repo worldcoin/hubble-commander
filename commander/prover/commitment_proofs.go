@@ -1,6 +1,7 @@
 package prover
 
 import (
+	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -81,8 +82,10 @@ func createCommitmentInclusionProof(
 	commitmentStateRoot, commitmentBodyRoot common.Hash,
 ) (*models.CommitmentInclusionProof, error) {
 	proof := models.CommitmentInclusionProof{
-		StateRoot: commitmentStateRoot,
-		BodyRoot:  commitmentBodyRoot,
+		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+			StateRoot: commitmentStateRoot,
+		},
+		BodyRoot: commitmentBodyRoot,
 	}
 
 	tree, err := merkletree.NewMerkleTree(leafHashes)
@@ -99,10 +102,53 @@ func createCommitmentInclusionProof(
 	return &proof, nil
 }
 
-func (c *Context) TargetCommitmentInclusionProof(
+func (c *Context) TargetTransferCommitmentInclusionProof(
 	batch *eth.DecodedTxBatch,
 	commitmentIndex uint32,
 ) (*models.TransferCommitmentInclusionProof, error) {
+	proofBase, err := c.targetCommitmentInclusionProofBase(batch, commitmentIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment := batch.Commitments[commitmentIndex].ToDecodedCommitment()
+	return &models.TransferCommitmentInclusionProof{
+		CommitmentInclusionProofBase: *proofBase,
+		Body: &models.TransferBody{
+			AccountRoot:  batch.AccountTreeRoot,
+			Signature:    commitment.CombinedSignature,
+			FeeReceiver:  commitment.FeeReceiver,
+			Transactions: commitment.Transactions,
+		},
+	}, nil
+}
+
+func (c *Context) TargetMMCommitmentInclusionProof(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex uint32,
+) (*models.MMCommitmentInclusionProof, error) {
+	proofBase, err := c.targetCommitmentInclusionProofBase(batch, commitmentIndex)
+	if err != nil {
+		return nil, err
+	}
+
+	commitment := batch.Commitments[commitmentIndex].(*encoder.DecodedMMCommitment)
+	return &models.MMCommitmentInclusionProof{
+		CommitmentInclusionProofBase: *proofBase,
+		Body: &models.MMBody{
+			AccountRoot:  batch.AccountTreeRoot,
+			Signature:    commitment.CombinedSignature,
+			Meta:         commitment.Meta,
+			WithdrawRoot: commitment.WithdrawRoot,
+			Transactions: commitment.Transactions,
+		},
+	}, nil
+}
+
+func (c *Context) targetCommitmentInclusionProofBase(
+	batch *eth.DecodedTxBatch,
+	commitmentIndex uint32,
+) (*models.CommitmentInclusionProofBase, error) {
 	leafHashes := make([]common.Hash, 0, len(batch.Commitments))
 	for i := range batch.Commitments {
 		leafHashes = append(leafHashes, batch.Commitments[i].LeafHash(batch.AccountTreeRoot))
@@ -112,21 +158,12 @@ func (c *Context) TargetCommitmentInclusionProof(
 		return nil, errors.WithStack(err)
 	}
 
-	path := &models.MerklePath{
-		Path:  commitmentIndex,
-		Depth: tree.Depth(),
-	}
-
-	commitment := batch.Commitments[commitmentIndex].ToDecodedCommitment()
-	return &models.TransferCommitmentInclusionProof{
-		StateRoot: commitment.StateRoot,
-		Body: &models.TransferBody{
-			AccountRoot:  batch.AccountTreeRoot,
-			Signature:    commitment.CombinedSignature,
-			FeeReceiver:  commitment.FeeReceiver,
-			Transactions: commitment.Transactions,
+	return &models.CommitmentInclusionProofBase{
+		StateRoot: batch.Commitments[commitmentIndex].GetStateRoot(),
+		Path: &models.MerklePath{
+			Path:  commitmentIndex,
+			Depth: tree.Depth(),
 		},
-		Path:    path,
 		Witness: tree.GetWitness(commitmentIndex),
 	}, nil
 }

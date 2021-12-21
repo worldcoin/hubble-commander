@@ -160,7 +160,7 @@ func (s *benchmarkTestSuite) sendTransactions(
 
 		workers := 0
 		for _, state := range userStates {
-			if state.Balance.CmpN(setup.InitialGenesisBalance) != 0 {
+			if !state.Balance.EqN(setup.InitialGenesisBalance) {
 				continue
 			}
 

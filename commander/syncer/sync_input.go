@@ -69,7 +69,7 @@ type SyncedMMs struct {
 	txs models.MassMigrationArray
 }
 
-func NewSyncedMM(txs models.MassMigrationArray) *SyncedMMs {
+func NewSyncedMMs(txs models.MassMigrationArray) *SyncedMMs {
 	return &SyncedMMs{txs: txs}
 }
 

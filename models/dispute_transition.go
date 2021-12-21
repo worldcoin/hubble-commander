@@ -4,24 +4,39 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type CommitmentInclusionProof struct {
+type CommitmentInclusionProofBase struct {
 	StateRoot common.Hash
-	BodyRoot  common.Hash
 	Path      *MerklePath
 	Witness   Witness
 }
 
+type CommitmentInclusionProof struct {
+	CommitmentInclusionProofBase
+	BodyRoot common.Hash
+}
+
 type TransferCommitmentInclusionProof struct {
-	StateRoot common.Hash
-	Body      *TransferBody
-	Path      *MerklePath
-	Witness   Witness
+	CommitmentInclusionProofBase
+	Body *TransferBody
 }
 
 type TransferBody struct {
 	AccountRoot  common.Hash
 	Signature    Signature
 	FeeReceiver  uint32
+	Transactions []byte
+}
+
+type MMCommitmentInclusionProof struct {
+	CommitmentInclusionProofBase
+	Body *MMBody
+}
+
+type MMBody struct {
+	AccountRoot  common.Hash
+	Signature    Signature
+	Meta         *MassMigrationMeta
+	WithdrawRoot common.Hash
 	Transactions []byte
 }
 

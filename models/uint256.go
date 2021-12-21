@@ -87,6 +87,14 @@ func (u *Uint256) CmpN(other uint64) int {
 	return u.Cmp(NewUint256(other))
 }
 
+func (u *Uint256) Eq(other *Uint256) bool {
+	return u.Int.Eq(&other.Int)
+}
+
+func (u *Uint256) EqN(other uint64) bool {
+	return u.Eq(NewUint256(other))
+}
+
 func (u *Uint256) String() string {
 	return u.Int.ToBig().Text(10)
 }
