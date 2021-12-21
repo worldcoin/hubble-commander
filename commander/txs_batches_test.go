@@ -19,6 +19,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -63,7 +64,6 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-	//seedDB(s.T(), s.storage.Storage, s.wallets)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
@@ -194,9 +194,11 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
-func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
-	//TODO-ref: replace with submitInvalidTransferInTx
-	s.submitFraudulentBatchWithTransferToSelf()
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatchWithSelfTransfer() {
+	transfer := testutils.MakeTransfer(0, 0, 0, 100)
+	s.submitInvalidBatchInTx(&transfer, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
+		commitment.PostStateRoot = common.Hash{1, 2, 3, 4}
+	})
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -206,7 +208,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithT
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
-	s.Equal(result.NotEnoughTokenBalance, getDisputeResult(s.Assertions, s.client))
+	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidSignature() {
@@ -468,72 +470,6 @@ func (s *TxsBatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.B
 	return pendingBatch
 }
 
-func (s *TxsBatchesTestSuite) submitFraudulentBatchWithTransferToSelf() *models.Batch {
-	storage, txsCtx := s.cloneStorage()
-	defer teardown(s.Assertions, storage.Teardown)
-
-	selfTransfer := testutils.MakeTransfer(0, 0, 0, 100)
-	invalidTransfer := testutils.MakeTransfer(1, 0, 0, 100)
-	txs := []models.Transfer{selfTransfer, invalidTransfer}
-
-	// Apply self transfer
-	commitmentTokenID := models.MakeUint256(0)
-	_, txErr, appErr := txsCtx.Applier.ApplyTransferForSync(&selfTransfer, commitmentTokenID)
-	s.NoError(txErr)
-	s.NoError(appErr)
-
-	// Apply invalid transfer
-	receiver, err := storage.StateTree.LeafOrEmpty(invalidTransfer.ToStateID)
-	s.NoError(err)
-
-	receiver.Balance = *receiver.Balance.Add(&invalidTransfer.Amount)
-	_, err = storage.StateTree.Set(invalidTransfer.ToStateID, &receiver.UserState)
-	s.NoError(err)
-
-	// Apply fee
-	feeReceiverStateID := uint32(0)
-	_, err = txsCtx.Applier.ApplyFee(feeReceiverStateID, *selfTransfer.Fee.Add(&invalidTransfer.Fee))
-	s.NoError(err)
-
-	// Create commitment
-	nextBatchID, err := storage.GetNextBatchID()
-	s.NoError(err)
-
-	postStateRoot, err := storage.StateTree.Root()
-	s.NoError(err)
-
-	domain, err := s.client.GetDomain()
-	s.NoError(err)
-
-	combinedSignature, err := executor.CombineSignatures(models.MakeTransferArray(txs...), domain)
-	s.NoError(err)
-
-	serializedTxs, err := encoder.SerializeTransfers(txs)
-	s.NoError(err)
-
-	commitment := models.CommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      *nextBatchID,
-					IndexInBatch: 0,
-				},
-				Type:          batchtype.Transfer,
-				PostStateRoot: *postStateRoot,
-			},
-			FeeReceiver:       feeReceiverStateID,
-			CombinedSignature: *combinedSignature,
-		},
-		Transactions: serializedTxs,
-	}
-
-	// Submit batch
-	batch, err := s.client.SubmitTransfersBatchAndWait(nextBatchID, []models.CommitmentWithTxs{commitment})
-	s.NoError(err)
-
-	return batch
-}
-
 func (s *TxsBatchesTestSuite) submitBatch(
 	storage *st.Storage,
 	txsCtx *executor.TxsContext,
@@ -547,22 +483,21 @@ func (s *TxsBatchesTestSuite) submitBatch(
 	return pendingBatch
 }
 
-func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) *models.Batch {
-	return s.submitInvalidBatchInTx(tx, func(_ *st.Storage, _ *models.CommitmentWithTxs) {})
+func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) {
+	s.submitInvalidBatchInTx(tx, func(_ *st.Storage, _ *models.CommitmentWithTxs) {})
 }
 
 // Make sure that the commander and the rollup context uses the same storage
 func (s *TxsBatchesTestSuite) submitInvalidBatchInTx(
 	tx models.GenericTransaction,
 	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
-) *models.Batch {
+) {
 	txController, txStorage, txsCtx := s.beginTransaction()
 	defer txController.Rollback(nil)
 
-	pendingBatch := submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, tx, modifier)
+	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, tx, modifier)
 
 	s.client.GetBackend().Commit()
-	return pendingBatch
 }
 
 func (s *TxsBatchesTestSuite) beginTransaction() (*db.TxController, *st.Storage, *executor.TxsContext) {
@@ -611,20 +546,6 @@ func (s *TxsBatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 	}
 }
 
-func (s *TxsBatchesTestSuite) updateBatchAfterSubmission(batch *eth.DecodedTxBatch) {
-	err := s.cmd.storage.UpdateBatch(batch.ToBatch(utils.RandomHash()))
-	s.NoError(err)
-
-	commitments, err := s.cmd.storage.GetTxCommitmentsByBatchID(batch.ID)
-	s.NoError(err)
-	for i := range commitments {
-		commitments[i].BodyHash = batch.Commitments[i].BodyHash(batch.AccountTreeRoot)
-	}
-
-	err = s.cmd.storage.UpdateCommitments(commitments)
-	s.NoError(err)
-}
-
 func checkBatchAfterDispute(s *require.Assertions, cmd *Commander, batchID models.Uint256) {
 	_, err := cmd.client.GetBatch(&batchID)
 	s.Error(err)
@@ -654,29 +575,6 @@ func (s *TxsBatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
 		s.NoError(err)
 		s.Equal(pubKeyIDs[i], *pubKeyID)
 	}
-}
-
-func (s *TxsBatchesTestSuite) getTransferCombinedSignature(transfer *models.Transfer) *models.Signature {
-	domain, err := s.client.GetDomain()
-	s.NoError(err)
-	sig, err := executor.CombineSignatures(models.MakeTransferArray(*transfer), domain)
-	s.NoError(err)
-	return sig
-}
-
-func (s *TxsBatchesTestSuite) cloneStorage() (*st.TestStorage, *executor.TxsContext) {
-	clonedStorage, err := s.storage.Clone()
-	s.NoError(err)
-
-	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
-
-	return clonedStorage, txsCtx
-}
-
-func teardown(s *require.Assertions, teardown func() error) {
-	err := teardown()
-	s.NoError(err)
 }
 
 func TestTxsBatchesTestSuite(t *testing.T) {
