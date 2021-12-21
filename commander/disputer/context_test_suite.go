@@ -6,10 +6,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -47,10 +49,41 @@ func (s *testSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchTyp
 
 	s.cfg = cfg
 
-	s.client, err = eth.NewTestClient()
+	s.setGenesisState()
+	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
+	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+		Params: rollup.Params{
+			GenesisStateRoot: root,
+		},
+	}, eth.ClientConfig{})
+	s.NoError(err)
+
+	s.addGenesisBatch(root)
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, batchType)
+}
+
+func (s *testSuiteWithContexts) setGenesisState() {
+	userStates := []models.UserState{
+		*createUserState(0, 300),
+		*createUserState(1, 200),
+		*createUserState(2, 100),
+	}
+
+	for i := range userStates {
+		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
+		s.NoError(err)
+	}
+}
+
+func (s *testSuiteWithContexts) addGenesisBatch(root *common.Hash) {
+	batch, err := s.client.GetBatch(models.NewUint256(0))
+	s.NoError(err)
+
+	batch.PrevStateRoot = root
+	err = s.storage.AddBatch(batch)
+	s.NoError(err)
 }
 
 func (s *testSuiteWithContexts) TearDownTest() {
@@ -96,13 +129,16 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 }
 
 func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
-	if tx.Type() == txtype.Transfer {
-		err := s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
-		s.NoError(err)
-	} else {
-		err := s.disputeCtx.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-		s.NoError(err)
+	var err error
+	switch tx.Type() {
+	case txtype.Transfer:
+		err = s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
+	case txtype.Create2Transfer:
+		err = s.disputeCtx.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
+	case txtype.MassMigration:
+		err = s.disputeCtx.storage.AddMassMigration(tx.ToMassMigration())
 	}
+	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)

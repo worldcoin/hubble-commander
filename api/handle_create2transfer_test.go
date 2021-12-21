@@ -91,13 +91,13 @@ func (s *SendCreate2TransferTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ReturnsNonNilHash() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ReturnsNonNilHash() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooLow_NoTransactions() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesNonceTooLow_NoTransactions() {
 	userStateWithIncreasedNonce := s.userState
 	userStateWithIncreasedNonce.Nonce = models.MakeUint256(1)
 
@@ -108,46 +108,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceToo
 	s.Equal(APIErrNonceTooLow, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_NoTransactions() {
-	transferWithIncreasedNonce := s.create2Transfer
-	transferWithIncreasedNonce.Nonce = models.NewUint256(1)
-	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
-
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooHigh_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
-	s.NoError(err)
-
-	transferWithIncreasedNonce := s.create2Transfer
-	transferWithIncreasedNonce.Nonce = models.NewUint256(2)
-	transferWithIncreasedNonce = s.signCreate2Transfer(transferWithIncreasedNonce)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(transferWithIncreasedNonce))
-	s.Equal(APIErrNonceTooHigh, err)
-}
-
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesNonceTooLow_ExistingTransactions() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
-	s.NoError(err)
-
-	secondTransfer := s.create2Transfer
-	secondTransfer.Nonce = models.NewUint256(1)
-	secondTransfer = s.signCreate2Transfer(secondTransfer)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(secondTransfer))
-	s.NoError(err)
-
-	thirdTransfer := s.create2Transfer
-	thirdTransfer = s.signCreate2Transfer(thirdTransfer)
-
-	_, err = s.api.SendTransaction(dto.MakeTransaction(thirdTransfer))
-	s.Equal(APIErrNonceTooLow, err)
-}
-
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeValue() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesFeeValue() {
 	transferWithZeroFee := s.create2Transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
@@ -155,7 +116,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeValue
 	s.Equal(APIErrFeeTooLow, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeEncodability() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesFeeEncodability() {
 	transferWithBadFee := s.create2Transfer
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
@@ -163,7 +124,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesFeeEncod
 	s.Equal(APINotDecimalEncodableFeeError, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountEncodability() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesAmountEncodability() {
 	transferWithBadAmount := s.create2Transfer
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
@@ -171,7 +132,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountEn
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountValue() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesAmountValue() {
 	transferWithZeroAmount := s.create2Transfer
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
@@ -179,7 +140,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesAmountVa
 	s.Equal(APIErrInvalidAmount, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesBalance() {
 	transferWithHugeAmount := s.create2Transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
 
@@ -187,7 +148,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesBalance(
 	s.Equal(APIErrNotEnoughBalance, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesSignature() {
 	wallet, err := bls.NewRandomWallet(*s.domain)
 	s.NoError(err)
 	fakeSignature, err := wallet.Sign(utils.RandomBytes(2))
@@ -200,7 +161,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.Equal(APIErrInvalidSignature, err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignature_DisabledSignatures() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_ValidatesSignature_DisabledSignatures() {
 	s.api.disableSignatures = true
 
 	wallet, err := bls.NewRandomWallet(*s.domain)
@@ -215,7 +176,7 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_ValidatesSignatur
 	s.NoError(err)
 }
 
-func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_AddsTransferToStorage() {
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
 	s.NoError(err)
 	s.NotNil(hash)
@@ -223,6 +184,28 @@ func (s *SendCreate2TransferTestSuite) TestSendCreate2Transfer_AddsTransferToSto
 	transfer, err := s.api.storage.GetCreate2Transfer(*hash)
 	s.NoError(err)
 	s.NotNil(transfer)
+}
+
+func (s *SendCreate2TransferTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+
+	err = s.storage.SetTransactionErrors(models.TxError{
+		TxHash:       *originalHash,
+		ErrorMessage: "some error",
+	})
+	s.NoError(err)
+
+	expectedTx, err := s.storage.GetCreate2Transfer(*originalHash)
+	s.NoError(err)
+
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	s.NoError(err)
+	s.Equal(*originalHash, *hash)
+
+	tx, err := s.storage.GetCreate2Transfer(*originalHash)
+	s.NoError(err)
+	s.Equal(*expectedTx, *tx)
 }
 
 func TestSendCreate2TransferTestSuite(t *testing.T) {

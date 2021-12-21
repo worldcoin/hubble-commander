@@ -40,14 +40,14 @@ func (c *ExecutionContext) revertCommitments(batches []models.Batch) error {
 	txBatchIDs := make([]models.Uint256, 0, len(batches))
 	for i := range batches {
 		switch batches[i].Type {
-		case batchtype.Transfer, batchtype.Create2Transfer:
+		case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
 			txBatchIDs = append(txBatchIDs, batches[i].ID)
 		case batchtype.Deposit:
 			err := c.revertDepositCommitment(batches[i].ID)
 			if err != nil {
 				return err
 			}
-		case batchtype.Genesis, batchtype.MassMigration:
+		case batchtype.Genesis:
 			panic("batch types not supported")
 		}
 	}

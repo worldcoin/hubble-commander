@@ -42,7 +42,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.newClientWithGenesisState()
+	s.client = newClientWithGenesisState(s.T(), s.storage)
 
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
@@ -59,15 +59,17 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 	}
 }
 
-func (s *DepositBatchesTestSuite) newClientWithGenesisState() {
-	setStateLeaves(s.T(), s.storage.Storage)
-	genesisRoot, err := s.storage.StateTree.Root()
-	s.NoError(err)
+func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestClient {
+	setStateLeaves(t, storage.Storage)
+	genesisRoot, err := storage.StateTree.Root()
+	require.NoError(t, err)
 
-	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+	client, err := eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{GenesisStateRoot: genesisRoot},
 	}, eth.ClientConfig{})
-	s.NoError(err)
+	require.NoError(t, err)
+
+	return client
 }
 
 func (s *DepositBatchesTestSuite) TearDownTest() {

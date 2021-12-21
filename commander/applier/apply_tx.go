@@ -115,14 +115,14 @@ func (a *Applier) fillSenderWitness(synced *SyncedTxWithProofs, tErr error) (*Sy
 }
 
 func (a *Applier) validateSenderTokenID(senderState *models.StateLeaf, commitmentTokenID models.Uint256) error {
-	if senderState.TokenID.Cmp(&commitmentTokenID) != 0 {
+	if !senderState.TokenID.Eq(&commitmentTokenID) {
 		return errors.WithStack(ErrInvalidSenderTokenID)
 	}
 	return nil
 }
 
 func (a *Applier) validateReceiverTokenID(receiverState *models.StateLeaf, commitmentTokenID models.Uint256) error {
-	if receiverState.TokenID.Cmp(&commitmentTokenID) != 0 {
+	if !receiverState.TokenID.Eq(&commitmentTokenID) {
 		return errors.WithStack(ErrInvalidReceiverTokenID)
 	}
 	return nil
