@@ -141,11 +141,11 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeID() {
 	s.Equal(APIErrInvalidSpokeID, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeExists() {
-	massMigrationWithDoesNotExistSpoke := s.massMigration
-	massMigrationWithDoesNotExistSpoke.SpokeID = ref.Uint32(1)
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesThatSpokeExists() {
+	massMigrationWithNonexistentSpoke := s.massMigration
+	massMigrationWithNonexistentSpoke.SpokeID = ref.Uint32(1)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithDoesNotExistSpoke))
+	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithNonexistentSpoke))
 	s.Equal(APIErrSpokeDoesNotExist, err)
 }
 
