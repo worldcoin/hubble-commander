@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -26,12 +27,12 @@ import (
 type TxsBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd         *Commander
-	client      *eth.TestClient
-	testStorage *st.TestStorage
-	txsCtx      *executor.TxsContext
-	cfg         *config.Config
-	wallets     []bls.Wallet
+	cmd     *Commander
+	client  *eth.TestClient
+	storage *st.TestStorage
+	txsCtx  *executor.TxsContext
+	cfg     *config.Config
+	wallets []bls.Wallet
 }
 
 func (s *TxsBatchesTestSuite) SetupSuite() {
@@ -44,18 +45,17 @@ func (s *TxsBatchesTestSuite) SetupSuite() {
 
 func (s *TxsBatchesTestSuite) SetupTest() {
 	var err error
-	s.testStorage, err = st.NewTestStorage()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.client, err = eth.NewTestClient()
-	s.NoError(err)
+	s.client = newClientWithGenesisState(s.T(), s.storage)
 
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
-	s.cmd.storage = s.testStorage.Storage
+	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
-	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	err = s.cmd.addGenesisBatch()
@@ -64,13 +64,13 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-	seedDB(s.T(), s.testStorage.Storage, s.wallets)
+	seedDB(s.T(), s.storage.Storage, s.wallets)
 }
 
 func (s *TxsBatchesTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
 	s.client.Close()
-	err := s.testStorage.Teardown()
+	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
@@ -164,7 +164,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
 	//TODO-ref: replace with genesis state
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfer)
 
 	transfer = testutils.MakeTransfer(0, 1, 1, 100)
 	s.submitInvalidBatchInTx(&transfer, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
@@ -186,7 +186,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() 
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostStateRoot() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfer)
 
 	invalidTransfer := testutils.MakeTransfer(0, 1, 1, 100)
 	s.submitInvalidBatchInTx(&invalidTransfer, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
@@ -208,7 +208,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_CanDisputeFraudulentBatchWithTransferToSelf() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 50)
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfer)
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfer)
 
 	//TODO-ref: replace with submitInvalidTransferInTx
 	s.submitFraudulentBatchWithTransferToSelf()
@@ -271,7 +271,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfers[0])
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfers[0])
 
 	s.submitInvalidBatchInTx(&transfers[1], func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		commitment.Transactions = append(commitment.Transactions, 1, 2, 3, 4)
@@ -313,7 +313,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAf
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidFeeReceiverTokenID() {
-	_, err := s.testStorage.StateTree.Set(2, &models.UserState{
+	_, err := s.storage.StateTree.Set(2, &models.UserState{
 		PubKeyID: 2,
 		TokenID:  models.MakeUint256(2),
 		Balance:  models.MakeUint256(0),
@@ -326,7 +326,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidF
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfers[0])
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfers[0])
 
 	s.submitInvalidBatchInTx(&transfers[1], func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		commitment.FeeReceiver = 2
@@ -351,7 +351,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTrans
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfers[0])
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfers[0])
 
 	s.submitInvalidBatchInTx(&transfers[1], func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		commitment.Transactions = []byte{}
@@ -376,7 +376,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 		testutils.MakeTransfer(0, 1, 1, 100),
 	}
 
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfers[0])
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfers[0])
 
 	s.submitInvalidBatchInTx(&transfers[1], func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		transfers[1].FromStateID = 10
@@ -400,7 +400,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
 	// Change batch type used in TxsContext
-	executionCtx := executor.NewTestExecutionContext(s.testStorage.Storage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
 
 	// Register public keys added to the account tree for signature disputes to work
@@ -411,7 +411,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 
 	// Submit a single batch to override genesis state root
 	firstC2T := testutils.MakeCreate2Transfer(0, nil, 0, 100, &models.PublicKey{1, 2, 3})
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &firstC2T)
+	s.submitBatch(s.storage.Storage, s.txsCtx, &firstC2T)
 
 	invalidC2T := testutils.MakeCreate2Transfer(0, nil, 1, 100, &models.PublicKey{1, 2, 3})
 	s.submitInvalidBatchInTx(&invalidC2T, func(storage *st.Storage, commitment *models.CommitmentWithTxs) {
@@ -481,7 +481,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentRec
 		Nonce:    models.MakeUint256(0),
 	}
 
-	leaf, err := s.testStorage.StateTree.Leaf(transfer.ToStateID)
+	leaf, err := s.storage.StateTree.Leaf(transfer.ToStateID)
 	s.NoError(err)
 	s.Equal(expectedReceiverState, leaf.UserState)
 }
@@ -493,13 +493,13 @@ func (s *TxsBatchesTestSuite) TestUnsafeSyncBatches_SyncsBatchesBeforeInvalidOne
 		testutils.MakeTransfer(0, 1, 2, 100),
 	}
 
-	s.submitBatch(s.testStorage.Storage, s.txsCtx, &transfers[0])
+	s.submitBatch(s.storage.Storage, s.txsCtx, &transfers[0])
 
-	clonedStorage, txsCtx := s.cloneStorage()
-	defer teardown(s.Assertions, clonedStorage.Teardown)
+	txController, txStorage, txsCtx := s.beginTransaction()
+	defer txController.Rollback(nil)
 
-	invalidBatch := s.submitBatch(clonedStorage.Storage, txsCtx, &transfers[1])
-	s.submitBatch(clonedStorage.Storage, txsCtx, &transfers[2])
+	invalidBatch := s.submitBatch(txStorage, txsCtx, &transfers[1])
+	s.submitBatch(txStorage, txsCtx, &transfers[2])
 
 	s.cmd.invalidBatchID = &invalidBatch.ID
 
@@ -611,7 +611,12 @@ func (s *TxsBatchesTestSuite) submitBatch(
 	txsCtx *executor.TxsContext,
 	tx models.GenericTransaction,
 ) *models.Batch {
-	return s.submitInvalidBatch(storage, txsCtx, tx, func(storage *st.Storage, commitment *models.CommitmentWithTxs) {})
+	pendingBatch := submitInvalidTxsBatch(s.Assertions, storage, txsCtx, tx,
+		func(storage *st.Storage, commitment *models.CommitmentWithTxs) {},
+	)
+
+	s.client.GetBackend().Commit()
+	return pendingBatch
 }
 
 func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) *models.Batch {
@@ -619,33 +624,24 @@ func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) *mod
 }
 
 // Make sure that the commander and the rollup context uses the same storage
-func (s *TxsBatchesTestSuite) submitInvalidBatch(
-	storage *st.Storage,
-	txsCtx *executor.TxsContext,
-	tx models.GenericTransaction,
-	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
-) *models.Batch {
-	pendingBatch := submitInvalidTxsBatch(s.Assertions, storage, txsCtx, tx, modifier)
-
-	s.client.GetBackend().Commit()
-	return pendingBatch
-}
-
-// Make sure that the commander and the rollup context uses the same storage
 func (s *TxsBatchesTestSuite) submitInvalidBatchInTx(
 	tx models.GenericTransaction,
 	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
 ) *models.Batch {
-	txController, txStorage := s.testStorage.BeginTransaction(st.TxOptions{})
+	txController, txStorage, txsCtx := s.beginTransaction()
 	defer txController.Rollback(nil)
-
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	pendingBatch := submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, tx, modifier)
 
 	s.client.GetBackend().Commit()
 	return pendingBatch
+}
+
+func (s *TxsBatchesTestSuite) beginTransaction() (*db.TxController, *st.Storage, *executor.TxsContext) {
+	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
+
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	return txController, txStorage, executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
 }
 
 func submitInvalidTxsBatch(
@@ -723,7 +719,7 @@ func getDisputeResult(s *require.Assertions, client *eth.TestClient) result.Disp
 
 func (s *TxsBatchesTestSuite) registerAccounts(pubKeyIDs []uint32) {
 	for i := range pubKeyIDs {
-		leaf, err := s.testStorage.AccountTree.Leaf(pubKeyIDs[i])
+		leaf, err := s.storage.AccountTree.Leaf(pubKeyIDs[i])
 		s.NoError(err)
 
 		pubKeyID, err := s.client.RegisterAccountAndWait(&leaf.PublicKey)
@@ -741,7 +737,7 @@ func (s *TxsBatchesTestSuite) getTransferCombinedSignature(transfer *models.Tran
 }
 
 func (s *TxsBatchesTestSuite) cloneStorage() (*st.TestStorage, *executor.TxsContext) {
-	clonedStorage, err := s.testStorage.Clone()
+	clonedStorage, err := s.storage.Clone()
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(clonedStorage.Storage, s.client.Client, s.cfg.Rollup)
