@@ -641,6 +641,10 @@ func (s *TxsBatchesTestSuite) submitBatch(
 	return s.submitInvalidBatch(storage, txsCtx, tx, func(commitment *models.CommitmentWithTxs) {})
 }
 
+func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) *models.Batch {
+	return s.submitInvalidBatchInTx(tx, func(commitment *models.CommitmentWithTxs) {})
+}
+
 // Make sure that the commander and the rollup context uses the same storage
 func (s *TxsBatchesTestSuite) submitInvalidBatch(
 	storage *st.Storage,
@@ -649,6 +653,23 @@ func (s *TxsBatchesTestSuite) submitInvalidBatch(
 	modifier func(commitment *models.CommitmentWithTxs),
 ) *models.Batch {
 	pendingBatch := submitInvalidTxsBatch(s.Assertions, storage, txsCtx, tx, modifier)
+
+	s.client.GetBackend().Commit()
+	return pendingBatch
+}
+
+// Make sure that the commander and the rollup context uses the same storage
+func (s *TxsBatchesTestSuite) submitInvalidBatchInTx(
+	tx models.GenericTransaction,
+	modifier func(commitment *models.CommitmentWithTxs),
+) *models.Batch {
+	txController, txStorage := s.testStorage.BeginTransaction(st.TxOptions{})
+	defer txController.Rollback(nil)
+
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+
+	pendingBatch := submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, tx, modifier)
 
 	s.client.GetBackend().Commit()
 	return pendingBatch
