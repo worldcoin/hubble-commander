@@ -30,7 +30,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer.Hash = *hash
 	transfer.SetReceiveTime()
 
-	defer logReceivedTransaction(transferDTO)
+	defer logReceivedTransaction(*hash, transferDTO)
 
 	err = a.storage.AddTransfer(transfer)
 	if errors.Is(err, bh.ErrKeyExists) {

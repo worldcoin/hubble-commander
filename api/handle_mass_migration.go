@@ -30,7 +30,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 	massMigration.Hash = *hash
 	massMigration.SetReceiveTime()
 
-	defer logReceivedTransaction(massMigrationDTO)
+	defer logReceivedTransaction(*hash, massMigrationDTO)
 
 	err = a.storage.AddMassMigration(massMigration)
 	if errors.Is(err, bh.ErrKeyExists) {
