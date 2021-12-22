@@ -19,7 +19,6 @@ var (
 	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
 	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
-	ErrInvalidSpokeID    = fmt.Errorf("spoke ID must be greater than 0")
 	ErrSpokeDoesNotExist = fmt.Errorf("spoke with given ID does not exist")
 
 	APIErrAnyMissingField = NewAPIError(
@@ -62,10 +61,6 @@ var (
 		10012,
 		"sender with given ID does not exist",
 	)
-	APIErrInvalidSpokeID = NewAPIError(
-		10013,
-		"spoke ID must be greater than 0",
-	)
 	APIErrSpokeDoesNotExist = NewAPIError(
 		10014,
 		"spoke with given ID does not exist",
@@ -83,7 +78,6 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrFeeTooLow:                          APIErrFeeTooLow,
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
-	ErrInvalidSpokeID:                     APIErrInvalidSpokeID,
 	ErrSpokeDoesNotExist:                  APIErrSpokeDoesNotExist,
 }
 

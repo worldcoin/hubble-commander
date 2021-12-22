@@ -133,14 +133,6 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountEncodabi
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeID() {
-	massMigrationWithBadSpokeID := s.massMigration
-	massMigrationWithBadSpokeID.SpokeID = ref.Uint32(0)
-
-	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithBadSpokeID))
-	s.Equal(APIErrInvalidSpokeID, err)
-}
-
 func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesThatSpokeExists() {
 	massMigrationWithNonexistentSpoke := s.massMigration
 	massMigrationWithNonexistentSpoke.SpokeID = ref.Uint32(1)
