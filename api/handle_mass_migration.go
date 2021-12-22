@@ -28,8 +28,10 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 		return nil, err
 	}
 	massMigration.Hash = *hash
-
 	massMigration.SetReceiveTime()
+
+	defer logReceivedTransaction(massMigrationDTO)
+
 	err = a.storage.AddMassMigration(massMigration)
 	if errors.Is(err, bh.ErrKeyExists) {
 		return a.updateDuplicatedTransaction(massMigration)
@@ -39,8 +41,6 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 	}
 
 	a.countAcceptedTx(massMigration.TxType)
-	logReceivedTransaction(massMigrationDTO)
-
 	return &massMigration.Hash, nil
 }
 

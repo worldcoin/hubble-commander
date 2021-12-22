@@ -28,8 +28,10 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, err
 	}
 	create2Transfer.Hash = *hash
-
 	create2Transfer.SetReceiveTime()
+
+	defer logReceivedTransaction(create2TransferDTO)
+
 	err = a.storage.AddCreate2Transfer(create2Transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
 		return a.updateDuplicatedTransaction(create2Transfer)
@@ -39,8 +41,6 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 
 	a.countAcceptedTx(create2Transfer.TxType)
-	logReceivedTransaction(create2TransferDTO)
-
 	return &create2Transfer.Hash, nil
 }
 
