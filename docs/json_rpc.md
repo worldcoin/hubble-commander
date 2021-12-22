@@ -16,7 +16,7 @@ Example result:
 
 This returns a number of datapoints about the current state of the system:
 
-- ethereum network chain id
+- Ethereum network chain id
 - AccountRegistry, TokenRegistry, DepositManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
@@ -46,7 +46,9 @@ Example result:
 
 ### `hubble_getGenesisAccounts()`
 
-Returns a list of genesis accounts added at batch #0. Example result:
+Returns a list of genesis accounts added at batch #0.
+
+Example result:
 
 ```json
 [
@@ -79,12 +81,12 @@ Example result:
 
 Returns transaction object including its status:
 
-- PENDING
-- IN_BATCH
-- FINALISED
-- ERROR
+- `PENDING`
+- `IN_BATCH`
+- `FINALISED`
+- `ERROR`
 
-Example result (TRANSFER):
+Example result (`TRANSFER`):
 
 ```json
 {
@@ -110,7 +112,7 @@ Example result (TRANSFER):
 }
 ```
 
-Example result (CREATE2TRANSFER):
+Example result (`CREATE2TRANSFER`):
 
 ```json
 {
@@ -137,7 +139,7 @@ Example result (CREATE2TRANSFER):
 }
 ```
 
-Example result (MASS_MIGRATION):
+Example result (`MASS_MIGRATION`):
 
 ```json
 {
@@ -165,10 +167,11 @@ Example result (MASS_MIGRATION):
 
 ### `hubble_getTransactions(pubKey)`
 
-Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given public key
+Returns an array of transactions (`TRANSFER` and `CREATE2TRANSFER` type) for given public key
 
 ### `hubble_getUserState(stateId)`
 
+Example result:
 ```json
 {
     "StateID": 3,
@@ -181,7 +184,9 @@ Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given p
 
 ### `hubble_getUserStates(pubKey)`
 
-Return all UserState objects related to a public key
+Return all UserState objects related to a public key.
+
+Example result:
 
 ```json
 [
@@ -204,25 +209,21 @@ Return all UserState objects related to a public key
 
 ### `hubble_getPublicKeyByPubKeyID(pubKeyId)`
 
+Example result:
 ```json
-{
-    "ID": 34,
-    "PublicKey": "0x123123123"
-}
+"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
 
 ### `hubble_getPublicKeyByStateID(stateID)`
 
+Example result:
 ```json
-{
-    "ID": 34,
-    "PublicKey": "0x123123123"
-}
+"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
 
 ### `hubble_getBatches(from, to)`
 
-Returns an array of batches in given ID range
+Returns an array of batches in given ID range.
 
 Example result:
 
@@ -242,7 +243,7 @@ Example result:
 
 ### `hubble_getBatchByHash(hash)`
 
-Returns batch information and list of included commitments in batch
+Returns batch information and list of included commitments in batch.
 
 Example result:
 
