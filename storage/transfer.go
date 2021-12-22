@@ -12,15 +12,15 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (s *TransactionStorage) AddTransfer(t *models.Transfer) error {
+func (s *TransactionStorage) AddTransfer(tx *models.Transfer) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		if t.CommitmentID != nil || t.ErrorMessage != nil {
-			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromTransfer(t))
+		if tx.CommitmentID != nil || tx.ErrorMessage != nil {
+			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromTransfer(tx))
 			if err != nil {
 				return err
 			}
 		}
-		return txStorage.addStoredTx(stored.NewTxFromTransfer(t))
+		return txStorage.addStoredTx(stored.NewTxFromTransfer(tx))
 	})
 }
 
@@ -37,6 +37,24 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 			}
 		}
 		return nil
+	})
+}
+
+func (s *TransactionStorage) UpdateTransfer(tx *models.Transfer) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		receipt, err := s.getStoredTxReceipt(tx.Hash)
+		if err != nil {
+			return err
+		}
+		if receipt == nil || receipt.ErrorMessage == nil {
+			return nil
+		}
+
+		err = s.MarkTransactionsAsPending([]common.Hash{tx.Hash})
+		if err != nil {
+			return err
+		}
+		return s.updateStoredTx(stored.NewTxFromTransfer(tx))
 	})
 }
 
