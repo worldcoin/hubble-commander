@@ -7,19 +7,21 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
 var (
-	ErrFeeTooLow         = fmt.Errorf("fee must be greater than 0")
-	ErrNonceTooLow       = fmt.Errorf("nonce too low")
-	ErrNotEnoughBalance  = fmt.Errorf("not enough balance")
-	ErrTransferToSelf    = fmt.Errorf("transfer to the same state id")
-	ErrInvalidAmount     = fmt.Errorf("amount must be positive")
-	ErrUnsupportedTxType = fmt.Errorf("unsupported transaction type")
-	ErrNonexistentSender = fmt.Errorf("sender state ID does not exist")
-	ErrInvalidSpokeID    = fmt.Errorf("spoke ID must be greater than 0")
+	ErrFeeTooLow          = fmt.Errorf("fee must be greater than 0")
+	ErrNonceTooLow        = fmt.Errorf("nonce too low")
+	ErrNotEnoughBalance   = fmt.Errorf("not enough balance")
+	ErrTransferToSelf     = fmt.Errorf("transfer to the same state id")
+	ErrInvalidAmount      = fmt.Errorf("amount must be positive")
+	ErrUnsupportedTxType  = fmt.Errorf("unsupported transaction type")
+	ErrNonexistentSender  = fmt.Errorf("sender state ID does not exist")
+	ErrInvalidSpokeID     = fmt.Errorf("spoke ID must be greater than 0")
+	ErrPendingTransaction = fmt.Errorf("transaction already exists")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -65,6 +67,14 @@ var (
 		10013,
 		"spoke ID must be greater than 0",
 	)
+	APIErrMinedTransaction = NewAPIError(
+		10014,
+		"cannot update mined transaction",
+	)
+	APIErrPendingTransaction = NewAPIError(
+		10015,
+		"transaction already exists",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
@@ -79,6 +89,8 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 	ErrInvalidSpokeID:                     APIErrInvalidSpokeID,
+	storage.ErrAlreadyMinedTransaction:    APIErrMinedTransaction,
+	ErrPendingTransaction:                 APIErrPendingTransaction,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
@@ -168,6 +180,9 @@ func (a *API) updateDuplicatedTransaction(tx models.GenericTransaction) (*common
 	txHash := &tx.GetBase().Hash
 	logDuplicateTransaction(txHash)
 	err := a.storage.UpdateTransaction(tx)
+	if storage.IsNotFoundError(err) {
+		return nil, errors.WithStack(ErrPendingTransaction)
+	}
 	if err != nil {
 		return nil, err
 	}

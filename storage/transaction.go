@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (
@@ -28,8 +29,11 @@ func (s *TransactionStorage) UpdateTransaction(tx models.GenericTransaction) err
 		if err != nil {
 			return err
 		}
-		if receipt == nil || receipt.ErrorMessage == nil {
-			return nil
+		if receipt == nil {
+			return NewNotFoundError("txReceipt")
+		}
+		if receipt.ErrorMessage == nil {
+			return errors.WithStack(ErrAlreadyMinedTransaction)
 		}
 
 		err = txStorage.MarkTransactionsAsPending([]common.Hash{txBase.Hash})
