@@ -42,7 +42,6 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 		PostStateRoot:     commitment.PostStateRoot,
 		FeeReceiver:       commitment.FeeReceiver,
 		CombinedSignature: commitment.CombinedSignature,
-		BodyHash:          commitment.BodyHash,
 		Status:            *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
 		BatchTime:         batch.SubmissionTime,
 		Transactions:      transactions,

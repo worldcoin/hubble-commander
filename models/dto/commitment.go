@@ -28,7 +28,6 @@ type Commitment struct {
 	PostStateRoot     common.Hash
 	FeeReceiver       uint32
 	CombinedSignature models.Signature
-	BodyHash          *common.Hash
 	Status            txstatus.TransactionStatus
 	BatchTime         *models.Timestamp
 	Transactions      interface{}

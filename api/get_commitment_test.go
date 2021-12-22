@@ -89,7 +89,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		PostStateRoot:     s.commitment.PostStateRoot,
 		FeeReceiver:       s.commitment.FeeReceiver,
 		CombinedSignature: s.commitment.CombinedSignature,
-		BodyHash:          s.commitment.BodyHash,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.TransferForCommitment{{
@@ -139,7 +138,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		PostStateRoot:     s.commitment.PostStateRoot,
 		FeeReceiver:       s.commitment.FeeReceiver,
 		CombinedSignature: s.commitment.CombinedSignature,
-		BodyHash:          s.commitment.BodyHash,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.Create2TransferForCommitment{{
@@ -189,7 +187,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 		PostStateRoot:     s.commitment.PostStateRoot,
 		FeeReceiver:       s.commitment.FeeReceiver,
 		CombinedSignature: s.commitment.CombinedSignature,
-		BodyHash:          s.commitment.BodyHash,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.MassMigrationForCommitment{{
