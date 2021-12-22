@@ -8,16 +8,18 @@ import (
 type CommitmentInclusionProof struct {
 	StateRoot common.Hash
 	Body      *CommitmentProofBody
-	Path      *models.MerklePath
+	Path      *MerklePath
 	Witness   models.Witness
 }
 
 type StateMerkleProof struct {
-	models.StateMerkleProof
+	UserState *UserState
+	Witness   models.Witness
 }
 
 type PublicKeyProof struct {
-	models.PublicKeyProof
+	PublicKey *models.PublicKey
+	Witness   models.Witness
 }
 
 type CommitmentProofBody struct {

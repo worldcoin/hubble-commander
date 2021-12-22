@@ -47,7 +47,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 		return nil, errors.WithStack(err)
 	}
 
-	path := &models.MerklePath{
+	path := &dto.MerklePath{
 		Path:  uint32(commitmentID.IndexInBatch),
 		Depth: tree.Depth(),
 	}

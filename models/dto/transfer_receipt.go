@@ -1,21 +1,20 @@
 package dto
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 )
 
 type TransactionReceipt struct {
-	models.TransactionWithBatchDetails
+	TransactionWithBatchDetails
 	Status txstatus.TransactionStatus
 }
 
 type TransferReceipt struct {
-	models.TransferWithBatchDetails
+	TransferWithBatchDetails
 	Status txstatus.TransactionStatus
 }
 
 type Create2TransferReceipt struct {
-	models.Create2TransferWithBatchDetails
+	Create2TransferWithBatchDetails
 	Status txstatus.TransactionStatus
 }
