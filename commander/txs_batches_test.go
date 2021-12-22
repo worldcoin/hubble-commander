@@ -105,58 +105,64 @@ func (s *TxsBatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwic
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() {
-	txs := []models.Transfer{
-		testutils.MakeTransfer(0, 1, 0, 100),
-		testutils.MakeTransfer(0, 1, 0, 200),
-	}
-	for i := range txs {
-		s.setTransferHashAndSign(&txs[i])
-	}
-
-	s.submitBatchInTx(&txs[0])
-
-	root, err := s.cmd.storage.StateTree.Root()
+	initialStateRoot, err := s.cmd.storage.StateTree.Root()
 	s.NoError(err)
 
-	s.createTransferBatch(&txs[1])
+	remoteTx := testutils.MakeTransfer(0, 1, 0, 100)
+	s.setTransferHashAndSign(&remoteTx)
+	s.submitBatchInTx(&remoteTx)
+
+	localTx := testutils.MakeTransfer(0, 1, 0, 200)
+	s.setTransferHashAndSign(&localTx)
+	s.createTransferBatchLocally(&localTx)
 
 	batches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(batches, 1)
+	remoteBatch := batches[0]
 
-	s.client.Account = s.client.Accounts[1]
-	err = s.cmd.syncRemoteBatch(batches[0])
+	err = s.cmd.syncRemoteBatch(remoteBatch)
 	s.NoError(err)
 
-	batch, err := s.cmd.storage.GetBatch(batches[0].GetID())
+	// Correct batch stored
+	expectedBatch := remoteBatch.ToBatch(*initialStateRoot)
+	storedBatch, err := s.cmd.storage.GetBatch(remoteBatch.GetID())
 	s.NoError(err)
-	s.Equal(*batches[0].ToBatch(*root), *batch)
+	s.Equal(*expectedBatch, *storedBatch)
 
-	txBatch := batches[0].ToDecodedTxBatch()
-	decodedCommitment := txBatch.Commitments[0].ToDecodedCommitment()
+	// Correct commitment stored
+	remoteTxBatch := remoteBatch.ToDecodedTxBatch()
+	remoteCommitment := remoteTxBatch.Commitments[0].ToDecodedCommitment()
 	expectedCommitment := models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
-				BatchID:      batch.ID,
+				BatchID:      remoteTxBatch.ID,
 				IndexInBatch: 0,
 			},
 			Type:          batchtype.Transfer,
-			PostStateRoot: decodedCommitment.StateRoot,
+			PostStateRoot: remoteCommitment.StateRoot,
 		},
-		FeeReceiver:       decodedCommitment.FeeReceiver,
-		CombinedSignature: decodedCommitment.CombinedSignature,
-		BodyHash:          txBatch.Commitments[0].BodyHash(*batch.AccountTreeRoot),
+		FeeReceiver:       remoteCommitment.FeeReceiver,
+		CombinedSignature: remoteCommitment.CombinedSignature,
+		BodyHash:          remoteTxBatch.Commitments[0].BodyHash(remoteTxBatch.AccountTreeRoot),
 	}
-	commitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
+	storedCommitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *storedCommitment)
 
-	expectedTx := txs[0]
+	// Correct tx stored
+	expectedTx := remoteTx
 	expectedTx.Signature = models.Signature{}
-	expectedTx.CommitmentID = &commitment.ID
-	transfer, err := s.cmd.storage.GetTransfer(txs[0].Hash)
+	expectedTx.CommitmentID = &expectedCommitment.ID
+	transfer, err := s.cmd.storage.GetTransfer(remoteTx.Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)
+
+	// Previously stored tx moved back to mempool
+	pendingTransfers, err := s.cmd.storage.GetPendingTransfers()
+	s.NoError(err)
+	s.Len(pendingTransfers, 1)
+	s.Equal(localTx, pendingTransfers[0])
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
@@ -258,7 +264,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 		commitment.Transactions = append(commitment.Transactions, 1, 2, 3, 4)
 	})
 
-	localBatch := s.createTransferBatch(&txs[1])
+	localBatch := s.createTransferBatchLocally(&txs[1])
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
@@ -454,8 +460,7 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 	s.NoError(err)
 }
 
-// Make sure that the commander and the rollup context uses the same storage
-func (s *TxsBatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
+func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *models.Batch {
 	err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
 
@@ -488,11 +493,12 @@ func (s *TxsBatchesTestSuite) submitBatch(
 	return pendingBatch
 }
 
+// Submits batch on chain without adding it to storage
 func (s *TxsBatchesTestSuite) submitBatchInTx(tx models.GenericTransaction) {
 	s.submitInvalidBatchInTx(tx, func(_ *st.Storage, _ *models.CommitmentWithTxs) {})
 }
 
-// Make sure that the commander and the rollup context uses the same storage
+// Submits invalid batch on chain without adding it to storage
 func (s *TxsBatchesTestSuite) submitInvalidBatchInTx(
 	tx models.GenericTransaction,
 	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
