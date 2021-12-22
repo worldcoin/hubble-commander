@@ -28,7 +28,6 @@ type TransactionSyncer interface {
 	)
 	VerifyAmountAndWithdrawRoots(commitment encoder.Commitment, txs models.GenericTransactionArray, proofs []models.StateMerkleProof) error
 	SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error
-	BatchAddTxs(txs models.GenericTransactionArray) error
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
 
@@ -104,10 +103,6 @@ func (s *TransferSyncer) SetMissingTxsData(_ encoder.Commitment, _ SyncedTxs) er
 	return nil
 }
 
-func (s *TransferSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
-	return s.storage.BatchAddTransfer(txs.ToTransferArray())
-}
-
 func (s *TransferSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
 	return encoder.HashTransfer(tx.ToTransfer())
 }
@@ -181,10 +176,6 @@ func (s *C2TSyncer) SetMissingTxsData(_ encoder.Commitment, syncedTxs SyncedTxs)
 		txs[i].ToPublicKey = leaf.PublicKey
 	}
 	return nil
-}
-
-func (s *C2TSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
-	return s.storage.BatchAddCreate2Transfer(txs.ToCreate2TransferArray())
 }
 
 func (s *C2TSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {
@@ -291,10 +282,6 @@ func (s *MMSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs Sy
 		txs[i].SpokeID = mmCommitment.Meta.SpokeID
 	}
 	return nil
-}
-
-func (s *MMSyncer) BatchAddTxs(txs models.GenericTransactionArray) error {
-	return s.storage.BatchAddMassMigration(txs.ToMassMigrationArray())
 }
 
 func (s *MMSyncer) HashTx(tx models.GenericTransaction) (*common.Hash, error) {

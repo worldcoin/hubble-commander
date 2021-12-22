@@ -3,12 +3,9 @@ package disputer
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -17,15 +14,15 @@ type DisputeMMSignatureTestSuite struct {
 }
 
 func (s *DisputeMMSignatureTestSuite) SetupTest() {
-	s.testSuiteWithContexts.SetupTest(batchtype.MassMigration)
+	s.testSuiteWithContexts.SetupTest(batchtype.MassMigration, false)
 	s.disputeSignatureTestSuite.setupTest()
 }
 
 func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInvalidSignature() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
-	signMassMigration(s.T(), &wallets[0], &massMigration)
+	s.signTx(&wallets[0], &massMigration)
 
 	s.submitBatch(&massMigration)
 
@@ -40,10 +37,10 @@ func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_DisputesBatchWithInva
 }
 
 func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_ValidBatch() {
-	wallets := s.setUserStatesAndAddAccounts()
+	wallets := s.setAccounts(s.domain)
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
-	signMassMigration(s.T(), &wallets[1], &massMigration)
+	s.signTx(&wallets[1], &massMigration)
 
 	s.submitBatch(&massMigration)
 
@@ -55,13 +52,6 @@ func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 	s.NoError(err)
 	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
-}
-
-func signMassMigration(t *testing.T, wallet *bls.Wallet, tx *models.MassMigration) {
-	encodedTx := encoder.EncodeMassMigrationForSigning(tx)
-	signature, err := wallet.Sign(encodedTx)
-	require.NoError(t, err)
-	tx.Signature = *signature.ModelsSignature()
 }
 
 func TestDisputeMMSignatureTestSuite(t *testing.T) {
