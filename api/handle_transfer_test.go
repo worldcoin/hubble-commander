@@ -205,7 +205,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 	s.NotNil(transfer)
 }
 
-func (s *SendTransferTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
 	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
@@ -215,7 +215,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdate
 	})
 	s.NoError(err)
 
-	expectedTx, err := s.storage.GetTransfer(*originalHash)
+	originalTx, err := s.storage.GetTransfer(*originalHash)
 	s.NoError(err)
 
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
@@ -224,7 +224,8 @@ func (s *SendTransferTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdate
 
 	tx, err := s.storage.GetTransfer(*originalHash)
 	s.NoError(err)
-	s.Equal(*expectedTx, *tx)
+	s.Nil(tx.ErrorMessage)
+	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
 }
 
 func TestSendTransferTestSuite(t *testing.T) {

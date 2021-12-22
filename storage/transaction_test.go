@@ -119,7 +119,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
 	s.NoError(err)
 
 	updatedTx := transfer
-	updatedTx.ReceiveTime = models.NewTimestamp(time.Now().UTC())
+	updatedTx.SetReceiveTime()
 	err = s.storage.UpdateTransaction(&updatedTx)
 	s.NoError(err)
 
@@ -137,7 +137,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
 	s.NoError(err)
 
 	updatedTx := create2Transfer
-	updatedTx.ReceiveTime = models.NewTimestamp(time.Now().UTC())
+	updatedTx.SetReceiveTime()
 	err = s.storage.UpdateTransaction(&updatedTx)
 	s.NoError(err)
 
@@ -151,7 +151,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
 	s.NoError(err)
 
 	updatedTx := massMigration
-	updatedTx.ReceiveTime = models.NewTimestamp(time.Now().UTC())
+	updatedTx.SetReceiveTime()
 	err = s.storage.UpdateTransaction(&updatedTx)
 	s.NoError(err)
 

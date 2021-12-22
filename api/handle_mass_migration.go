@@ -32,8 +32,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 	massMigration.SetReceiveTime()
 	err = a.storage.AddMassMigration(massMigration)
 	if errors.Is(err, bh.ErrKeyExists) {
-		logDuplicateTransaction(&massMigration.Hash)
-		return &massMigration.Hash, nil
+		return a.updateDuplicatedTransaction(massMigration)
 	}
 	if err != nil {
 		return nil, err

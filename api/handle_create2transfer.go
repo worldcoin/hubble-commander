@@ -32,8 +32,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	create2Transfer.SetReceiveTime()
 	err = a.storage.AddCreate2Transfer(create2Transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
-		logDuplicateTransaction(&create2Transfer.Hash)
-		return &create2Transfer.Hash, nil
+		return a.updateDuplicatedTransaction(create2Transfer)
 	}
 	if err != nil {
 		return nil, err

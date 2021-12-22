@@ -32,8 +32,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer.SetReceiveTime()
 	err = a.storage.AddTransfer(transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
-		logDuplicateTransaction(&transfer.Hash)
-		return &transfer.Hash, nil
+		return a.updateDuplicatedTransaction(transfer)
 	}
 	if err != nil {
 		return nil, err
