@@ -173,7 +173,7 @@ Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given p
 {
     "StateID": 3,
     "PubKeyID": 3,
-    "TokenIndex": "0",
+    "TokenID": "0",
     "Balance": "1000000000000000000",
     "Nonce": "0"
 }
@@ -188,14 +188,14 @@ Return all UserState objects related to a public key
     {
         "StateID": 3,
         "PubKeyID": 3,
-        "TokenIndex": "0",
+        "TokenID": "0",
         "Balance": "1000000000000000000",
         "Nonce": "0"
     },
     {
         "StateID": 1,
         "PubKeyID": 1,
-        "TokenIndex": "0",
+        "TokenID": "0",
         "Balance": "999999999999996800",
         "Nonce": "32"
     }
