@@ -1,6 +1,7 @@
 package disputer
 
 import (
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -9,8 +10,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -32,13 +33,13 @@ func (s *testSuiteWithContexts) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *testSuiteWithContexts) SetupTest(batchType batchtype.BatchType) {
+func (s *testSuiteWithContexts) SetupTest(batchType batchtype.BatchType, disableSignatures bool) {
 	s.SetupTestWithConfig(batchType, &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,
-		MaxTxsPerCommitment:    1,
-		DisableSignatures:      false,
+		MaxTxsPerCommitment:    2,
+		DisableSignatures:      disableSignatures,
 	})
 }
 
@@ -54,9 +55,7 @@ func (s *testSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchTyp
 	s.NoError(err)
 
 	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
-		Params: rollup.Params{
-			GenesisStateRoot: root,
-		},
+		Params: rollup.Params{GenesisStateRoot: root},
 	}, eth.ClientConfig{})
 	s.NoError(err)
 
@@ -77,6 +76,22 @@ func (s *testSuiteWithContexts) setGenesisState() {
 	}
 }
 
+func (s *testSuiteWithContexts) setAccounts(domain *bls.Domain) []bls.Wallet {
+	wallets := testutils.GenerateWallets(s.Assertions, domain, 3)
+	for i := range wallets {
+		pubKeyID, err := s.client.RegisterAccountAndWait(wallets[i].PublicKey())
+		s.NoError(err)
+		s.EqualValues(i, *pubKeyID)
+
+		err = s.storage.AccountTree.SetSingle(&models.AccountLeaf{
+			PubKeyID:  uint32(i),
+			PublicKey: *wallets[i].PublicKey(),
+		})
+		s.NoError(err)
+	}
+	return wallets
+}
+
 func (s *testSuiteWithContexts) addGenesisBatch(root *common.Hash) {
 	batch, err := s.client.GetBatch(models.NewUint256(0))
 	s.NoError(err)
@@ -93,7 +108,10 @@ func (s *testSuiteWithContexts) TearDownTest() {
 }
 
 func (s *testSuiteWithContexts) newContexts(
-	storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, batchType batchtype.BatchType,
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	batchType batchtype.BatchType,
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
@@ -107,45 +125,18 @@ func (s *testSuiteWithContexts) beginTransaction() {
 	s.newContexts(txStorage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
-func (s *testSuiteWithContexts) commitTransaction() {
-	err := s.txController.Commit()
-	s.NoError(err)
-	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
-}
-
 func (s *testSuiteWithContexts) rollback() {
 	s.txController.Rollback(nil)
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 }
 
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
-	pendingBatch, batchData := s.createBatch(tx)
+	err := s.disputeCtx.storage.AddTransaction(tx)
+	s.NoError(err)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
 	return pendingBatch
-}
-
-func (s *testSuiteWithContexts) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
-	var err error
-	switch tx.Type() {
-	case txtype.Transfer:
-		err = s.disputeCtx.storage.AddTransfer(tx.ToTransfer())
-	case txtype.Create2Transfer:
-		err = s.disputeCtx.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-	case txtype.MassMigration:
-		err = s.disputeCtx.storage.AddMassMigration(tx.ToMassMigration())
-	}
-	s.NoError(err)
-
-	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
-	s.NoError(err)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-
-	return pendingBatch, batchData
 }

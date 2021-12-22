@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
@@ -146,15 +145,7 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.Commi
 }
 
 func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, executor.BatchData) {
-	var err error
-	switch tx.Type() {
-	case txtype.Transfer:
-		err = s.storage.AddTransfer(tx.ToTransfer())
-	case txtype.Create2Transfer:
-		err = s.storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-	case txtype.MassMigration:
-		err = s.storage.AddMassMigration(tx.ToMassMigration())
-	}
+	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
