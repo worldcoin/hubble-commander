@@ -12,5 +12,4 @@ create-missing = false
 [preprocessor.toc]
 command = "mdbook-toc"
 renderer = ["html"]
-marker = "<!-- toc -->"
 max-level = 4
