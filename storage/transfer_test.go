@@ -75,54 +75,6 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
 	s.Equal(includedTransfer, *res)
 }
 
-func (s *TransferTestSuite) TestUpdateTransfer_UpdatesTransfer() {
-	failedTransfer := transfer
-	failedTransfer.ErrorMessage = ref.String("some message")
-	err := s.storage.AddTransfer(&failedTransfer)
-	s.NoError(err)
-
-	updatedTransfer := transfer
-	updatedTransfer.ReceiveTime = models.NewTimestamp(time.Now().UTC())
-	err = s.storage.UpdateTransfer(&updatedTransfer)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-	s.Equal(updatedTransfer, *res)
-}
-
-func (s *TransferTestSuite) TestUpdateTransfer_DoesNotUpdateMinedTransfer() {
-	tx := transfer
-	tx.CommitmentID = &models.CommitmentID{
-		BatchID: models.MakeUint256(1),
-	}
-	err := s.storage.AddTransfer(&tx)
-	s.NoError(err)
-
-	updatedTransfer := transfer
-	updatedTransfer.ReceiveTime = models.NewTimestamp(time.Now().UTC())
-	err = s.storage.UpdateTransfer(&updatedTransfer)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-	s.Equal(tx, *res)
-}
-
-func (s *TransferTestSuite) TestUpdateTransfer_DoesNotUpdatePendingTransfer() {
-	err := s.storage.AddTransfer(&transfer)
-	s.NoError(err)
-
-	updatedTransfer := transfer
-	updatedTransfer.ReceiveTime = models.NewTimestamp(time.Now().UTC())
-	err = s.storage.UpdateTransfer(&updatedTransfer)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-	s.Equal(transfer, *res)
-}
-
 func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 	err := s.storage.AddCreate2Transfer(&create2Transfer)
 	s.NoError(err)

@@ -40,24 +40,6 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	})
 }
 
-func (s *TransactionStorage) UpdateTransfer(tx *models.Transfer) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		receipt, err := s.getStoredTxReceipt(tx.Hash)
-		if err != nil {
-			return err
-		}
-		if receipt == nil || receipt.ErrorMessage == nil {
-			return nil
-		}
-
-		err = s.MarkTransactionsAsPending([]common.Hash{tx.Hash})
-		if err != nil {
-			return err
-		}
-		return s.updateStoredTx(stored.NewTxFromTransfer(tx))
-	})
-}
-
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
 	if err != nil {
