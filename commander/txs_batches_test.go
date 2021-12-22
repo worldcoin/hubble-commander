@@ -199,6 +199,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
+// This test checks that state witnesses needed for dispute tx are gathered correctly in case of a self transfer
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatchWithSelfTransfer() {
 	tx := testutils.MakeTransfer(0, 0, 0, 100)
 	s.submitInvalidBatchInTx(&tx, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
@@ -213,6 +214,8 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatchWithSel
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+
+	// post state root is checked after applying the transfer in the SC dispute method, so we know that the witnesses were correct
 	s.Equal(result.Ok, getDisputeResult(s.Assertions, s.client)) // invalid post state root emits Result.Ok
 }
 
