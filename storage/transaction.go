@@ -3,7 +3,9 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (
@@ -18,6 +20,28 @@ func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (
 		return nil, err
 	}
 	return transaction, nil
+}
+
+func (s *TransactionStorage) UpdateTransaction(tx models.GenericTransaction) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		txBase := tx.GetBase()
+		receipt, err := txStorage.getStoredTxReceipt(txBase.Hash)
+		if err != nil {
+			return err
+		}
+		if receipt == nil {
+			return NewNotFoundError("txReceipt")
+		}
+		if receipt.ErrorMessage == nil {
+			return errors.WithStack(ErrAlreadyMinedTransaction)
+		}
+
+		err = txStorage.MarkTransactionsAsPending([]common.Hash{txBase.Hash})
+		if err != nil {
+			return err
+		}
+		return txStorage.updateStoredTx(stored.NewTx(tx))
+	})
 }
 
 func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (

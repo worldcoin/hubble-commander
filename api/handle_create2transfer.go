@@ -28,20 +28,19 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 		return nil, err
 	}
 	create2Transfer.Hash = *hash
-
 	create2Transfer.SetReceiveTime()
+
+	defer logReceivedTransaction(*hash, create2TransferDTO)
+
 	err = a.storage.AddCreate2Transfer(create2Transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
-		logDuplicateTransaction(&create2Transfer.Hash)
-		return &create2Transfer.Hash, nil
+		return a.updateDuplicatedTransaction(create2Transfer)
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	a.countAcceptedTx(create2Transfer.TxType)
-	logReceivedTransaction(create2TransferDTO)
-
 	return &create2Transfer.Hash, nil
 }
 

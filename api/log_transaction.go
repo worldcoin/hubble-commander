@@ -7,17 +7,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func logReceivedTransaction(tx interface{}) {
+const txHashField = "txHash"
+
+func logReceivedTransaction(hash common.Hash, tx interface{}) {
 	if log.IsLevelEnabled(log.DebugLevel) {
 		jsonTx, err := json.Marshal(tx)
 		if err != nil {
-			log.Errorln("Marshaling received transaction failed")
+			log.WithField(txHashField, hash).Errorln("Marshaling received transaction failed")
 			return
 		}
-		log.Debugf("API: received new transaction: %s", string(jsonTx))
+		log.WithField(txHashField, hash).Debugf("API: received new transaction: %s", string(jsonTx))
 	}
 }
 
 func logDuplicateTransaction(txHash *common.Hash) {
-	log.WithField("txHash", txHash).Debug("API: received transaction already exists")
+	log.WithField(txHashField, txHash).Debug("API: received transaction already exists")
 }
