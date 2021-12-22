@@ -2,36 +2,36 @@
 
 ## Stored structures
 - State Tree
-    - [State Leaf](#State-Leaf)
-        - [Index on `PubKeyID`](#Index-on-PubKeyID)
-    - [State Tree Node](#State-Tree-Node)
-    - [State Update](#State-Update)
+    - [State Leaf](#state-leaf)
+        - [Index on `PubKeyID`](#index-on-pubkeyid)
+    - [State Tree Node](#state-tree-node)
+    - [State Update](#state-update)
 - Account Tree
-    - [Account Leaf](#Account-Leaf)
-        - [Index on `PublicKey`](#Index-on-PublicKey)
-    - [Account Tree Node](#Account-Tree-Node)
+    - [Account Leaf](#account-leaf)
+        - [Index on `PublicKey`](#index-on-publickey)
+    - [Account Tree Node](#account-tree-node)
 - Transactions
-    - [Stored Transaction](#Stored-Transaction)
-        - [Transfer](#Transfer)
-            - [Index on `ToStateID`](#Index-on-ToStateID)
-        - [Create2Transfer](#Create2Transfer)
-        - [MassMigration](#MassMigration)
-        - [Index on `FromStateID`](#Index-on-FromStateID)
-    - [Stored Transaction Receipt](#Stored-Transaction-Receipt)
-        - [Index on `CommitmentID`](#Index-on-CommitmentID)
-        - [Index on `ToStateID`](#Index-on-ToStateID-1)
+    - [Stored Transaction](#stored-transaction)
+        - [Transfer](#transfer)
+            - [Index on `ToStateID`](#index-on-tostateid)
+        - [Create2Transfer](#create2transfer)
+        - [MassMigration](#massmigration)
+        - [Index on `FromStateID`](#index-on-fromstateid)
+    - [Stored Transaction Receipt](#stored-transaction-receipt)
+        - [Index on `CommitmentID`](#index-on-commitmentid)
+        - [Index on `ToStateID`](#index-on-tostateid-1)
 - Deposits
-    - [Pending Deposit](#Pending-Deposit)
-    - [Pending Deposit SubTree](#Pending-Deposit-SubTree)
+    - [Pending Deposit](#pending-deposit)
+    - [Pending Deposit SubTree](#pending-deposit-subtree)
 - Commitments and Batches
-    - [Stored Commitment](#Stored-Commitment)
-        - [Transaction Commitment](#Transaction-Commitment)
-        - [Deposit Commitment](#Deposit-Commitment)
-    - [Stored Batch](#Stored-Batch)
-        - [Index on `Hash`](#Index-on-Hash)
+    - [Stored Commitment](#stored-commitment)
+        - [Transaction Commitment](#transaction-commitment)
+        - [Deposit Commitment](#deposit-commitment)
+    - [Stored Batch](#stored-batch)
+        - [Index on `Hash`](#index-on-hash)
 - Other
-    - [Chain State](#Chain-State)
-    - [Registered Token](#Registered-Token)
+    - [Chain State](#chain-state)
+    - [Registered Token](#registered-token)
 
 ## Notes and design rationale
 - Some indices are specified using badgerhold tags on struct fields.

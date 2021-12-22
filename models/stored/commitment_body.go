@@ -20,7 +20,6 @@ type CommitmentBody interface {
 }
 
 func NewCommitmentBody(commitmentType batchtype.BatchType) (CommitmentBody, error) {
-	// nolint:exhaustive
 	switch commitmentType {
 	case batchtype.Deposit:
 		return new(DepositCommitmentBody), nil
