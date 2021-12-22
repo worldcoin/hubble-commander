@@ -19,7 +19,7 @@
 | `10002`    | `some field is missing, verify the transfer/create2transfer object` |
 | `10003`    | `invalid recipient, cannot send funds to yourself`                  |
 | `10004`    | `nonce too low`                                                     |
-| `10005`    | _DEPRICATED_: `nonce too high`                                      |
+| `10005`    | _DEPRECATED_: `nonce too high`                                      |
 | `10006`    | `not enough balance`                                                |
 | `10007`    | `amount must be greater than 0`                                     |
 | `10008`    | `fee too low`                                                       |
