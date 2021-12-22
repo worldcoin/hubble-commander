@@ -19,7 +19,7 @@
 | `10002`    | `some field is missing, verify the transfer/create2transfer object` |
 | `10003`    | `invalid recipient, cannot send funds to yourself`                  |
 | `10004`    | `nonce too low`                                                     |
-| `10005`    | _DEPRICATED_: `nonce too high`                                      |
+| `10005`    | _DEPRECATED_: `nonce too high`                                      |
 | `10006`    | `not enough balance`                                                |
 | `10007`    | `amount must be greater than 0`                                     |
 | `10008`    | `fee too low`                                                       |
@@ -27,7 +27,8 @@
 | `10010`    | `amount is not encodable as multi-precission decimal`               |
 | `10011`    | `fee is not encodable as multi-precission decimal`                  |
 | `10012`    | `sender state ID does not exist`                                    |
-| `10013`    | `spoke ID must be greater than 0`                                   |
+| `10013`    | _DEPRECATED_: `spoke ID must be greater than 0`                     |
+| `10014`    | `spoke with given ID does not exist`                                |
 | `20000`    | `commitment not found`                                              |
 | `30000`    | `batch not found`                                                   |
 | `30001`    | `batches not found`                                                 |
