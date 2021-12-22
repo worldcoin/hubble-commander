@@ -79,10 +79,10 @@ To install Rust and Cargo on MacOS, type the following:
 brew install rust
 ```
 
-Then install mdBook with Cargo:
+Then install mdBook and mdbook-toc preprocessor with Cargo:
 
 ```shell
-cargo install mdbook
+cargo install mdbook mdbook-toc
 ```
 
 Afterwards, run the server:
