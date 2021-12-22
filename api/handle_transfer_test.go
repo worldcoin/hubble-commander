@@ -228,6 +228,28 @@ func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
 	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
 }
 
+func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdatePendingTransfer() {
+	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.Equal(APIErrPendingTransaction, err)
+}
+
+func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer() {
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+
+	tx, err := s.storage.GetTransfer(*hash)
+	s.NoError(err)
+
+	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{*tx}, &models.CommitmentID{BatchID: models.MakeUint256(1)})
+	s.NoError(err)
+
+	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.Equal(APIErrMinedTransaction, err)
+}
+
 func TestSendTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendTransferTestSuite))
 }
