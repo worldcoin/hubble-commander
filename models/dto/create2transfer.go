@@ -101,19 +101,8 @@ func MakeCreate2TransferWithBatchDetails(transfer *models.Create2TransferWithBat
 
 func MakeCreate2TransferWithBatchDetailsFromCreate2Transfer(transfer *models.Create2Transfer) Create2TransferWithBatchDetails {
 	return Create2TransferWithBatchDetails{
-		TransactionBase: TransactionBase{
-			CommitmentID: MakeCommitmentID(transfer.CommitmentID),
-			Hash:         transfer.Hash,
-			TxType:       transfer.TxType,
-			FromStateID:  transfer.FromStateID,
-			Amount:       transfer.Amount,
-			Fee:          transfer.Fee,
-			Nonce:        transfer.Nonce,
-			Signature:    transfer.Signature,
-			ReceiveTime:  transfer.ReceiveTime,
-			ErrorMessage: transfer.ErrorMessage,
-		},
-		ToStateID:   transfer.ToStateID,
-		ToPublicKey: transfer.ToPublicKey,
+		TransactionBase: MakeTransactionBase(&transfer.TransactionBase),
+		ToStateID:       transfer.ToStateID,
+		ToPublicKey:     transfer.ToPublicKey,
 	}
 }

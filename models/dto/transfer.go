@@ -98,18 +98,7 @@ func MakeTransferWithBatchDetails(transfer *models.TransferWithBatchDetails) Tra
 
 func MakeTransferWithBatchDetailsFromTransfer(transfer *models.Transfer) TransferWithBatchDetails {
 	return TransferWithBatchDetails{
-		TransactionBase: TransactionBase{
-			CommitmentID: MakeCommitmentID(transfer.CommitmentID),
-			Hash:         transfer.Hash,
-			TxType:       transfer.TxType,
-			FromStateID:  transfer.FromStateID,
-			Amount:       transfer.Amount,
-			Fee:          transfer.Fee,
-			Nonce:        transfer.Nonce,
-			Signature:    transfer.Signature,
-			ReceiveTime:  transfer.ReceiveTime,
-			ErrorMessage: transfer.ErrorMessage,
-		},
-		ToStateID: transfer.ToStateID,
+		TransactionBase: MakeTransactionBase(&transfer.TransactionBase),
+		ToStateID:       transfer.ToStateID,
 	}
 }
