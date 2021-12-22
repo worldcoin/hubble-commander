@@ -18,3 +18,21 @@ type TransactionBase struct {
 	CommitmentID *CommitmentID
 	ErrorMessage *string
 }
+
+func MakeTransactionBase(tx *models.TransactionBase) TransactionBase {
+	return TransactionBase{
+		Hash:        tx.Hash,
+		TxType:      tx.TxType,
+		FromStateID: tx.FromStateID,
+		Amount:      tx.Amount,
+		Fee:         tx.Fee,
+		Nonce:       tx.Nonce,
+		Signature:   tx.Signature,
+		ReceiveTime: tx.ReceiveTime,
+		CommitmentID: &CommitmentID{
+			BatchID:      tx.CommitmentID.BatchID,
+			IndexInBatch: tx.CommitmentID.IndexInBatch,
+		},
+		ErrorMessage: tx.ErrorMessage,
+	}
+}
