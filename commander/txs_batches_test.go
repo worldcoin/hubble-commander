@@ -258,27 +258,25 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatur
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
-	txs := []models.Transfer{
-		testutils.MakeTransfer(0, 1, 0, 250),
-		testutils.MakeTransfer(0, 1, 0, 100),
-	}
-
-	s.submitInvalidBatchInTx(&txs[0], func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
+	remoteTx := testutils.MakeTransfer(0, 1, 0, 250)
+	s.submitInvalidBatchInTx(&remoteTx, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		commitment.Transactions = append(commitment.Transactions, 1, 2, 3, 4)
 	})
 
-	localBatch := s.createTransferBatchLocally(&txs[1])
+	localTx := testutils.MakeTransfer(0, 1, 0, 100)
+	localBatch := s.createTransferBatchLocally(&localTx)
 
 	remoteBatches, err := s.client.GetAllBatches()
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
+	remoteBatch := remoteBatches[0]
 
-	s.client.Account = s.client.Accounts[1]
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(remoteBatch)
 	s.ErrorIs(err, ErrRollbackInProgress)
 
-	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatch.GetID())
 	s.Equal(result.BadCompression, getDisputeResult(s.Assertions, s.client))
+
 	_, err = s.cmd.storage.GetBatch(localBatch.ID)
 	s.True(st.IsNotFoundError(err))
 }
