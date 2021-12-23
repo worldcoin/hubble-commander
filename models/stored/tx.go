@@ -37,6 +37,18 @@ type Tx struct {
 	Body TxBody
 }
 
+func NewTx(tx models.GenericTransaction) *Tx {
+	switch tx.Type() {
+	case txtype.Transfer:
+		return NewTxFromTransfer(tx.ToTransfer())
+	case txtype.Create2Transfer:
+		return NewTxFromCreate2Transfer(tx.ToCreate2Transfer())
+	case txtype.MassMigration:
+		return NewTxFromMassMigration(tx.ToMassMigration())
+	}
+	return nil
+}
+
 func NewTxFromTransfer(t *models.Transfer) *Tx {
 	return &Tx{
 		Hash:        t.Hash,

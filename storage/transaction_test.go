@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -109,6 +110,46 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 	res, err := s.storage.GetTransactionWithBatchDetails(massMigrationInBatch.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
+}
+
+func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
+	failedTx := transfer
+	failedTx.ErrorMessage = ref.String("some message")
+	err := s.storage.AddTransfer(&failedTx)
+	s.NoError(err)
+
+	updatedTx := transfer
+	updatedTx.SetReceiveTime()
+	err = s.storage.UpdateTransaction(&updatedTx)
+	s.NoError(err)
+
+	res, err := s.storage.GetTransfer(transfer.Hash)
+	s.NoError(err)
+	s.Equal(updatedTx, *res)
+}
+
+func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
+	tx := create2Transfer
+	tx.CommitmentID = &models.CommitmentID{
+		BatchID: models.MakeUint256(1),
+	}
+	err := s.storage.AddCreate2Transfer(&tx)
+	s.NoError(err)
+
+	updatedTx := create2Transfer
+	updatedTx.SetReceiveTime()
+	err = s.storage.UpdateTransaction(&updatedTx)
+	s.ErrorIs(err, ErrAlreadyMinedTransaction)
+}
+
+func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
+	err := s.storage.AddMassMigration(&massMigration)
+	s.NoError(err)
+
+	updatedTx := massMigration
+	updatedTx.SetReceiveTime()
+	err = s.storage.UpdateTransaction(&updatedTx)
+	s.ErrorIs(err, NewNotFoundError("txReceipt"))
 }
 
 func TestTransactionTestSuite(t *testing.T) {

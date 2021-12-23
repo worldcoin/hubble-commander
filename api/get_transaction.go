@@ -43,7 +43,7 @@ func (a *API) unsafeGetTransaction(hash common.Hash) (*dto.TransactionReceipt, e
 	}
 
 	return &dto.TransactionReceipt{
-		TransactionWithBatchDetails: *transaction,
+		TransactionWithBatchDetails: dto.MakeTransactionWithBatchDetails(transaction),
 		Status:                      *status,
 	}, nil
 }

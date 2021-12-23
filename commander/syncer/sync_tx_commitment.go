@@ -92,5 +92,5 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 		}
 		txs.At(i).GetBase().Hash = *hashTransfer
 	}
-	return c.Syncer.BatchAddTxs(txs)
+	return c.storage.BatchAddTransaction(txs)
 }

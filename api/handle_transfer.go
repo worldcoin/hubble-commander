@@ -28,20 +28,19 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 	transfer.Hash = *hash
-
 	transfer.SetReceiveTime()
+
+	defer logReceivedTransaction(*hash, transferDTO)
+
 	err = a.storage.AddTransfer(transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
-		logDuplicateTransaction(&transfer.Hash)
-		return &transfer.Hash, nil
+		return a.updateDuplicatedTransaction(transfer)
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	a.countAcceptedTx(transfer.TxType)
-	logReceivedTransaction(transferDTO)
-
 	return &transfer.Hash, nil
 }
 

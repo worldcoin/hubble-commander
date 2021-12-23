@@ -83,3 +83,26 @@ func MakeCreate2TransferForCommitment(transfer *models.Create2Transfer) Create2T
 		ToPublicKey: transfer.ToPublicKey,
 	}
 }
+
+type Create2TransferWithBatchDetails struct {
+	TransactionBase
+	ToStateID   *uint32
+	ToPublicKey models.PublicKey
+	BatchHash   *common.Hash
+	BatchTime   *models.Timestamp
+}
+
+func MakeCreate2TransferWithBatchDetails(transfer *models.Create2TransferWithBatchDetails) Create2TransferWithBatchDetails {
+	out := MakeCreate2TransferWithBatchDetailsFromCreate2Transfer(transfer.ToCreate2Transfer())
+	out.BatchHash = transfer.BatchHash
+	out.BatchTime = transfer.BatchTime
+	return out
+}
+
+func MakeCreate2TransferWithBatchDetailsFromCreate2Transfer(transfer *models.Create2Transfer) Create2TransferWithBatchDetails {
+	return Create2TransferWithBatchDetails{
+		TransactionBase: MakeTransactionBase(&transfer.TransactionBase),
+		ToStateID:       transfer.ToStateID,
+		ToPublicKey:     transfer.ToPublicKey,
+	}
+}
