@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -34,9 +33,7 @@ func (a *API) unsafeGetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof,
 	}
 
 	return &dto.PublicKeyProof{
-		PublicKeyProof: models.PublicKeyProof{
-			PublicKey: &leaf.PublicKey,
-			Witness:   witness,
-		},
+		PublicKey: &leaf.PublicKey,
+		Witness:   witness,
 	}, nil
 }

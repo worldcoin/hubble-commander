@@ -1,37 +1,7 @@
 # 🦡 Badger data structures
 
 ## Stored structures
-- State Tree
-    - [State Leaf](#State-Leaf)
-        - [Index on `PubKeyID`](#Index-on-PubKeyID)
-    - [State Tree Node](#State-Tree-Node)
-    - [State Update](#State-Update)
-- Account Tree
-    - [Account Leaf](#Account-Leaf)
-        - [Index on `PublicKey`](#Index-on-PublicKey)
-    - [Account Tree Node](#Account-Tree-Node)
-- Transactions
-    - [Stored Transaction](#Stored-Transaction)
-        - [Transfer](#Transfer)
-            - [Index on `ToStateID`](#Index-on-ToStateID)
-        - [Create2Transfer](#Create2Transfer)
-        - [MassMigration](#MassMigration)
-        - [Index on `FromStateID`](#Index-on-FromStateID)
-    - [Stored Transaction Receipt](#Stored-Transaction-Receipt)
-        - [Index on `CommitmentID`](#Index-on-CommitmentID)
-        - [Index on `ToStateID`](#Index-on-ToStateID-1)
-- Deposits
-    - [Pending Deposit](#Pending-Deposit)
-    - [Pending Deposit SubTree](#Pending-Deposit-SubTree)
-- Commitments and Batches
-    - [Stored Commitment](#Stored-Commitment)
-        - [Transaction Commitment](#Transaction-Commitment)
-        - [Deposit Commitment](#Deposit-Commitment)
-    - [Stored Batch](#Stored-Batch)
-        - [Index on `Hash`](#Index-on-Hash)
-- Other
-    - [Chain State](#Chain-State)
-    - [Registered Token](#Registered-Token)
+<!-- toc -->
 
 ## Notes and design rationale
 - Some indices are specified using badgerhold tags on struct fields.

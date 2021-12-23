@@ -105,6 +105,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Contract.Bytes(), nil
 	case *models.RegisteredToken:
 		return nil, errors.WithStack(errPassedByPointer)
+	case models.RegisteredSpoke:
+		return v.Contract.Bytes(), nil
+	case *models.RegisteredSpoke:
+		return nil, errors.WithStack(errPassedByPointer)
 	case bh.KeyList:
 		return EncodeKeyList(&v)
 	default:
@@ -159,6 +163,9 @@ func Decode(data []byte, value interface{}) error {
 	case *uint64:
 		return stored.DecodeUint64(data, v)
 	case *models.RegisteredToken:
+		v.Contract.SetBytes(data)
+		return nil
+	case *models.RegisteredSpoke:
 		v.Contract.SetBytes(data)
 		return nil
 	case *bh.KeyList:

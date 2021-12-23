@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -107,8 +108,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 	s.NoError(err)
 	s.Equal(txstatus.Pending, receipt.Status)
 
-	_, ok := receipt.Transaction.(*models.Transfer)
-	s.True(ok)
+	s.Equal(txtype.Transfer, receipt.TxType)
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
@@ -119,8 +119,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
 	s.NoError(err)
 	s.Equal(txstatus.Pending, receipt.Status)
 
-	_, ok := receipt.Transaction.(*models.Create2Transfer)
-	s.True(ok)
+	s.Equal(txtype.Create2Transfer, receipt.TxType)
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
@@ -131,8 +130,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
 	s.NoError(err)
 	s.Equal(txstatus.Pending, receipt.Status)
 
-	_, ok := receipt.Transaction.(*models.MassMigration)
-	s.True(ok)
+	s.Equal(txtype.MassMigration, receipt.TxType)
 }
 
 func TestGetTransactionTestSuite(t *testing.T) {

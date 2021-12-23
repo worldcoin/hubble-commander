@@ -53,11 +53,11 @@ func (s *GetUserStateProofTestSuite) TestGetUserState() {
 	witness, err := s.api.storage.StateTree.GetLeafWitness(leaf.StateID)
 	s.NoError(err)
 
+	dtoUserState := dto.MakeUserState(&leaf.UserState)
+
 	expectedUserStateProof := &dto.StateMerkleProof{
-		StateMerkleProof: models.StateMerkleProof{
-			UserState: &leaf.UserState,
-			Witness:   witness,
-		},
+		UserState: &dtoUserState,
+		Witness:   witness,
 	}
 	userStateProof, err := s.api.GetUserStateProof(leaf.StateID)
 	s.NoError(err)

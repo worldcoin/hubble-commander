@@ -124,6 +124,10 @@ func (s *TransactionStorage) addStoredTx(tx *stored.Tx) error {
 	return s.database.Badger.Insert(tx.Hash, *tx)
 }
 
+func (s *TransactionStorage) updateStoredTx(tx *stored.Tx) error {
+	return s.database.Badger.Update(tx.Hash, *tx)
+}
+
 func (s *TransactionStorage) getStoredTx(hash common.Hash) (*stored.Tx, error) {
 	var storedTx stored.Tx
 	err := s.database.Badger.Get(hash, &storedTx)

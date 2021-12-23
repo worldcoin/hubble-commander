@@ -16,6 +16,13 @@ func NewRegisteredSpokeStorage(database *Database) *RegisteredSpokeStorage {
 	}
 }
 
+func (s *RegisteredSpokeStorage) copyWithNewDatabase(database *Database) *RegisteredSpokeStorage {
+	newRegisteredSpokeStorage := *s
+	newRegisteredSpokeStorage.database = database
+
+	return &newRegisteredSpokeStorage
+}
+
 func (s *RegisteredSpokeStorage) AddRegisteredSpoke(registeredSpoke *models.RegisteredSpoke) error {
 	return s.database.Badger.Insert(registeredSpoke.ID, *registeredSpoke)
 }

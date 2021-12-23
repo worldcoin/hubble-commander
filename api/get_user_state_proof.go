@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
@@ -33,10 +32,10 @@ func (a *API) unsafeGetUserStateProof(id uint32) (*dto.StateMerkleProof, error) 
 		return nil, errors.WithStack(err)
 	}
 
+	dtoUserState := dto.MakeUserState(&leaf.UserState)
+
 	return &dto.StateMerkleProof{
-		StateMerkleProof: models.StateMerkleProof{
-			UserState: &leaf.UserState,
-			Witness:   witness,
-		},
+		UserState: &dtoUserState,
+		Witness:   witness,
 	}, nil
 }

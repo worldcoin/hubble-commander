@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -50,7 +51,7 @@ func newContext(
 	var batchCtx batchContext
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		batchCtx = newTxsContext(txStorage, client, cfg, batchType)
+		batchCtx = newTxsContext(txStorage, client, cfg, txtype.TransactionType(batchType))
 	case batchtype.Deposit:
 		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis:

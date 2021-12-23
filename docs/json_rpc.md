@@ -16,8 +16,8 @@ Example result:
 
 This returns a number of datapoints about the current state of the system:
 
-- ethereum network chain id
-- AccountRegistry, TokenRegistry, DepositManager and Rollup contract addresses
+- Ethereum network chain id
+- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
 - Number of transactions and accounts
@@ -33,6 +33,7 @@ Example result:
     "AccountRegistry": "0x10bd6732fe3908b8a816f6a1b271e0864de78ca1",
     "AccountRegistryDeploymentBlock": 74,
     "TokenRegistry": "0x07389715ae1f0a891fba82e65099f6a3fa7da593",
+    "SpokeRegistry": "0x535ca2e7dc31afce3dde4d78ded91aedf55b04b8",
     "DepositManager": "0xa3accd1cfabc8b09aea4d0e25f21f25c526c9be8",
     "Rollup": "0xf2a409ccf78e6e32e02d5e3a3ac274ca6880d9ac",
     "BlockNumber": 2146,
@@ -46,7 +47,9 @@ Example result:
 
 ### `hubble_getGenesisAccounts()`
 
-Returns a list of genesis accounts added at batch #0. Example result:
+Returns a list of genesis accounts added at batch #0.
+
+Example result:
 
 ```json
 [
@@ -79,12 +82,12 @@ Example result:
 
 Returns transaction object including its status:
 
-- PENDING
-- IN_BATCH
-- FINALISED
-- ERROR
+- `PENDING`
+- `IN_BATCH`
+- `FINALISED`
+- `ERROR`
 
-Example result (TRANSFER):
+Example result (`TRANSFER`):
 
 ```json
 {
@@ -110,7 +113,7 @@ Example result (TRANSFER):
 }
 ```
 
-Example result (CREATE2TRANSFER):
+Example result (`CREATE2TRANSFER`):
 
 ```json
 {
@@ -137,7 +140,7 @@ Example result (CREATE2TRANSFER):
 }
 ```
 
-Example result (MASS_MIGRATION):
+Example result (`MASS_MIGRATION`):
 
 ```json
 {
@@ -165,15 +168,16 @@ Example result (MASS_MIGRATION):
 
 ### `hubble_getTransactions(pubKey)`
 
-Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given public key
+Returns an array of transactions (`TRANSFER` and `CREATE2TRANSFER` type) for given public key
 
 ### `hubble_getUserState(stateId)`
 
+Example result:
 ```json
 {
     "StateID": 3,
     "PubKeyID": 3,
-    "TokenIndex": "0",
+    "TokenID": "0",
     "Balance": "1000000000000000000",
     "Nonce": "0"
 }
@@ -181,21 +185,23 @@ Returns an array of transactions (TRANSFER and CREATE2TRANSFER type) for given p
 
 ### `hubble_getUserStates(pubKey)`
 
-Return all UserState objects related to a public key
+Return all UserState objects related to a public key.
+
+Example result:
 
 ```json
 [
     {
         "StateID": 3,
         "PubKeyID": 3,
-        "TokenIndex": "0",
+        "TokenID": "0",
         "Balance": "1000000000000000000",
         "Nonce": "0"
     },
     {
         "StateID": 1,
         "PubKeyID": 1,
-        "TokenIndex": "0",
+        "TokenID": "0",
         "Balance": "999999999999996800",
         "Nonce": "32"
     }
@@ -204,25 +210,21 @@ Return all UserState objects related to a public key
 
 ### `hubble_getPublicKeyByPubKeyID(pubKeyId)`
 
+Example result:
 ```json
-{
-    "ID": 34,
-    "PublicKey": "0x123123123"
-}
+"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
 
 ### `hubble_getPublicKeyByStateID(stateID)`
 
+Example result:
 ```json
-{
-    "ID": 34,
-    "PublicKey": "0x123123123"
-}
+"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
 
 ### `hubble_getBatches(from, to)`
 
-Returns an array of batches in given ID range
+Returns an array of batches in given ID range.
 
 Example result:
 
@@ -242,7 +244,7 @@ Example result:
 
 ### `hubble_getBatchByHash(hash)`
 
-Returns batch information and list of included commitments in batch
+Returns batch information and list of included commitments in batch.
 
 Example result:
 

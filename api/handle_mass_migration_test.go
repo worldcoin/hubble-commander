@@ -195,7 +195,7 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_AddsMassMigrationToStor
 	s.NotNil(transfer)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendTransaction_RepeatedRequestDoesNotUpdateAlreadyStoredTransaction() {
+func (s *SendMassMigrationTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
 	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
 	s.NoError(err)
 
@@ -205,7 +205,7 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_RepeatedRequestDoesNotU
 	})
 	s.NoError(err)
 
-	expectedTx, err := s.storage.GetMassMigration(*originalHash)
+	originalTx, err := s.storage.GetMassMigration(*originalHash)
 	s.NoError(err)
 
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
@@ -214,7 +214,8 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_RepeatedRequestDoesNotU
 
 	tx, err := s.storage.GetMassMigration(*originalHash)
 	s.NoError(err)
-	s.Equal(*expectedTx, *tx)
+	s.Nil(tx.ErrorMessage)
+	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
 }
 
 func TestSendMassMigrationTestSuite(t *testing.T) {

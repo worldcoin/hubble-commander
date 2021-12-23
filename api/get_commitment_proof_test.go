@@ -94,7 +94,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
 	s.NoError(err)
 
-	path := &models.MerklePath{
+	path := &dto.MerklePath{
 		Path:  uint32(s.commitment.ID.IndexInBatch),
 		Depth: tree.Depth(),
 	}
@@ -136,7 +136,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
 	s.NoError(err)
 
-	path := &models.MerklePath{
+	path := &dto.MerklePath{
 		Path:  uint32(s.commitment.ID.IndexInBatch),
 		Depth: tree.Depth(),
 	}
@@ -178,7 +178,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
 	s.NoError(err)
 
-	path := &models.MerklePath{
+	path := &dto.MerklePath{
 		Path:  uint32(s.commitment.ID.IndexInBatch),
 		Depth: tree.Depth(),
 	}

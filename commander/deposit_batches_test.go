@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -134,7 +135,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
-	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(commitment *models.CommitmentWithTxs) {
+	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 	s.client.Blockchain.GetBackend().Commit()
@@ -143,7 +144,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, batchtype.Transfer)
+	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, txtype.Transfer)
 	err = txsSyncCtx.UpdateExistingBatch(remoteBatches[0], *previousRoot)
 	s.NoError(err)
 

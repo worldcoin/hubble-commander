@@ -21,7 +21,6 @@ func TxTypeToMetricsTxType(transactionType txtype.TransactionType) string {
 }
 
 func BatchTypeToMetricsBatchType(batchType batchtype.BatchType) string {
-	// nolint:exhaustive
 	switch batchType {
 	case batchtype.Transfer:
 		return TransferBatchLabel

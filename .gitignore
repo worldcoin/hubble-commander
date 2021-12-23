@@ -5,6 +5,7 @@ build
 .env.docker
 db/data
 e2e-data
+book
 commander-config.yaml
 deployer-config.yaml
 e2e/geth-data/geth

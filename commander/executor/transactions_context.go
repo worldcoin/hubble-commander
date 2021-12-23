@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -37,7 +38,7 @@ func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.Batch
 func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
 	return &TxsContext{
 		ExecutionContext: executionCtx,
-		Executor:         NewTransactionExecutor(executionCtx, batchType),
+		Executor:         NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
 		BatchType:        batchType,
 		txErrorsToStore:  make([]models.TxError, 0),
 	}

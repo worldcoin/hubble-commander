@@ -5,7 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +16,7 @@ type SyncCreate2TransfersTestSuite struct {
 }
 
 func (s *SyncCreate2TransfersTestSuite) SetupTest() {
-	s.syncTxsTestSuite.SetupTest(batchtype.Create2Transfer)
+	s.syncTxsTestSuite.SetupTest(txtype.Create2Transfer)
 }
 
 func (s *SyncCreate2TransfersTestSuite) TestSyncTxs_AllValid() {

@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
@@ -400,6 +401,11 @@ func createClientFromChainState(
 		return nil, err
 	}
 
+	spokeRegistry, err := spokeregistry.NewSpokeRegistry(chainState.SpokeRegistry, backend)
+	if err != nil {
+		return nil, err
+	}
+
 	depositManager, err := depositmanager.NewDepositManager(chainState.DepositManager, backend)
 	if err != nil {
 		return nil, err
@@ -415,6 +421,7 @@ func createClientFromChainState(
 		Rollup:          rollupContract,
 		AccountRegistry: accountRegistry,
 		TokenRegistry:   tokenRegistry,
+		SpokeRegistry:   spokeRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
 			TransferBatchSubmissionGasLimit:      ref.Uint64(cfg.TransferBatchSubmissionGasLimit),

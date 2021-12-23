@@ -27,6 +27,7 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		AccountRegistry:                a.client.ChainState.AccountRegistry,
 		AccountRegistryDeploymentBlock: a.client.ChainState.AccountRegistryDeploymentBlock,
 		TokenRegistry:                  a.client.ChainState.TokenRegistry,
+		SpokeRegistry:                  a.client.ChainState.SpokeRegistry,
 		DepositManager:                 a.client.ChainState.DepositManager,
 		Rollup:                         a.client.ChainState.Rollup,
 		BlockNumber:                    a.storage.GetLatestBlockNumber(),

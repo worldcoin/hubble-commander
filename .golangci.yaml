@@ -51,7 +51,6 @@ linters:
     - depguard
     - dogsled
     - errcheck
-    - exhaustive
     - funlen
     - goconst
     - gocritic
