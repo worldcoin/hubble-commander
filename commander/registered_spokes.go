@@ -12,10 +12,8 @@ import (
 )
 
 func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
-	var newSpokesCount *int
-
 	duration, err := metrics.MeasureDuration(func() (err error) {
-		newSpokesCount, err = c.unmeasuredSyncSpokes(startBlock, endBlock)
+		err = c.unmeasuredSyncSpokes(startBlock, endBlock)
 		if err != nil {
 			return err
 		}
@@ -30,17 +28,15 @@ func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
 		"method": metrics.SyncSpokesMethod,
 	})
 
-	logNewRegisteredSpokesCount(*newSpokesCount)
-
 	return nil
 }
 
-func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) (*int, error) {
+func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) error {
 	newSpokesCount := 0
 
 	it, err := c.getSpokeRegisteredIterator(startBlock, endBlock)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() { _ = it.Close() }()
 
@@ -54,14 +50,19 @@ func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) (*int, err
 
 		isNewSpoke, err := saveSyncedSpoke(c.storage.RegisteredSpokeStorage, registeredSpoke)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if *isNewSpoke {
 			newSpokesCount++
 		}
 	}
 
-	return &newSpokesCount, it.Error()
+	if it.Error() != nil {
+		return it.Error()
+	}
+
+	logNewRegisteredSpokesCount(newSpokesCount)
+	return nil
 }
 
 func (c *Commander) getSpokeRegisteredIterator(start, end uint64) (*spokeregistry.SpokeRegisteredIterator, error) {
@@ -78,17 +79,14 @@ func (c *Commander) getSpokeRegisteredIterator(start, end uint64) (*spokeregistr
 	return it, nil
 }
 
-func saveSyncedSpoke(
-	registeredSpokeStorage *st.RegisteredSpokeStorage,
-	registeredSpoke *models.RegisteredSpoke,
-) (isNewSpoke *bool, err error) {
-	_, err = registeredSpokeStorage.GetRegisteredSpoke(registeredSpoke.ID)
+func saveSyncedSpoke(storage *st.RegisteredSpokeStorage, spoke *models.RegisteredSpoke) (isNewSpoke *bool, err error) {
+	_, err = storage.GetRegisteredSpoke(spoke.ID)
 	if err != nil && !st.IsNotFoundError(err) {
 		return nil, err
 	}
 
 	if st.IsNotFoundError(err) {
-		err = registeredSpokeStorage.AddRegisteredSpoke(registeredSpoke)
+		err = storage.AddRegisteredSpoke(spoke)
 		if err != nil {
 			return nil, err
 		}
