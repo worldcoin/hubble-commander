@@ -63,9 +63,11 @@ func TestCommanderDispute(t *testing.T) {
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
 	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
+	testDisputeTransitionMM(t, cmd.Client(), ethClient, senderWallet)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
 	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, receiverWallet)
+	testDisputeTransitionMMInvalidStateRoot(t, cmd.Client(), ethClient)
 }
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -133,7 +135,7 @@ func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.
 	sendTransferBatchWithInvalidStateRoot(t, ethClient)
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
-	testBatchesAfterDispute(t, client, 4)
+	testBatchesAfterDispute(t, client, 5)
 }
 
 func testDisputeTransitionC2T(
@@ -168,7 +170,40 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
+	testBatchesAfterDispute(t, client, 5)
+}
+
+func testDisputeTransitionMM(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	senderWallet bls.Wallet,
+) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendMMBatchWithInvalidAmount(t, ethClient)
+	testRollbackCompletion(t, ethClient, sink, subscription)
+
 	testBatchesAfterDispute(t, client, 4)
+
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitMassMigrationBatch(t, client, senderWallet, 96)
+	})
+}
+
+func testDisputeTransitionMMInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	sendMMBatchWithInvalidStateRoot(t, ethClient)
+	testRollbackCompletion(t, ethClient, sink, subscription)
+
+	testBatchesAfterDispute(t, client, 5)
 }
 
 func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {
@@ -260,7 +295,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, encodedTransfer, 4)
+	sendTransferCommitment(t, ethClient, encodedTransfer, 5)
 }
 
 func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -298,7 +333,7 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
 	require.NoError(t, err)
 
-	sendC2TCommitment(t, ethClient, encodedTransfer, 4)
+	sendC2TCommitment(t, ethClient, encodedTransfer, 5)
 }
 
 func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -330,6 +365,33 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		Transactions: encodedTransfer,
 	}
 	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
+}
+
+func sendMMBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
+	tx := models.MassMigration{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
+			Fee:         models.MakeUint256(10),
+		},
+		SpokeID: 1,
+	}
+
+	encodedTx, err := encoder.EncodeMassMigrationForCommitment(&tx)
+	require.NoError(t, err)
+
+	hash, err := encoder.HashUserState(&models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  tx.Amount,
+		Nonce:    models.MakeUint256(0),
+	})
+	require.NoError(t, err)
+
+	merkleTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
+	require.NoError(t, err)
+
+	sendMMCommitment(t, ethClient, encodedTx, merkleTree.Root(), tx.Amount.Uint64(), 4)
 }
 
 func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
@@ -380,6 +442,33 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 
 	withdrawRoots := []common.Hash{merkleTree.Root()}
 	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
+}
+
+func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
+	tx := models.MassMigration{
+		TransactionBase: models.TransactionBase{
+			FromStateID: 1,
+			Amount:      models.MakeUint256(90),
+			Fee:         models.MakeUint256(10),
+		},
+		SpokeID: 1,
+	}
+
+	encodedTx, err := encoder.EncodeMassMigrationForCommitment(&tx)
+	require.NoError(t, err)
+
+	hash, err := encoder.HashUserState(&models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(0),
+		Balance:  tx.Amount,
+		Nonce:    models.MakeUint256(0),
+	})
+	require.NoError(t, err)
+
+	merkleTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
+	require.NoError(t, err)
+
+	sendMMCommitment(t, ethClient, encodedTx, merkleTree.Root(), tx.Amount.Uint64(), 5)
 }
 
 func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
