@@ -17,7 +17,7 @@ Example result:
 This returns a number of datapoints about the current state of the system:
 
 - Ethereum network chain id
-- AccountRegistry, TokenRegistry, DepositManager and Rollup contract addresses
+- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
 - Number of transactions and accounts
@@ -33,6 +33,7 @@ Example result:
     "AccountRegistry": "0x10bd6732fe3908b8a816f6a1b271e0864de78ca1",
     "AccountRegistryDeploymentBlock": 74,
     "TokenRegistry": "0x07389715ae1f0a891fba82e65099f6a3fa7da593",
+    "SpokeRegistry": "0x535ca2e7dc31afce3dde4d78ded91aedf55b04b8",
     "DepositManager": "0xa3accd1cfabc8b09aea4d0e25f21f25c526c9be8",
     "Rollup": "0xf2a409ccf78e6e32e02d5e3a3ac274ca6880d9ac",
     "BlockNumber": 2146,
