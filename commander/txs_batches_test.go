@@ -547,13 +547,8 @@ func submitInvalidTxsBatch(
 	tx models.GenericTransaction,
 	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
 ) *models.Batch {
-	if tx.Type() == txtype.Transfer {
-		err := storage.AddTransfer(tx.ToTransfer())
-		s.NoError(err)
-	} else {
-		err := storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-		s.NoError(err)
-	}
+	err := storage.AddTransaction(tx)
+	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
