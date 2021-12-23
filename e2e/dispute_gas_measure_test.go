@@ -186,7 +186,7 @@ func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wal
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 		},
-		Transactions: encodedTransfers,
+		Transactions: bytes.Repeat(encodedTransfers, 32),
 	}
 	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
 }
