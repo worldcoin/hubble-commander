@@ -6,13 +6,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-type RegisteredSpokeIterator struct {
-	SpokeRegistryRegisteredSpokeIterator
+type SpokeRegisteredIterator struct {
+	SpokeRegistrySpokeRegisteredIterator
 }
 
-func (i *RegisteredSpokeIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
-	i.SpokeRegistryRegisteredSpokeIterator.contract = contract
-	i.SpokeRegistryRegisteredSpokeIterator.event = event
-	i.SpokeRegistryRegisteredSpokeIterator.logs = logs
-	i.SpokeRegistryRegisteredSpokeIterator.sub = sub
+func (i *SpokeRegisteredIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
+	i.SpokeRegistrySpokeRegisteredIterator.contract = contract
+	i.SpokeRegistrySpokeRegisteredIterator.event = event
+	i.SpokeRegistrySpokeRegisteredIterator.logs = logs
+	i.SpokeRegistrySpokeRegisteredIterator.sub = sub
 }

@@ -31,13 +31,13 @@ func (c *Client) RegisterSpoke(spokeContract common.Address) (*types.Transaction
 }
 
 func (c *Client) retrieveRegisteredSpokeID(receipt *types.Receipt) (*models.Uint256, error) {
-	log, err := retrieveLog(receipt, RegisteredSpokeEvent)
+	log, err := retrieveLog(receipt, SpokeRegisteredEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	event := new(spokeregistry.SpokeRegistryRegisteredSpoke)
-	err = c.SpokeRegistry.BoundContract.UnpackLog(event, RegisteredSpokeEvent, *log)
+	event := new(spokeregistry.SpokeRegistrySpokeRegistered)
+	err = c.SpokeRegistry.BoundContract.UnpackLog(event, SpokeRegisteredEvent, *log)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

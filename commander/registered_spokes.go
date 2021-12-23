@@ -38,7 +38,7 @@ func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
 func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) (*int, error) {
 	newSpokesCount := 0
 
-	it, err := c.getRegisteredSpokeIterator(startBlock, endBlock)
+	it, err := c.getSpokeRegisteredIterator(startBlock, endBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +64,10 @@ func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) (*int, err
 	return &newSpokesCount, it.Error()
 }
 
-func (c *Commander) getRegisteredSpokeIterator(start, end uint64) (*spokeregistry.RegisteredSpokeIterator, error) {
-	it := &spokeregistry.RegisteredSpokeIterator{}
+func (c *Commander) getSpokeRegisteredIterator(start, end uint64) (*spokeregistry.SpokeRegisteredIterator, error) {
+	it := &spokeregistry.SpokeRegisteredIterator{}
 
-	err := c.client.FilterLogs(c.client.SpokeRegistry.BoundContract, "RegisteredSpoke", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.SpokeRegistry.BoundContract, "SpokeRegistered", &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)
