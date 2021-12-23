@@ -160,4 +160,3 @@ Key: bh_Batch, Count: 1, Size: 244
 Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
 SUM: Count: 82115, Size: 46035926
 ```
-

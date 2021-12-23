@@ -82,6 +82,8 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 
 	registeredTokenStorage := s.RegisteredTokenStorage.copyWithNewDatabase(database)
 
+	registeredSpokeStorage := s.RegisteredSpokeStorage.copyWithNewDatabase(database)
+
 	stateTree := s.StateTree.copyWithNewDatabase(database)
 
 	accountTree := s.AccountTree.copyWithNewDatabase(database)
@@ -93,6 +95,7 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 		DepositStorage:         depositStorage,
 		ChainStateStorage:      chainStateStorage,
 		RegisteredTokenStorage: registeredTokenStorage,
+		RegisteredSpokeStorage: registeredSpokeStorage,
 		StateTree:              stateTree,
 		AccountTree:            accountTree,
 		database:               database,

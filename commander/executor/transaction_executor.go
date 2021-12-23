@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,16 +24,14 @@ type TransactionExecutor interface {
 	GenerateMetaAndWithdrawRoots(batchData BatchData, result CreateCommitmentResult) error
 }
 
-func NewTransactionExecutor(executionCtx *ExecutionContext, batchType batchtype.BatchType) TransactionExecutor {
-	switch batchType {
-	case batchtype.Transfer:
+func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
+	switch txType {
+	case txtype.Transfer:
 		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
-	case batchtype.Create2Transfer:
+	case txtype.Create2Transfer:
 		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
-	case batchtype.MassMigration:
+	case txtype.MassMigration:
 		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
-	case batchtype.Genesis, batchtype.Deposit:
-		panic("invalid batch type")
 	}
 	return nil
 }

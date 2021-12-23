@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrNoRowsAffected   = fmt.Errorf("no rows were affected by the update")
-	ErrNonexistentState = fmt.Errorf("cannot revert to nonexistent state")
+	ErrNoRowsAffected          = fmt.Errorf("no rows were affected by the update")
+	ErrNonexistentState        = fmt.Errorf("cannot revert to nonexistent state")
+	ErrAlreadyMinedTransaction = fmt.Errorf("transaction already mined")
 
 	AnyNotFoundError, anyNotFoundErrorSupport = utils.NewAnyError(&NotFoundError{})
 )

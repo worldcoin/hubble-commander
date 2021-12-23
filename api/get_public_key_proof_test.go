@@ -61,10 +61,8 @@ func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID() {
 	s.NoError(err)
 
 	expectedPublicKeyProof := &dto.PublicKeyProof{
-		PublicKeyProof: models.PublicKeyProof{
-			PublicKey: &account.PublicKey,
-			Witness:   witness,
-		},
+		PublicKey: &account.PublicKey,
+		Witness:   witness,
 	}
 	publicKeyProof, err := s.api.GetPublicKeyProofByPubKeyID(account.PubKeyID)
 	s.NoError(err)

@@ -126,19 +126,15 @@ func (s *GetTransactionsTestSuite) TestGetTransactions() {
 
 	newTransferReceipt := func(transfer models.Transfer) *dto.TransferReceipt {
 		return &dto.TransferReceipt{
-			TransferWithBatchDetails: models.TransferWithBatchDetails{
-				Transfer: transfer,
-			},
-			Status: txstatus.Pending,
+			TransferWithBatchDetails: dto.MakeTransferWithBatchDetailsFromTransfer(&transfer),
+			Status:                   txstatus.Pending,
 		}
 	}
 
 	newCreate2Receipt := func(transfer models.Create2Transfer) *dto.Create2TransferReceipt {
 		return &dto.Create2TransferReceipt{
-			Create2TransferWithBatchDetails: models.Create2TransferWithBatchDetails{
-				Create2Transfer: transfer,
-			},
-			Status: txstatus.Pending,
+			Create2TransferWithBatchDetails: dto.MakeCreate2TransferWithBatchDetailsFromCreate2Transfer(&transfer),
+			Status:                          txstatus.Pending,
 		}
 	}
 
@@ -218,24 +214,22 @@ func (s *GetTransactionsTestSuite) TestGetTransactions_ReceiptsWithDetails() {
 	s.NoError(err)
 
 	newIncludedTransferReceipt := func(transfer models.Transfer) *dto.TransferReceipt {
+		transferWithBatchDetails := dto.MakeTransferWithBatchDetailsFromTransfer(&transfer)
+		transferWithBatchDetails.BatchHash = batch.Hash
+		transferWithBatchDetails.BatchTime = batch.SubmissionTime
 		return &dto.TransferReceipt{
-			TransferWithBatchDetails: models.TransferWithBatchDetails{
-				Transfer:  transfer,
-				BatchHash: batch.Hash,
-				BatchTime: batch.SubmissionTime,
-			},
-			Status: txstatus.InBatch,
+			TransferWithBatchDetails: transferWithBatchDetails,
+			Status:                   txstatus.InBatch,
 		}
 	}
 
 	newIncludedCreate2Receipt := func(transfer models.Create2Transfer) *dto.Create2TransferReceipt {
+		create2TransferWithBatchDetails := dto.MakeCreate2TransferWithBatchDetailsFromCreate2Transfer(&transfer)
+		create2TransferWithBatchDetails.BatchHash = batch.Hash
+		create2TransferWithBatchDetails.BatchTime = batch.SubmissionTime
 		return &dto.Create2TransferReceipt{
-			Create2TransferWithBatchDetails: models.Create2TransferWithBatchDetails{
-				Create2Transfer: transfer,
-				BatchHash:       batch.Hash,
-				BatchTime:       batch.SubmissionTime,
-			},
-			Status: txstatus.InBatch,
+			Create2TransferWithBatchDetails: create2TransferWithBatchDetails,
+			Status:                          txstatus.InBatch,
 		}
 	}
 

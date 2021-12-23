@@ -89,15 +89,15 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 	s.Len(userStates, 3)
 	s.Equal(userStates[0], dto.UserStateWithID{
 		StateID:   0,
-		UserState: leaves[0].UserState,
+		UserState: dto.MakeUserState(&leaves[0].UserState),
 	})
 	s.Equal(userStates[1], dto.UserStateWithID{
 		StateID:   1,
-		UserState: leaves[1].UserState,
+		UserState: dto.MakeUserState(&leaves[1].UserState),
 	})
 	s.Equal(userStates[2], dto.UserStateWithID{
 		StateID:   2,
-		UserState: leaves[2].UserState,
+		UserState: dto.MakeUserState(&leaves[2].UserState),
 	})
 }
 
