@@ -143,3 +143,59 @@ func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, 
 
 	return C.CString(hex.EncodeToString(transfer.Signature.Bytes()))
 }
+
+//export SignMessage
+func SignMessage(message, privateKey, domain *C.char) *C.char {
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return nil
+	}
+
+	wallet, err := parseWallet(privateKey, domainBls)
+	if err != nil {
+		return nil
+	}
+
+	signature, err := wallet.Sign([]byte(C.GoString(message)))
+	if err != nil {
+		return nil
+	}
+
+	return C.CString(hex.EncodeToString(signature.Bytes()))
+}
+
+//export VerifySignedMessage
+func VerifySignedMessage(message, signature, pubKey, domain *C.char) C.int {
+	domainBls, err := parseDomain(domain)
+	if err != nil {
+		return C.int(-1)
+	}
+
+	signatureDecoded, err := hex.DecodeString(C.GoString(signature))
+	if err != nil {
+		return C.int(-1)
+	}
+
+	signatureObj, err := bls.NewSignatureFromBytes(signatureDecoded, *domainBls)
+	if err != nil {
+		return C.int(-1)
+	}
+
+	publicKeyBytes, err := hex.DecodeString(C.GoString(pubKey))
+	if err != nil {
+		return C.int(-1)
+	}
+
+	var publicKey models.PublicKey
+	copy(publicKey[:], publicKeyBytes)
+
+	res, err := signatureObj.Verify([]byte(C.GoString(message)), &publicKey)
+	if err != nil {
+		return C.int(-1)
+	}
+
+	if res {
+		return C.int(1)
+	}
+	return C.int(0)
+}
