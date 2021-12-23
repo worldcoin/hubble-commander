@@ -17,6 +17,10 @@ type StateMerkleProof struct {
 	Witness   models.Witness
 }
 
+type WithdrawProof struct {
+	models.WithdrawProof
+}
+
 type PublicKeyProof struct {
 	PublicKey *models.PublicKey
 	Witness   models.Witness

@@ -44,3 +44,10 @@ type StateMerkleProof struct {
 	UserState *UserState
 	Witness   Witness
 }
+
+type WithdrawProof struct {
+	UserState *UserState
+	Path      MerklePath
+	Witness   Witness
+	Root      common.Hash
+}
