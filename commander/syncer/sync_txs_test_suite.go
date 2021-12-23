@@ -3,7 +3,7 @@ package syncer
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -24,7 +24,7 @@ func (s *syncTxsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *syncTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
+func (s *syncTxsTestSuite) SetupTest(txType txtype.TransactionType) {
 	var err error
 	s.storage, err = storage.NewTestStorage()
 	s.NoError(err)
@@ -59,7 +59,7 @@ func (s *syncTxsTestSuite) SetupTest(batchType batchtype.BatchType) {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, nil, s.cfg, batchType)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, nil, s.cfg, txType)
 
 	s.feeReceiverStateID = 3
 }

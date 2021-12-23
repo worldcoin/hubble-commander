@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/ethereum/go-ethereum/common"
@@ -115,7 +116,7 @@ func (s *testSuiteWithContexts) newContexts(
 ) {
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
-	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, batchType)
+	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, txtype.TransactionType(batchType))
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
 

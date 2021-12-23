@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,16 +31,14 @@ type TransactionSyncer interface {
 	HashTx(tx models.GenericTransaction) (*common.Hash, error)
 }
 
-func NewTransactionSyncer(storage *st.Storage, batchType batchtype.BatchType) TransactionSyncer {
-	switch batchType {
-	case batchtype.Transfer:
+func NewTransactionSyncer(storage *st.Storage, txType txtype.TransactionType) TransactionSyncer {
+	switch txType {
+	case txtype.Transfer:
 		return NewTransferSyncer(storage)
-	case batchtype.Create2Transfer:
+	case txtype.Create2Transfer:
 		return NewC2TSyncer(storage)
-	case batchtype.MassMigration:
+	case txtype.MassMigration:
 		return NewMMSyncer(storage)
-	case batchtype.Genesis, batchtype.Deposit:
-		panic("invalid tx type")
 	}
 	return nil
 }

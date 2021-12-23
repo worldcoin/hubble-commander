@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -143,7 +144,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, batchtype.Transfer)
+	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, txtype.Transfer)
 	err = txsSyncCtx.UpdateExistingBatch(remoteBatches[0], *previousRoot)
 	s.NoError(err)
 
