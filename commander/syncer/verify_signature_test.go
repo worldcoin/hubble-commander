@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -55,7 +54,7 @@ func (s *VerifySignatureTestSuite) TearDownTest() {
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
 
 	txs := models.TransferArray{
 		{
@@ -96,7 +95,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
 
 	txs := models.TransferArray{
 		{
@@ -143,7 +142,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
 
 	txs := make(models.TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
@@ -155,7 +154,7 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
 
 	txs := models.Create2TransferArray{
 		{
@@ -198,7 +197,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Create2Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
 
 	txs := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
@@ -210,7 +209,7 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTran
 }
 
 func (s *VerifySignatureTestSuite) TestUserStateProof() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, batchtype.Transfer)
+	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
 
 	userState := &models.UserState{
 		PubKeyID: 1,
