@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
@@ -287,6 +288,24 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.Nil(batchData)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
+}
+
+func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkipsMinCommitmentsCheck() {
+	s.cfg.MinTxsPerCommitment = 1
+	s.cfg.MaxTxsPerCommitment = 1
+	s.cfg.MinCommitmentsPerBatch = 2
+	s.cfg.MaxTxnDelay = 1 * time.Second
+
+	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
+	{
+		twoSecondsAgo := time.Now().UTC().Add(time.Duration(-2) * time.Second)
+		validTransfer.ReceiveTime = models.NewTimestamp(twoSecondsAgo)
+	}
+	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
+
+	batchData, err := s.txsCtx.CreateCommitments()
+	s.NoError(err)
+	s.NotNil(batchData)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNotCreateEnoughCommitments() {

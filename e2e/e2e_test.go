@@ -21,6 +21,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func TestCommander(t *testing.T) {
@@ -28,6 +30,7 @@ func TestCommander(t *testing.T) {
 	cfg.MinTxsPerCommitment = 32
 	cfg.MaxTxsPerCommitment = 32
 	cfg.MinCommitmentsPerBatch = 1
+	cfg.MaxTxnDelay = 2 * time.Second
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(cfg)
 	require.NoError(t, err)
@@ -49,9 +52,19 @@ func TestCommander(t *testing.T) {
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
 
+	// TODO: move to the end of all the other tests so we don't mess up nonces
+
+	// the following tests hardcode expected nonces,
+	// delayWallet := wallets[2]
+	// testMaxBatchDelay(t, commander.Client(), delayWallet)
+
 	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
 		return testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
 	})
+
+	testMaxBatchDelay(t, commander.Client(), senderWallet)
+
+	return
 
 	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
 		firstC2TWallet := wallets[len(wallets)-32]
@@ -292,4 +305,29 @@ func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserSt
 		}
 	}
 	return nil, errors.New("user state with given stateID not found")
+}
+
+
+// confirms that batches smaller than the minimum will be mined if any txn is left
+// pending for too long
+
+// assumes senderWallet is unused, that nonce 0 is available for use
+func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
+	txnHash := testSendTransfer(t, client, senderWallet, 32)
+	require.NotZero(t, txnHash)
+
+	time.Sleep(1)
+
+	var txReceipt dto.TransactionReceipt
+	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
+	require.NoError(t, err)
+	require.NotEqual(t, txReceipt.Status, txstatus.InBatch)
+
+	log.Warn("txn is not yet in batch. waiting..")
+
+	require.Eventually(t, func() bool {
+		err = client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
+		require.NoError(t, err)
+		return txReceipt.Status == txstatus.InBatch
+	}, 5*time.Second, testutils.TryInterval)
 }

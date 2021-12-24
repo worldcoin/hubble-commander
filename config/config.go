@@ -53,6 +53,7 @@ func GetConfig() *Config {
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
 			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
+			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 30*time.Minute),
 		},
 		API: &APIConfig{
 			Version:            "0.5.0-rc2",
