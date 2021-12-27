@@ -12,6 +12,10 @@ type CommitmentInclusionProof struct {
 	Witness   models.Witness
 }
 
+type MMCommitmentInclusionProof struct {
+	models.MMCommitmentInclusionProof
+}
+
 type StateMerkleProof struct {
 	UserState *UserState
 	Witness   models.Witness

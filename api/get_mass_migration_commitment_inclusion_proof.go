@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -14,7 +15,7 @@ var getMassMigrationCommitmentInclusionProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof not found"),
 }
 
-func (a *API) GetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*models.MMCommitmentInclusionProof, error) {
+func (a *API) GetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MMCommitmentInclusionProof, error) {
 	if !a.cfg.EnableProofMethods {
 		return nil, errProofMethodsDisabled
 	}
@@ -25,7 +26,7 @@ func (a *API) GetMassMigrationCommitmentInclusionProof(batchID models.Uint256, c
 	return commitmentInclusionProof, nil
 }
 
-func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*models.MMCommitmentInclusionProof, error) {
+func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MMCommitmentInclusionProof, error) {
 	batch, err := a.storage.GetBatch(batchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -112,14 +113,16 @@ func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint
 		Witness: batchLeafTree.GetWitness(uint32(commitmentIndex)),
 	}
 
-	return &models.MMCommitmentInclusionProof{
-		CommitmentInclusionProofBase: *proofBase,
-		Body: &models.MMBody{
-			AccountRoot:  *batch.AccountTreeRoot,
-			Signature:    commitment.CombinedSignature,
-			Meta:         meta,
-			WithdrawRoot: withdrawTree.Root(),
-			Transactions: serializedMassMigrations,
+	return &dto.MMCommitmentInclusionProof{
+		MMCommitmentInclusionProof: models.MMCommitmentInclusionProof{
+			CommitmentInclusionProofBase: *proofBase,
+			Body: &models.MMBody{
+				AccountRoot:  *batch.AccountTreeRoot,
+				Signature:    commitment.CombinedSignature,
+				Meta:         meta,
+				WithdrawRoot: withdrawTree.Root(),
+				Transactions: serializedMassMigrations,
+			},
 		},
 	}, nil
 }

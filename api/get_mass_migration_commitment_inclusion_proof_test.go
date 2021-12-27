@@ -231,7 +231,7 @@ func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentI
 
 	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentInclusionProof(s.batch.ID, uint8(commitmentIndex))
 	s.NoError(err)
-	s.Equal(expected, *commitmentInclusionProof)
+	s.Equal(expected, commitmentInclusionProof.MMCommitmentInclusionProof)
 }
 
 func TestGetMMCommitmentInclusionProofTestSuite(t *testing.T) {
