@@ -402,18 +402,7 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 		},
 	}
 
-	hash, err := encoder.HashUserState(&models.UserState{
-		PubKeyID: 1,
-		TokenID:  metas[0].TokenID,
-		Balance:  tx.Amount,
-		Nonce:    models.MakeUint256(0),
-	})
-	require.NoError(t, err)
-
-	merkleTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
-	require.NoError(t, err)
-
-	withdrawRoots := []common.Hash{merkleTree.Root()}
+	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, 1)}
 	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
 }
 
