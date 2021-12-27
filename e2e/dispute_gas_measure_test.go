@@ -22,10 +22,12 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+const maxTxsPerCommitment = 32
+
 func TestMeasureDisputeGasUsage(t *testing.T) {
 	cfg := config.GetConfig().Rollup
-	cfg.MinTxsPerCommitment = 32
-	cfg.MaxTxsPerCommitment = 32
+	cfg.MinTxsPerCommitment = maxTxsPerCommitment
+	cfg.MaxTxsPerCommitment = maxTxsPerCommitment
 	cfg.MinCommitmentsPerBatch = 1
 
 	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
@@ -142,7 +144,7 @@ func send32TransfersBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Clien
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, bytes.Repeat(encodedTransfer, 32), 2)
+	sendTransferCommitment(t, ethClient, bytes.Repeat(encodedTransfer, maxTxsPerCommitment), 2)
 }
 
 func send32C2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -174,11 +176,10 @@ func send32MMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
 	encodedTransfer, err := encoder.EncodeMassMigrationForCommitment(&tx)
 	require.NoError(t, err)
 
-	txCount := 32
-	totalAmount := tx.Amount.MulN(uint64(txCount)).Uint64()
-	withdrawRoot := calculateWithdrawRoot(t, tx.Amount, txCount)
+	totalAmount := tx.Amount.MulN(uint64(maxTxsPerCommitment)).Uint64()
+	withdrawRoot := calculateWithdrawRoot(t, tx.Amount, maxTxsPerCommitment)
 
-	sendMMCommitment(t, ethClient, bytes.Repeat(encodedTransfer, txCount), withdrawRoot, totalAmount, 2)
+	sendMMCommitment(t, ethClient, bytes.Repeat(encodedTransfer, maxTxsPerCommitment), withdrawRoot, totalAmount, 2)
 }
 
 func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
@@ -204,7 +205,7 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 		},
-		Transactions: bytes.Repeat(encodedTransfer, 32),
+		Transactions: bytes.Repeat(encodedTransfer, maxTxsPerCommitment),
 	}
 	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
 }
@@ -253,7 +254,6 @@ func send32MMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 
 	postStateRoot := common.Hash{68, 198, 251, 28, 54, 95, 42, 7, 136, 120, 20, 253, 146, 124, 84, 119, 183, 52, 27, 44, 225, 192, 165, 206,
 		154, 69, 207, 53, 239, 253, 79, 216}
-	txCount := 32
 
 	commitment := models.CommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
@@ -263,18 +263,18 @@ func send32MMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 		},
-		Transactions: bytes.Repeat(encodedTx, txCount),
+		Transactions: bytes.Repeat(encodedTx, maxTxsPerCommitment),
 	}
 	metas := []models.MassMigrationMeta{
 		{
 			SpokeID:     tx.SpokeID,
 			TokenID:     models.MakeUint256(0),
-			Amount:      *tx.Amount.MulN(uint64(txCount)),
+			Amount:      *tx.Amount.MulN(uint64(maxTxsPerCommitment)),
 			FeeReceiver: 0,
 		},
 	}
 
-	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, txCount)}
+	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, maxTxsPerCommitment)}
 	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
 }
 
@@ -311,8 +311,8 @@ func encodeCreate2Transfers(t *testing.T, transfer *models.Create2Transfer, regi
 
 func register32Accounts(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) []uint32 {
 	publicKeyBatch := make([]models.PublicKey, 16)
-	registeredPubKeyIDs := make([]uint32, 0, 32)
-	walletIndex := len(wallets) - 32
+	registeredPubKeyIDs := make([]uint32, 0, maxTxsPerCommitment)
+	walletIndex := len(wallets) - maxTxsPerCommitment
 	for i := 0; i < 2; i++ {
 		for j := range publicKeyBatch {
 			publicKeyBatch[j] = *wallets[walletIndex].PublicKey()
