@@ -59,7 +59,7 @@ func TestCommanderDispute(t *testing.T) {
 
 	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
-	testDisputeSignatureMassMigration(t, cmd.Client(), ethClient)
+	testDisputeSignatureMM(t, cmd.Client(), ethClient)
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
 	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
@@ -94,7 +94,7 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 	testBatchesAfterDispute(t, client, 1)
 }
 
-func testDisputeSignatureMassMigration(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
