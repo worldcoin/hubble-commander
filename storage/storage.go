@@ -14,6 +14,7 @@ type Storage struct {
 	*DepositStorage
 	*RegisteredTokenStorage
 	*RegisteredSpokeStorage
+	*PendingStakeWithdrawalStorage
 	StateTree           *StateTree
 	AccountTree         *AccountTree
 	database            *Database
@@ -54,18 +55,21 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	registeredSpokeStorage := NewRegisteredSpokeStorage(database)
 
+	pendingStakeWithdrawalStorage := NewPendingStakeWithdrawalStorage(database)
+
 	return &Storage{
-		BatchStorage:           batchStorage,
-		CommitmentStorage:      commitmentStorage,
-		TransactionStorage:     transactionStorage,
-		DepositStorage:         depositStorage,
-		ChainStateStorage:      chainStateStorage,
-		RegisteredTokenStorage: registeredTokenStorage,
-		RegisteredSpokeStorage: registeredSpokeStorage,
-		StateTree:              NewStateTree(database),
-		AccountTree:            NewAccountTree(database),
-		database:               database,
-		feeReceiverStateIDs:    make(map[string]uint32),
+		BatchStorage:                  batchStorage,
+		CommitmentStorage:             commitmentStorage,
+		TransactionStorage:            transactionStorage,
+		DepositStorage:                depositStorage,
+		ChainStateStorage:             chainStateStorage,
+		RegisteredTokenStorage:        registeredTokenStorage,
+		RegisteredSpokeStorage:        registeredSpokeStorage,
+		StateTree:                     NewStateTree(database),
+		AccountTree:                   NewAccountTree(database),
+		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
+		database:                      database,
+		feeReceiverStateIDs:           make(map[string]uint32),
 	}, nil
 }
 
