@@ -18,10 +18,6 @@ type Commander interface {
 	Client() jsonrpc.RPCClient
 }
 
-func NewCommanderFromEnv() (Commander, error) {
-	return NewConfiguredCommanderFromEnv(nil, nil)
-}
-
 func NewConfiguredCommanderFromEnv(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (Commander, error) {
 	if commanderConfig != nil {
 		logRequiredConfig(commanderConfig.Rollup)
