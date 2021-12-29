@@ -4,6 +4,7 @@ import "C"
 
 import (
 	"encoding/hex"
+	"errors"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/api"
@@ -56,6 +57,14 @@ func parsePublicKey(pubKey *C.char) (*models.PublicKey, error) {
 	return &publicKey, nil
 }
 
+func parseUint256(uint256 *C.char) (*models.Uint256, error) {
+	value := new(big.Int)
+	if _, success := value.SetString(C.GoString(uint256), 10); !success {
+		return nil, errors.New("failed to parse Uint256")
+	}
+	return models.NewUint256FromBig(*value), nil
+}
+
 //export NewWalletPrivateKey
 func NewWalletPrivateKey() *C.char {
 	wallet, err := bls.NewRandomWallet(placeholderDomain)
@@ -90,21 +99,25 @@ func SignTransfer(from, to C.uint, amount, fee, nonce, privateKey, domain *C.cha
 		return nil
 	}
 
-	amountBigInt := new(big.Int)
-	amountBigInt.SetString(C.GoString(amount), 10)
-
-	feeBigInt := new(big.Int)
-	feeBigInt.SetString(C.GoString(fee), 10)
-
-	nonceBigInt := new(big.Int)
-	nonceBigInt.SetString(C.GoString(nonce), 10)
+	amountUint256, err := parseUint256(amount)
+	if err != nil {
+		return nil
+	}
+	feeUint256, err := parseUint256(fee)
+	if err != nil {
+		return nil
+	}
+	nonceUint256, err := parseUint256(nonce)
+	if err != nil {
+		return nil
+	}
 
 	transfer, err := api.SignTransfer(wallet, dto.Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
 		ToStateID:   ref.Uint32(uint32(to)),
-		Amount:      models.NewUint256FromBig(*amountBigInt),
-		Fee:         models.NewUint256FromBig(*feeBigInt),
-		Nonce:       models.NewUint256FromBig(*nonceBigInt),
+		Amount:      amountUint256,
+		Fee:         feeUint256,
+		Nonce:       nonceUint256,
 	})
 	if err != nil {
 		return nil
@@ -125,14 +138,18 @@ func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, 
 		return nil
 	}
 
-	amountBigInt := new(big.Int)
-	amountBigInt.SetString(C.GoString(amount), 10)
-
-	feeBigInt := new(big.Int)
-	feeBigInt.SetString(C.GoString(fee), 10)
-
-	nonceBigInt := new(big.Int)
-	nonceBigInt.SetString(C.GoString(nonce), 10)
+	amountUint256, err := parseUint256(amount)
+	if err != nil {
+		return nil
+	}
+	feeUint256, err := parseUint256(fee)
+	if err != nil {
+		return nil
+	}
+	nonceUint256, err := parseUint256(nonce)
+	if err != nil {
+		return nil
+	}
 
 	toPublicKey, err := parsePublicKey(toPubKey)
 	if err != nil {
@@ -142,9 +159,9 @@ func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, 
 	transfer, err := api.SignCreate2Transfer(wallet, dto.Create2Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
 		ToPublicKey: toPublicKey,
-		Amount:      models.NewUint256FromBig(*amountBigInt),
-		Fee:         models.NewUint256FromBig(*feeBigInt),
-		Nonce:       models.NewUint256FromBig(*nonceBigInt),
+		Amount:      amountUint256,
+		Fee:         feeUint256,
+		Nonce:       nonceUint256,
 	})
 	if err != nil {
 		return nil
