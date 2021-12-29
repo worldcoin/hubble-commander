@@ -216,6 +216,12 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
+	log.Println("Setting Rollup address in Vault")
+	vaultInitTx, err := vaultContract.SetRollupAddress(c.GetAccount(), rollupAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	log.Println("Deploying WithdrawManager")
 	withdrawManagerAddress, withdrawManagerTx, _, err := withdrawmanager.DeployWithdrawManager(
 		c.GetAccount(),
@@ -234,7 +240,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *withdrawManagerTx, *exampleTokenTx)
+	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *vaultInitTx, *withdrawManagerTx, *exampleTokenTx)
 	if err != nil {
 		return nil, err
 	}
