@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/models"
 )
@@ -88,6 +89,27 @@ func (b *tokenRegistrySessionBuilder) WithValue(value *models.Uint256) *tokenReg
 }
 
 func (b *tokenRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *tokenRegistrySessionBuilder {
+	b.TransactOpts.GasLimit = gasLimit
+	return b
+}
+
+type spokeRegistrySessionBuilder struct {
+	spokeregistry.SpokeRegistrySession
+}
+
+func (c *Client) spokeRegistry() *spokeRegistrySessionBuilder {
+	return &spokeRegistrySessionBuilder{spokeregistry.SpokeRegistrySession{
+		Contract:     c.SpokeRegistry.SpokeRegistry,
+		TransactOpts: *c.Blockchain.GetAccount(),
+	}}
+}
+
+func (b *spokeRegistrySessionBuilder) WithValue(value *models.Uint256) *spokeRegistrySessionBuilder {
+	b.TransactOpts.Value = value.ToBig()
+	return b
+}
+
+func (b *spokeRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *spokeRegistrySessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
 	return b
 }

@@ -63,6 +63,7 @@ type RollupContracts struct {
 	TokenRegistry          *tokenregistry.TokenRegistry
 	TokenRegistryAddress   common.Address
 	SpokeRegistry          *spokeregistry.SpokeRegistry
+	SpokeRegistryAddress   common.Address
 	Vault                  *vault.Vault
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerAddress  common.Address
@@ -267,6 +268,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		TokenRegistry:          tokenRegistry,
 		TokenRegistryAddress:   tokenRegistryAddress,
 		SpokeRegistry:          spokeRegistry,
+		SpokeRegistryAddress:   spokeRegistryAddress,
 		Vault:                  vaultContract,
 		DepositManager:         depositManager,
 		DepositManagerAddress:  depositManagerAddress,

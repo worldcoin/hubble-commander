@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -24,6 +25,7 @@ type NewClientParams struct {
 	Rollup          *rollup.Rollup
 	AccountRegistry *accountregistry.AccountRegistry
 	TokenRegistry   *tokenregistry.TokenRegistry
+	SpokeRegistry   *spokeregistry.SpokeRegistry
 	DepositManager  *depositmanager.DepositManager
 	ClientConfig
 }
@@ -47,6 +49,7 @@ type Client struct {
 	Metrics                *metrics.CommanderMetrics
 	Rollup                 *Rollup
 	TokenRegistry          *TokenRegistry
+	SpokeRegistry          *SpokeRegistry
 	DepositManager         *DepositManager
 	blocksToFinalise       *int64
 	maxDepositSubTreeDepth *uint8
@@ -67,6 +70,10 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	spokeRegistryAbi, err := abi.JSON(strings.NewReader(spokeregistry.SpokeRegistryABI))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	depositManagerAbi, err := abi.JSON(strings.NewReader(depositmanager.DepositManagerABI))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -82,6 +89,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	}
 	rollupContract := bind.NewBoundContract(params.ChainState.Rollup, rollupAbi, backend, backend, backend)
 	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
+	spokeRegistryContract := bind.NewBoundContract(params.ChainState.SpokeRegistry, spokeRegistryAbi, backend, backend, backend)
 	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 	return &Client{
 		config:         params.ClientConfig,
@@ -90,25 +98,20 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		Metrics:        commanderMetrics,
 		AccountManager: accountManager,
 		Rollup: &Rollup{
-			Rollup: params.Rollup,
-			Contract: Contract{
-				ABI:           &rollupAbi,
-				BoundContract: rollupContract,
-			},
+			Rollup:   params.Rollup,
+			Contract: MakeContract(&rollupAbi, rollupContract),
 		},
 		TokenRegistry: &TokenRegistry{
 			TokenRegistry: params.TokenRegistry,
-			Contract: Contract{
-				ABI:           &tokenRegistryAbi,
-				BoundContract: tokenRegistryContract,
-			},
+			Contract:      MakeContract(&tokenRegistryAbi, tokenRegistryContract),
+		},
+		SpokeRegistry: &SpokeRegistry{
+			SpokeRegistry: params.SpokeRegistry,
+			Contract:      MakeContract(&spokeRegistryAbi, spokeRegistryContract),
 		},
 		DepositManager: &DepositManager{
 			DepositManager: params.DepositManager,
-			Contract: Contract{
-				ABI:           &depositManagerAbi,
-				BoundContract: depositManagerContract,
-			},
+			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
 	}, nil
 }

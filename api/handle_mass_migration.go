@@ -84,7 +84,7 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	if vErr := validateFee(&massMigration.Fee); vErr != nil {
 		return vErr
 	}
-	if vErr := validateSpokeID(massMigration.SpokeID); vErr != nil {
+	if vErr := a.validateSpokeExists(massMigration.SpokeID); vErr != nil {
 		return vErr
 	}
 
@@ -111,9 +111,14 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 	return a.validateSignature(encodedTransfer, &massMigration.Signature, &senderState.UserState)
 }
 
-func validateSpokeID(spokeID uint32) error {
-	if spokeID < 1 {
-		return errors.WithStack(ErrInvalidSpokeID)
+func (a *API) validateSpokeExists(spokeID uint32) error {
+	uint256SpokeID := models.MakeUint256(uint64(spokeID))
+	_, err := a.storage.GetRegisteredSpoke(uint256SpokeID)
+	if storage.IsNotFoundError(err) {
+		return errors.WithStack(ErrSpokeDoesNotExist)
+	}
+	if err != nil {
+		return err
 	}
 	return nil
 }

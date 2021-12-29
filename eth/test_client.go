@@ -42,6 +42,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 			AccountRegistry:                contracts.AccountRegistryAddress,
 			AccountRegistryDeploymentBlock: 0,
 			TokenRegistry:                  contracts.TokenRegistryAddress,
+			SpokeRegistry:                  contracts.SpokeRegistryAddress,
 			DepositManager:                 contracts.DepositManagerAddress,
 			Rollup:                         contracts.RollupAddress,
 			SyncedBlock:                    0,
@@ -50,6 +51,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		Rollup:          contracts.Rollup,
 		AccountRegistry: contracts.AccountRegistry,
 		TokenRegistry:   contracts.TokenRegistry,
+		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
 		ClientConfig:    clientCfg,
 	})
