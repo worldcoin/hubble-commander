@@ -19,7 +19,7 @@ type InProcessCommander struct {
 	blockchain chain.Connection
 }
 
-func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
+func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
 	if commanderConfig == nil {
 		commanderConfig = config.GetConfig()
 	}
@@ -30,10 +30,10 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 		deployerConfig = config.GetDeployerConfig()
 	}
 
-	return CreateInProcessCommanderWithConfig(commanderConfig, true, deployerConfig)
+	return CreateInProcessCommanderWithConfig(commanderConfig, deployerConfig)
 }
 
-func CreateInProcessCommanderWithConfig(commanderConfig *config.Config, deployContracts bool, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
+func CreateInProcessCommanderWithConfig(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
 	blockchain, err := commander.GetChainConnection(commanderConfig.Ethereum)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func CreateInProcessCommanderWithConfig(commanderConfig *config.Config, deployCo
 	endpoint := fmt.Sprintf("http://localhost:%s", commanderConfig.API.Port)
 	client := jsonrpc.NewClient(endpoint)
 
-	if deployContracts {
+	if deployerConfig != nil {
 		file, err := os.CreateTemp("", "in_process_commander")
 		if err != nil {
 			return nil, err
