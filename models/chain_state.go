@@ -13,6 +13,7 @@ type ChainState struct {
 	AccountRegistry                common.Address
 	AccountRegistryDeploymentBlock uint64
 	TokenRegistry                  common.Address
+	SpokeRegistry                  common.Address
 	DepositManager                 common.Address
 	Rollup                         common.Address
 	SyncedBlock                    uint64
@@ -24,6 +25,7 @@ type ChainSpec struct {
 	AccountRegistry                common.Address `yaml:"account_registry"`
 	AccountRegistryDeploymentBlock uint64         `yaml:"account_registry_deployment_block"`
 	TokenRegistry                  common.Address `yaml:"token_registry"`
+	SpokeRegistry                  common.Address `yaml:"spoke_registry"`
 	DepositManager                 common.Address `yaml:"deposit_manager"`
 	Rollup                         common.Address
 	GenesisAccounts                GenesisAccounts `yaml:"genesis_accounts"`

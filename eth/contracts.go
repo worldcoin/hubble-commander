@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -12,6 +13,10 @@ import (
 type Contract struct {
 	ABI           *abi.ABI
 	BoundContract *bind.BoundContract
+}
+
+func MakeContract(abi_ *abi.ABI, boundContract *bind.BoundContract) Contract {
+	return Contract{ABI: abi_, BoundContract: boundContract}
 }
 
 type AccountRegistry struct {
@@ -31,5 +36,10 @@ type TokenRegistry struct {
 
 type DepositManager struct {
 	*depositmanager.DepositManager
+	Contract
+}
+
+type SpokeRegistry struct {
+	*spokeregistry.SpokeRegistry
 	Contract
 }
