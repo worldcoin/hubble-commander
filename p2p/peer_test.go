@@ -5,11 +5,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"log"
 	"testing"
-	"time"
 )
 
 type TestRpc struct {
-
 }
 
 type IntParam struct {
@@ -29,6 +27,8 @@ func TestPeer(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	done := make(chan bool)
+
 	bob, err := NewPeerWithRandomKey(0, func(conn Connection) {
 		var res IntParam
 		err := conn.client.Call("test_double", IntParam{3}, &res)
@@ -36,6 +36,8 @@ func TestPeer(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		done <- true
 	})
 	require.NoError(t, err)
 
@@ -43,7 +45,7 @@ func TestPeer(t *testing.T) {
 	err = bob.Dial(addr)
 	require.NoError(t, err)
 
-	time.Sleep(1 * time.Second)
+	<-done
 
 	//require.NoError(t, alice.Close())
 	//require.NoError(t, bob.Close())

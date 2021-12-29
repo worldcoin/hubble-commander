@@ -8,6 +8,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/ethereum/go-ethereum v1.10.8
 	github.com/holiman/uint256 v1.2.0
+	github.com/inconshreveable/muxado v0.0.0-20160802230925-fc182d90f26e
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
 	github.com/libp2p/go-libp2p v0.16.0
 	github.com/libp2p/go-libp2p-core v0.11.0
@@ -61,6 +62,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/huin/goupnp v1.0.2 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect

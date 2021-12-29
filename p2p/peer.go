@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/inconshreveable/muxado"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -13,14 +14,16 @@ import (
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/multiformats/go-multiaddr"
 	"io"
+	"log"
 	netRpc "net/rpc"
 	"net/rpc/jsonrpc"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type Peer struct {
-	host host.Host
+	host             host.Host
 	handleConnection func(conn Connection)
 }
 
@@ -84,23 +87,67 @@ func (c conn) SetWriteDeadline(time time.Time) error {
 func (p *Peer) handleStream(stream network.Stream) {
 	fmt.Println("handleStream")
 
-	server := rpc.NewServer()
+	mux := muxado.Server(stream, nil)
 
-	c := conn{
-		Reader: stream,
-		Writer: stream,
-	}
-
-	client := jsonrpc.NewClient(c)
-
-	p.handleConnection(Connection{
-		server: server,
-		client: client,
-	})
-
-	go server.ServeCodec(rpc.NewCodec(c), 0)
+	p.handleMuxed(mux)
 
 	println("handleStream end")
+}
+
+func (p *Peer) handleDial(stream network.Stream) {
+	fmt.Println("handleDial")
+
+	mux := muxado.Client(stream, nil)
+
+	time.Sleep(100 * time.Millisecond)
+
+	p.handleMuxed(mux)
+
+	println("handleDial end")
+}
+
+func (p *Peer) handleMuxed(mux muxado.Session) {
+
+	conn := Connection{}
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		fmt.Println("Waiting to accept")
+		serverStream, err := mux.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Accepted")
+
+		conn.server = rpc.NewServer()
+
+		go conn.server.ServeCodec(rpc.NewCodec(serverStream), 0)
+		wg.Done()
+	}()
+
+	time.Sleep(200 * time.Millisecond)
+
+	go func() {
+		clientStream, err := mux.Open()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Opened")
+
+		conn.client = jsonrpc.NewClient(clientStream)
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	fmt.Println("handleConnection")
+
+	p.handleConnection(conn)
+
+	fmt.Println("handleConnection end")
 }
 
 func (p *Peer) Dial(destination string) error {
@@ -109,7 +156,6 @@ func (p *Peer) Dial(destination string) error {
 	if err != nil {
 		return err
 	}
-
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
@@ -128,12 +174,9 @@ func (p *Peer) Dial(destination string) error {
 		return err
 	}
 
+	go p.handleDial(s)
+
 	println("Dial end")
-
-	p.handleStream(s)
-
-	println("Handle end")
-
 	return nil
 }
 
