@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -53,10 +54,13 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 		IndexInBatch: commitmentIndex,
 	}
 
-	massMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
+	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
+	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
 	tokenID := models.MakeUint256(0)
 	hashes := make([]common.Hash, 0, len(massMigrations))
@@ -90,9 +94,8 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 
 		if massMigrations[i].Hash == transactionHash {
 			targetUserState = massMigrationUserState
+			massMigrationIndex = i
 		}
-
-		massMigrationIndex = i
 	}
 	if targetUserState == nil {
 		return nil, errors.WithStack(ErrMassMigrationWithSenderNotFound)

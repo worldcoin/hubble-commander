@@ -41,10 +41,11 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 		cfg:     &config.APIConfig{EnableProofMethods: true},
 	}
 
+	// unsorted mass migrations
 	s.massMigrations = []models.MassMigration{
 		{
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
+				Hash:        common.Hash{2, 3, 4},
 				TxType:      txtype.MassMigration,
 				FromStateID: 0,
 				Amount:      models.MakeUint256(90),
@@ -62,7 +63,7 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 		},
 		{
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
+				Hash:        common.Hash{1, 2, 3},
 				TxType:      txtype.MassMigration,
 				FromStateID: 0,
 				Amount:      models.MakeUint256(90),
@@ -70,6 +71,24 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 				Nonce:       models.MakeUint256(1),
 				Signature:   models.MakeRandomSignature(),
 				ReceiveTime: models.NewTimestamp(time.Unix(150, 0).UTC()),
+				CommitmentID: &models.CommitmentID{
+					BatchID:      models.MakeUint256(1),
+					IndexInBatch: 0,
+				},
+				ErrorMessage: nil,
+			},
+			SpokeID: 1,
+		},
+		{
+			TransactionBase: models.TransactionBase{
+				Hash:        common.Hash{3, 4, 5},
+				TxType:      txtype.MassMigration,
+				FromStateID: 0,
+				Amount:      models.MakeUint256(90),
+				Fee:         models.MakeUint256(10),
+				Nonce:       models.MakeUint256(2),
+				Signature:   models.MakeRandomSignature(),
+				ReceiveTime: models.NewTimestamp(time.Unix(160, 0).UTC()),
 				CommitmentID: &models.CommitmentID{
 					BatchID:      models.MakeUint256(1),
 					IndexInBatch: 1,
@@ -83,7 +102,7 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		Balance: models.MakeUint256(100),
 		TokenID: models.MakeUint256(10),
-		Nonce:   models.MakeUint256(1),
+		Nonce:   models.MakeUint256(2),
 	})
 	s.NoError(err)
 
@@ -93,7 +112,7 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		Balance: models.MakeUint256(0),
 		TokenID: models.MakeUint256(10),
-		Nonce:   models.MakeUint256(2),
+		Nonce:   models.MakeUint256(3),
 	})
 	s.NoError(err)
 
@@ -116,9 +135,9 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 	err = s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	serializedMassMigrations1, err := encoder.SerializeMassMigrations([]models.MassMigration{s.massMigrations[0]})
+	serializedMassMigrations1, err := encoder.SerializeMassMigrations([]models.MassMigration{s.massMigrations[0], s.massMigrations[1]})
 	s.NoError(err)
-	serializedMassMigrations2, err := encoder.SerializeMassMigrations([]models.MassMigration{s.massMigrations[1]})
+	serializedMassMigrations2, err := encoder.SerializeMassMigrations([]models.MassMigration{s.massMigrations[2]})
 	s.NoError(err)
 
 	s.commitments = []models.CommitmentWithTxs{
@@ -171,11 +190,11 @@ func (s *GetMMCommitmentInclusionProofTestSuite) TearDownTest() {
 }
 
 func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_FirstCommitment() {
-	s.testGetMassMigrationCommitmentInclusionProofEndpoint(0)
+	s.testGetMassMigrationCommitmentInclusionProofEndpoint(0, s.massMigrations[:2])
 }
 
 func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_SecondCommitment() {
-	s.testGetMassMigrationCommitmentInclusionProofEndpoint(1)
+	s.testGetMassMigrationCommitmentInclusionProofEndpoint(1, s.massMigrations[2:])
 }
 
 func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_NonexistentBatch() {
@@ -186,19 +205,35 @@ func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentI
 	}, err)
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentInclusionProofEndpoint(commitmentIndex int) {
-	senderLeaf, err := s.storage.StateTree.Leaf(s.massMigrations[commitmentIndex].FromStateID)
-	s.NoError(err)
+func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentInclusionProofEndpoint(commitmentIndex int, massMigrations []models.MassMigration) {
+	hashes := make([]common.Hash, 0, len(massMigrations))
+	meta := models.MassMigrationMeta{
+		FeeReceiver: s.commitments[commitmentIndex].FeeReceiver,
+	}
 
-	hash, err := encoder.HashUserState(&models.UserState{
-		PubKeyID: senderLeaf.PubKeyID,
-		TokenID:  senderLeaf.TokenID,
-		Balance:  s.massMigrations[commitmentIndex].Amount,
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
+	for i := range massMigrations {
+		senderLeaf, err := s.storage.StateTree.Leaf(s.massMigrations[i].FromStateID)
+		s.NoError(err)
 
-	withdrawTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
+		if i == 0 {
+			meta.SpokeID = massMigrations[i].SpokeID
+			meta.TokenID = senderLeaf.TokenID
+		}
+
+		meta.Amount = *meta.Amount.Add(&massMigrations[i].Amount)
+
+		hash, err := encoder.HashUserState(&models.UserState{
+			PubKeyID: senderLeaf.PubKeyID,
+			TokenID:  senderLeaf.TokenID,
+			Balance:  s.massMigrations[i].Amount,
+			Nonce:    models.MakeUint256(0),
+		})
+		s.NoError(err)
+
+		hashes = append(hashes, *hash)
+	}
+
+	withdrawTree, err := merkletree.NewMerkleTree(hashes)
 	s.NoError(err)
 
 	witnessIndex := 0
@@ -216,14 +251,9 @@ func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentI
 			Witness: []common.Hash{s.commitments[witnessIndex].LeafHash()},
 		},
 		Body: &models.MMBody{
-			AccountRoot: *s.batch.AccountTreeRoot,
-			Signature:   s.commitments[commitmentIndex].CombinedSignature,
-			Meta: &models.MassMigrationMeta{
-				SpokeID:     s.massMigrations[commitmentIndex].SpokeID,
-				TokenID:     senderLeaf.TokenID,
-				Amount:      s.massMigrations[commitmentIndex].Amount,
-				FeeReceiver: s.commitments[commitmentIndex].FeeReceiver,
-			},
+			AccountRoot:  *s.batch.AccountTreeRoot,
+			Signature:    s.commitments[commitmentIndex].CombinedSignature,
+			Meta:         &meta,
 			WithdrawRoot: withdrawTree.Root(),
 			Transactions: s.commitments[commitmentIndex].Transactions,
 		},

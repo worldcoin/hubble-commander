@@ -40,10 +40,11 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 		cfg:     &config.APIConfig{EnableProofMethods: true},
 	}
 
+	// unsorted mass migrations
 	s.massMigrations = []models.MassMigration{
 		{
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
+				Hash:        common.Hash{2, 3, 4},
 				TxType:      txtype.MassMigration,
 				FromStateID: 0,
 				Amount:      models.MakeUint256(90),
@@ -61,7 +62,7 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 		},
 		{
 			TransactionBase: models.TransactionBase{
-				Hash:        utils.RandomHash(),
+				Hash:        common.Hash{1, 2, 3},
 				TxType:      txtype.MassMigration,
 				FromStateID: 1,
 				Amount:      models.MakeUint256(90),
@@ -89,7 +90,7 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(1, &models.UserState{
 		Balance: models.MakeUint256(0),
 		TokenID: models.MakeUint256(10),
-		Nonce:   models.MakeUint256(1),
+		Nonce:   models.MakeUint256(2),
 	})
 	s.NoError(err)
 
@@ -180,9 +181,8 @@ func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(transactionHash
 
 		if s.massMigrations[i].Hash == transactionHash {
 			targetUserState = massMigrationUserState
+			massMigrationIndex = i
 		}
-
-		massMigrationIndex = i
 	}
 
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)

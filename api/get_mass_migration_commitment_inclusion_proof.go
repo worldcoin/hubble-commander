@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -42,10 +43,13 @@ func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint
 		return nil, errors.WithStack(err)
 	}
 
-	massMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
+	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
+	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
 	serializedMassMigrations, err := encoder.SerializeMassMigrations(massMigrations)
 	if err != nil {
