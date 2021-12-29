@@ -29,10 +29,7 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 		Blockchain: blockchain,
 		AccountRegistry: &AccountRegistry{
 			AccountRegistry: params.AccountRegistry,
-			Contract: Contract{
-				ABI:           &accountRegistryAbi,
-				BoundContract: accountRegistryContract,
-			},
+			Contract:        MakeContract(&accountRegistryAbi, accountRegistryContract),
 		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 	}, nil

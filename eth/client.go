@@ -98,32 +98,20 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		Metrics:        commanderMetrics,
 		AccountManager: accountManager,
 		Rollup: &Rollup{
-			Rollup: params.Rollup,
-			Contract: Contract{
-				ABI:           &rollupAbi,
-				BoundContract: rollupContract,
-			},
+			Rollup:   params.Rollup,
+			Contract: MakeContract(&rollupAbi, rollupContract),
 		},
 		TokenRegistry: &TokenRegistry{
 			TokenRegistry: params.TokenRegistry,
-			Contract: Contract{
-				ABI:           &tokenRegistryAbi,
-				BoundContract: tokenRegistryContract,
-			},
+			Contract:      MakeContract(&tokenRegistryAbi, tokenRegistryContract),
 		},
 		SpokeRegistry: &SpokeRegistry{
 			SpokeRegistry: params.SpokeRegistry,
-			Contract: Contract{
-				ABI:           &spokeRegistryAbi,
-				BoundContract: spokeRegistryContract,
-			},
+			Contract:      MakeContract(&spokeRegistryAbi, spokeRegistryContract),
 		},
 		DepositManager: &DepositManager{
 			DepositManager: params.DepositManager,
-			Contract: Contract{
-				ABI:           &depositManagerAbi,
-				BoundContract: depositManagerContract,
-			},
+			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
 	}, nil
 }
