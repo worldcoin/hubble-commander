@@ -44,6 +44,18 @@ func parseDomain(domain *C.char) (*bls.Domain, error) {
 	return domainBls, nil
 }
 
+func parsePublicKey(pubKey *C.char) (*models.PublicKey, error) {
+	publicKeyBytes, err := hex.DecodeString(C.GoString(pubKey))
+	if err != nil {
+		return nil, err
+	}
+
+	var publicKey models.PublicKey
+	copy(publicKey[:], publicKeyBytes)
+
+	return &publicKey, nil
+}
+
 //export NewWalletPrivateKey
 func NewWalletPrivateKey() *C.char {
 	wallet, err := bls.NewRandomWallet(placeholderDomain)
@@ -122,17 +134,14 @@ func SignCreate2Transfer(from C.uint, toPubKey, amount, fee, nonce, privateKey, 
 	nonceBigInt := new(big.Int)
 	nonceBigInt.SetString(C.GoString(nonce), 10)
 
-	toPublicKeyBytes, err := hex.DecodeString(C.GoString(toPubKey))
+	toPublicKey, err := parsePublicKey(toPubKey)
 	if err != nil {
 		return nil
 	}
 
-	var toPublicKey models.PublicKey
-	copy(toPublicKey[:], toPublicKeyBytes)
-
 	transfer, err := api.SignCreate2Transfer(wallet, dto.Create2Transfer{
 		FromStateID: ref.Uint32(uint32(from)),
-		ToPublicKey: &toPublicKey,
+		ToPublicKey: toPublicKey,
 		Amount:      models.NewUint256FromBig(*amountBigInt),
 		Fee:         models.NewUint256FromBig(*feeBigInt),
 		Nonce:       models.NewUint256FromBig(*nonceBigInt),
@@ -181,15 +190,12 @@ func VerifySignedMessage(message, signature, pubKey, domain *C.char) C.int {
 		return C.int(-1)
 	}
 
-	publicKeyBytes, err := hex.DecodeString(C.GoString(pubKey))
+	publicKey, err := parsePublicKey(pubKey)
 	if err != nil {
 		return C.int(-1)
 	}
 
-	var publicKey models.PublicKey
-	copy(publicKey[:], publicKeyBytes)
-
-	res, err := signatureObj.Verify([]byte(C.GoString(message)), &publicKey)
+	res, err := signatureObj.Verify([]byte(C.GoString(message)), publicKey)
 	if err != nil {
 		return C.int(-1)
 	}
