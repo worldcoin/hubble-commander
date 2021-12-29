@@ -12,13 +12,8 @@ import (
 )
 
 func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
-	duration, err := metrics.MeasureDuration(func() (err error) {
-		err = c.unmeasuredSyncSpokes(startBlock, endBlock)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	duration, err := metrics.MeasureDuration(func() error {
+		return c.unmeasuredSyncSpokes(startBlock, endBlock)
 	})
 	if err != nil {
 		return err
