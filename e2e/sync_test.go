@@ -57,7 +57,7 @@ func TestCommanderSync(t *testing.T) {
 	cfg.Metrics.Port = "2002"
 	cfg.Badger.Path += "_passive"
 	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
-	passiveCommander, err := setup.CreateInProcessCommanderWithConfig(cfg, nil)
+	passiveCommander, err := setup.CreateInProcessCommander(cfg, nil)
 	require.NoError(t, err)
 
 	err = passiveCommander.Start()

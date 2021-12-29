@@ -30,10 +30,10 @@ func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerC
 		deployerConfig = config.GetDeployerConfig()
 	}
 
-	return CreateInProcessCommanderWithConfig(commanderConfig, deployerConfig)
+	return CreateInProcessCommander(commanderConfig, deployerConfig)
 }
 
-func CreateInProcessCommanderWithConfig(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
+func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
 	blockchain, err := commander.GetChainConnection(commanderConfig.Ethereum)
 	if err != nil {
 		return nil, err
