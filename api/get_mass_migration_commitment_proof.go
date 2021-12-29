@@ -12,22 +12,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-var getMassMigrationCommitmentInclusionProofAPIErrors = map[error]*APIError{
+var getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof not found"),
 }
 
-func (a *API) GetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MMCommitmentInclusionProof, error) {
+func (a *API) GetMassMigrationCommitmentProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MassMigrationCommitmentProof, error) {
 	if !a.cfg.EnableProofMethods {
 		return nil, errProofMethodsDisabled
 	}
-	commitmentInclusionProof, err := a.unsafeGetMassMigrationCommitmentInclusionProof(batchID, commitmentIndex)
+	commitmentInclusionProof, err := a.unsafeGetMassMigrationCommitmentProof(batchID, commitmentIndex)
 	if err != nil {
-		return nil, sanitizeError(err, getMassMigrationCommitmentInclusionProofAPIErrors)
+		return nil, sanitizeError(err, getMassMigrationCommitmentProofAPIErrors)
 	}
 	return commitmentInclusionProof, nil
 }
 
-func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MMCommitmentInclusionProof, error) {
+func (a *API) unsafeGetMassMigrationCommitmentProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MassMigrationCommitmentProof, error) {
 	batch, err := a.storage.GetBatch(batchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -117,7 +117,7 @@ func (a *API) unsafeGetMassMigrationCommitmentInclusionProof(batchID models.Uint
 		Witness: batchLeafTree.GetWitness(uint32(commitmentIndex)),
 	}
 
-	return &dto.MMCommitmentInclusionProof{
+	return &dto.MassMigrationCommitmentProof{
 		MMCommitmentInclusionProof: models.MMCommitmentInclusionProof{
 			CommitmentInclusionProofBase: *proofBase,
 			Body: &models.MMBody{

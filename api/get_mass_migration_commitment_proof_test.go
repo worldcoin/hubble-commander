@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GetMMCommitmentInclusionProofTestSuite struct {
+type GetMassMigrationCommitmentProofTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	api            *API
@@ -28,11 +28,11 @@ type GetMMCommitmentInclusionProofTestSuite struct {
 	massMigrations []models.MassMigration
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) SetupSuite() {
+func (s *GetMassMigrationCommitmentProofTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
+func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -184,28 +184,28 @@ func (s *GetMMCommitmentInclusionProofTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) TearDownTest() {
+func (s *GetMassMigrationCommitmentProofTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_FirstCommitment() {
-	s.testGetMassMigrationCommitmentInclusionProofEndpoint(0, s.massMigrations[:2])
+func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_FirstCommitment() {
+	s.testGetMassMigrationCommitmentProofEndpoint(0, s.massMigrations[:2])
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_SecondCommitment() {
-	s.testGetMassMigrationCommitmentInclusionProofEndpoint(1, s.massMigrations[2:])
+func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_SecondCommitment() {
+	s.testGetMassMigrationCommitmentProofEndpoint(1, s.massMigrations[2:])
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) TestGetMassMigrationCommitmentInclusionProof_NonexistentBatch() {
-	_, err := s.api.GetMassMigrationCommitmentInclusionProof(models.MakeUint256(10), 15)
+func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_NonexistentBatch() {
+	_, err := s.api.GetMassMigrationCommitmentProof(models.MakeUint256(10), 15)
 	s.Equal(&APIError{
 		Code:    50004,
 		Message: "mass migration commitment inclusion proof not found",
 	}, err)
 }
 
-func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentInclusionProofEndpoint(commitmentIndex int, massMigrations []models.MassMigration) {
+func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmentProofEndpoint(commitmentIndex int, massMigrations []models.MassMigration) {
 	hashes := make([]common.Hash, 0, len(massMigrations))
 	meta := models.MassMigrationMeta{
 		FeeReceiver: s.commitments[commitmentIndex].FeeReceiver,
@@ -259,11 +259,11 @@ func (s *GetMMCommitmentInclusionProofTestSuite) testGetMassMigrationCommitmentI
 		},
 	}
 
-	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentInclusionProof(s.batch.ID, uint8(commitmentIndex))
+	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentProof(s.batch.ID, uint8(commitmentIndex))
 	s.NoError(err)
 	s.Equal(expected, commitmentInclusionProof.MMCommitmentInclusionProof)
 }
 
-func TestGetMMCommitmentInclusionProofTestSuite(t *testing.T) {
-	suite.Run(t, new(GetMMCommitmentInclusionProofTestSuite))
+func TestGetMassMigrationCommitmentProofTestSuite(t *testing.T) {
+	suite.Run(t, new(GetMassMigrationCommitmentProofTestSuite))
 }

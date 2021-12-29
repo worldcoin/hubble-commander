@@ -12,7 +12,7 @@ type CommitmentInclusionProof struct {
 	Witness   models.Witness
 }
 
-type MMCommitmentInclusionProof struct {
+type MassMigrationCommitmentProof struct {
 	models.MMCommitmentInclusionProof
 }
 
