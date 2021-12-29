@@ -109,13 +109,6 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			SpokeRegistry: params.SpokeRegistry,
 			Contract:      MakeContract(&spokeRegistryAbi, spokeRegistryContract),
 		},
-		SpokeRegistry: &SpokeRegistry{
-			SpokeRegistry: params.SpokeRegistry,
-			Contract: Contract{
-				ABI:           &spokeRegistryAbi,
-				BoundContract: spokeRegistryContract,
-			},
-		},
 		DepositManager: &DepositManager{
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
