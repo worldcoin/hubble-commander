@@ -223,13 +223,20 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	log.Println("Deploying WithdrawManager")
-	withdrawManagerAddress, withdrawManagerTx, _, err := withdrawmanager.DeployWithdrawManager(
-		c.GetAccount(),
-		c.GetBackend(),
-		tokenRegistryAddress,
-		vaultAddress,
-		rollupAddress,
+	var (
+		withdrawManagerAddress common.Address
+		withdrawManagerTx      *types.Transaction
 	)
+	withReplacedCostEstimatorAddress(costEstimatorAddress, func() {
+		withdrawManagerAddress, withdrawManagerTx, _, err = withdrawmanager.DeployWithdrawManager(
+			c.GetAccount(),
+			c.GetBackend(),
+			tokenRegistryAddress,
+			vaultAddress,
+			rollupAddress,
+		)
+	})
+
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -365,15 +372,18 @@ func deployMissing(dependencies *Dependencies, c chain.Connection) error {
 //goland:noinspection GoDeprecation
 func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()) {
 	targetString := strings.ToLower(newCostEstimator.String()[2:])
+	originalWithdrawManagerBin := withdrawmanager.WithdrawManagerBin
 	originalTransferBin := transfer.TransferBin
 	originalCreate2TransferBin := create2transfer.Create2TransferBin
 	originalMassMigrationBin := massmigration.MassMigrationBin
 
+	withdrawmanager.WithdrawManagerBin = strings.Replace(originalWithdrawManagerBin, originalCostEstimatorAddress, targetString, -1)
 	transfer.TransferBin = strings.Replace(originalTransferBin, originalCostEstimatorAddress, targetString, -1)
 	create2transfer.Create2TransferBin = strings.Replace(originalCreate2TransferBin, originalCostEstimatorAddress, targetString, -1)
 	massmigration.MassMigrationBin = strings.Replace(originalMassMigrationBin, originalCostEstimatorAddress, targetString, -1)
 
 	defer func() {
+		withdrawmanager.WithdrawManagerBin = originalWithdrawManagerBin
 		transfer.TransferBin = originalTransferBin
 		create2transfer.Create2TransferBin = originalCreate2TransferBin
 		massmigration.MassMigrationBin = originalMassMigrationBin
