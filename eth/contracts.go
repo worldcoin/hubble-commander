@@ -15,6 +15,10 @@ type Contract struct {
 	BoundContract *bind.BoundContract
 }
 
+func MakeContract(abi_ *abi.ABI, boundContract *bind.BoundContract) Contract {
+	return Contract{ABI: abi_, BoundContract: boundContract}
+}
+
 type AccountRegistry struct {
 	*accountregistry.AccountRegistry
 	Contract

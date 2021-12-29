@@ -58,6 +58,17 @@ func (s *RegisteredSpokesTestSuite) TestSyncSingleSpoke() {
 	s.Equal(registeredSpoke.ID, syncedSpoke.ID)
 }
 
+func (s *RegisteredSpokesTestSuite) TestSyncSingleSpoke_CanSyncTheSameBlocksTwice() {
+	_ = s.registerSingleSpoke()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncSpokes(0, *latestBlockNumber)
+	s.NoError(err)
+	err = s.cmd.syncSpokes(0, *latestBlockNumber)
+	s.NoError(err)
+}
+
 func (s *RegisteredSpokesTestSuite) registerSingleSpoke() models.RegisteredSpoke {
 	address := utils.RandomAddress()
 	spokeID := RegisterSingleSpoke(s.Assertions, s.testClient, address)

@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"errors"
+
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -9,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
@@ -78,24 +81,15 @@ func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistr
 	return it, nil
 }
 
-func saveSyncedToken(
-	registeredTokenStorage *st.RegisteredTokenStorage,
-	registeredToken *models.RegisteredToken,
-) (isNewToken *bool, err error) {
-	_, err = registeredTokenStorage.GetRegisteredToken(registeredToken.ID)
-	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	if st.IsNotFoundError(err) {
-		err = registeredTokenStorage.AddRegisteredToken(registeredToken)
-		if err != nil {
-			return nil, err
-		}
-		return ref.Bool(true), nil
-	} else {
+func saveSyncedToken(storage *st.RegisteredTokenStorage, token *models.RegisteredToken) (isNewToken *bool, err error) {
+	err = storage.AddRegisteredToken(token)
+	if errors.Is(err, bh.ErrKeyExists) {
 		return ref.Bool(false), nil
 	}
+	if err != nil {
+		return nil, err
+	}
+	return ref.Bool(true), nil
 }
 
 func logNewRegisteredTokensCount(newTokensCount int) {

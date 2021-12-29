@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"errors"
+
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -9,16 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
-	duration, err := metrics.MeasureDuration(func() (err error) {
-		err = c.unmeasuredSyncSpokes(startBlock, endBlock)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	duration, err := metrics.MeasureDuration(func() error {
+		return c.unmeasuredSyncSpokes(startBlock, endBlock)
 	})
 	if err != nil {
 		return err
@@ -56,7 +54,6 @@ func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) error {
 			newSpokesCount++
 		}
 	}
-
 	if it.Error() != nil {
 		return it.Error()
 	}
@@ -80,20 +77,14 @@ func (c *Commander) getSpokeRegisteredIterator(start, end uint64) (*spokeregistr
 }
 
 func saveSyncedSpoke(storage *st.RegisteredSpokeStorage, spoke *models.RegisteredSpoke) (isNewSpoke *bool, err error) {
-	_, err = storage.GetRegisteredSpoke(spoke.ID)
-	if err != nil && !st.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	if st.IsNotFoundError(err) {
-		err = storage.AddRegisteredSpoke(spoke)
-		if err != nil {
-			return nil, err
-		}
-		return ref.Bool(true), nil
-	} else {
+	err = storage.AddRegisteredSpoke(spoke)
+	if errors.Is(err, bh.ErrKeyExists) {
 		return ref.Bool(false), nil
 	}
+	if err != nil {
+		return nil, err
+	}
+	return ref.Bool(true), nil
 }
 
 func logNewRegisteredSpokesCount(newSpokesCount int) {
