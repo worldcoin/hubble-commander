@@ -27,13 +27,16 @@ func (a *API) GetMassMigrationCommitmentProof(batchID models.Uint256, commitment
 	return commitmentInclusionProof, nil
 }
 
-func (a *API) unsafeGetMassMigrationCommitmentProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MassMigrationCommitmentProof, error) {
+func (a *API) unsafeGetMassMigrationCommitmentProof(
+	batchID models.Uint256,
+	commitmentIndex uint8,
+) (*dto.MassMigrationCommitmentProof, error) {
 	batch, err := a.storage.GetBatch(batchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	commitmentId := models.CommitmentID{
+	commitmentID := models.CommitmentID{
 		BatchID:      batchID,
 		IndexInBatch: commitmentIndex,
 	}
@@ -43,7 +46,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(batchID models.Uint256, comm
 		return nil, errors.WithStack(err)
 	}
 
-	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
+	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -56,47 +59,14 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(batchID models.Uint256, comm
 		return nil, errors.WithStack(err)
 	}
 
-	commitment, err := a.storage.GetTxCommitment(&commitmentId)
+	commitment, err := a.storage.GetTxCommitment(&commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	meta := &models.MassMigrationMeta{
-		SpokeID:     0,
-		TokenID:     models.MakeUint256(0),
-		Amount:      models.MakeUint256(0),
-		FeeReceiver: commitment.FeeReceiver,
-	}
-
-	hashes := make([]common.Hash, 0, len(massMigrations))
-
-	for i := range massMigrations {
-		meta.Amount = *meta.Amount.Add(&massMigrations[i].Amount)
-
-		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		if i == 0 {
-			meta.TokenID = senderLeaf.TokenID
-			meta.SpokeID = massMigrations[0].SpokeID
-		}
-
-		hash, err := encoder.HashUserState(&models.UserState{
-			PubKeyID: senderLeaf.PubKeyID,
-			TokenID:  meta.TokenID,
-			Balance:  massMigrations[i].Amount,
-			Nonce:    models.MakeUint256(0),
-		})
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		hashes = append(hashes, *hash)
-	}
-
-	withdrawTree, err := merkletree.NewMerkleTree(hashes)
+	withdrawTree, meta, err := a.generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(commitment, massMigrations)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	leafHashes := make([]common.Hash, 0, len(commitments))
@@ -129,4 +99,47 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(batchID models.Uint256, comm
 			},
 		},
 	}, nil
+}
+
+func (a *API) generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(
+	commitment *models.TxCommitment,
+	massMigrations []models.MassMigration,
+) (*merkletree.MerkleTree, *models.MassMigrationMeta, error) {
+	meta := &models.MassMigrationMeta{
+		Amount:      models.MakeUint256(0),
+		FeeReceiver: commitment.FeeReceiver,
+	}
+
+	hashes := make([]common.Hash, 0, len(massMigrations))
+
+	for i := range massMigrations {
+		meta.Amount = *meta.Amount.Add(&massMigrations[i].Amount)
+
+		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
+		if err != nil {
+			return nil, nil, err
+		}
+		if i == 0 {
+			meta.TokenID = senderLeaf.TokenID
+			meta.SpokeID = massMigrations[0].SpokeID
+		}
+
+		hash, err := encoder.HashUserState(&models.UserState{
+			PubKeyID: senderLeaf.PubKeyID,
+			TokenID:  meta.TokenID,
+			Balance:  massMigrations[i].Amount,
+			Nonce:    models.MakeUint256(0),
+		})
+		if err != nil {
+			return nil, nil, errors.WithStack(err)
+		}
+		hashes = append(hashes, *hash)
+	}
+
+	withdrawTree, err := merkletree.NewMerkleTree(hashes)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	return withdrawTree, meta, nil
 }

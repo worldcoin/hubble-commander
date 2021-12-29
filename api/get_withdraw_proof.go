@@ -9,12 +9,16 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
 var (
-	ErrMassMigrationWithSenderNotFound = fmt.Errorf("mass migration with given sender was not found in a commitment with given commitment index")
+	ErrMassMigrationWithSenderNotFound = fmt.Errorf(
+		"mass migration with given sender " +
+			"was not found in a commitment with given commitment index",
+	)
 
 	APIWithdrawProofCouldNotBeCalculated = NewAPIError(
 		50005,
@@ -42,19 +46,23 @@ func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, tr
 	return withdrawTreeProofAndRoot, nil
 }
 
-func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) (*dto.WithdrawProof, error) {
+func (a *API) unsafeGetWithdrawProof(
+	batchID models.Uint256,
+	commitmentIndex uint8,
+	transactionHash common.Hash,
+) (*dto.WithdrawProof, error) {
 	// Verifies that batch exists
 	_, err := a.storage.GetBatch(batchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	commitmentId := models.CommitmentID{
+	commitmentID := models.CommitmentID{
 		BatchID:      batchID,
 		IndexInBatch: commitmentIndex,
 	}
 
-	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentId)
+	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -62,6 +70,33 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
+	withdrawTree, targetUserState, massMigrationIndex, err := a.generateWithdrawTreeForWithdrawProof(massMigrations, transactionHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.WithdrawProof{
+		WithdrawProof: models.WithdrawProof{
+			UserState: targetUserState,
+			Path: models.MerklePath{
+				Path:  *massMigrationIndex,
+				Depth: withdrawTree.Depth(),
+			},
+			Witness: withdrawTree.GetWitness(*massMigrationIndex),
+			Root:    withdrawTree.Root(),
+		},
+	}, nil
+}
+
+func (a *API) generateWithdrawTreeForWithdrawProof(
+	massMigrations []models.MassMigration,
+	transactionHash common.Hash,
+) (
+	*merkletree.MerkleTree,
+	*models.UserState,
+	*uint32,
+	error,
+) {
 	tokenID := models.MakeUint256(0)
 	hashes := make([]common.Hash, 0, len(massMigrations))
 
@@ -73,7 +108,7 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 	for i := range massMigrations {
 		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, nil, nil, err
 		}
 		if i == 0 {
 			tokenID = senderLeaf.TokenID
@@ -88,7 +123,7 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 
 		hash, err := encoder.HashUserState(massMigrationUserState)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, nil, nil, errors.WithStack(err)
 		}
 		hashes = append(hashes, *hash)
 
@@ -98,23 +133,13 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 		}
 	}
 	if targetUserState == nil {
-		return nil, errors.WithStack(ErrMassMigrationWithSenderNotFound)
+		return nil, nil, nil, errors.WithStack(ErrMassMigrationWithSenderNotFound)
 	}
 
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	return &dto.WithdrawProof{
-		WithdrawProof: models.WithdrawProof{
-			UserState: targetUserState,
-			Path: models.MerklePath{
-				Path:  uint32(massMigrationIndex),
-				Depth: withdrawTree.Depth(),
-			},
-			Witness: withdrawTree.GetWitness(uint32(massMigrationIndex)),
-			Root:    withdrawTree.Root(),
-		},
-	}, nil
+	return withdrawTree, targetUserState, ref.Uint32(uint32(massMigrationIndex)), nil
 }
