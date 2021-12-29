@@ -27,9 +27,10 @@
 | `10010`    | `amount is not encodable as multi-precission decimal`               |
 | `10011`    | `fee is not encodable as multi-precission decimal`                  |
 | `10012`    | `sender state ID does not exist`                                    |
-| `10013`    | `spoke ID must be greater than 0`                                   |
+| `10013`    | _DEPRECATED_: `spoke ID must be greater than 0`                     |
 | `10014`    | `cannot update mined transaction`                                   |
 | `10015`    | `transaction already exists`                                        |
+| `10016`    | `spoke with given ID does not exist`                                |
 | `20000`    | `commitment not found`                                              |
 | `30000`    | `batch not found`                                                   |
 | `30001`    | `batches not found`                                                 |

@@ -74,6 +74,11 @@ func (s *SendMassMigrationTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.massMigration = s.signMassMigration(massMigrationWithoutSignature)
+
+	err = s.storage.AddRegisteredSpoke(&models.RegisteredSpoke{
+		ID: models.MakeUint256(2),
+	})
+	s.NoError(err)
 }
 
 func (s *SendMassMigrationTestSuite) signMassMigration(massMigration dto.MassMigration) dto.MassMigration {
@@ -128,12 +133,12 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountEncodabi
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
-func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesSpokeID() {
-	massMigrationWithBadSpokeID := s.massMigration
-	massMigrationWithBadSpokeID.SpokeID = ref.Uint32(0)
+func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesThatSpokeExists() {
+	massMigrationWithNonexistentSpoke := s.massMigration
+	massMigrationWithNonexistentSpoke.SpokeID = ref.Uint32(1)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithBadSpokeID))
-	s.Equal(APIErrInvalidSpokeID, err)
+	_, err := s.api.SendTransaction(dto.MakeTransaction(massMigrationWithNonexistentSpoke))
+	s.Equal(APIErrSpokeDoesNotExist, err)
 }
 
 func (s *SendMassMigrationTestSuite) TestSendTransaction_ValidatesAmountValue() {

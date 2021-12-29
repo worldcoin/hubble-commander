@@ -67,6 +67,11 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.transfer = s.signTransfer(transferWithoutSignature)
 	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
 	s.massMigration = s.signMassMigration(massMigrationWithoutSignature)
+
+	err = s.storage.AddRegisteredSpoke(&models.RegisteredSpoke{
+		ID: models.MakeUint256(2),
+	})
+	s.NoError(err)
 }
 
 func (s *GetTransactionTestSuite) signTransfer(transfer dto.Transfer) dto.Transfer {
