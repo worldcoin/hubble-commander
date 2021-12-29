@@ -35,12 +35,12 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cfg := config.GetConfig().Rollup
-	cfg.MinTxsPerCommitment = 32
-	cfg.MaxTxsPerCommitment = 32
-	cfg.MinCommitmentsPerBatch = 1
+	cfg := config.GetConfig()
+	cfg.Rollup.MinTxsPerCommitment = 32
+	cfg.Rollup.MaxTxsPerCommitment = 32
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 
-	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)

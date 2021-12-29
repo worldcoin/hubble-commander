@@ -24,11 +24,11 @@ const maxTxsPerCommitment = 32
 
 func TestMeasureDisputeGasUsage(t *testing.T) {
 	cfg := config.GetConfig().Rollup
-	cfg.MinTxsPerCommitment = maxTxsPerCommitment
-	cfg.MaxTxsPerCommitment = maxTxsPerCommitment
-	cfg.MinCommitmentsPerBatch = 1
+	cfg.Rollup.MinTxsPerCommitment = maxTxsPerCommitment
+	cfg.Rollup.MaxTxsPerCommitment = maxTxsPerCommitment
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 
-	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)
