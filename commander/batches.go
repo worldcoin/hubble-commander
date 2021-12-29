@@ -76,7 +76,14 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		case <-c.workersContext.Done():
 			return ErrIncompleteBlockRangeSync
 		default:
-			continue
+		}
+
+		err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
+			BatchID:           newRemoteBatches[i].GetID(),
+			FinalisationBlock: newRemoteBatches[i].GetBase().FinalisationBlock,
+		})
+		if err != nil {
+			return err
 		}
 	}
 

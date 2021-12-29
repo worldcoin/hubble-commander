@@ -32,10 +32,11 @@ const (
 
 // Syncing metrics
 const (
-	SyncAccountsMethod = "sync_accounts"
-	SyncBatchesMethod  = "sync_batches"
-	SyncRangeMethod    = "sync_range"
-	SyncDepositsMethod = "sync_deposits"
-	SyncTokensMethod   = "sync_tokens"
-	SyncSpokesMethod   = "sync_spokes"
+	SyncAccountsMethod         = "sync_accounts"
+	SyncBatchesMethod          = "sync_batches"
+	SyncRangeMethod            = "sync_range"
+	SyncDepositsMethod         = "sync_deposits"
+	SyncTokensMethod           = "sync_tokens"
+	SyncSpokesMethod           = "sync_spokes"
+	SyncStakeWithdrawalsMethod = "sync_stake_withdrawals"
 )

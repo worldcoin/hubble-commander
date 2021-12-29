@@ -71,13 +71,5 @@ func (c *Context) syncExistingBatch(remoteDecodedBatch eth.DecodedBatch, localBa
 		log.Errorf("Local batch with ID=%s was found inconsistent with remote batch", localBatch.ID.String())
 		return NewInconsistentBatchError(localBatch)
 	}
-
-	err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
-		BatchID:           localBatch.ID,
-		FinalisationBlock: remoteBatch.FinalisationBlock,
-	})
-	if err != nil {
-		return err
-	}
 	return nil
 }
