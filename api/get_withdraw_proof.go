@@ -21,7 +21,7 @@ var (
 	)
 	APIErrMassMigrationWithSenderNotFound = NewAPIError(
 		50006,
-		"mass migration with given sender was not found in a commitment with given commitment index",
+		"mass migration with given transaction hash was not found in a commitment with given commitment index",
 	)
 )
 
@@ -30,18 +30,18 @@ var getWithdrawTreeProofAPIErrors = map[error]*APIError{
 	ErrMassMigrationWithSenderNotFound: APIErrMassMigrationWithSenderNotFound,
 }
 
-func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, stateID uint32) (*dto.WithdrawProof, error) {
+func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) (*dto.WithdrawProof, error) {
 	if !a.cfg.EnableProofMethods {
 		return nil, errProofMethodsDisabled
 	}
-	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(batchID, commitmentIndex, stateID)
+	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(batchID, commitmentIndex, transactionHash)
 	if err != nil {
 		return nil, sanitizeError(err, getWithdrawTreeProofAPIErrors)
 	}
 	return withdrawTreeProofAndRoot, nil
 }
 
-func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, stateID uint32) (*dto.WithdrawProof, error) {
+func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) (*dto.WithdrawProof, error) {
 	// Verifies that batch exists
 	_, err := a.storage.GetBatch(batchID)
 	if err != nil {
@@ -60,7 +60,11 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 
 	tokenID := models.MakeUint256(0)
 	hashes := make([]common.Hash, 0, len(massMigrations))
-	var targetUserState *models.UserState
+
+	var (
+		targetUserState    *models.UserState
+		massMigrationIndex int
+	)
 
 	for i := range massMigrations {
 		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
@@ -71,20 +75,24 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 			tokenID = senderLeaf.TokenID
 		}
 
-		if senderLeaf.StateID == stateID {
-			targetUserState = &senderLeaf.UserState
-		}
-
-		hash, err := encoder.HashUserState(&models.UserState{
+		massMigrationUserState := &models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
 			TokenID:  tokenID,
 			Balance:  massMigrations[i].Amount,
 			Nonce:    models.MakeUint256(0),
-		})
+		}
+
+		hash, err := encoder.HashUserState(massMigrationUserState)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 		hashes = append(hashes, *hash)
+
+		if massMigrations[i].Hash == transactionHash {
+			targetUserState = massMigrationUserState
+		}
+
+		massMigrationIndex = i
 	}
 	if targetUserState == nil {
 		return nil, errors.WithStack(ErrMassMigrationWithSenderNotFound)
@@ -99,10 +107,10 @@ func (a *API) unsafeGetWithdrawProof(batchID models.Uint256, commitmentIndex uin
 		WithdrawProof: models.WithdrawProof{
 			UserState: targetUserState,
 			Path: models.MerklePath{
-				Path:  stateID,
+				Path:  uint32(massMigrationIndex),
 				Depth: withdrawTree.Depth(),
 			},
-			Witness: withdrawTree.GetWitness(stateID),
+			Witness: withdrawTree.GetWitness(uint32(massMigrationIndex)),
 			Root:    withdrawTree.Root(),
 		},
 	}, nil

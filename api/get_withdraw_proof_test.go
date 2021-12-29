@@ -137,44 +137,52 @@ func (s *GetWithdrawProofTestSuite) TearDownTest() {
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_FirstMassMigrationInCommitment() {
-	s.testGetWithdrawProofEndpoint(0)
+	s.testGetWithdrawProofEndpoint(s.massMigrations[0].Hash)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_SecondMassMigrationInCommitment() {
-	s.testGetWithdrawProofEndpoint(1)
+	s.testGetWithdrawProofEndpoint(s.massMigrations[1].Hash)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentBatch() {
-	_, err := s.api.GetWithdrawProof(models.MakeUint256(10), 15, 0)
+	_, err := s.api.GetWithdrawProof(models.MakeUint256(10), 15, utils.RandomHash())
 	s.Equal(APIWithdrawProofCouldNotBeCalculated, err)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentMassMigrationWithGivenSenderInCommitment() {
-	_, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, 50)
+	_, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, utils.RandomHash())
 	s.Equal(APIErrMassMigrationWithSenderNotFound, err)
 }
 
-func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(stateID uint32) {
-	var targetUserState *models.UserState
+func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(transactionHash common.Hash) {
+	var (
+		targetUserState    *models.UserState
+		massMigrationIndex int
+	)
+
 	hashes := make([]common.Hash, 0, len(s.massMigrations))
 
 	for i := range s.massMigrations {
 		senderLeaf, err := s.storage.StateTree.Leaf(s.massMigrations[i].FromStateID)
 		s.NoError(err)
 
-		if senderLeaf.StateID == stateID {
-			targetUserState = &senderLeaf.UserState
-		}
-
-		hash, err := encoder.HashUserState(&models.UserState{
+		massMigrationUserState := &models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
 			TokenID:  senderLeaf.TokenID,
 			Balance:  s.massMigrations[i].Amount,
 			Nonce:    models.MakeUint256(0),
-		})
+		}
+
+		hash, err := encoder.HashUserState(massMigrationUserState)
 		s.NoError(err)
 
 		hashes = append(hashes, *hash)
+
+		if s.massMigrations[i].Hash == transactionHash {
+			targetUserState = massMigrationUserState
+		}
+
+		massMigrationIndex = i
 	}
 
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)
@@ -184,15 +192,15 @@ func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(stateID uint32)
 		WithdrawProof: models.WithdrawProof{
 			UserState: targetUserState,
 			Path: models.MerklePath{
-				Path:  stateID,
+				Path:  uint32(massMigrationIndex),
 				Depth: withdrawTree.Depth(),
 			},
-			Witness: withdrawTree.GetWitness(stateID),
+			Witness: withdrawTree.GetWitness(uint32(massMigrationIndex)),
 			Root:    withdrawTree.Root(),
 		},
 	}
 
-	withdrawProof, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, stateID)
+	withdrawProof, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, transactionHash)
 	s.NoError(err)
 	s.Equal(expected, *withdrawProof)
 }
