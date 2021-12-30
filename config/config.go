@@ -44,7 +44,7 @@ func GetConfig() *Config {
 			TransferBatchSubmissionGasLimit: getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
 			C2TBatchSubmissionGasLimit:      getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
 			MMBatchSubmissionGasLimit: getUint64(
-				"rollup.mass_migration_batch_submission_gas_limit",
+				"rollup.mm_batch_submission_gas_limit",
 				DefaultMMBatchSubmissionGasLimit,
 			),
 			DepositBatchSubmissionGasLimit:   getUint64("rollup.deposit_batch_submission_gas_limit", DefaultDepositBatchSubmissionGasLimit),
