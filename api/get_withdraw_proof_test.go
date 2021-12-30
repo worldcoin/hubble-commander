@@ -8,8 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -42,42 +40,26 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 
 	// unsorted mass migrations
 	s.massMigrations = []models.MassMigration{
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        common.Hash{2, 3, 4},
-				TxType:      txtype.MassMigration,
-				FromStateID: 0,
-				Amount:      models.MakeUint256(90),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(0),
-				Signature:   models.MakeRandomSignature(),
-				ReceiveTime: models.NewTimestamp(time.Unix(140, 0).UTC()),
-				CommitmentID: &models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
-				},
-				ErrorMessage: nil,
+		makeMassMigration(
+			common.Hash{2, 3, 4},
+			0,
+			0,
+			models.NewTimestamp(time.Unix(140, 0).UTC()),
+			models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 0,
 			},
-			SpokeID: 1,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				Hash:        common.Hash{1, 2, 3},
-				TxType:      txtype.MassMigration,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(90),
-				Fee:         models.MakeUint256(10),
-				Nonce:       models.MakeUint256(1),
-				Signature:   models.MakeRandomSignature(),
-				ReceiveTime: models.NewTimestamp(time.Unix(150, 0).UTC()),
-				CommitmentID: &models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
-				},
-				ErrorMessage: nil,
+		),
+		makeMassMigration(
+			common.Hash{1, 2, 3},
+			1,
+			1,
+			models.NewTimestamp(time.Unix(150, 0).UTC()),
+			models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 0,
 			},
-			SpokeID: 1,
-		},
+		),
 	}
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
@@ -100,28 +82,17 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	err = s.storage.BatchAddMassMigration(s.massMigrations)
 	s.NoError(err)
 
-	serializedMassMigrations, err := encoder.SerializeMassMigrations(s.massMigrations)
-	s.NoError(err)
-
-	s.commitment = models.CommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
-				},
-				Type:          batchtype.MassMigration,
-				PostStateRoot: *stateRoot,
-			},
-			FeeReceiver:       1,
-			CombinedSignature: models.MakeRandomSignature(),
-			BodyHash:          nil,
-		},
-		Transactions: serializedMassMigrations,
-	}
-
 	accountTreeRoot := utils.RandomHash()
-	s.commitment.BodyHash = s.commitment.CalcBodyHash(accountTreeRoot)
+	s.commitment = makeMassMigrationCommitment(
+		s.Assertions,
+		models.CommitmentID{
+			BatchID:      models.MakeUint256(1),
+			IndexInBatch: 0,
+		},
+		*stateRoot,
+		accountTreeRoot,
+		s.massMigrations,
+	)
 
 	err = s.storage.AddTxCommitment(&s.commitment.TxCommitment)
 	s.NoError(err)

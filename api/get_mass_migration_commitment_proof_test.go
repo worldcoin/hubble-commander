@@ -44,8 +44,9 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 
 	// unsorted mass migrations
 	s.massMigrations = []models.MassMigration{
-		s.makeMassMigration(
+		makeMassMigration(
 			common.Hash{2, 3, 4},
+			0,
 			0,
 			models.NewTimestamp(time.Unix(140, 0).UTC()),
 			models.CommitmentID{
@@ -53,8 +54,9 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 				IndexInBatch: 0,
 			},
 		),
-		s.makeMassMigration(
+		makeMassMigration(
 			common.Hash{1, 2, 3},
+			0,
 			1,
 			models.NewTimestamp(time.Unix(150, 0).UTC()),
 			models.CommitmentID{
@@ -62,8 +64,9 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 				IndexInBatch: 0,
 			},
 		),
-		s.makeMassMigration(
+		makeMassMigration(
 			common.Hash{3, 4, 5},
+			0,
 			2,
 			models.NewTimestamp(time.Unix(160, 0).UTC()),
 			models.CommitmentID{
@@ -110,7 +113,8 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.commitments = []models.CommitmentWithTxs{
-		s.makeMassMigrationCommitment(
+		makeMassMigrationCommitment(
+			s.Assertions,
 			models.CommitmentID{
 				BatchID:      models.MakeUint256(1),
 				IndexInBatch: 0,
@@ -119,7 +123,8 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 			accountTreeRoot,
 			[]models.MassMigration{s.massMigrations[0], s.massMigrations[1]},
 		),
-		s.makeMassMigrationCommitment(
+		makeMassMigrationCommitment(
+			s.Assertions,
 			models.CommitmentID{
 				BatchID:      models.MakeUint256(1),
 				IndexInBatch: 1,
@@ -228,8 +233,9 @@ func (s *GetMassMigrationCommitmentProofTestSuite) prepareWithdrawTreeAndMeta(
 	return withdrawTree, meta
 }
 
-func (s *GetMassMigrationCommitmentProofTestSuite) makeMassMigration(
+func makeMassMigration(
 	hash common.Hash,
+	from uint32,
 	nonce uint64,
 	receiveTime *models.Timestamp,
 	commitmentID models.CommitmentID,
@@ -238,7 +244,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) makeMassMigration(
 		TransactionBase: models.TransactionBase{
 			Hash:         hash,
 			TxType:       txtype.MassMigration,
-			FromStateID:  0,
+			FromStateID:  from,
 			Amount:       models.MakeUint256(90),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(nonce),
@@ -251,14 +257,15 @@ func (s *GetMassMigrationCommitmentProofTestSuite) makeMassMigration(
 	}
 }
 
-func (s *GetMassMigrationCommitmentProofTestSuite) makeMassMigrationCommitment(
+func makeMassMigrationCommitment(
+	assertion *require.Assertions,
 	commitmentID models.CommitmentID,
 	stateRoot common.Hash,
 	accountRoot common.Hash,
 	massMigrations []models.MassMigration,
 ) models.CommitmentWithTxs {
 	serializedMassMigrations, err := encoder.SerializeMassMigrations(massMigrations)
-	s.NoError(err)
+	assertion.NoError(err)
 
 	massMigrationCommitment := models.CommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
