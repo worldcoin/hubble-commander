@@ -43,38 +43,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 	}
 
 	// unsorted mass migrations
-	s.massMigrations = []models.MassMigration{
-		makeMassMigration(
-			common.Hash{2, 3, 4},
-			0,
-			0,
-			models.NewTimestamp(time.Unix(140, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
-			},
-		),
-		makeMassMigration(
-			common.Hash{1, 2, 3},
-			0,
-			1,
-			models.NewTimestamp(time.Unix(150, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
-			},
-		),
-		makeMassMigration(
-			common.Hash{3, 4, 5},
-			0,
-			2,
-			models.NewTimestamp(time.Unix(160, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 1,
-			},
-		),
-	}
+	s.massMigrations = s.generateMassMigrationForTestSuite()
 
 	_, err = s.storage.StateTree.Set(0, &models.UserState{
 		Balance: models.MakeUint256(100),
@@ -231,6 +200,41 @@ func (s *GetMassMigrationCommitmentProofTestSuite) prepareWithdrawTreeAndMeta(
 	s.NoError(err)
 
 	return withdrawTree, meta
+}
+
+func (s *GetMassMigrationCommitmentProofTestSuite) generateMassMigrationForTestSuite() []models.MassMigration {
+	return []models.MassMigration{
+		makeMassMigration(
+			common.Hash{2, 3, 4},
+			0,
+			0,
+			models.NewTimestamp(time.Unix(140, 0).UTC()),
+			models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 0,
+			},
+		),
+		makeMassMigration(
+			common.Hash{1, 2, 3},
+			0,
+			1,
+			models.NewTimestamp(time.Unix(150, 0).UTC()),
+			models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 0,
+			},
+		),
+		makeMassMigration(
+			common.Hash{3, 4, 5},
+			0,
+			2,
+			models.NewTimestamp(time.Unix(160, 0).UTC()),
+			models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 1,
+			},
+		),
+	}
 }
 
 func makeMassMigration(
