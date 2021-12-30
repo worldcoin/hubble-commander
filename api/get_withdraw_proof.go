@@ -67,6 +67,7 @@ func (a *API) unsafeGetWithdrawProof(
 		return nil, errors.WithStack(err)
 	}
 
+	// TODO remove when new primary key for transactions with transaction index is implement
 	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
