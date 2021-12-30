@@ -16,8 +16,8 @@ const (
 	DefaultC2TBatchSubmissionGasLimit           = uint64(500_000)
 	DefaultMassMigrationBatchSubmissionGasLimit = uint64(550_000)
 	DefaultDepositBatchSubmissionGasLimit       = uint64(220_000)
-	DefaultTransitionDisputeGasLimit            = uint64(5_000_000)
-	DefaultSignatureDisputeGasLimit             = uint64(7_500_000)
+	DefaultTransitionDisputeGasLimit            = uint64(4_100_000)
+	DefaultSignatureDisputeGasLimit             = uint64(7_600_000)
 	DefaultBatchAccountRegistrationGasLimit     = uint64(8_000_000)
 	DefaultMetricsPort                          = "2112"
 	DefaultMetricsEndpoint                      = "/metrics"
