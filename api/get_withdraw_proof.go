@@ -30,7 +30,7 @@ var (
 	)
 )
 
-var getWithdrawTreeProofAPIErrors = map[error]*APIError{
+var getWithdrawProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError:           APIWithdrawProofCouldNotBeCalculated,
 	ErrMassMigrationWithSenderNotFound: APIErrMassMigrationWithSenderNotFound,
 }
@@ -41,7 +41,7 @@ func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, tr
 	}
 	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(batchID, commitmentIndex, transactionHash)
 	if err != nil {
-		return nil, sanitizeError(err, getWithdrawTreeProofAPIErrors)
+		return nil, sanitizeError(err, getWithdrawProofAPIErrors)
 	}
 	return withdrawTreeProofAndRoot, nil
 }
