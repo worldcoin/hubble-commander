@@ -57,6 +57,17 @@ func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
+func (s *RegisteredTokensTestSuite) TestSyncSingleToken_CanSyncTheSameBlocksTwice() {
+	_ = s.registerSingleToken()
+
+	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
+	s.NoError(err)
+	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	s.NoError(err)
+	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	s.NoError(err)
+}
+
 func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken {
 	tokenID := RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
 	return models.RegisteredToken{

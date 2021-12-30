@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/result"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -392,6 +391,28 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	s.Equal(result.NonexistentReceiver, getDisputeResult(s.Assertions, s.client))
 }
 
+func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenAmount() {
+	tx := testutils.MakeTransfer(0, 1, 0, 10)
+
+	s.submitInvalidBatchInTx(&tx, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
+		tx.Amount = models.MakeUint256(0)
+		encodedTx, err := encoder.EncodeTransferForCommitment(&tx)
+		s.NoError(err)
+
+		commitment.Transactions = encodedTx
+	})
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	s.ErrorIs(err, ErrRollbackInProgress)
+
+	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
+	s.Equal(result.InvalidTokenAmount, getDisputeResult(s.Assertions, s.client))
+}
+
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
 	tx := s.submitTransferToNonexistentReceiver()
 
@@ -526,13 +547,8 @@ func submitInvalidTxsBatch(
 	tx models.GenericTransaction,
 	modifier func(storage *st.Storage, commitment *models.CommitmentWithTxs),
 ) *models.Batch {
-	if tx.Type() == txtype.Transfer {
-		err := storage.AddTransfer(tx.ToTransfer())
-		s.NoError(err)
-	} else {
-		err := storage.AddCreate2Transfer(tx.ToCreate2Transfer())
-		s.NoError(err)
-	}
+	err := storage.AddTransaction(tx)
+	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)

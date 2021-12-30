@@ -37,4 +37,5 @@ const (
 	SyncRangeMethod    = "sync_range"
 	SyncDepositsMethod = "sync_deposits"
 	SyncTokensMethod   = "sync_tokens"
+	SyncSpokesMethod   = "sync_spokes"
 )
