@@ -28,7 +28,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/event"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
@@ -66,73 +65,49 @@ func TestCommanderDispute(t *testing.T) {
 }
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendTransferBatchWithInvalidSignature(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendTransferBatchWithInvalidSignature(t, ethClient)
+	})
 
 	testBatchesAfterDispute(t, client, 1)
 }
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
+	})
 
 	testBatchesAfterDispute(t, client, 1)
 }
 
 func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendMMBatchWithInvalidSignature(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendMMBatchWithInvalidSignature(t, ethClient)
+	})
 
 	testBatchesAfterDispute(t, client, 1)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendTransferBatchWithInvalidStateRoot(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendTransferBatchWithInvalidStateRoot(t, ethClient)
+	})
 
 	testBatchesAfterDispute(t, client, 5)
 }
 
 func testDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
+	})
 
 	testBatchesAfterDispute(t, client, 5)
 }
 
 func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendMMBatchWithInvalidStateRoot(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
+	requireRollbackCompleted(t, ethClient, func() {
+		sendMMBatchWithInvalidStateRoot(t, ethClient)
+	})
 
 	testBatchesAfterDispute(t, client, 5)
 }
@@ -145,12 +120,14 @@ func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLen
 	require.Len(t, batches, expectedLength)
 }
 
-func testRollbackCompletion(
-	t *testing.T,
-	ethClient *eth.Client,
-	sink chan *rollup.RollupRollbackStatus,
-	subscription event.Subscription,
-) {
+func requireRollbackCompleted(t *testing.T, ethClient *eth.Client, triggerRollback func()) {
+	sink := make(chan *rollup.RollupRollbackStatus)
+	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
+	require.NoError(t, err)
+	defer subscription.Unsubscribe()
+
+	triggerRollback()
+
 	require.Eventually(t, func() bool {
 		for {
 			select {
