@@ -130,7 +130,7 @@ func fillWithDefaults(c *ClientConfig) {
 		c.C2TBatchSubmissionGasLimit = ref.Uint64(config.DefaultC2TBatchSubmissionGasLimit)
 	}
 	if c.MassMigrationBatchSubmissionGasLimit == nil {
-		c.MassMigrationBatchSubmissionGasLimit = ref.Uint64(config.DefaultMassMigrationBatchSubmissionGasLimit)
+		c.MassMigrationBatchSubmissionGasLimit = ref.Uint64(config.DefaultMMBatchSubmissionGasLimit)
 	}
 	if c.DepositBatchSubmissionGasLimit == nil {
 		c.DepositBatchSubmissionGasLimit = ref.Uint64(config.DefaultDepositBatchSubmissionGasLimit)

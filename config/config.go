@@ -11,16 +11,16 @@ import (
 )
 
 const (
-	SimulatorChainID                            = 1337
-	DefaultTransferBatchSubmissionGasLimit      = uint64(400_000)
-	DefaultC2TBatchSubmissionGasLimit           = uint64(500_000)
-	DefaultMassMigrationBatchSubmissionGasLimit = uint64(550_000)
-	DefaultDepositBatchSubmissionGasLimit       = uint64(220_000)
-	DefaultTransitionDisputeGasLimit            = uint64(4_100_000)
-	DefaultSignatureDisputeGasLimit             = uint64(7_600_000)
-	DefaultBatchAccountRegistrationGasLimit     = uint64(8_000_000)
-	DefaultMetricsPort                          = "2112"
-	DefaultMetricsEndpoint                      = "/metrics"
+	SimulatorChainID                        = 1337
+	DefaultTransferBatchSubmissionGasLimit  = uint64(400_000)
+	DefaultC2TBatchSubmissionGasLimit       = uint64(500_000)
+	DefaultMMBatchSubmissionGasLimit        = uint64(550_000)
+	DefaultDepositBatchSubmissionGasLimit   = uint64(220_000)
+	DefaultTransitionDisputeGasLimit        = uint64(4_100_000)
+	DefaultSignatureDisputeGasLimit         = uint64(7_600_000)
+	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
+	DefaultMetricsPort                      = "2112"
+	DefaultMetricsEndpoint                  = "/metrics"
 )
 
 func GetConfig() *Config {
@@ -45,7 +45,7 @@ func GetConfig() *Config {
 			C2TBatchSubmissionGasLimit:      getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
 			MassMigrationBatchSubmissionGasLimit: getUint64(
 				"rollup.mass_migration_batch_submission_gas_limit",
-				DefaultMassMigrationBatchSubmissionGasLimit,
+				DefaultMMBatchSubmissionGasLimit,
 			),
 			DepositBatchSubmissionGasLimit:   getUint64("rollup.deposit_batch_submission_gas_limit", DefaultDepositBatchSubmissionGasLimit),
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
@@ -92,7 +92,7 @@ func GetTestConfig() *Config {
 			MaxCommitmentsPerBatch:               32,
 			TransferBatchSubmissionGasLimit:      DefaultTransferBatchSubmissionGasLimit,
 			C2TBatchSubmissionGasLimit:           DefaultC2TBatchSubmissionGasLimit,
-			MassMigrationBatchSubmissionGasLimit: DefaultMassMigrationBatchSubmissionGasLimit,
+			MassMigrationBatchSubmissionGasLimit: DefaultMMBatchSubmissionGasLimit,
 			DepositBatchSubmissionGasLimit:       DefaultDepositBatchSubmissionGasLimit,
 			TransitionDisputeGasLimit:            DefaultTransitionDisputeGasLimit,
 			SignatureDisputeGasLimit:             DefaultSignatureDisputeGasLimit,
