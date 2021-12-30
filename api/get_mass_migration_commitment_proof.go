@@ -78,9 +78,9 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(
 		return nil, errors.WithStack(err)
 	}
 
-	proofBase := &models.CommitmentInclusionProofBase{
+	proofBase := &dto.CommitmentInclusionProofBase{
 		StateRoot: commitments[commitmentIndex].GetPostStateRoot(),
-		Path: &models.MerklePath{
+		Path: &dto.MerklePath{
 			Path:  uint32(commitmentIndex),
 			Depth: batchLeafTree.Depth(),
 		},
@@ -88,15 +88,13 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(
 	}
 
 	return &dto.MassMigrationCommitmentProof{
-		MMCommitmentInclusionProof: models.MMCommitmentInclusionProof{
-			CommitmentInclusionProofBase: *proofBase,
-			Body: &models.MMBody{
-				AccountRoot:  *batch.AccountTreeRoot,
-				Signature:    commitment.CombinedSignature,
-				Meta:         meta,
-				WithdrawRoot: withdrawTree.Root(),
-				Transactions: serializedMassMigrations,
-			},
+		CommitmentInclusionProofBase: *proofBase,
+		Body: &dto.MassMigrationBody{
+			AccountRoot:  *batch.AccountTreeRoot,
+			Signature:    commitment.CombinedSignature,
+			Meta:         meta,
+			WithdrawRoot: withdrawTree.Root(),
+			Transactions: serializedMassMigrations,
 		},
 	}, nil
 }
@@ -104,8 +102,8 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(
 func (a *API) generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(
 	commitment *models.TxCommitment,
 	massMigrations []models.MassMigration,
-) (*merkletree.MerkleTree, *models.MassMigrationMeta, error) {
-	meta := &models.MassMigrationMeta{
+) (*merkletree.MerkleTree, *dto.MassMigrationMeta, error) {
+	meta := &dto.MassMigrationMeta{
 		Amount:      models.MakeUint256(0),
 		FeeReceiver: commitment.FeeReceiver,
 	}

@@ -5,15 +5,28 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type CommitmentInclusionProof struct {
+type CommitmentInclusionProofBase struct {
 	StateRoot common.Hash
-	Body      *CommitmentProofBody
 	Path      *MerklePath
 	Witness   models.Witness
 }
 
+type CommitmentInclusionProof struct {
+	CommitmentInclusionProofBase
+	Body *CommitmentProofBody
+}
+
 type MassMigrationCommitmentProof struct {
-	models.MMCommitmentInclusionProof
+	CommitmentInclusionProofBase
+	Body *MassMigrationBody
+}
+
+type MassMigrationBody struct {
+	AccountRoot  common.Hash
+	Signature    models.Signature
+	Meta         *MassMigrationMeta
+	WithdrawRoot common.Hash
+	Transactions []byte
 }
 
 type StateMerkleProof struct {
