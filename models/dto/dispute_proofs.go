@@ -35,7 +35,10 @@ type StateMerkleProof struct {
 }
 
 type WithdrawProof struct {
-	models.WithdrawProof
+	UserState *UserState
+	Path      MerklePath
+	Witness   models.Witness
+	Root      common.Hash
 }
 
 type PublicKeyProof struct {

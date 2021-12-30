@@ -76,15 +76,13 @@ func (a *API) unsafeGetWithdrawProof(
 	}
 
 	return &dto.WithdrawProof{
-		WithdrawProof: models.WithdrawProof{
-			UserState: targetUserState,
-			Path: models.MerklePath{
-				Path:  *massMigrationIndex,
-				Depth: withdrawTree.Depth(),
-			},
-			Witness: withdrawTree.GetWitness(*massMigrationIndex),
-			Root:    withdrawTree.Root(),
+		UserState: targetUserState,
+		Path: dto.MerklePath{
+			Path:  *massMigrationIndex,
+			Depth: withdrawTree.Depth(),
 		},
+		Witness: withdrawTree.GetWitness(*massMigrationIndex),
+		Root:    withdrawTree.Root(),
 	}, nil
 }
 
@@ -93,7 +91,7 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 	transactionHash common.Hash,
 ) (
 	*merkletree.MerkleTree,
-	*models.UserState,
+	*dto.UserState,
 	*uint32,
 	error,
 ) {
@@ -101,7 +99,7 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 	hashes := make([]common.Hash, 0, len(massMigrations))
 
 	var (
-		targetUserState    *models.UserState
+		targetUserState    *dto.UserState
 		massMigrationIndex int
 	)
 
@@ -128,7 +126,8 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 		hashes = append(hashes, *hash)
 
 		if massMigrations[i].Hash == transactionHash {
-			targetUserState = massMigrationUserState
+			dtoMassMigrationUserState := dto.MakeUserState(massMigrationUserState)
+			targetUserState = &dtoMassMigrationUserState
 			massMigrationIndex = i
 		}
 	}

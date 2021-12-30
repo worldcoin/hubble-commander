@@ -188,16 +188,15 @@ func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(transactionHash
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)
 	s.NoError(err)
 
+	dtoTargetUserState := dto.MakeUserState(targetUserState)
 	expected := dto.WithdrawProof{
-		WithdrawProof: models.WithdrawProof{
-			UserState: targetUserState,
-			Path: models.MerklePath{
-				Path:  uint32(massMigrationIndex),
-				Depth: withdrawTree.Depth(),
-			},
-			Witness: withdrawTree.GetWitness(uint32(massMigrationIndex)),
-			Root:    withdrawTree.Root(),
+		UserState: &dtoTargetUserState,
+		Path: dto.MerklePath{
+			Path:  uint32(massMigrationIndex),
+			Depth: withdrawTree.Depth(),
 		},
+		Witness: withdrawTree.GetWitness(uint32(massMigrationIndex)),
+		Root:    withdrawTree.Root(),
 	}
 
 	withdrawProof, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, transactionHash)
