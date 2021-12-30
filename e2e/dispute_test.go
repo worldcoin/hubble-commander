@@ -67,7 +67,7 @@ func TestCommanderDispute(t *testing.T) {
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendTransferBatchWithInvalidSignature(t, ethClient)
+		sendTransferBatchWithInvalidSignature(t, ethClient, 1)
 	})
 
 	requireBatchesCount(t, client, 1)
@@ -75,7 +75,7 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
+		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey(), 1)
 	})
 
 	requireBatchesCount(t, client, 1)
@@ -83,7 +83,7 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 
 func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendMMBatchWithInvalidSignature(t, ethClient)
+		sendMMBatchWithInvalidSignature(t, ethClient, 1)
 	})
 
 	requireBatchesCount(t, client, 1)
@@ -95,7 +95,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 	})
 
 	requireRollbackCompleted(t, ethClient, func() {
-		sendTransferBatchWithInvalidStateRoot(t, ethClient)
+		sendTransferBatchWithInvalidStateRoot(t, ethClient, 2)
 	})
 
 	requireBatchesCount(t, client, 2)
@@ -114,7 +114,7 @@ func testDisputeTransitionC2T(
 	wallets []bls.Wallet,
 ) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
+		sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey(), 3)
 	})
 
 	requireBatchesCount(t, client, 3)
@@ -127,7 +127,7 @@ func testDisputeTransitionC2T(
 
 func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendMMBatchWithInvalidStateRoot(t, ethClient)
+		sendMMBatchWithInvalidStateRoot(t, ethClient, 4)
 	})
 
 	requireBatchesCount(t, client, 4)
@@ -167,7 +167,7 @@ func requireRollbackCompleted(t *testing.T, ethClient *eth.Client, triggerRollba
 	}, 30*time.Second, testutils.TryInterval)
 }
 
-func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
+func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, batchID uint64) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -192,10 +192,10 @@ func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) 
 		},
 		Transactions: encodedTransfer,
 	}
-	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
+	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, batchID)
 }
 
-func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
+func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, batchID uint64) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -208,10 +208,10 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	require.NoError(t, err)
 
-	sendTransferCommitment(t, ethClient, encodedTransfer, 5)
+	sendTransferCommitment(t, ethClient, encodedTransfer, batchID)
 }
 
-func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -239,10 +239,10 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		},
 		Transactions: encodedTransfer,
 	}
-	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, batchID)
 }
 
-func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -258,10 +258,10 @@ func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPub
 	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
 	require.NoError(t, err)
 
-	sendC2TCommitment(t, ethClient, encodedTransfer, 5)
+	sendC2TCommitment(t, ethClient, encodedTransfer, batchID)
 }
 
-func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
+func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, batchID uint64) {
 	tx := models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -297,10 +297,10 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 	}
 
 	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, 1)}
-	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
+	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, batchID)
 }
 
-func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
+func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, batchID uint64) {
 	tx := models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -324,7 +324,7 @@ func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
 	merkleTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
 	require.NoError(t, err)
 
-	sendMMCommitment(t, ethClient, encodedTx, merkleTree.Root(), tx.Amount.Uint64(), 5)
+	sendMMCommitment(t, ethClient, encodedTx, merkleTree.Root(), tx.Amount.Uint64(), batchID)
 }
 
 func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []byte, batchID uint64) {
