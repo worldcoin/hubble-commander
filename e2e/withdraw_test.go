@@ -200,16 +200,16 @@ func testSendMassMigrationForWithdrawal(t *testing.T, client jsonrpc.RPCClient, 
 	return txHash
 }
 
-func testGetMMCommitmentInclusionProof(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256, commitmentIndex uint8) dto.MMCommitmentInclusionProof {
-	var proof dto.MMCommitmentInclusionProof
-	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentInclusionProof", []interface{}{batchID, commitmentIndex})
+func testGetMassMigrationCommitmentProof(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256, commitmentIndex uint8) dto.MassMigrationCommitmentProof {
+	var proof dto.MassMigrationCommitmentProof
+	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{batchID, commitmentIndex})
 	require.NoError(t, err)
 
 	return proof
 }
 
 func testProcessWithdrawCommitment(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, transactor *bind.TransactOpts, withdrawManager *withdrawmanager.WithdrawManager, withdrawManagerAddress common.Address, token *customtoken.TestCustomToken) {
-	proof := testGetMMCommitmentInclusionProof(t, client, models.MakeUint256(2), 0)
+	proof := testGetMassMigrationCommitmentProof(t, client, models.MakeUint256(2), 0)
 
 	typedProof := withdrawmanager.TypesMMCommitmentInclusionProof{
 		Commitment: withdrawmanager.TypesMassMigrationCommitment{
