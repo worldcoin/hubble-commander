@@ -31,7 +31,7 @@ func (c *Commander) unmeasuredSyncStakeWithdrawals(startBlock, endBlock uint64) 
 	defer func() { _ = it.Close() }()
 
 	for it.Next() {
-		if it.Event.Committed != c.client {
+		if it.Event.Committed != c.client.Blockchain.GetAccount().From {
 			continue
 		}
 
