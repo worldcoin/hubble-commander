@@ -69,7 +69,7 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 		sendTransferBatchWithInvalidSignature(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
@@ -77,7 +77,7 @@ func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *
 		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -85,7 +85,7 @@ func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *e
 		sendMMBatchWithInvalidSignature(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -93,7 +93,7 @@ func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethCl
 		sendTransferBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 5)
+	requireBatchesCount(t, client, 5)
 }
 
 func testDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
@@ -101,7 +101,7 @@ func testDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient 
 		sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
 	})
 
-	testBatchesAfterDispute(t, client, 5)
+	requireBatchesCount(t, client, 5)
 }
 
 func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -109,15 +109,15 @@ func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *
 		sendMMBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 5)
+	requireBatchesCount(t, client, 5)
 }
 
-func testBatchesAfterDispute(t *testing.T, client jsonrpc.RPCClient, expectedLength int) {
+func requireBatchesCount(t *testing.T, client jsonrpc.RPCClient, expectedCount int) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 
 	require.NoError(t, err)
-	require.Len(t, batches, expectedLength)
+	require.Len(t, batches, expectedCount)
 }
 
 func requireRollbackCompleted(t *testing.T, ethClient *eth.Client, triggerRollback func()) {

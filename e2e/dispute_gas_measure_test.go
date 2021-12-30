@@ -62,7 +62,7 @@ func measureDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, eth
 		send32TransfersBatchWithInvalidSignature(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -70,7 +70,7 @@ func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClien
 		send32C2TBatchWithInvalidSignature(t, ethClient, wallets)
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func measureDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -78,7 +78,7 @@ func measureDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient
 		send32MMBatchWithInvalidSignature(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func measureDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -86,7 +86,7 @@ func measureDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, et
 		send32TransfersBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
 func measureDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -94,7 +94,7 @@ func measureDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClie
 		send32C2TBatchWithInvalidStateRoot(t, ethClient, wallets)
 	})
 
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
 func measureDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -102,7 +102,7 @@ func measureDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClien
 		send32MMBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
 func send32TransfersBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
