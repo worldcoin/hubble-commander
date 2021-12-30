@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -167,16 +168,16 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 		witnessIndex = 1
 	}
 
-	expected := models.MMCommitmentInclusionProof{
-		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
+	expected := dto.MassMigrationCommitmentProof{
+		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
 			StateRoot: s.commitments[commitmentIndex].PostStateRoot,
-			Path: &models.MerklePath{
+			Path: &dto.MerklePath{
 				Path:  uint32(commitmentIndex),
 				Depth: 2,
 			},
 			Witness: []common.Hash{s.commitments[witnessIndex].LeafHash()},
 		},
-		Body: &models.MMBody{
+		Body: &dto.MassMigrationBody{
 			AccountRoot:  *s.batch.AccountTreeRoot,
 			Signature:    s.commitments[commitmentIndex].CombinedSignature,
 			Meta:         meta,
@@ -187,15 +188,15 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 
 	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentProof(s.batch.ID, uint8(commitmentIndex))
 	s.NoError(err)
-	s.Equal(expected, commitmentInclusionProof.MMCommitmentInclusionProof)
+	s.Equal(expected, *commitmentInclusionProof)
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) prepareWithdrawTreeAndMeta(
 	commitmentIndex int,
 	massMigrations []models.MassMigration,
-) (*merkletree.MerkleTree, *models.MassMigrationMeta) {
+) (*merkletree.MerkleTree, *dto.MassMigrationMeta) {
 	hashes := make([]common.Hash, 0, len(massMigrations))
-	meta := &models.MassMigrationMeta{
+	meta := &dto.MassMigrationMeta{
 		FeeReceiver: s.commitments[commitmentIndex].FeeReceiver,
 	}
 

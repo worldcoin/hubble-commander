@@ -63,14 +63,19 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 	}
 
 	return &dto.CommitmentInclusionProof{
-		StateRoot: commitment.PostStateRoot,
+		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
+			StateRoot: commitment.PostStateRoot,
+			Path: &dto.MerklePath{
+				Path:  path.Path,
+				Depth: path.Depth,
+			},
+			Witness: tree.GetWitness(uint32(commitmentID.IndexInBatch)),
+		},
 		Body: &dto.CommitmentProofBody{
 			AccountRoot:  *batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
 			FeeReceiver:  commitment.FeeReceiver,
 			Transactions: transactions,
 		},
-		Path:    path,
-		Witness: tree.GetWitness(uint32(commitmentID.IndexInBatch)),
 	}, nil
 }
