@@ -27,6 +27,8 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+const L2UNIT = 1e9
+
 func TestWithdrawProcess(t *testing.T) {
 	commanderConfig := config.GetConfig()
 	commanderConfig.Rollup.MinTxsPerCommitment = 2
@@ -75,8 +77,22 @@ func TestWithdrawProcess(t *testing.T) {
 
 	var targetMassMigrationHash common.Hash
 	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
-		firstMassMigrationHash := testSendMassMigrationForWithdrawal(t, commander.Client(), senderWallet, newUserStates[0].StateID, massMigrationWithdrawalAmount, 0)
-		secondMMHash := testSendMassMigrationForWithdrawal(t, commander.Client(), senderWallet, newUserStates[0].StateID, models.NewUint256(90), 1)
+		firstMassMigrationHash := testSendMassMigrationForWithdrawal(
+			t,
+			commander.Client(),
+			senderWallet,
+			newUserStates[0].StateID,
+			massMigrationWithdrawalAmount,
+			0,
+		)
+		secondMMHash := testSendMassMigrationForWithdrawal(
+			t,
+			commander.Client(),
+			senderWallet,
+			newUserStates[0].StateID,
+			models.NewUint256(90),
+			1,
+		)
 
 		testGetTransaction(t, commander.Client(), firstMassMigrationHash)
 		testGetTransaction(t, commander.Client(), secondMMHash)
@@ -145,7 +161,15 @@ func calculateDepositsCountForFullBatch(t *testing.T, ethClient *eth.Client) int
 	return depositsCount
 }
 
-func makeFullDepositBatch(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, depositAmount, tokenID *models.Uint256, token *customtoken.TestCustomToken, senderEthAddress common.Address, depositsNeeded int) {
+func makeFullDepositBatch(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	depositAmount, tokenID *models.Uint256,
+	token *customtoken.TestCustomToken,
+	senderEthAddress common.Address,
+	depositsNeeded int,
+) {
 	balanceBeforeDepositBatch, err := token.BalanceOf(nil, senderEthAddress)
 	require.NoError(t, err)
 
@@ -183,7 +207,14 @@ func userStatesDifference(a, b []dto.UserStateWithID) []dto.UserStateWithID {
 	return diff
 }
 
-func testSendMassMigrationForWithdrawal(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, fromStateID uint32, amount *models.Uint256, nonce int) common.Hash {
+func testSendMassMigrationForWithdrawal(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	senderWallet bls.Wallet,
+	fromStateID uint32,
+	amount *models.Uint256,
+	nonce int,
+) common.Hash {
 	massMigration, err := api.SignMassMigration(&senderWallet, dto.MassMigration{
 		FromStateID: ref.Uint32(fromStateID),
 		SpokeID:     ref.Uint32(1),
@@ -200,7 +231,12 @@ func testSendMassMigrationForWithdrawal(t *testing.T, client jsonrpc.RPCClient, 
 	return txHash
 }
 
-func testGetMassMigrationCommitmentProof(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256, commitmentIndex uint8) dto.MassMigrationCommitmentProof {
+func testGetMassMigrationCommitmentProof(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	batchID models.Uint256,
+	commitmentIndex uint8,
+) dto.MassMigrationCommitmentProof {
 	var proof dto.MassMigrationCommitmentProof
 	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{batchID, commitmentIndex})
 	require.NoError(t, err)
@@ -208,7 +244,15 @@ func testGetMassMigrationCommitmentProof(t *testing.T, client jsonrpc.RPCClient,
 	return proof
 }
 
-func testProcessWithdrawCommitment(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, transactor *bind.TransactOpts, withdrawManager *withdrawmanager.WithdrawManager, withdrawManagerAddress common.Address, token *customtoken.TestCustomToken) {
+func testProcessWithdrawCommitment(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	transactor *bind.TransactOpts,
+	withdrawManager *withdrawmanager.WithdrawManager,
+	withdrawManagerAddress common.Address,
+	token *customtoken.TestCustomToken,
+) {
 	proof := testGetMassMigrationCommitmentProof(t, client, models.MakeUint256(2), 0)
 
 	typedProof := withdrawmanager.TypesMMCommitmentInclusionProof{
@@ -242,12 +286,20 @@ func testProcessWithdrawCommitment(t *testing.T, client jsonrpc.RPCClient, ethCl
 	balanceAfterProcessingWithdrawCommitment, err := token.BalanceOf(nil, withdrawManagerAddress)
 	require.NoError(t, err)
 
-	l2Unit := 1e9
-	expectedBalance := balanceBeforeProcessingWithdrawCommitment.Add(balanceBeforeProcessingWithdrawCommitment, proof.Body.Meta.Amount.MulN(uint64(l2Unit)).ToBig())
+	expectedBalance := balanceBeforeProcessingWithdrawCommitment.Add(
+		balanceBeforeProcessingWithdrawCommitment,
+		proof.Body.Meta.Amount.MulN(uint64(L2UNIT)).ToBig(),
+	)
 	require.Equal(t, balanceAfterProcessingWithdrawCommitment, expectedBalance)
 }
 
-func testGetWithdrawProof(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) dto.WithdrawProof {
+func testGetWithdrawProof(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	batchID models.Uint256,
+	commitmentIndex uint8,
+	transactionHash common.Hash,
+) dto.WithdrawProof {
 	var proof dto.WithdrawProof
 	err := client.CallFor(&proof, "hubble_getWithdrawProof", []interface{}{batchID, commitmentIndex, transactionHash})
 	require.NoError(t, err)
@@ -263,7 +315,16 @@ func testGetPublicKeyProof(t *testing.T, client jsonrpc.RPCClient, pubKeyID uint
 	return proof
 }
 
-func testClaimTokens(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, transactor *bind.TransactOpts, withdrawManager *withdrawmanager.WithdrawManager, token *customtoken.TestCustomToken, sender bls.Wallet, transactionHash common.Hash) {
+func testClaimTokens(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	transactor *bind.TransactOpts,
+	withdrawManager *withdrawmanager.WithdrawManager,
+	token *customtoken.TestCustomToken,
+	sender bls.Wallet,
+	transactionHash common.Hash,
+) {
 	proof := testGetWithdrawProof(t, client, models.MakeUint256(2), 0, transactionHash)
 
 	typedProof := withdrawmanager.TypesStateMerkleProofWithPath{
@@ -285,7 +346,14 @@ func testClaimTokens(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Clie
 	balanceBeforeClaimingTokens, err := token.BalanceOf(nil, transactor.From)
 	require.NoError(t, err)
 
-	tx, err := withdrawManager.ClaimTokens(transactor, utils.ByteSliceTo32ByteSlice(proof.Root.Bytes()), typedProof, sender.PublicKey().BigInts(), message.BigInts(), publicKeyProof.Witness.Bytes())
+	tx, err := withdrawManager.ClaimTokens(
+		transactor,
+		utils.ByteSliceTo32ByteSlice(proof.Root.Bytes()),
+		typedProof,
+		sender.PublicKey().BigInts(),
+		message.BigInts(),
+		publicKeyProof.Witness.Bytes(),
+	)
 	require.NoError(t, err)
 
 	receipt, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
@@ -295,7 +363,9 @@ func testClaimTokens(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Clie
 	balanceAfterClaimingTokens, err := token.BalanceOf(nil, transactor.From)
 	require.NoError(t, err)
 
-	l2Unit := 1e9
-	expectedBalance := balanceBeforeClaimingTokens.Add(balanceBeforeClaimingTokens, proof.UserState.Balance.MulN(uint64(l2Unit)).ToBig())
+	expectedBalance := balanceBeforeClaimingTokens.Add(
+		balanceBeforeClaimingTokens,
+		proof.UserState.Balance.MulN(uint64(L2UNIT)).ToBig(),
+	)
 	require.Equal(t, balanceAfterClaimingTokens, expectedBalance)
 }
