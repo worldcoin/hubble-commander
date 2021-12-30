@@ -31,15 +31,15 @@ type NewClientParams struct {
 }
 
 type ClientConfig struct {
-	TxTimeout                            *time.Duration  // default 60s
-	StakeAmount                          *models.Uint256 // default 0.1 ether
-	TransferBatchSubmissionGasLimit      *uint64         // default 400_000 gas
-	C2TBatchSubmissionGasLimit           *uint64         // default 500_000 gas
-	MassMigrationBatchSubmissionGasLimit *uint64         // default 550_000 gas
-	DepositBatchSubmissionGasLimit       *uint64         // default 220_000 gas
-	TransitionDisputeGasLimit            *uint64         // default 5_000_000 gas
-	SignatureDisputeGasLimit             *uint64         // default 7_500_000 gas
-	BatchAccountRegistrationGasLimit     *uint64         // default 8_000_000 gas
+	TxTimeout                        *time.Duration  // default 60s
+	StakeAmount                      *models.Uint256 // default 0.1 ether
+	TransferBatchSubmissionGasLimit  *uint64         // default 400_000 gas
+	C2TBatchSubmissionGasLimit       *uint64         // default 500_000 gas
+	MMBatchSubmissionGasLimit        *uint64         // default 550_000 gas
+	DepositBatchSubmissionGasLimit   *uint64         // default 220_000 gas
+	TransitionDisputeGasLimit        *uint64         // default 5_000_000 gas
+	SignatureDisputeGasLimit         *uint64         // default 7_500_000 gas
+	BatchAccountRegistrationGasLimit *uint64         // default 8_000_000 gas
 }
 
 type Client struct {
@@ -129,8 +129,8 @@ func fillWithDefaults(c *ClientConfig) {
 	if c.C2TBatchSubmissionGasLimit == nil {
 		c.C2TBatchSubmissionGasLimit = ref.Uint64(config.DefaultC2TBatchSubmissionGasLimit)
 	}
-	if c.MassMigrationBatchSubmissionGasLimit == nil {
-		c.MassMigrationBatchSubmissionGasLimit = ref.Uint64(config.DefaultMMBatchSubmissionGasLimit)
+	if c.MMBatchSubmissionGasLimit == nil {
+		c.MMBatchSubmissionGasLimit = ref.Uint64(config.DefaultMMBatchSubmissionGasLimit)
 	}
 	if c.DepositBatchSubmissionGasLimit == nil {
 		c.DepositBatchSubmissionGasLimit = ref.Uint64(config.DefaultDepositBatchSubmissionGasLimit)
