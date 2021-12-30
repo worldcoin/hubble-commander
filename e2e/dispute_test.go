@@ -51,6 +51,7 @@ func TestCommanderDispute(t *testing.T) {
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
+	senderWallet := wallets[1]
 	receiverWallet := wallets[len(wallets)-1]
 
 	ethClient := newEthClient(t, cmd.Client())
@@ -59,8 +60,8 @@ func TestCommanderDispute(t *testing.T) {
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
 	testDisputeSignatureMM(t, cmd.Client(), ethClient)
 
-	testDisputeTransitionTransfer(t, cmd.Client(), ethClient)
-	testDisputeTransitionC2T(t, cmd.Client(), ethClient, receiverWallet)
+	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
+	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, receiverWallet, wallets)
 	testDisputeTransitionMM(t, cmd.Client(), ethClient)
 }
 
@@ -88,20 +89,40 @@ func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *e
 	requireBatchesCount(t, client, 1)
 }
 
-func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitTransferBatch(t, client, senderWallet, 0)
+	})
+
 	requireRollbackCompleted(t, ethClient, func() {
 		sendTransferBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	requireBatchesCount(t, client, 5)
+	requireBatchesCount(t, client, 2)
+
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitTransferBatch(t, client, senderWallet, 32)
+	})
 }
 
-func testDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
+func testDisputeTransitionC2T(
+	t *testing.T,
+	client jsonrpc.RPCClient,
+	ethClient *eth.Client,
+	senderWallet bls.Wallet,
+	receiverWallet bls.Wallet,
+	wallets []bls.Wallet,
+) {
 	requireRollbackCompleted(t, ethClient, func() {
 		sendC2TBatchWithInvalidStateRoot(t, ethClient, receiverWallet.PublicKey())
 	})
 
-	requireBatchesCount(t, client, 5)
+	requireBatchesCount(t, client, 3)
+
+	firstC2TWallet := wallets[len(wallets)-32]
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
+	})
 }
 
 func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -109,7 +130,7 @@ func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *
 		sendMMBatchWithInvalidStateRoot(t, ethClient)
 	})
 
-	requireBatchesCount(t, client, 5)
+	requireBatchesCount(t, client, 4)
 }
 
 func requireBatchesCount(t *testing.T, client jsonrpc.RPCClient, expectedCount int) {
