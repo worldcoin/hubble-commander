@@ -52,7 +52,6 @@ func TestCommanderDispute(t *testing.T) {
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
-	senderWallet := wallets[1]
 	receiverWallet := wallets[len(wallets)-1]
 
 	ethClient := newEthClient(t, cmd.Client())
@@ -60,10 +59,6 @@ func TestCommanderDispute(t *testing.T) {
 	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
 	testDisputeSignatureMM(t, cmd.Client(), ethClient)
-
-	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
-	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, wallets)
-	testDisputeTransitionMM(t, cmd.Client(), ethClient, senderWallet)
 
 	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
 	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, receiverWallet)
@@ -104,70 +99,6 @@ func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *e
 	testRollbackCompletion(t, ethClient, sink, subscription)
 
 	testBatchesAfterDispute(t, client, 1)
-}
-
-func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
-	submitTxBatchAndWait(t, client, func() common.Hash {
-		return testSubmitTransferBatch(t, client, senderWallet, 0)
-	})
-
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendTransferBatchWithInvalidAmount(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 2)
-
-	submitTxBatchAndWait(t, client, func() common.Hash {
-		return testSubmitTransferBatch(t, client, senderWallet, 32)
-	})
-}
-
-func testDisputeTransitionC2T(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	ethClient *eth.Client,
-	senderWallet bls.Wallet,
-	wallets []bls.Wallet,
-) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	firstC2TWallet := wallets[len(wallets)-32]
-	sendC2TBatchWithInvalidAmount(t, ethClient, firstC2TWallet.PublicKey())
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 3)
-
-	submitTxBatchAndWait(t, client, func() common.Hash {
-		return testSubmitC2TBatch(t, client, senderWallet, wallets, firstC2TWallet.PublicKey(), 64)
-	})
-}
-
-func testDisputeTransitionMM(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	ethClient *eth.Client,
-	senderWallet bls.Wallet,
-) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
-
-	sendMMBatchWithInvalidAmount(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 4)
-
-	submitTxBatchAndWait(t, client, func() common.Hash {
-		return testSubmitMassMigrationBatch(t, client, senderWallet, 96)
-	})
 }
 
 func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -266,22 +197,6 @@ func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) 
 	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
 }
 
-func sendTransferBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
-	transfer := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: 2,
-	}
-
-	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
-	require.NoError(t, err)
-
-	sendTransferCommitment(t, ethClient, encodedTransfer, 2)
-}
-
 func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
@@ -327,25 +242,6 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		Transactions: encodedTransfer,
 	}
 	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
-}
-
-func sendC2TBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
-	transfer := models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
-			Fee:         models.MakeUint256(10),
-		},
-		ToStateID: ref.Uint32(6),
-	}
-
-	pubKeyID, err := ethClient.RegisterAccountAndWait(toPublicKey)
-	require.NoError(t, err)
-
-	encodedTransfer, err := encoder.EncodeCreate2TransferForCommitment(&transfer, *pubKeyID)
-	require.NoError(t, err)
-
-	sendC2TCommitment(t, ethClient, encodedTransfer, 3)
 }
 
 func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
@@ -404,33 +300,6 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 
 	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, 1)}
 	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
-}
-
-func sendMMBatchWithInvalidAmount(t *testing.T, ethClient *eth.Client) {
-	tx := models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			FromStateID: 1,
-			Amount:      models.MakeUint256(2_000_000_000_000_000_000),
-			Fee:         models.MakeUint256(10),
-		},
-		SpokeID: 1,
-	}
-
-	encodedTx, err := encoder.EncodeMassMigrationForCommitment(&tx)
-	require.NoError(t, err)
-
-	hash, err := encoder.HashUserState(&models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(0),
-		Balance:  tx.Amount,
-		Nonce:    models.MakeUint256(0),
-	})
-	require.NoError(t, err)
-
-	merkleTree, err := merkletree.NewMerkleTree([]common.Hash{*hash})
-	require.NoError(t, err)
-
-	sendMMCommitment(t, ethClient, encodedTx, merkleTree.Root(), tx.Amount.Uint64(), 4)
 }
 
 func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
