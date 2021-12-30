@@ -60,9 +60,9 @@ func TestCommanderDispute(t *testing.T) {
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
 	testDisputeSignatureMM(t, cmd.Client(), ethClient)
 
-	testDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	testDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, receiverWallet)
-	testDisputeTransitionMMInvalidStateRoot(t, cmd.Client(), ethClient)
+	testDisputeTransitionTransfer(t, cmd.Client(), ethClient)
+	testDisputeTransitionC2T(t, cmd.Client(), ethClient, receiverWallet)
+	testDisputeTransitionMM(t, cmd.Client(), ethClient)
 }
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -101,7 +101,7 @@ func testDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *e
 	testBatchesAfterDispute(t, client, 1)
 }
 
-func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func testDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
@@ -113,7 +113,7 @@ func testDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.
 	testBatchesAfterDispute(t, client, 5)
 }
 
-func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
+func testDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func testDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCCl
 	testBatchesAfterDispute(t, client, 5)
 }
 
-func testDisputeTransitionMMInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)

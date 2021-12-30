@@ -54,9 +54,9 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 		return testSubmitTransferBatch(t, cmd.Client(), senderWallet, 0)
 	})
 
-	measureDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	measureDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets)
-	measureDisputeTransitionMMInvalidStateRoot(t, cmd.Client(), ethClient)
+	measureDisputeTransitionTransfer(t, cmd.Client(), ethClient)
+	measureDisputeTransitionC2T(t, cmd.Client(), ethClient, wallets)
+	measureDisputeTransitionMM(t, cmd.Client(), ethClient)
 }
 
 func measureDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -95,7 +95,7 @@ func measureDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient
 	testBatchesAfterDispute(t, client, 1)
 }
 
-func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func measureDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
@@ -107,7 +107,7 @@ func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonr
 	testBatchesAfterDispute(t, client, 2)
 }
 
-func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
+func measureDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RP
 	testBatchesAfterDispute(t, client, 2)
 }
 
-func measureDisputeTransitionMMInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func measureDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
 	sink := make(chan *rollup.RollupRollbackStatus)
 	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
 	require.NoError(t, err)
