@@ -42,11 +42,11 @@ func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.Batch
 
 func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
 	return &TxsContext{
-		ExecutionContext: executionCtx,
-		Executor:         NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
-		BatchType:        batchType,
-		txErrorsToStore:  make([]models.TxError, 0),
-		minTxsPerCommitment: executionCtx.cfg.MinTxsPerCommitment,
+		ExecutionContext:       executionCtx,
+		Executor:               NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
+		BatchType:              batchType,
+		txErrorsToStore:        make([]models.TxError, 0),
+		minTxsPerCommitment:    executionCtx.cfg.MinTxsPerCommitment,
 		minCommitmentsPerBatch: executionCtx.cfg.MinCommitmentsPerBatch,
 	}
 }
