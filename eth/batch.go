@@ -24,6 +24,7 @@ type DecodedBatchBase struct {
 	FinalisationBlock uint32
 	AccountTreeRoot   common.Hash
 	SubmissionTime    models.Timestamp
+	Committer         common.Address
 }
 
 func NewDecodedBatchBase(
@@ -52,6 +53,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 		AccountTreeRoot:   &b.AccountTreeRoot,
 		SubmissionTime:    &b.SubmissionTime,
 		PrevStateRoot:     &prevStateRoot,
+		Committer:         &b.Committer,
 	}
 }
 

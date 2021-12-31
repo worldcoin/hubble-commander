@@ -14,4 +14,5 @@ type Batch struct {
 	AccountTreeRoot   *common.Hash
 	PrevStateRoot     *common.Hash
 	SubmissionTime    *Timestamp
+	Committer         *common.Address
 }
