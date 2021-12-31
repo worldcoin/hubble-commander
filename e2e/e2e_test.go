@@ -52,19 +52,9 @@ func TestCommander(t *testing.T) {
 	firstUserState := testGetUserStates(t, commander.Client(), senderWallet)
 	testGetPublicKey(t, commander.Client(), &firstUserState, senderWallet)
 
-	// TODO: move to the end of all the other tests so we don't mess up nonces
-
-	// the following tests hardcode expected nonces,
-	// delayWallet := wallets[2]
-	// testMaxBatchDelay(t, commander.Client(), delayWallet)
-
 	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
 		return testSubmitTransferBatch(t, commander.Client(), senderWallet, 0)
 	})
-
-	testMaxBatchDelay(t, commander.Client(), senderWallet)
-
-	return
 
 	submitTxBatchAndWait(t, commander.Client(), func() common.Hash {
 		firstC2TWallet := wallets[len(wallets)-32]
@@ -75,13 +65,15 @@ func TestCommander(t *testing.T) {
 		return testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
 	})
 
+	testMaxBatchDelay(t, commander.Client(), senderWallet, 96)
+
 	testSubmitDepositBatchAndWait(t, commander.Client())
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
 	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
 	testGetBatches(t, commander.Client())
 
-	testCommanderRestart(t, commander, senderWallet)
+	testCommanderRestart(t, commander, senderWallet, 97)
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -261,8 +253,8 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, models.MakeUint256(32+32+32), senderState.Nonce)
-	require.Equal(t, *initialBalance.SubN(32*100 + 32*100 + 32*100), senderState.Balance)
+	require.Equal(t, models.MakeUint256(32+32+32+1), senderState.Nonce)
+	require.Equal(t, *initialBalance.SubN(32*100 + 32*100 + 32*100 + 100), senderState.Balance)
 }
 
 func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
@@ -274,7 +266,7 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.AddN(32*10 + 32*10 + 32*10), feeReceiverState.Balance)
+	require.Equal(t, *initialBalance.AddN(32*10 + 32*10 + 32*10 + 10), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
 
@@ -282,20 +274,23 @@ func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 	require.NoError(t, err)
-	require.Len(t, batches, 5)
+	require.Len(t, batches, 6)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type, batches[3].Type, batches[4].Type}
+	batchTypes := []batchtype.BatchType{
+		batches[1].Type, batches[2].Type, batches[3].Type, batches[4].Type,
+		batches[5].Type,
+	}
 	require.Contains(t, batchTypes, batchtype.Transfer)
 	require.Contains(t, batchTypes, batchtype.Create2Transfer)
 	require.Contains(t, batchTypes, batchtype.MassMigration)
 	require.Contains(t, batchTypes, batchtype.Deposit)
 }
 
-func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {
+func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet, startNonce uint64) {
 	err := commander.Restart()
 	require.NoError(t, err)
 
-	testSendTransfer(t, commander.Client(), senderWallet, 96)
+	testSendTransfer(t, commander.Client(), senderWallet, startNonce)
 }
 
 func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserStateWithID, error) {
@@ -308,12 +303,10 @@ func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserSt
 }
 
 
-// confirms that batches smaller than the minimum will be mined if any txn is left
+// confirms that batches smaller than the minimum will be submitted if any txn is left
 // pending for too long
-
-// assumes senderWallet is unused, that nonce 0 is available for use
-func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
-	txnHash := testSendTransfer(t, client, senderWallet, 32)
+func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	txnHash := testSendTransfer(t, client, senderWallet, startNonce)
 	require.NotZero(t, txnHash)
 
 	time.Sleep(1)
@@ -329,5 +322,5 @@ func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.
 		err = client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
 		require.NoError(t, err)
 		return txReceipt.Status == txstatus.InBatch
-	}, 5*time.Second, testutils.TryInterval)
+	}, 10*time.Second, testutils.TryInterval)
 }

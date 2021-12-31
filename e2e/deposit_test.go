@@ -26,7 +26,7 @@ const queueDepositGasLimit = 600_000
 
 func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient) {
 	makeDeposits(t, client)
-	waitForBatch(t, client, models.MakeUint256(4))
+	waitForBatch(t, client, models.MakeUint256(5))
 }
 
 func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
