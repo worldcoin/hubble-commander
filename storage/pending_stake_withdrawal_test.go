@@ -57,7 +57,7 @@ func (s *PendingStakeWithdrawalTestSuite) TestGetPendingStakeWithdrawalByFinalis
 
 	stStake, err := s.storage.GetPendingStakeWithdrawalByFinalisationBlock(stake.FinalisationBlock)
 	s.NoError(err)
-	s.Equal(stake, stStake)
+	s.Equal(stake, *stStake)
 }
 
 func (s *PendingStakeWithdrawalTestSuite) TestGetPendingStakeWithdrawalByFinalisationBlock_NonexistentStake() {
