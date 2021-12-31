@@ -41,8 +41,27 @@ func (s *PendingStakeWithdrawalTestSuite) TestAddPendingStakeWithdrawal_AddAndDe
 	s.NoError(err)
 }
 
-func (s *PendingStakeWithdrawalTestSuite) TestRemovePendingStakeWithdrawal_NonexistentStoke() {
+func (s *PendingStakeWithdrawalTestSuite) TestRemovePendingStakeWithdrawal_NonexistentStake() {
 	err := s.storage.RemovePendingStakeWithdrawal(models.MakeUint256(42))
+	s.ErrorIs(err, NewNotFoundError("pending stake withdrawal"))
+}
+
+func (s *PendingStakeWithdrawalTestSuite) TestGetPendingStakeWithdrawalByFinalisationBlock_AddAndGet() {
+	stake := models.PendingStakeWithdrawal{
+		BatchID:           models.MakeUint256(uint64(100)),
+		FinalisationBlock: uint32(125),
+	}
+
+	err := s.storage.AddPendingStakeWithdrawal(&stake)
+	s.NoError(err)
+
+	stStake, err := s.storage.GetPendingStakeWithdrawalByFinalisationBlock(stake.FinalisationBlock)
+	s.NoError(err)
+	s.Equal(stake, stStake)
+}
+
+func (s *PendingStakeWithdrawalTestSuite) TestGetPendingStakeWithdrawalByFinalisationBlock_NonexistentStake() {
+	_, err := s.storage.GetPendingStakeWithdrawalByFinalisationBlock(123)
 	s.ErrorIs(err, NewNotFoundError("pending stake withdrawal"))
 }
 
