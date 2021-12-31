@@ -66,8 +66,8 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(newRemoteBatches[i])
+	for _, remoteBatch := range newRemoteBatches {
+		err = c.syncRemoteBatch(remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -78,12 +78,19 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		default:
 		}
 
-		err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
-			BatchID:           newRemoteBatches[i].GetID(),
-			FinalisationBlock: newRemoteBatches[i].GetBase().FinalisationBlock,
-		})
 		if err != nil {
 			return err
+		}
+
+		batchBase := remoteBatch.GetBase()
+		if batchBase.Committer == c.blockchain.GetAccount().From {
+			err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
+				BatchID:           batchBase.ID,
+				FinalisationBlock: batchBase.FinalisationBlock,
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
