@@ -23,11 +23,6 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() (BatchData, error) {
-	// an evil hack because I'm not sure how to fix the test suite
-	c.minTxsPerCommitment = c.cfg.MinTxsPerCommitment
-	c.minCommitmentsPerBatch = c.cfg.MinCommitmentsPerBatch
-	log.Warnf("minTxs=%d minCommit=%d", c.minTxsPerCommitment, c.minCommitmentsPerBatch)
-
 	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err

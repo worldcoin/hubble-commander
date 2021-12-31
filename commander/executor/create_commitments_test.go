@@ -75,6 +75,7 @@ func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitment() {
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 1
+	s.AcceptNewConfig()
 
 	transfers := testutils.GenerateValidTransfers(1)
 	s.addTransfers(transfers)
@@ -114,12 +115,13 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPer
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
-	s.txsCtx.cfg = &config.RollupConfig{
+	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    4,
 		FeeReceiverPubKeyID:    2,
 		MaxCommitmentsPerBatch: 3,
 	}
+	s.AcceptNewConfig()
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
@@ -172,13 +174,14 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughValidTransfers() {
-	s.txsCtx.cfg = &config.RollupConfig{
+	s.cfg = &config.RollupConfig{
 		MinTxsPerCommitment:    32,
 		MaxTxsPerCommitment:    32,
 		FeeReceiverPubKeyID:    2,
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 1,
 	}
+	s.AcceptNewConfig()
 
 	transfers := testutils.GenerateValidTransfers(2)
 	s.addTransfers(transfers)
@@ -295,6 +298,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkips
 	s.cfg.MaxTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 2
 	s.cfg.MaxTxnDelay = 1 * time.Second
+	s.AcceptNewConfig()
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	{
@@ -312,6 +316,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MaxTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 2
+	s.txsCtx = NewTestTxsContext(s.executionCtx, batchtype.Transfer)
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
@@ -325,6 +330,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOfInvalidTransactions() {
 	s.cfg.MinTxsPerCommitment = 1
+	s.AcceptNewConfig()
 
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
@@ -368,6 +374,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	// Calculate state root after applying 2 valid transfers
 	s.cfg.MinTxsPerCommitment = 2
 	s.cfg.MinCommitmentsPerBatch = 1
+	s.AcceptNewConfig()
 
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[0])
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[1])
@@ -393,6 +400,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.cfg.MinTxsPerCommitment = 2
 	s.cfg.MaxTxsPerCommitment = 2
 	s.cfg.MinCommitmentsPerBatch = 1
+	s.AcceptNewConfig()
 
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[2])
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
@@ -410,6 +418,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionReplacement() {
 	// Mine the transaction with higher fee in case there are two txs from the same sender with the same nonce
 	s.cfg.MinTxsPerCommitment = 1
+	s.AcceptNewConfig()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 100)
 	transfer.Hash = common.BytesToHash([]byte{1})
