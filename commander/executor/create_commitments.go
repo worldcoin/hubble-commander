@@ -159,7 +159,7 @@ func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray)
 		return
 	}
 
-	oldestTxnDelay := time.Now().Sub(oldestTxnTime.Time)
+	oldestTxnDelay := time.Since(oldestTxnTime.Time)
 
 	if oldestTxnDelay > c.cfg.MaxTxnDelay {
 		log.Warn("ignoring batch minimums")

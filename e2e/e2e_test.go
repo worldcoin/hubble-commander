@@ -19,10 +19,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func TestCommander(t *testing.T) {
@@ -302,14 +301,13 @@ func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserSt
 	return nil, errors.New("user state with given stateID not found")
 }
 
-
 // confirms that batches smaller than the minimum will be submitted if any txn is left
 // pending for too long
 func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
 	txnHash := testSendTransfer(t, client, senderWallet, startNonce)
 	require.NotZero(t, txnHash)
 
-	time.Sleep(1)
+	time.Sleep(1 * time.Second)
 
 	var txReceipt dto.TransactionReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})

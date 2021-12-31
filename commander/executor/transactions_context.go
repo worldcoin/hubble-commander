@@ -20,7 +20,7 @@ type TxsContext struct {
 
 	// saved here because the configuration might be overridden depending on the set
 	// of currently pending transactions
-	minTxsPerCommitment uint32
+	minTxsPerCommitment    uint32
 	minCommitmentsPerBatch uint32
 }
 
