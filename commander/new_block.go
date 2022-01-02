@@ -153,6 +153,11 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, err
 	}
 
+	err = c.withdrawRemainingStakes(startBlock, endBlock)
+	if err != nil {
+		return nil, err
+	}
+
 	err = c.storage.SetSyncedBlock(endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -198,6 +203,20 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 		return err
 	}
 
+	return nil
+}
+
+func (c *Commander) withdrawRemainingStakes(startBlock, endBlock uint64) error {
+	stakes, err := c.storage.GetPendingStakeWithdrawalsByFinalisationBlock(uint32(startBlock), uint32(endBlock))
+	if err != nil {
+		return err
+	}
+	for _, stake := range stakes {
+		err = c.client.WithdrawStake(&stake.BatchID)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

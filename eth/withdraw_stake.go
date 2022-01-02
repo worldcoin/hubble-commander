@@ -13,3 +13,8 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 	_, err = chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
 	return err
 }
+
+func (c *Client) WithdrawStake(batchID *models.Uint256) error {
+	_, err := c.rollup().WithdrawStake(batchID.ToBig())
+	return err
+}
