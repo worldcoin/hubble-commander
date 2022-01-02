@@ -88,22 +88,25 @@ func (s *Storage) copyWithNewDatabase(database *Database) *Storage {
 
 	registeredSpokeStorage := s.RegisteredSpokeStorage.copyWithNewDatabase(database)
 
+	pendingStakeWithdrawalStorage := s.PendingStakeWithdrawalStorage.copyWithNewDatabase(database)
+
 	stateTree := s.StateTree.copyWithNewDatabase(database)
 
 	accountTree := s.AccountTree.copyWithNewDatabase(database)
 
 	return &Storage{
-		BatchStorage:           batchStorage,
-		CommitmentStorage:      commitmentStorage,
-		TransactionStorage:     transactionStorage,
-		DepositStorage:         depositStorage,
-		ChainStateStorage:      chainStateStorage,
-		RegisteredTokenStorage: registeredTokenStorage,
-		RegisteredSpokeStorage: registeredSpokeStorage,
-		StateTree:              stateTree,
-		AccountTree:            accountTree,
-		database:               database,
-		feeReceiverStateIDs:    utils.CopyStringUint32Map(s.feeReceiverStateIDs),
+		BatchStorage:                  batchStorage,
+		CommitmentStorage:             commitmentStorage,
+		TransactionStorage:            transactionStorage,
+		DepositStorage:                depositStorage,
+		ChainStateStorage:             chainStateStorage,
+		RegisteredTokenStorage:        registeredTokenStorage,
+		RegisteredSpokeStorage:        registeredSpokeStorage,
+		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
+		StateTree:                     stateTree,
+		AccountTree:                   accountTree,
+		database:                      database,
+		feeReceiverStateIDs:           utils.CopyStringUint32Map(s.feeReceiverStateIDs),
 	}
 }
 

@@ -30,7 +30,7 @@ func (s *StakeWithdrawalsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.teardown = testStorage.Teardown
 
-	// finalise instantly
+	// finalize instantly
 	s.testClient, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
 		Params: rollup.Params{BlocksToFinalise: models.NewUint256(0)},
 	}, eth.ClientConfig{})
