@@ -53,7 +53,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 		AccountTreeRoot:   &b.AccountTreeRoot,
 		SubmissionTime:    &b.SubmissionTime,
 		PrevStateRoot:     &prevStateRoot,
-		Committer:         &b.Committer,
+		Committer:         b.Committer,
 	}
 }
 

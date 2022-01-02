@@ -18,6 +18,6 @@ func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
 		Hash:              &hash,
 		Type:              meta.BatchType,
 		FinalisationBlock: &meta.FinaliseOn,
-		Committer:         &meta.Committer,
+		Committer:         meta.Committer,
 	}, nil
 }
