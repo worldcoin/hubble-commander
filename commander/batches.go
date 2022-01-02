@@ -78,10 +78,6 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		default:
 		}
 
-		if err != nil {
-			return err
-		}
-
 		batchBase := remoteBatch.GetBase()
 		if batchBase.Committer == c.blockchain.GetAccount().From {
 			err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
