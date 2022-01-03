@@ -33,6 +33,34 @@ type ChainSpec struct {
 
 type GenesisAccounts []PopulatedGenesisAccount
 
+func (s *ChainState) Equal(other *ChainState) bool {
+	if s == nil || other == nil {
+		return s == nil && other == nil
+	}
+
+	if s.ChainID != other.ChainID ||
+		s.AccountRegistry != other.AccountRegistry ||
+		s.AccountRegistryDeploymentBlock != other.AccountRegistryDeploymentBlock ||
+		s.TokenRegistry != other.TokenRegistry ||
+		s.SpokeRegistry != other.SpokeRegistry ||
+		s.DepositManager != other.DepositManager ||
+		s.Rollup != other.Rollup {
+		return false
+	}
+
+	if len(s.GenesisAccounts) != len(other.GenesisAccounts) {
+		return false
+	}
+
+	for i := range s.GenesisAccounts {
+		if s.GenesisAccounts[i] != other.GenesisAccounts[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (s *ChainState) Bytes() []byte {
 	size := baseChainStateDataLength + len(s.GenesisAccounts)*populatedGenesisAccountByteSize
 	b := make([]byte, size)
