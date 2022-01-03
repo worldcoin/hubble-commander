@@ -1,47 +1,58 @@
 # Badger Operations
 
-Statistics for large operations done on Badger database.
-This is mostly for tracking whether we don't hit Badger txn limits. 
+Statistics for large operations done on Badger database. This is mostly for tracking whether we don't hit Badger txn limits. Stats generated
+using [these changes to Badger](https://github.com/msieczko/badger/commit/bf43a3a4b9dfb80019a97b10d0e7d269a7eff34e).
 
 ## Rollup loop
 
 ### Transfer batch
+
+Measured with `TestBenchTransfersCommander`. Tx count: `10000`.
+
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
+
+Both Badger tx operations count and tx size stable for consecutive batches.
 
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
-Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
+Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 847360
 Key: bh_StateUpdate, Count: 2080, Size: 505440
-Key: bh_StateLeaf, Count: 2080, Size: 351520
-Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 4160, Size: 260000
-Key: bh_TxReceipt, Count: 1024, Size: 138240
-Key: bh_Commitment, Count: 32, Size: 7424
-Key: bh_Batch, Count: 1, Size: 244
-SUM: Count: 79042, Size: 7159849
+Key: bh_StateLeaf, Count: 2080, Size: 343200
+Key: _bhIndex:StateLeaf:PubKeyID, Count: 4160, Size: 235040
+Key: bh_TxReceipt, Count: 1024, Size: 132096
+Key: bh_Commitment, Count: 32, Size: 7232
+Key: bh_Batch, Count: 1, Size: 238
+SUM: Count: 79042, Size: 7012707
 ```
 
 ### Create2Transfer batch (realistic)
-Measured with `TestBenchCreate2TransfersCommander`. Batch with 1024 public key registrations.
+
+Measured with `TestBenchCreate2TransfersCommander`. Batch with 1024 public key registrations. Tx count: `10000`.
+
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
+
+Badger tx operations count stable and tx size mostly stable for consecutive batches. Only `_bhIndex:AccountLeaf:PublicKey`
+and `_bhIndex:StateLeaf:PubKeyID` index sizes grow slowly.
+
 ```
 Key: bh_MerkleTreeNode, Count: 102432, Size: 7442688
-Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
+Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 847360
 Key: bh_StateUpdate, Count: 2080, Size: 505440
-Key: bh_StateLeaf, Count: 2080, Size: 351520
-Key: _bhIndex:StateLeaf:PubKeyID, Count: 3136, Size: 210932
-Key: _bhIndex:AccountLeaf:PublicKey, Count: 1024, Size: 203094
+Key: bh_StateLeaf, Count: 2080, Size: 343200
+Key: _bhIndex:AccountLeaf:PublicKey, Count: 1024, Size: 203436
+Key: _bhIndex:StateLeaf:PubKeyID, Count: 3136, Size: 190035
 Key: bh_AccountLeaf, Count: 1024, Size: 166912
-Key: bh_TxReceipt, Count: 1024, Size: 138240
-Key: _bhIndex:TxReceipt:ToStateID, Count: 1024, Size: 112640
-Key: bh_Commitment, Count: 32, Size: 7424
-Key: bh_Batch, Count: 1, Size: 244
-SUM: Count: 114882, Size: 10094035
+Key: bh_TxReceipt, Count: 1024, Size: 132096
+Key: _bhIndex:TxReceipt:ToStateID, Count: 1024, Size: 100352
+Key: bh_Commitment, Count: 32, Size: 7232
+Key: bh_Batch, Count: 1, Size: 238
+SUM: Count: 114882, Size: 9939010
 ```
 
 ### Create2Transfer batch (unrealistic)
@@ -137,7 +148,7 @@ min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
 
-Tx size turned out stable for consecutive batches.
+Badger tx size stable for consecutive batches.
 
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
