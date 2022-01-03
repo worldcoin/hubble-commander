@@ -22,6 +22,7 @@ func TestChainState_SetBytes(t *testing.T) {
 		AccountRegistry:                utils.RandomAddress(),
 		AccountRegistryDeploymentBlock: 7392,
 		TokenRegistry:                  utils.RandomAddress(),
+		SpokeRegistry:                  utils.RandomAddress(),
 		DepositManager:                 utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		SyncedBlock:                    8001,
