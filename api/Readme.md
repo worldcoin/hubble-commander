@@ -15,7 +15,7 @@
 |------------|---------------------------------------------------------------------|
 | `999`      | `unknown error: COMMANDER_ERROR`                                    |
 | `10000`    | `transaction not found`                                             |
-| `10001`    | `transactions not found`                                            |
+| `10001`    | _DEPRECATED_: `transactions not found`                              |
 | `10002`    | `some field is missing, verify the transfer/create2transfer object` |
 | `10003`    | `invalid recipient, cannot send funds to yourself`                  |
 | `10004`    | `nonce too low`                                                     |

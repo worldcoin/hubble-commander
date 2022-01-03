@@ -166,10 +166,6 @@ Example result (`MASS_MIGRATION`):
 }
 ```
 
-### `hubble_getTransactions(pubKey)`
-
-Returns an array of transactions (`TRANSFER` and `CREATE2TRANSFER` type) for given public key
-
 ### `hubble_getUserState(stateId)`
 
 Example result:

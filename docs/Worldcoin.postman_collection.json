@@ -1,6 +1,6 @@
 {
     "info": {
-        "_postman_id": "a7f03435-4cdb-4561-9a38-4852c43b7cf7",
+        "_postman_id": "44d8ebbf-9504-4347-a63a-05b0aeda4910",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
@@ -151,29 +151,6 @@
                 "body": {
                     "mode": "raw",
                     "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatches\",\n    \"params\": [\n        \"0\",\n        \"2\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
-                        }
-                    }
-                },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getTransactions",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransactions\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
                     "options": {
                         "raw": {
                             "language": "json"
