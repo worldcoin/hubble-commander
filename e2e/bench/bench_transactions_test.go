@@ -32,10 +32,10 @@ type BenchmarkTransactionsSuite struct {
 
 func (s *BenchmarkTransactionsSuite) SetupTest() {
 	s.benchmarkTestSuite.SetupTest(BenchmarkConfig{
-		TxCount:                1_000,
-		TxBatchSize:            32,
-		MaxQueuedBatchesAmount: 20,
-		MaxConcurrentWorkers:   4,
+		TxCount:               1_000,
+		TxBatchSize:           32,
+		MaxQueuedBatchesCount: 20,
+		MaxConcurrentWorkers:  4,
 	})
 
 	unregisteredWallets, err := setup.CreateUnregisteredWalletsForBenchmark(s.benchConfig.TxCount, s.domain)

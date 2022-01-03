@@ -28,7 +28,7 @@ type BenchmarkConfig struct {
 	TxBatchSize int64
 
 	// Maximum number of tx batches in queue.
-	MaxQueuedBatchesAmount int64
+	MaxQueuedBatchesCount int64
 
 	// Maximum number of workers that send transactions.
 	MaxConcurrentWorkers int64
@@ -188,12 +188,12 @@ func (s *benchmarkTestSuite) runForWallet(
 ) {
 	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateID, senderWallet.PublicKey().String())
 
-	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesAmount)
+	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesCount)
 	nonce := models.MakeUint256(0)
 
 	for s.txsSent < s.benchConfig.TxCount {
 		// Send phase
-		for int64(len(txsToWatch)) <= s.benchConfig.MaxQueuedBatchesAmount {
+		for int64(len(txsToWatch)) <= s.benchConfig.MaxQueuedBatchesCount {
 			var lastTxHash common.Hash
 
 			for i := 0; i < int(s.benchConfig.TxBatchSize); i++ {
