@@ -20,7 +20,7 @@ func (s *testSuiteWithTxsContext) SetupTestWithConfig(batchType batchtype.BatchT
 	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
 }
 
-// testify does not support parameterized test fixtures and propagators are not in
+// AcceptNewConfig testify does not support parameterized test fixtures and propagators are not in
 // fashion so when a test changes the RollupConfig is must also redo the relevant parts of
 // setup
 func (s *testSuiteWithTxsContext) AcceptNewConfig() {
