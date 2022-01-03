@@ -104,59 +104,26 @@ SUM: Count: 79042, Size: 11254164
 ## Syncing
 
 ### Transfer batch
-Measured with `TestBenchSyncCommander` set to send and sync only Transfer batches.
+
+Measured with `TestBenchSyncCommander` set to send and sync only Transfer batches. Tx count: `10000`.
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
-The test sends an enormous number of Transfers using just a bunch of User States. 
-As a result `_bhIndex:Tx:FromStateID` and `_bhIndex:Tx:ToStateID` grow with every batch.
 
-First batch:
+The test sends an enormous number of Transfers using just a bunch of User States. Removing `_bhIndex:Tx:FromStateID`
+and `_bhIndex:Tx:ToStateID` indices made the size of txs stable for consecutive batches.
+
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
-Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 3938404
-Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 3922632
-Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
+Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 847360
 Key: bh_StateUpdate, Count: 2080, Size: 505440
-Key: bh_FlatStateLeaf, Count: 2080, Size: 351520
-Key: bh_Tx, Count: 1024, Size: 279552
-Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 4160, Size: 260000
-Key: bh_TxReceipt, Count: 1024, Size: 138240
-Key: bh_Commitment, Count: 32, Size: 7424
-Key: bh_Batch, Count: 1, Size: 244
-Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
-SUM: Count: 82115, Size: 15300562
-```
-Second batch:
-```
-Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 11643552
-Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 11612160
-Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
-Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
-Key: bh_StateUpdate, Count: 2080, Size: 505440
-Key: bh_FlatStateLeaf, Count: 2080, Size: 351520
-Key: bh_Tx, Count: 1024, Size: 279552
-Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 4160, Size: 260000
-Key: bh_TxReceipt, Count: 1024, Size: 138240
-Key: bh_Commitment, Count: 32, Size: 7424
-Key: bh_Batch, Count: 1, Size: 244
-Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
-SUM: Count: 82115, Size: 30695238
-```
-Third batch:
-```
-Key: _bhIndex:Tx:FromStateID, Count: 1024, Size: 19301688
-Key: _bhIndex:Tx:ToStateID, Count: 1024, Size: 19294712
-Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
-Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 954880
-Key: bh_StateUpdate, Count: 2080, Size: 505440
-Key: bh_FlatStateLeaf, Count: 2080, Size: 351520
-Key: bh_Tx, Count: 1024, Size: 279552
-Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 4160, Size: 260000
-Key: bh_TxReceipt, Count: 1024, Size: 138240
-Key: bh_Commitment, Count: 32, Size: 7424
-Key: bh_Batch, Count: 1, Size: 244
-Key: _bhIndex:Batch:Hash, Count: 1, Size: 125
-SUM: Count: 82115, Size: 46035926
+Key: bh_StateLeaf, Count: 2080, Size: 343200
+Key: bh_Tx, Count: 1024, Size: 273408
+Key: _bhIndex:StateLeaf:PubKeyID, Count: 4160, Size: 235040
+Key: bh_TxReceipt, Count: 1024, Size: 132096
+Key: bh_Commitment, Count: 32, Size: 7232
+Key: bh_Batch, Count: 1, Size: 238
+Key: _bhIndex:Batch:Hash, Count: 1, Size: 113
+SUM: Count: 80067, Size: 7286228
 ```
