@@ -127,3 +127,29 @@ Key: bh_Batch, Count: 1, Size: 238
 Key: _bhIndex:Batch:Hash, Count: 1, Size: 113
 SUM: Count: 80067, Size: 7286228
 ```
+
+### Create2Transfer batch
+
+Measured with `TestBenchSyncCommander` set to send and sync only Create2Transfer batches. Tx count: `5000`.
+
+```
+min_txs_per_commitment: 32
+min_commitments_per_batch: 32
+```
+
+Tx size turned out stable for consecutive batches.
+
+```
+Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
+Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 847360
+Key: bh_StateUpdate, Count: 2080, Size: 505440
+Key: bh_Tx, Count: 1024, Size: 400384
+Key: bh_StateLeaf, Count: 2080, Size: 343200
+Key: _bhIndex:StateLeaf:PubKeyID, Count: 3136, Size: 190069
+Key: bh_TxReceipt, Count: 1024, Size: 132096
+Key: _bhIndex:TxReceipt:ToStateID, Count: 1024, Size: 100352
+Key: bh_Commitment, Count: 32, Size: 7232
+Key: bh_Batch, Count: 1, Size: 238
+Key: _bhIndex:Batch:Hash, Count: 1, Size: 113
+SUM: Count: 80067, Size: 7468585
+```
