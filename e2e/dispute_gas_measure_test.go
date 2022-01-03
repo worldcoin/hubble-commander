@@ -9,14 +9,12 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
@@ -54,81 +52,57 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 		return testSubmitTransferBatch(t, cmd.Client(), senderWallet, 0)
 	})
 
-	measureDisputeTransitionTransferInvalidStateRoot(t, cmd.Client(), ethClient)
-	measureDisputeTransitionC2TInvalidStateRoot(t, cmd.Client(), ethClient, wallets)
-	measureDisputeTransitionMMInvalidStateRoot(t, cmd.Client(), ethClient)
+	measureDisputeTransitionTransfer(t, cmd.Client(), ethClient)
+	measureDisputeTransitionC2T(t, cmd.Client(), ethClient, wallets)
+	measureDisputeTransitionMM(t, cmd.Client(), ethClient)
 }
 
 func measureDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+	requireRollbackCompleted(t, ethClient, func() {
+		send32TransfersBatchWithInvalidSignature(t, ethClient)
+	})
 
-	send32TransfersBatchWithInvalidSignature(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func measureDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+	requireRollbackCompleted(t, ethClient, func() {
+		send32C2TBatchWithInvalidSignature(t, ethClient, wallets)
+	})
 
-	send32C2TBatchWithInvalidSignature(t, ethClient, wallets)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
 func measureDisputeSignatureMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+	requireRollbackCompleted(t, ethClient, func() {
+		send32MMBatchWithInvalidSignature(t, ethClient)
+	})
 
-	send32MMBatchWithInvalidSignature(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 1)
+	requireBatchesCount(t, client, 1)
 }
 
-func measureDisputeTransitionTransferInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+func measureDisputeTransitionTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+	requireRollbackCompleted(t, ethClient, func() {
+		send32TransfersBatchWithInvalidStateRoot(t, ethClient)
+	})
 
-	send32TransfersBatchWithInvalidStateRoot(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
-func measureDisputeTransitionC2TInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+func measureDisputeTransitionC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, wallets []bls.Wallet) {
+	requireRollbackCompleted(t, ethClient, func() {
+		send32C2TBatchWithInvalidStateRoot(t, ethClient, wallets)
+	})
 
-	send32C2TBatchWithInvalidStateRoot(t, ethClient, wallets)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
-func measureDisputeTransitionMMInvalidStateRoot(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
-	sink := make(chan *rollup.RollupRollbackStatus)
-	subscription, err := ethClient.Rollup.WatchRollbackStatus(&bind.WatchOpts{}, sink)
-	require.NoError(t, err)
-	defer subscription.Unsubscribe()
+func measureDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+	requireRollbackCompleted(t, ethClient, func() {
+		send32MMBatchWithInvalidStateRoot(t, ethClient)
+	})
 
-	send32MMBatchWithInvalidStateRoot(t, ethClient)
-	testRollbackCompletion(t, ethClient, sink, subscription)
-
-	testBatchesAfterDispute(t, client, 2)
+	requireBatchesCount(t, client, 2)
 }
 
 func send32TransfersBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client) {
