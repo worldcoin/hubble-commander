@@ -52,7 +52,7 @@ type benchmarkTestSuite struct {
 	txsSent   int64
 	txsQueued int64
 
-	lastReportedTxAmount int64
+	lastReportedTxCount int64
 }
 
 func (s *benchmarkTestSuite) SetupSuite() {
@@ -83,7 +83,7 @@ func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig Benchmark
 	s.waitGroup = sync.WaitGroup{}
 	s.txsSent = 0
 	s.txsQueued = 0
-	s.lastReportedTxAmount = 0
+	s.lastReportedTxCount = 0
 }
 
 func (s *benchmarkTestSuite) TearDownTest() {
@@ -232,8 +232,8 @@ func (s *benchmarkTestSuite) runForWallet(
 		txsToWatch = newTxsToWatch
 
 		// Report phase
-		if s.lastReportedTxAmount != s.txsSent {
-			s.lastReportedTxAmount = s.txsSent
+		if s.lastReportedTxCount != s.txsSent {
+			s.lastReportedTxCount = s.txsSent
 			fmt.Printf(
 				"Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n",
 				s.txsSent,
