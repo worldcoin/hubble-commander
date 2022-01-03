@@ -426,13 +426,13 @@ func createClientFromChainState(
 		SpokeRegistry:   spokeRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
-			TransferBatchSubmissionGasLimit:      ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
-			C2TBatchSubmissionGasLimit:           ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
-			MassMigrationBatchSubmissionGasLimit: ref.Uint64(cfg.MassMigrationBatchSubmissionGasLimit),
-			DepositBatchSubmissionGasLimit:       ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
-			TransitionDisputeGasLimit:            ref.Uint64(cfg.TransitionDisputeGasLimit),
-			SignatureDisputeGasLimit:             ref.Uint64(cfg.SignatureDisputeGasLimit),
-			BatchAccountRegistrationGasLimit:     ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
+			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
+			MMBatchSubmissionGasLimit:        ref.Uint64(cfg.MMBatchSubmissionGasLimit),
+			DepositBatchSubmissionGasLimit:   ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
+			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
+			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
 		},
 	})
 	if err != nil {
