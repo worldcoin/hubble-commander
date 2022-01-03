@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const baseChainStateDataLength = 128
+const baseChainStateDataLength = 148
 
 type ChainState struct {
 	ChainID                        Uint256
@@ -33,6 +33,34 @@ type ChainSpec struct {
 
 type GenesisAccounts []PopulatedGenesisAccount
 
+func (s *ChainState) Equal(other *ChainState) bool {
+	if s == nil || other == nil {
+		return s == nil && other == nil
+	}
+
+	if s.ChainID != other.ChainID ||
+		s.AccountRegistry != other.AccountRegistry ||
+		s.AccountRegistryDeploymentBlock != other.AccountRegistryDeploymentBlock ||
+		s.TokenRegistry != other.TokenRegistry ||
+		s.SpokeRegistry != other.SpokeRegistry ||
+		s.DepositManager != other.DepositManager ||
+		s.Rollup != other.Rollup {
+		return false
+	}
+
+	if len(s.GenesisAccounts) != len(other.GenesisAccounts) {
+		return false
+	}
+
+	for i := range s.GenesisAccounts {
+		if s.GenesisAccounts[i] != other.GenesisAccounts[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (s *ChainState) Bytes() []byte {
 	size := baseChainStateDataLength + len(s.GenesisAccounts)*populatedGenesisAccountByteSize
 	b := make([]byte, size)
@@ -41,9 +69,10 @@ func (s *ChainState) Bytes() []byte {
 	copy(b[32:52], s.AccountRegistry.Bytes())
 	binary.BigEndian.PutUint64(b[52:60], s.AccountRegistryDeploymentBlock)
 	copy(b[60:80], s.TokenRegistry.Bytes())
-	copy(b[80:100], s.DepositManager.Bytes())
-	copy(b[100:120], s.Rollup.Bytes())
-	binary.BigEndian.PutUint64(b[120:128], s.SyncedBlock)
+	copy(b[80:100], s.SpokeRegistry.Bytes())
+	copy(b[100:120], s.DepositManager.Bytes())
+	copy(b[120:140], s.Rollup.Bytes())
+	binary.BigEndian.PutUint64(b[140:148], s.SyncedBlock)
 
 	for i := range s.GenesisAccounts {
 		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
@@ -66,9 +95,10 @@ func (s *ChainState) SetBytes(data []byte) error {
 	s.AccountRegistry.SetBytes(data[32:52])
 	s.AccountRegistryDeploymentBlock = binary.BigEndian.Uint64(data[52:60])
 	s.TokenRegistry.SetBytes(data[60:80])
-	s.DepositManager.SetBytes(data[80:100])
-	s.Rollup.SetBytes(data[100:120])
-	s.SyncedBlock = binary.BigEndian.Uint64(data[120:128])
+	s.SpokeRegistry.SetBytes(data[80:100])
+	s.DepositManager.SetBytes(data[100:120])
+	s.Rollup.SetBytes(data[120:140])
+	s.SyncedBlock = binary.BigEndian.Uint64(data[140:148])
 
 	genesisAccountsCount := (dataLength - baseChainStateDataLength) / populatedGenesisAccountByteSize
 
