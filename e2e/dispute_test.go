@@ -62,7 +62,7 @@ func TestCommanderDispute(t *testing.T) {
 
 	testDisputeTransitionTransfer(t, cmd.Client(), ethClient, senderWallet)
 	testDisputeTransitionC2T(t, cmd.Client(), ethClient, senderWallet, receiverWallet, wallets)
-	testDisputeTransitionMM(t, cmd.Client(), ethClient)
+	testDisputeTransitionMM(t, cmd.Client(), ethClient, senderWallet)
 }
 
 func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
@@ -125,12 +125,16 @@ func testDisputeTransitionC2T(
 	})
 }
 
-func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) {
+func testDisputeTransitionMM(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, senderWallet bls.Wallet) {
 	requireRollbackCompleted(t, ethClient, func() {
 		sendMMBatchWithInvalidStateRoot(t, ethClient, 4)
 	})
 
 	requireBatchesCount(t, client, 4)
+
+	submitTxBatchAndWait(t, client, func() common.Hash {
+		return testSubmitMassMigrationBatch(t, client, senderWallet, 96)
+	})
 }
 
 func requireBatchesCount(t *testing.T, client jsonrpc.RPCClient, expectedCount int) {
