@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -178,40 +177,6 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	s.Nil(hashes)
 }
 
-func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_IndexWorks() {
-	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
-	s.addStoredTx(txtype.Transfer, ref.Uint32(2))
-	s.addStoredTx(txtype.Transfer, ref.Uint32(1))
-
-	indexValues := s.getToStateIDIndexValues(stored.TxName)
-	s.Len(indexValues, 3)
-	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
-	s.Len(indexValues[1], 2)
-	s.Len(indexValues[2], 1)
-}
-
-func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_ValuesWithoutThisFieldAreNotIndexed() {
-	s.addStoredTx(txtype.Create2Transfer, nil)
-
-	indexValues := s.getToStateIDIndexValues(stored.TxName)
-	s.Len(indexValues, 1)
-	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
-}
-
-// This test checks an edge case that we introduced by indexing ToStateID field which is only available in Transfer transactions.
-// See: NewTransactionStorage
-func (s *StoredTransactionTestSuite) TestStoredTx_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithoutThisField() {
-	s.addStoredTx(txtype.Create2Transfer, nil)
-
-	txs := make([]stored.Tx, 0, 1)
-	err := s.storage.database.Badger.Find(
-		&txs,
-		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
-	)
-	s.NoError(err)
-	s.Len(txs, 0)
-}
-
 func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_IndexWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
@@ -300,28 +265,6 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 		}
 		err := s.storage.AddTransfer(&transfers[i])
 		s.NoError(err)
-	}
-}
-
-func (s *StoredTransactionTestSuite) addStoredTx(txType txtype.TransactionType, toStateID *uint32) {
-	switch txType {
-	case txtype.Transfer:
-		err := s.storage.addStoredTx(stored.NewTxFromTransfer(&models.Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash: utils.RandomHash(),
-			},
-			ToStateID: *toStateID,
-		}))
-		s.NoError(err)
-	case txtype.Create2Transfer:
-		err := s.storage.addStoredTx(stored.NewTxFromCreate2Transfer(&models.Create2Transfer{
-			TransactionBase: models.TransactionBase{
-				Hash: utils.RandomHash(),
-			},
-		}))
-		s.NoError(err)
-	case txtype.MassMigration:
-		panic("not implemented")
 	}
 }
 

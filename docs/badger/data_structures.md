@@ -151,16 +151,6 @@ type TxTransferBody struct {
 }
 ```
 
-##### Index on `ToStateID`
-
-- This index is updated only when storing transactions with `TxTransferBody`
-
-Key: to state ID `uint32`
-
-Prefix: `_bhIndex:Tx:ToStateID:`
-
-Value: list of tx hashes `bh.KeyList`
-
 #### Create2Transfer
 Body: `stored.TxCreate2TransferBody`
 
@@ -178,14 +168,6 @@ type TxMassMigrationBody struct {
     SpokeID uint32
 }
 ```
-
-#### Index on `FromStateID`
-- This index is updated for all stored transactions
-Key: from state ID `uint32`
-
-Prefix: `_bhIndex:Tx:FromStateID:`
-
-Value: list of tx hashes `bh.KeyList`
 
 ### Stored Transaction Receipt
 - Stores transactions details known only after it is mined
