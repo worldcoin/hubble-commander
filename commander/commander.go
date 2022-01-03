@@ -372,6 +372,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 		AccountRegistry:                info.AccountRegistry,
 		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
 		TokenRegistry:                  info.TokenRegistry,
+		SpokeRegistry:                  info.SpokeRegistry,
 		DepositManager:                 info.DepositManager,
 		Rollup:                         info.Rollup,
 		GenesisAccounts:                genesisAccounts,
