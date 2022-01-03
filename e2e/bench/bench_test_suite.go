@@ -22,7 +22,7 @@ import (
 
 type BenchmarkConfig struct {
 	// Total number of transactions to be sent.
-	TxAmount int64
+	TxCount int64
 
 	// Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
 	TxBatchSize int64
@@ -191,7 +191,7 @@ func (s *benchmarkTestSuite) runForWallet(
 	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesAmount)
 	nonce := models.MakeUint256(0)
 
-	for s.txsSent < s.benchConfig.TxAmount {
+	for s.txsSent < s.benchConfig.TxCount {
 		// Send phase
 		for int64(len(txsToWatch)) <= s.benchConfig.MaxQueuedBatchesAmount {
 			var lastTxHash common.Hash
