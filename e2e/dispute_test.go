@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -561,6 +562,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		AccountRegistry:                info.AccountRegistry,
 		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
 		TokenRegistry:                  info.TokenRegistry,
+		SpokeRegistry:                  info.SpokeRegistry,
 		DepositManager:                 info.DepositManager,
 		Rollup:                         info.Rollup,
 	}
@@ -572,6 +574,9 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	backend := blockchain.GetBackend()
 
 	accountRegistry, err := accountregistry.NewAccountRegistry(chainState.AccountRegistry, backend)
+	require.NoError(t, err)
+
+	spokeRegistry, err := spokeregistry.NewSpokeRegistry(chainState.SpokeRegistry, backend)
 	require.NoError(t, err)
 
 	tokenRegistry, err := tokenregistry.NewTokenRegistry(chainState.TokenRegistry, backend)
@@ -586,6 +591,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
+		SpokeRegistry:   spokeRegistry,
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		Rollup:          rollupContract,
