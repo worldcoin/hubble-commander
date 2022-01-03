@@ -50,21 +50,21 @@ type CommanderBootstrapConfig struct {
 }
 
 type RollupConfig struct {
-	SyncSize                             uint32
-	FeeReceiverPubKeyID                  uint32
-	MinTxsPerCommitment                  uint32
-	MaxTxsPerCommitment                  uint32
-	MinCommitmentsPerBatch               uint32
-	MaxCommitmentsPerBatch               uint32
-	TransferBatchSubmissionGasLimit      uint64
-	C2TBatchSubmissionGasLimit           uint64
-	MassMigrationBatchSubmissionGasLimit uint64
-	DepositBatchSubmissionGasLimit       uint64
-	TransitionDisputeGasLimit            uint64
-	SignatureDisputeGasLimit             uint64
-	BatchAccountRegistrationGasLimit     uint64
-	BatchLoopInterval                    time.Duration
-	DisableSignatures                    bool
+	SyncSize                         uint32
+	FeeReceiverPubKeyID              uint32
+	MinTxsPerCommitment              uint32
+	MaxTxsPerCommitment              uint32
+	MinCommitmentsPerBatch           uint32
+	MaxCommitmentsPerBatch           uint32
+	TransferBatchSubmissionGasLimit  uint64
+	C2TBatchSubmissionGasLimit       uint64
+	MMBatchSubmissionGasLimit        uint64
+	DepositBatchSubmissionGasLimit   uint64
+	TransitionDisputeGasLimit        uint64
+	SignatureDisputeGasLimit         uint64
+	BatchAccountRegistrationGasLimit uint64
+	BatchLoopInterval                time.Duration
+	DisableSignatures                bool
 
 	// if MinTxsPerCommitment or MinCommitmentsPerBatch cause a pending transaction to
 	// wait to be included for longer than this delay then they will be ignored and a

@@ -11,16 +11,16 @@ import (
 )
 
 const (
-	SimulatorChainID                            = 1337
-	DefaultTransferBatchSubmissionGasLimit      = uint64(400_000)
-	DefaultC2TBatchSubmissionGasLimit           = uint64(500_000)
-	DefaultMassMigrationBatchSubmissionGasLimit = uint64(550_000)
-	DefaultDepositBatchSubmissionGasLimit       = uint64(220_000)
-	DefaultTransitionDisputeGasLimit            = uint64(4_100_000)
-	DefaultSignatureDisputeGasLimit             = uint64(7_600_000)
-	DefaultBatchAccountRegistrationGasLimit     = uint64(8_000_000)
-	DefaultMetricsPort                          = "2112"
-	DefaultMetricsEndpoint                      = "/metrics"
+	SimulatorChainID                        = 1337
+	DefaultTransferBatchSubmissionGasLimit  = uint64(400_000)
+	DefaultC2TBatchSubmissionGasLimit       = uint64(500_000)
+	DefaultMMBatchSubmissionGasLimit        = uint64(550_000)
+	DefaultDepositBatchSubmissionGasLimit   = uint64(220_000)
+	DefaultTransitionDisputeGasLimit        = uint64(4_100_000)
+	DefaultSignatureDisputeGasLimit         = uint64(7_600_000)
+	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
+	DefaultMetricsPort                      = "2112"
+	DefaultMetricsEndpoint                  = "/metrics"
 )
 
 func GetConfig() *Config {
@@ -35,18 +35,15 @@ func GetConfig() *Config {
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
 		Rollup: &RollupConfig{
-			SyncSize:                        getUint32("rollup.sync_size", 50),
-			FeeReceiverPubKeyID:             getUint32("rollup.fee_receiver_pub_key_id", 0),
-			MinTxsPerCommitment:             getUint32("rollup.min_txs_per_commitment", 1),
-			MaxTxsPerCommitment:             getUint32("rollup.max_txs_per_commitment", 32),
-			MinCommitmentsPerBatch:          getUint32("rollup.min_commitments_per_batch", 1),
-			MaxCommitmentsPerBatch:          getUint32("rollup.max_commitments_per_batch", 32),
-			TransferBatchSubmissionGasLimit: getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
-			C2TBatchSubmissionGasLimit:      getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
-			MassMigrationBatchSubmissionGasLimit: getUint64(
-				"rollup.mass_migration_batch_submission_gas_limit",
-				DefaultMassMigrationBatchSubmissionGasLimit,
-			),
+			SyncSize:                         getUint32("rollup.sync_size", 50),
+			FeeReceiverPubKeyID:              getUint32("rollup.fee_receiver_pub_key_id", 0),
+			MinTxsPerCommitment:              getUint32("rollup.min_txs_per_commitment", 1),
+			MaxTxsPerCommitment:              getUint32("rollup.max_txs_per_commitment", 32),
+			MinCommitmentsPerBatch:           getUint32("rollup.min_commitments_per_batch", 1),
+			MaxCommitmentsPerBatch:           getUint32("rollup.max_commitments_per_batch", 32),
+			TransferBatchSubmissionGasLimit:  getUint64("rollup.transfer_batch_submission_gas_limit", DefaultTransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       getUint64("rollup.c2t_batch_submission_gas_limit", DefaultC2TBatchSubmissionGasLimit),
+			MMBatchSubmissionGasLimit:        getUint64("rollup.mm_batch_submission_gas_limit", DefaultMMBatchSubmissionGasLimit),
 			DepositBatchSubmissionGasLimit:   getUint64("rollup.deposit_batch_submission_gas_limit", DefaultDepositBatchSubmissionGasLimit),
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
@@ -85,21 +82,21 @@ func GetTestConfig() *Config {
 			ChainSpecPath:    nil,
 		},
 		Rollup: &RollupConfig{
-			SyncSize:                             50,
-			FeeReceiverPubKeyID:                  0,
-			MinTxsPerCommitment:                  2,
-			MaxTxsPerCommitment:                  2,
-			MinCommitmentsPerBatch:               1,
-			MaxCommitmentsPerBatch:               32,
-			TransferBatchSubmissionGasLimit:      DefaultTransferBatchSubmissionGasLimit,
-			C2TBatchSubmissionGasLimit:           DefaultC2TBatchSubmissionGasLimit,
-			MassMigrationBatchSubmissionGasLimit: DefaultMassMigrationBatchSubmissionGasLimit,
-			DepositBatchSubmissionGasLimit:       DefaultDepositBatchSubmissionGasLimit,
-			TransitionDisputeGasLimit:            DefaultTransitionDisputeGasLimit,
-			SignatureDisputeGasLimit:             DefaultSignatureDisputeGasLimit,
-			BatchAccountRegistrationGasLimit:     DefaultBatchAccountRegistrationGasLimit,
-			BatchLoopInterval:                    500 * time.Millisecond,
-			DisableSignatures:                    true,
+			SyncSize:                         50,
+			FeeReceiverPubKeyID:              0,
+			MinTxsPerCommitment:              2,
+			MaxTxsPerCommitment:              2,
+			MinCommitmentsPerBatch:           1,
+			MaxCommitmentsPerBatch:           32,
+			TransferBatchSubmissionGasLimit:  DefaultTransferBatchSubmissionGasLimit,
+			C2TBatchSubmissionGasLimit:       DefaultC2TBatchSubmissionGasLimit,
+			MMBatchSubmissionGasLimit:        DefaultMMBatchSubmissionGasLimit,
+			DepositBatchSubmissionGasLimit:   DefaultDepositBatchSubmissionGasLimit,
+			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
+			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
+			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
+			BatchLoopInterval:                500 * time.Millisecond,
+			DisableSignatures:                true,
 		},
 		API: &APIConfig{
 			Version:            "dev-0.5.0-rc2",
