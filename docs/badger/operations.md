@@ -3,16 +3,18 @@
 Statistics for large operations done on Badger database. This is mostly for tracking whether we don't hit Badger txn limits. Stats generated
 using [these changes to Badger](https://github.com/msieczko/badger/commit/bf43a3a4b9dfb80019a97b10d0e7d269a7eff34e).
 
-## Rollup loop
-
-### Transfer batch
-
-Measured with `TestBenchTransfersCommander`. Tx count: `10000`.
+All tests run for full batches:
 
 ```
 min_txs_per_commitment: 32
 min_commitments_per_batch: 32
 ```
+
+## Rollup loop
+
+### Transfer batch
+
+Measured with `TestBenchTransfersCommander`. Tx count: `10000`.
 
 Both Badger tx operations count and tx size stable for consecutive batches.
 
@@ -31,11 +33,6 @@ SUM: Count: 79042, Size: 7012707
 ### Create2Transfer batch (realistic)
 
 Measured with `TestBenchCreate2TransfersCommander`. Batch with 1024 public key registrations. Tx count: `10000`.
-
-```
-min_txs_per_commitment: 32
-min_commitments_per_batch: 32
-```
 
 Badger tx operations count stable and tx size mostly stable for consecutive batches. Only `_bhIndex:AccountLeaf:PublicKey`
 and `_bhIndex:StateLeaf:PubKeyID` index sizes grow slowly.
@@ -56,21 +53,15 @@ SUM: Count: 114882, Size: 9939010
 ```
 
 ### Create2Transfer batch (unrealistic)
+
 Measured with `TestBenchCreate2TransfersCommander` (
 at [`6b813227`](https://github.com/worldcoin/hubble-commander/commit/6b81322780bb73f21ce25c434265062fc72a44bd)).
 
-```
-min_txs_per_commitment: 32
-min_commitments_per_batch: 32
-```
-
-
-This test sends an enormous number of C2Ts to a bunch of registered accounts. 
-A lot of new User States are created for a small set of pub key IDs.
-As a result `_bhIndex:FlatStateLeaf:PubKeyID` index grows with every batch.
-
+This test sends an enormous number of C2Ts to a bunch of registered accounts. A lot of new User States are created for a small set of pub
+key IDs. As a result `_bhIndex:FlatStateLeaf:PubKeyID` index grows with every batch.
 
 First batch:
+
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 980392
@@ -85,6 +76,7 @@ SUM: Count: 79042, Size: 7992881
 ```
 
 Second batch:
+
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 2549209
@@ -99,6 +91,7 @@ SUM: Count: 79042, Size: 9561698
 ```
 
 Third batch:
+
 ```
 Key: bh_MerkleTreeNode, Count: 68640, Size: 4942080
 Key: _bhIndex:FlatStateLeaf:PubKeyID, Count: 3136, Size: 4241675
@@ -117,10 +110,6 @@ SUM: Count: 79042, Size: 11254164
 ### Transfer batch
 
 Measured with `TestBenchSyncCommander` set to send and sync only Transfer batches. Tx count: `10000`.
-```
-min_txs_per_commitment: 32
-min_commitments_per_batch: 32
-```
 
 The test sends an enormous number of Transfers using just a bunch of User States. Removing `_bhIndex:Tx:FromStateID`
 and `_bhIndex:Tx:ToStateID` indices made the size of txs stable for consecutive batches.
@@ -142,11 +131,6 @@ SUM: Count: 80067, Size: 7286228
 ### Create2Transfer batch
 
 Measured with `TestBenchSyncCommander` set to send and sync only Create2Transfer batches. Tx count: `5000`.
-
-```
-min_txs_per_commitment: 32
-min_commitments_per_batch: 32
-```
 
 Badger tx size stable for consecutive batches.
 
