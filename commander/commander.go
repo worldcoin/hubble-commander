@@ -271,6 +271,7 @@ func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
 		chainStateA.Rollup != chainStateB.Rollup ||
 		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
 		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
+		chainStateA.SpokeRegistry != chainStateB.SpokeRegistry ||
 		chainStateA.DepositManager != chainStateB.DepositManager {
 		return errors.WithStack(errInconsistentChainState)
 	}
