@@ -52,8 +52,11 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			continue
 		}
 
-		txHash := events[i].Raw.TxHash
-		tx, _, err := c.ChainConnection.GetBackend().TransactionByHash(context.Background(), txHash)
+		tx, err := c.ChainConnection.GetBackend().TransactionInBlock(
+			context.Background(),
+			events[i].Raw.BlockHash,
+			events[i].Raw.TxIndex,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +79,7 @@ func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
 			return nil, err
 		}
 
-		batch.TransactionHash = txHash
+		batch.TransactionHash = events[i].Raw.TxHash
 		batch.SubmissionTime = models.NewTimestamp(time.Unix(int64(header.Time), 0).UTC())
 
 		res = append(res, *batch)

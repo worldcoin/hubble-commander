@@ -6,8 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -42,17 +40,7 @@ func (t *TransactionExecutor) syncExistingBatch(remoteBatch *eth.DecodedBatch, l
 			remoteBatch.Hash,
 		)
 	} else {
-		txSender, err := t.getTransactionSender(remoteBatch.TransactionHash)
-		if err != nil {
-			return err
-		}
-		if *txSender != t.client.ChainConnection.GetAccount().From {
-			return NewInconsistentBatchError(localBatch)
-		} else {
-			// TODO remove the above check and this error once we use contracts with batchID verification:
-			//  https://github.com/thehubbleproject/hubble-contracts/pull/601
-			return ErrBatchSubmissionFailed
-		}
+		return ErrBatchSubmissionFailed
 	}
 	return nil
 }
@@ -93,18 +81,6 @@ func (t *TransactionExecutor) excludeTransactionsFromCommitment(batchIDs ...mode
 		return err
 	}
 	return t.storage.BatchMarkTransactionAsIncluded(hashes, nil)
-}
-
-func (t *TransactionExecutor) getTransactionSender(txHash common.Hash) (*common.Address, error) {
-	tx, _, err := t.client.ChainConnection.GetBackend().TransactionByHash(t.ctx, txHash)
-	if err != nil {
-		return nil, err
-	}
-	sender, err := types.LatestSignerForChainID(tx.ChainId()).Sender(tx)
-	if err != nil {
-		return nil, err
-	}
-	return &sender, nil
 }
 
 func (t *TransactionExecutor) syncNewBatch(batch *eth.DecodedBatch) error {
