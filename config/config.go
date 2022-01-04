@@ -97,6 +97,7 @@ func GetTestConfig() *Config {
 			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
 			BatchLoopInterval:                500 * time.Millisecond,
 			DisableSignatures:                true,
+			MaxTxnDelay:                      30 * time.Minute,
 		},
 		API: &APIConfig{
 			Version:            "dev-0.5.0-rc2",
