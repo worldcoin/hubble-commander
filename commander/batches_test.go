@@ -476,6 +476,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 }
 
 // Make sure that the commander and the transaction executor uses the same storage
+// nolint:unused
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)
