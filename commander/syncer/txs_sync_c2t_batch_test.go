@@ -168,7 +168,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -179,7 +179,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.CommitmentWithTxs {
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.TxCommitmentWithTxs {
 	pendingBatch, batchData := s.createBatch(tx)
 	commitments := batchData.Commitments()
 

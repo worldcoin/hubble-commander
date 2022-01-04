@@ -90,7 +90,7 @@ func DecodeMMBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMMComm
 	return commitments, nil
 }
 
-func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (
+func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commitments []models.TxCommitmentWithTxs) (
 	bigBatchID *big.Int,
 	stateRoots [][32]byte,
 	signatures [][2]*big.Int,
@@ -118,7 +118,7 @@ func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commi
 //nolint:gocritic
 func CommitmentsToSubmitMassMigrationBatchFields(
 	batchID *models.Uint256,
-	commitments []models.CommitmentWithTxs,
+	commitments []models.TxCommitmentWithTxs,
 	metas []models.MassMigrationMeta,
 	withdrawRoots []common.Hash,
 ) (

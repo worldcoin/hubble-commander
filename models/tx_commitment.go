@@ -24,16 +24,16 @@ func (c *TxCommitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
 }
 
-type CommitmentWithTxs struct {
+type TxCommitmentWithTxs struct {
 	TxCommitment
 	Transactions []byte
 }
 
-func (c *CommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
+func (c *TxCommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
 	c.BodyHash = calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
-func (c *CommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
+func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 

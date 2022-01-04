@@ -17,7 +17,7 @@ type TransactionExecutor interface {
 	NewExecuteTxsForCommitmentResult(result ExecuteTxsResult) ExecuteTxsForCommitmentResult
 	SerializeTxs(results ExecuteTxsForCommitmentResult) ([]byte, error)
 	AddPendingAccount(result applier.ApplySingleTxResult) error
-	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.CommitmentWithTxs) CreateCommitmentResult
+	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment *models.TxCommitmentWithTxs) CreateCommitmentResult
 	NewBatchData(capacity uint32) BatchData
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
 	SubmitBatch(batchID *models.Uint256, batchData BatchData) (*types.Transaction, error)
@@ -69,7 +69,7 @@ func (e *TransferExecutor) NewExecuteTxsForCommitmentResult(
 
 func (e *TransferExecutor) NewCreateCommitmentResult(
 	result ExecuteTxsForCommitmentResult,
-	commitment *models.CommitmentWithTxs,
+	commitment *models.TxCommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToTransferArray(),
@@ -93,7 +93,7 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 
 func (e *TransferExecutor) NewBatchData(capacity uint32) BatchData {
 	return &TxBatchData{
-		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+		commitments: make([]models.TxCommitmentWithTxs, 0, capacity),
 	}
 }
 
@@ -142,7 +142,7 @@ func (e *C2TExecutor) NewExecuteTxsForCommitmentResult(
 
 func (e *C2TExecutor) NewCreateCommitmentResult(
 	result ExecuteTxsForCommitmentResult,
-	commitment *models.CommitmentWithTxs,
+	commitment *models.TxCommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateC2TCommitmentResult{
 		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
@@ -170,7 +170,7 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 
 func (e *C2TExecutor) NewBatchData(capacity uint32) BatchData {
 	return &TxBatchData{
-		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+		commitments: make([]models.TxCommitmentWithTxs, 0, capacity),
 	}
 }
 
@@ -215,7 +215,7 @@ func (e *MassMigrationExecutor) NewExecuteTxsForCommitmentResult(
 
 func (e *MassMigrationExecutor) NewCreateCommitmentResult(
 	result ExecuteTxsForCommitmentResult,
-	commitment *models.CommitmentWithTxs,
+	commitment *models.TxCommitmentWithTxs,
 ) CreateCommitmentResult {
 	return &CreateMassMigrationCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToMassMigrationArray(),
@@ -239,7 +239,7 @@ func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitment
 
 func (e *MassMigrationExecutor) NewBatchData(capacity uint32) BatchData {
 	return &MassMigrationBatchData{
-		commitments: make([]models.CommitmentWithTxs, 0, capacity),
+		commitments: make([]models.TxCommitmentWithTxs, 0, capacity),
 		metas:       make([]models.MassMigrationMeta, 0, capacity),
 	}
 }

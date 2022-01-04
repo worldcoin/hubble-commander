@@ -16,14 +16,14 @@ type GetMMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client        *TestClient
-	commitments   []models.CommitmentWithTxs
+	commitments   []models.TxCommitmentWithTxs
 	metas         []models.MassMigrationMeta
 	withdrawRoots []common.Hash
 }
 
 func (s *GetMMBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.commitments = []models.CommitmentWithTxs{
+	s.commitments = []models.TxCommitmentWithTxs{
 		{
 			TxCommitment: models.TxCommitment{
 				CommitmentBase: models.CommitmentBase{

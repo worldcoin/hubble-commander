@@ -75,7 +75,7 @@ func (s *EncoderTestSuite) TestCommitmentWithTxs_CalcBodyHash() {
 	})
 	s.NoError(err)
 
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type: batchtype.Transfer,

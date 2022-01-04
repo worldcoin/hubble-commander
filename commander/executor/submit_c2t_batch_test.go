@@ -12,7 +12,7 @@ import (
 
 type SubmitC2TBatchTestSuite struct {
 	submitBatchTestSuite
-	baseCommitment models.CommitmentWithTxs
+	baseCommitment models.TxCommitmentWithTxs
 }
 
 func (s *SubmitC2TBatchTestSuite) SetupTest() {
@@ -30,7 +30,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	commitment := s.baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.TxCommitmentWithTxs{commitment}})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -47,7 +47,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	commitment := s.baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.TxCommitmentWithTxs{commitment}})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))

@@ -13,7 +13,7 @@ import (
 
 type SubmitMassMigrationBatchTestSuite struct {
 	submitBatchTestSuite
-	commitment models.CommitmentWithTxs
+	commitment models.TxCommitmentWithTxs
 	batchData  BatchData
 }
 
@@ -24,7 +24,7 @@ func (s *SubmitMassMigrationBatchTestSuite) SetupTest() {
 	s.commitment = baseCommitment
 	s.commitment.Type = batchtype.MassMigration
 	s.batchData = &MassMigrationBatchData{
-		commitments: make([]models.CommitmentWithTxs, 0, 1),
+		commitments: make([]models.TxCommitmentWithTxs, 0, 1),
 		metas: []models.MassMigrationMeta{
 			{
 				SpokeID:     1,

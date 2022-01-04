@@ -11,13 +11,13 @@ func (c *TxsContext) newCommitment(
 	feeReceiverStateID uint32,
 	serializedTxs []byte,
 	combinedSignature *models.Signature,
-) (*models.CommitmentWithTxs, error) {
+) (*models.TxCommitmentWithTxs, error) {
 	stateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.CommitmentWithTxs{
+	return &models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID:            *commitmentID,

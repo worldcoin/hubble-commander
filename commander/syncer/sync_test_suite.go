@@ -88,11 +88,11 @@ func (s *syncTestSuite) setBatchAccounts() {
 	s.NoError(err)
 }
 
-func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.CommitmentWithTxs {
+func (s *syncTestSuite) createCommitmentWithEmptyTransactions(commitmentType batchtype.BatchType) models.TxCommitmentWithTxs {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	return models.CommitmentWithTxs{
+	return models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          commitmentType,
@@ -134,7 +134,7 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 	return common.BytesToHash(rawAccountRoot[:])
 }
 
-func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.CommitmentWithTxs {
+func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.TxCommitmentWithTxs {
 	pendingBatch, batchData := s.createBatch(tx)
 
 	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)

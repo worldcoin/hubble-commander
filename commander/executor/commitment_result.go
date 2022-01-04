@@ -8,12 +8,12 @@ import (
 type CreateCommitmentResult interface {
 	AppliedTxs() models.GenericTransactionArray
 	PendingAccounts() []models.AccountLeaf
-	Commitment() *models.CommitmentWithTxs
+	Commitment() *models.TxCommitmentWithTxs
 }
 
 type CreateTransferCommitmentResult struct {
 	appliedTxs models.TransferArray
-	commitment *models.CommitmentWithTxs
+	commitment *models.TxCommitmentWithTxs
 }
 
 func (c *CreateTransferCommitmentResult) AppliedTxs() models.GenericTransactionArray {
@@ -24,14 +24,14 @@ func (c *CreateTransferCommitmentResult) PendingAccounts() []models.AccountLeaf 
 	return []models.AccountLeaf{}
 }
 
-func (c *CreateTransferCommitmentResult) Commitment() *models.CommitmentWithTxs {
+func (c *CreateTransferCommitmentResult) Commitment() *models.TxCommitmentWithTxs {
 	return c.commitment
 }
 
 type CreateC2TCommitmentResult struct {
 	appliedTxs      models.Create2TransferArray
 	pendingAccounts []models.AccountLeaf
-	commitment      *models.CommitmentWithTxs
+	commitment      *models.TxCommitmentWithTxs
 }
 
 func (c *CreateC2TCommitmentResult) AppliedTxs() models.GenericTransactionArray {
@@ -42,13 +42,13 @@ func (c *CreateC2TCommitmentResult) PendingAccounts() []models.AccountLeaf {
 	return c.pendingAccounts
 }
 
-func (c *CreateC2TCommitmentResult) Commitment() *models.CommitmentWithTxs {
+func (c *CreateC2TCommitmentResult) Commitment() *models.TxCommitmentWithTxs {
 	return c.commitment
 }
 
 type CreateMassMigrationCommitmentResult struct {
 	appliedTxs models.MassMigrationArray
-	commitment *models.CommitmentWithTxs
+	commitment *models.TxCommitmentWithTxs
 }
 
 func (c *CreateMassMigrationCommitmentResult) AppliedTxs() models.GenericTransactionArray {
@@ -59,25 +59,25 @@ func (c *CreateMassMigrationCommitmentResult) PendingAccounts() []models.Account
 	return []models.AccountLeaf{}
 }
 
-func (c *CreateMassMigrationCommitmentResult) Commitment() *models.CommitmentWithTxs {
+func (c *CreateMassMigrationCommitmentResult) Commitment() *models.TxCommitmentWithTxs {
 	return c.commitment
 }
 
 type BatchData interface {
-	Commitments() []models.CommitmentWithTxs
+	Commitments() []models.TxCommitmentWithTxs
 	Metas() []models.MassMigrationMeta
 	WithdrawRoots() []common.Hash
 	Len() int
-	AddCommitment(commitment *models.CommitmentWithTxs)
+	AddCommitment(commitment *models.TxCommitmentWithTxs)
 	AddMeta(meta *models.MassMigrationMeta)
 	AddWithdrawRoot(withdrawRoot common.Hash)
 }
 
 type TxBatchData struct {
-	commitments []models.CommitmentWithTxs
+	commitments []models.TxCommitmentWithTxs
 }
 
-func (c *TxBatchData) Commitments() []models.CommitmentWithTxs {
+func (c *TxBatchData) Commitments() []models.TxCommitmentWithTxs {
 	return c.commitments
 }
 
@@ -93,7 +93,7 @@ func (c *TxBatchData) Len() int {
 	return len(c.commitments)
 }
 
-func (c *TxBatchData) AddCommitment(commitment *models.CommitmentWithTxs) {
+func (c *TxBatchData) AddCommitment(commitment *models.TxCommitmentWithTxs) {
 	c.commitments = append(c.commitments, *commitment)
 }
 
@@ -106,12 +106,12 @@ func (c *TxBatchData) AddWithdrawRoot(_ common.Hash) {
 }
 
 type MassMigrationBatchData struct {
-	commitments   []models.CommitmentWithTxs
+	commitments   []models.TxCommitmentWithTxs
 	metas         []models.MassMigrationMeta
 	withdrawRoots []common.Hash
 }
 
-func (c *MassMigrationBatchData) Commitments() []models.CommitmentWithTxs {
+func (c *MassMigrationBatchData) Commitments() []models.TxCommitmentWithTxs {
 	return c.commitments
 }
 
@@ -127,7 +127,7 @@ func (c *MassMigrationBatchData) Len() int {
 	return len(c.commitments)
 }
 
-func (c *MassMigrationBatchData) AddCommitment(commitment *models.CommitmentWithTxs) {
+func (c *MassMigrationBatchData) AddCommitment(commitment *models.TxCommitmentWithTxs) {
 	c.commitments = append(c.commitments, *commitment)
 }
 

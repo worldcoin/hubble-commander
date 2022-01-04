@@ -240,7 +240,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Transfer)
 
-	_, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
+	_, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -327,7 +327,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 	nextBatchID, err := s.storage.GetNextBatchID()
 	s.NoError(err)
 
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID: models.CommitmentID{
@@ -342,7 +342,7 @@ func (s *SyncTransferBatchTestSuite) submitTransferBatchWithNonexistentFeeReceiv
 		},
 		Transactions: serializedTxs,
 	}
-	_, err = s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
+	_, err = s.client.SubmitTransfersBatchAndWait(models.NewUint256(1), []models.TxCommitmentWithTxs{commitment})
 	s.NoError(err)
 }
 

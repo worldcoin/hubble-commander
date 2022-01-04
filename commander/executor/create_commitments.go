@@ -77,7 +77,7 @@ func (c *TxsContext) CreateCommitments() (BatchData, error) {
 func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
-	var commitment *models.CommitmentWithTxs
+	var commitment *models.TxCommitmentWithTxs
 	var executeResult ExecuteTxsForCommitmentResult
 
 	duration, err := metrics.MeasureDuration(func() error {

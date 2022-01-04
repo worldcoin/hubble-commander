@@ -19,7 +19,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.Transfer,
@@ -30,7 +30,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
-	arg1, arg2, arg3, arg4, arg5 := CommitmentsToTransferAndC2TSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	arg1, arg2, arg3, arg4, arg5 := CommitmentsToTransferAndC2TSubmitBatchFields(batchID, []models.TxCommitmentWithTxs{commitment})
 	calldata, err := rollupABI.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 
@@ -53,7 +53,7 @@ func TestDecodeMMBatchCalldata(t *testing.T) {
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
-	commitments := []models.CommitmentWithTxs{{
+	commitments := []models.TxCommitmentWithTxs{{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.MassMigration,
