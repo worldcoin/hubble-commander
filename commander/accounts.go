@@ -40,7 +40,11 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, err := c.client.ChainConnection.GetBackend().TransactionInBlock(
+			context.Background(),
+			it.Event.Raw.BlockHash,
+			it.Event.Raw.TxIndex,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +89,11 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.ChainConnection.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		tx, err := c.client.ChainConnection.GetBackend().TransactionInBlock(
+			context.Background(),
+			it.Event.Raw.BlockHash,
+			it.Event.Raw.TxIndex,
+		)
 		if err != nil {
 			return nil, err
 		}
