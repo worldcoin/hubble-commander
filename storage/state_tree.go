@@ -13,12 +13,12 @@ import (
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const StateTreeDepth = merkletree.MaxDepth
 
-var stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name())
+var stateUpdatePrefix = []byte("bh_" + reflect.TypeOf(models.StateUpdate{}).Name() + ":")
 
 type StateTree struct {
 	database   *Database

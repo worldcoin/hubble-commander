@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var FlatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(FlatStateLeaf{}).Name())
+var FlatStateLeafPrefix = []byte("bh_" + reflect.TypeOf(FlatStateLeaf{}).Name() + ":")
 
 type UserState struct {
 	PubKeyID uint32
