@@ -56,7 +56,7 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.database.Badger.Find(
 		&accounts,
-		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey"),
 	)
 	if err != nil {
 		return nil, err
