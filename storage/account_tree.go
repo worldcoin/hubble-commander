@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
@@ -62,7 +62,7 @@ func (s *AccountTree) Leaves(publicKey *models.PublicKey) ([]models.AccountLeaf,
 	accounts := make([]models.AccountLeaf, 0, 1)
 	err := s.database.Badger.Find(
 		&accounts,
-		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey"),
 	)
 	if err != nil {
 		return nil, err

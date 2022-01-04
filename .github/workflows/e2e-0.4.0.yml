@@ -68,21 +68,3 @@ jobs:
         run: |
           make setup-geth &
           HUBBLE_E2E=docker make test-e2e
-
-  deploy:
-    name: Deploy to AWS Staging machine
-    needs: e2e
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Deploy to AWS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.AWS_STAGING_HOST }}
-          username: ec2-user
-          key: ${{ secrets.AWS_HUBBLE_CONSUMER_BACKEND_SSH_KEY }}
-          script_stop: true
-          script: |
-            cd deployment/
-            docker-compose pull
-            docker-compose up -d commander
-            docker images -f "before=ghcr.io/worldcoin/hubble-commander:latest-0.4.0" -f "dangling=true" -q ghcr.io/worldcoin/hubble-commander | xargs docker image rm || true

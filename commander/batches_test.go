@@ -115,6 +115,7 @@ func (s *BatchesTestSuite) TestUnsafeSyncBatches_DoesNotSyncExistingBatchTwice()
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne() {
+	s.T().Skip() // Skipping because of disabled feature
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 100),
 		testutils.MakeTransfer(0, 1, 0, 200),
@@ -234,6 +235,7 @@ func (s *BatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidSignature
 }
 
 func (s *BatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDisputesFraudulentOne() {
+	s.T().Skip() // Skipping because of disabled feature
 	transfers := []models.Transfer{
 		testutils.MakeTransfer(0, 1, 0, 50),
 		testutils.MakeTransfer(0, 1, 1, 250),
@@ -474,6 +476,7 @@ func (s *BatchesTestSuite) createAndSubmitTransferBatch(
 }
 
 // Make sure that the commander and the transaction executor uses the same storage
+// nolint:unused
 func (s *BatchesTestSuite) createTransferBatch(tx *models.Transfer) *models.Batch {
 	_, err := s.cmd.storage.AddTransfer(tx)
 	s.NoError(err)

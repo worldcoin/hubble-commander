@@ -2,7 +2,7 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	bh "github.com/timshannon/badgerhold/v3"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type ChainStateStorage struct {
