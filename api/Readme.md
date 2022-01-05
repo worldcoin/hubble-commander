@@ -42,7 +42,7 @@
 | `50003`    | `user state proof not found`                                                                           |
 | `50004`    | `mass migration commitment inclusion proof not found`                                                  |
 | `50005`    | `withdraw proof could not be calculated for a given batch`                                             |
-| `50004`    | `mass migration with given transaction hash was not found in a commitment with given commitment index` |
+| `50004`    | `mass migration with given transaction hash was not found in a given commitment`                       |
 | `99000`    | `an error occurred while fetching the account count`                                                   |
 | `99001`    | `public key not found`                                                                                 |
 | `99002`    | `user state not found`                                                                                 |

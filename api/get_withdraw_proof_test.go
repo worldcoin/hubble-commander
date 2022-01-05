@@ -123,7 +123,7 @@ func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentBatch() {
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentMassMigrationWithGivenSenderInCommitment() {
 	_, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, utils.RandomHash())
-	s.Equal(APIErrMassMigrationWithSenderNotFound, err)
+	s.Equal(APIErrMassMigrationWithTxHashNotFound, err)
 }
 
 func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(transactionHash common.Hash) {

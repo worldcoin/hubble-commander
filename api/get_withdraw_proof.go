@@ -15,24 +15,23 @@ import (
 )
 
 var (
-	ErrMassMigrationWithSenderNotFound = fmt.Errorf(
-		"mass migration with given sender " +
-			"was not found in a commitment with given commitment index",
+	ErrMassMigrationWithTxHashNotFound = fmt.Errorf(
+		"mass migration with given transaction hash was not found in a given commitment",
 	)
 
 	APIWithdrawProofCouldNotBeCalculated = NewAPIError(
 		50005,
 		"withdraw proof could not be calculated for a given batch",
 	)
-	APIErrMassMigrationWithSenderNotFound = NewAPIError(
+	APIErrMassMigrationWithTxHashNotFound = NewAPIError(
 		50006,
-		"mass migration with given transaction hash was not found in a commitment with given commitment index",
+		"mass migration with given transaction hash was not found in a given commitment",
 	)
 )
 
 var getWithdrawProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError:           APIWithdrawProofCouldNotBeCalculated,
-	ErrMassMigrationWithSenderNotFound: APIErrMassMigrationWithSenderNotFound,
+	ErrMassMigrationWithTxHashNotFound: APIErrMassMigrationWithTxHashNotFound,
 }
 
 func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) (*dto.WithdrawProof, error) {
@@ -133,7 +132,7 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 		}
 	}
 	if targetUserState == nil {
-		return nil, nil, nil, errors.WithStack(ErrMassMigrationWithSenderNotFound)
+		return nil, nil, nil, errors.WithStack(ErrMassMigrationWithTxHashNotFound)
 	}
 
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)
