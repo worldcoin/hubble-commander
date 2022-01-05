@@ -60,10 +60,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(
 		return nil, errors.WithStack(err)
 	}
 
-	commitment, err := a.storage.GetTxCommitment(&commitmentID)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	commitment := commitments[commitmentID.IndexInBatch].(*models.TxCommitment)
 
 	withdrawTree, meta, err := a.generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(commitment, massMigrations)
 	if err != nil {
