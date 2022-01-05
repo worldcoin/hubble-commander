@@ -116,11 +116,11 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TearDownTest() {
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_FirstCommitment() {
-	s.testGetMassMigrationCommitmentProofEndpoint(0, s.massMigrations[:2])
+	s.testGetMassMigrationCommitmentProofEndpoint(0, 1, s.massMigrations[:2])
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_SecondCommitment() {
-	s.testGetMassMigrationCommitmentProofEndpoint(1, s.massMigrations[2:])
+	s.testGetMassMigrationCommitmentProofEndpoint(1, 0, s.massMigrations[2:])
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_NonexistentBatch() {
@@ -133,14 +133,10 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmen
 
 func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmentProofEndpoint(
 	commitmentIndex int,
+	witnessIndex int,
 	massMigrations []models.MassMigration,
 ) {
 	withdrawTree, meta := s.prepareWithdrawTreeAndMeta(commitmentIndex, massMigrations)
-
-	witnessIndex := 0
-	if commitmentIndex == 0 {
-		witnessIndex = 1
-	}
 
 	expected := dto.MassMigrationCommitmentProof{
 		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
