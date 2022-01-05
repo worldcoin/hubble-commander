@@ -36,6 +36,40 @@ func TestCommitment_Bytes_TxCommitment(t *testing.T) {
 	require.Equal(t, *commitment, *decodedCommitment)
 }
 
+func TestCommitment_Bytes_MMCommitment(t *testing.T) {
+	commitment := &models.MMCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256(1),
+				IndexInBatch: 4,
+			},
+			Type:          batchtype.MassMigration,
+			PostStateRoot: utils.RandomHash(),
+		},
+		FeeReceiver:       3,
+		CombinedSignature: models.Signature{1, 2, 3, 4, 5},
+		BodyHash:          utils.NewRandomHash(),
+		Meta: &models.MassMigrationMeta{
+			SpokeID:     5,
+			TokenID:     models.MakeUint256(6),
+			Amount:      models.MakeUint256(7),
+			FeeReceiver: 8,
+		},
+		WithdrawRoot: utils.RandomHash(),
+	}
+
+	storedCommitment := MakeCommitmentFromMMCommitment(commitment)
+	bytes := storedCommitment.Bytes()
+
+	var decodedStoredCommitment Commitment
+	err := decodedStoredCommitment.SetBytes(bytes)
+	require.NoError(t, err)
+	require.Equal(t, storedCommitment, decodedStoredCommitment)
+
+	decodedCommitment := decodedStoredCommitment.ToMMCommitment()
+	require.Equal(t, *commitment, *decodedCommitment)
+}
+
 func TestCommitment_Bytes_DepositCommitment(t *testing.T) {
 	commitment := &models.DepositCommitment{
 		CommitmentBase: models.CommitmentBase{
