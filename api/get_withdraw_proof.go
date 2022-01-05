@@ -90,21 +90,17 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 	massMigrations []models.MassMigration,
 	transactionHash common.Hash,
 ) (
-	*merkletree.MerkleTree,
-	*dto.UserState,
-	*uint32,
-	error,
+	withdrawTree *merkletree.MerkleTree,
+	targetUserState *dto.UserState,
+	massMigrationIndex *uint32,
+	err error,
 ) {
 	tokenID := models.MakeUint256(0)
 	hashes := make([]common.Hash, 0, len(massMigrations))
 
-	var (
-		targetUserState    *dto.UserState
-		massMigrationIndex int
-	)
-
 	for i := range massMigrations {
-		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
+		var senderLeaf *models.StateLeaf
+		senderLeaf, err = a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -119,7 +115,8 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 			Nonce:    models.MakeUint256(0),
 		}
 
-		hash, err := encoder.HashUserState(massMigrationUserState)
+		var hash *common.Hash
+		hash, err = encoder.HashUserState(massMigrationUserState)
 		if err != nil {
 			return nil, nil, nil, errors.WithStack(err)
 		}
@@ -128,17 +125,17 @@ func (a *API) generateWithdrawTreeForWithdrawProof(
 		if massMigrations[i].Hash == transactionHash {
 			dtoMassMigrationUserState := dto.MakeUserState(massMigrationUserState)
 			targetUserState = &dtoMassMigrationUserState
-			massMigrationIndex = i
+			massMigrationIndex = ref.Uint32(uint32(i))
 		}
 	}
 	if targetUserState == nil {
 		return nil, nil, nil, errors.WithStack(ErrMassMigrationWithTxHashNotFound)
 	}
 
-	withdrawTree, err := merkletree.NewMerkleTree(hashes)
+	withdrawTree, err = merkletree.NewMerkleTree(hashes)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	return withdrawTree, targetUserState, ref.Uint32(uint32(massMigrationIndex)), nil
+	return withdrawTree, targetUserState, massMigrationIndex, nil
 }
