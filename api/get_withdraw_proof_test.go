@@ -123,7 +123,7 @@ func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentBatch() {
 	s.Equal(APIWithdrawProofCouldNotBeCalculated, err)
 }
 
-func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_InvalidBatchTypeBatch() {
+func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_InvalidBatchType() {
 	err := s.storage.AddBatch(&models.Batch{
 		ID:   models.MakeUint256(2),
 		Type: batchtype.Transfer,
