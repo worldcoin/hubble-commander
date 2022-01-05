@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -98,7 +99,8 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	s.NoError(err)
 
 	err = s.storage.AddBatch(&models.Batch{
-		ID: models.MakeUint256(1),
+		ID:   models.MakeUint256(1),
+		Type: batchtype.MassMigration,
 	})
 	s.NoError(err)
 }
@@ -119,6 +121,17 @@ func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_SecondMassMigrationInCo
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentBatch() {
 	_, err := s.api.GetWithdrawProof(models.MakeUint256(10), 15, utils.RandomHash())
 	s.Equal(APIWithdrawProofCouldNotBeCalculated, err)
+}
+
+func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_InvalidBatchTypeBatch() {
+	err := s.storage.AddBatch(&models.Batch{
+		ID:   models.MakeUint256(2),
+		Type: batchtype.Transfer,
+	})
+	s.NoError(err)
+
+	_, err = s.api.GetWithdrawProof(models.MakeUint256(2), 0, utils.RandomHash())
+	s.Equal(APIErrOnlyMassMigrationBatches, err)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentMassMigrationWithGivenSenderInCommitment() {

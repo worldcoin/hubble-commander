@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -15,22 +16,26 @@ import (
 )
 
 var (
-	ErrMassMigrationWithTxHashNotFound = fmt.Errorf(
-		"mass migration with given transaction hash was not found in a given commitment",
-	)
+	ErrMassMigrationWithTxHashNotFound = fmt.Errorf("mass migration with given transaction hash was not found in a given commitment")
+	ErrOnlyMassMigrationBatches        = fmt.Errorf("invalid batch type, only mass migration batches are supported")
 
 	APIWithdrawProofCouldNotBeCalculated = NewAPIError(
 		50005,
 		"withdraw proof could not be calculated for a given batch",
 	)
-	APIErrMassMigrationWithTxHashNotFound = NewAPIError(
+	APIErrOnlyMassMigrationBatches = NewAPIError(
 		50006,
+		"invalid batch type, only mass migration batches are supported",
+	)
+	APIErrMassMigrationWithTxHashNotFound = NewAPIError(
+		50007,
 		"mass migration with given transaction hash was not found in a given commitment",
 	)
 )
 
 var getWithdrawProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError:           APIWithdrawProofCouldNotBeCalculated,
+	ErrOnlyMassMigrationBatches:        APIErrOnlyMassMigrationBatches,
 	ErrMassMigrationWithTxHashNotFound: APIErrMassMigrationWithTxHashNotFound,
 }
 
@@ -50,10 +55,12 @@ func (a *API) unsafeGetWithdrawProof(
 	commitmentIndex uint8,
 	transactionHash common.Hash,
 ) (*dto.WithdrawProof, error) {
-	// Verifies that batch exists
-	_, err := a.storage.GetBatch(batchID)
+	batch, err := a.storage.GetBatch(batchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+	if batch.Type != batchtype.MassMigration {
+		return nil, errors.WithStack(ErrOnlyMassMigrationBatches)
 	}
 
 	commitmentID := models.CommitmentID{
