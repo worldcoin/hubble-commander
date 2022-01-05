@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	txCommitmentBodyLength          = 4 + 64 + 33
-	depositCommitmentBodyBaseLength = 32 + 32
+	txCommitmentBodyLength          = 101 // 4 + 64 + 33
+	mmCommitmentBodyLength          = 205 // 101 + 72 + 32
+	depositCommitmentBodyBaseLength = 64  // 32 + 32
 )
 
 type CommitmentBody interface {
@@ -48,18 +49,55 @@ func (c *TxCommitmentBody) SetBytes(data []byte) error {
 	if len(data) != txCommitmentBodyLength {
 		return models.ErrInvalidLength
 	}
+
+	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
 	err := c.CombinedSignature.SetBytes(data[4:68])
 	if err != nil {
 		return err
 	}
-
-	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
 	c.BodyHash = decodeHashPointer(data[68:101])
+
 	return nil
 }
 
 func (c *TxCommitmentBody) BytesLen() int {
 	return txCommitmentBodyLength
+}
+
+type MMCommitmentBody struct {
+	TxCommitmentBody
+	Meta         models.MassMigrationMeta
+	WithdrawRoot common.Hash
+}
+
+func (c *MMCommitmentBody) Bytes() []byte {
+	b := make([]byte, c.BytesLen())
+	copy(b[0:101], c.TxCommitmentBody.Bytes())
+	copy(b[101:173], c.Meta.Bytes())
+	copy(b[173:205], c.WithdrawRoot.Bytes())
+	return b
+}
+
+func (c *MMCommitmentBody) SetBytes(data []byte) error {
+	if len(data) != mmCommitmentBodyLength {
+		return models.ErrInvalidLength
+	}
+
+	err := c.TxCommitmentBody.SetBytes(data[0:101])
+	if err != nil {
+		return err
+	}
+	err = c.Meta.SetBytes(data[101:173])
+	if err != nil {
+		return err
+	}
+	c.WithdrawRoot.SetBytes(data[173:205])
+
+	return nil
+}
+
+func (c *MMCommitmentBody) BytesLen() int {
+	return mmCommitmentBodyLength
 }
 
 type DepositCommitmentBody struct {
