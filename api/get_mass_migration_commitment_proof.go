@@ -16,32 +16,24 @@ var getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof not found"),
 }
 
-func (a *API) GetMassMigrationCommitmentProof(batchID models.Uint256, commitmentIndex uint8) (*dto.MassMigrationCommitmentProof, error) {
+func (a *API) GetMassMigrationCommitmentProof(commitmentID models.CommitmentID) (*dto.MassMigrationCommitmentProof, error) {
 	if !a.cfg.EnableProofMethods {
 		return nil, errProofMethodsDisabled
 	}
-	commitmentInclusionProof, err := a.unsafeGetMassMigrationCommitmentProof(batchID, commitmentIndex)
+	commitmentInclusionProof, err := a.unsafeGetMassMigrationCommitmentProof(commitmentID)
 	if err != nil {
 		return nil, sanitizeError(err, getMassMigrationCommitmentProofAPIErrors)
 	}
 	return commitmentInclusionProof, nil
 }
 
-func (a *API) unsafeGetMassMigrationCommitmentProof(
-	batchID models.Uint256,
-	commitmentIndex uint8,
-) (*dto.MassMigrationCommitmentProof, error) {
-	batch, err := a.storage.GetBatch(batchID)
+func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.CommitmentID) (*dto.MassMigrationCommitmentProof, error) {
+	batch, err := a.storage.GetBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	commitmentID := models.CommitmentID{
-		BatchID:      batchID,
-		IndexInBatch: commitmentIndex,
-	}
-
-	commitments, err := a.storage.GetCommitmentsByBatchID(batchID, batchtype.MassMigration)
+	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID, batchtype.MassMigration)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -77,12 +69,12 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(
 	}
 
 	proofBase := &dto.CommitmentInclusionProofBase{
-		StateRoot: commitments[commitmentIndex].GetPostStateRoot(),
+		StateRoot: commitments[commitmentID.IndexInBatch].GetPostStateRoot(),
 		Path: &dto.MerklePath{
-			Path:  uint32(commitmentIndex),
+			Path:  uint32(commitmentID.IndexInBatch),
 			Depth: batchLeafTree.Depth(),
 		},
-		Witness: batchLeafTree.GetWitness(uint32(commitmentIndex)),
+		Witness: batchLeafTree.GetWitness(uint32(commitmentID.IndexInBatch)),
 	}
 
 	return &dto.MassMigrationCommitmentProof{

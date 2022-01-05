@@ -124,7 +124,11 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmen
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_NonexistentBatch() {
-	_, err := s.api.GetMassMigrationCommitmentProof(models.MakeUint256(10), 15)
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(10),
+		IndexInBatch: 15,
+	}
+	_, err := s.api.GetMassMigrationCommitmentProof(commitmentID)
 	s.Equal(&APIError{
 		Code:    50004,
 		Message: "mass migration commitment inclusion proof not found",
@@ -156,7 +160,12 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 		},
 	}
 
-	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentProof(s.batch.ID, uint8(commitmentIndex))
+	commitmentID := models.CommitmentID{
+		BatchID:      s.batch.ID,
+		IndexInBatch: uint8(commitmentIndex),
+	}
+
+	commitmentInclusionProof, err := s.api.GetMassMigrationCommitmentProof(commitmentID)
 	s.NoError(err)
 	s.Equal(expected, *commitmentInclusionProof)
 }
