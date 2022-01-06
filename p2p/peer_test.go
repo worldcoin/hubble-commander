@@ -24,7 +24,7 @@ func TestPeer(t *testing.T) {
 	// Create node Alice serving test_double
 	alice, err := NewPeerWithRandomKey(0)
 	require.NoError(t, err)
-	err = alice.rpc.RegisterName("test", &TestRpc{})
+	err = alice.server.RegisterName("test", &TestRpc{})
 	require.NoError(t, err)
 	fmt.Println("Alice id:", alice.host.ID())
 	fmt.Println("Alice addr:", alice.host.Addrs())
@@ -38,7 +38,9 @@ func TestPeer(t *testing.T) {
 	// Have Bob call Alice
 	var res IntParam
 	addr := alice.ListenAddr()
-	err = bob.Call(addr, "test_double", IntParam{3}, &res)
+	client, err := bob.Dial(addr)
+	require.NoError(t, err)
+	err = client.Call(&res, "test_double", IntParam{3})
 	require.NoError(t, err)
 	fmt.Println(res.value)
 

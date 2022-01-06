@@ -1,15 +1,13 @@
 package p2p
 
 import (
-	"bytes"
-	"context"
 	"crypto/rand"
 	"fmt"
-	"io"
 	"log"
+	"net"
+	"net/http"
 	netRpc "net/rpc"
 	"strconv"
-	"time"
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/libp2p/go-libp2p"
@@ -18,45 +16,22 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/protocol"
-	gorpc "github.com/libp2p/go-libp2p-gorpc"
+	p2pstream "github.com/libp2p/go-libp2p-gostream"
+	p2phttp "github.com/libp2p/go-libp2p-http"
 	"github.com/multiformats/go-multiaddr"
 )
 
-type Request struct {
-	Data []byte
-}
-type Response struct {
-	Data []byte
-}
-
-type Service struct{}
+var protocolID = protocol.ID("/worldcoin/rpc/1.0.0")
 
 type Peer struct {
-	host    host.Host
-	rpc     *rpc.Server
-	client  *gorpc.Client
-	server  *gorpc.Server
-	service Service
+	host     host.Host
+	server   *rpc.Server
+	listener net.Listener
 }
 
 type Connection struct {
 	server *rpc.Server
 	client *netRpc.Client
-}
-
-// Name to advertise our service on the P2P network. For connecting and service discovery.
-var protocolID = protocol.ID("/worldcoin/rpc/1.0.0")
-var serviceName = "RPC"
-var serviceMethod = "Call" // Same as function name below
-
-func (t *Service) Call(ctx context.Context, req Request, res *Response) error {
-	sender, err := gorpc.GetRequestSender(ctx)
-	if err != nil {
-		return err
-	}
-	log.Println("Received a request from", sender)
-	res.Data = req.Data
-	return nil
 }
 
 // NewPeer creates a new transaction exchange with P2P capabilities.
@@ -78,26 +53,15 @@ func NewPeer(port int, privateKey crypto.PrivKey) (*Peer, error) {
 		return nil, err
 	}
 
-	// Create a gorpc client protocol handler
-	clt := gorpc.NewClient(h, protocolID)
-
-	// Create a gorpc server protocol handler and add the RPC service
-	svr := gorpc.NewServer(h, protocolID)
-	svc := Service{}
-	err = svr.RegisterName(serviceName, &svc)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create a geth RPC server
-	rpc := rpc.NewServer()
+	// Start a libp2p-gostream based Geth JSON-RPC server
+	server := rpc.NewServer()
+	listener, _ := p2pstream.Listen(h, protocolID)
+	go server.ServeListener(listener)
 
 	p := &Peer{
-		host:    h,
-		rpc:     rpc,
-		client:  clt,
-		server:  svr,
-		service: svc,
+		host:     h,
+		server:   server,
+		listener: listener,
 	}
 
 	return p, nil
@@ -113,73 +77,20 @@ func NewPeerWithRandomKey(port int) (*Peer, error) {
 	return NewPeer(port, prvKey)
 }
 
-type conn struct {
-	io.Reader
-	io.Writer
-}
-
-func (c conn) Close() error {
-	return nil
-}
-
-func (c conn) SetWriteDeadline(time time.Time) error {
-	return nil
-}
-
-func (p *Peer) handleDial(peer peer.ID) {
-	fmt.Println("handleDial")
-
-	// Construct request
-	var req Request
-	b := make([]byte, 64)
-	_, err := rand.Read(b)
-	if err != nil {
-		panic(err)
-	}
-	req.Data = b
-
-	// Allocate reply
-	var res Response
-
-	// Execute RPC request
-	log.Println("Send ping request")
-	err = p.client.Call(peer, serviceName, "Call", req, &res)
-	if err != nil {
-		panic(err)
-	}
-	log.Println("Received ping reply")
-
-	println("handleDial end")
-}
-
-func (p *Peer) Call(destination string, method string, args ...interface{}) error {
-
-	// Register remote peer
+func (p *Peer) Dial(destination string) (*rpc.Client, error) {
+	// Register remote peer and get url
 	dest, err := p.PeerID(destination)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	url := fmt.Sprintf("libp2p://%s/", dest.Pretty())
+	log.Println(url)
 
-	// Encode request as JSON-RPC
-	var in bytes.Buffer
-	var out bytes.Buffer
-	ctx := context.Background()
-	client, err := rpc.DialIO(ctx, in, out)
-
-	// Construct requrest
-	var req Request
-	// TODO
-
-	// Call
-	var res Response
-	err = p.client.Call(*dest, serviceName, serviceMethod, req, &res)
-	if err != nil {
-		return err
-	}
-
-	// TODO
-
-	return nil
+	// Create libp2p-http based Geth JSON-RPC client
+	tr := &http.Transport{}
+	tr.RegisterProtocol("libp2p", p2phttp.NewTransport(p.host, p2phttp.ProtocolOption(protocolID)))
+	http := &http.Client{Transport: tr}
+	return rpc.DialHTTPWithClient(url, http)
 }
 
 func (p *Peer) PeerID(destination string) (*peer.ID, error) {
@@ -218,5 +129,6 @@ func (p *Peer) ListenAddr() string {
 }
 
 func (p *Peer) Close() error {
+	p.listener.Close()
 	return p.host.Close()
 }
