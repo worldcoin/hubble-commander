@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net"
-	netRpc "net/rpc"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/rpc"
@@ -15,7 +14,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/protocol"
-	gostream "github.com/libp2p/go-libp2p-gostream"
 	p2pstream "github.com/libp2p/go-libp2p-gostream"
 	"github.com/multiformats/go-multiaddr"
 )
@@ -26,11 +24,6 @@ type Peer struct {
 	host     host.Host
 	server   *rpc.Server
 	listener net.Listener
-}
-
-type Connection struct {
-	server *rpc.Server
-	client *netRpc.Client
 }
 
 // NewPeer creates a new transaction exchange with P2P capabilities.
@@ -85,7 +78,7 @@ func (p *Peer) Dial(destination string) (*rpc.Client, error) {
 
 	// Create a socket
 	ctx := context.Background()
-	conn, err := gostream.Dial(ctx, p.host, *dest, protocolID)
+	conn, err := p2pstream.Dial(ctx, p.host, *dest, protocolID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +88,6 @@ func (p *Peer) Dial(destination string) (*rpc.Client, error) {
 }
 
 func (p *Peer) PeerID(destination string) (*peer.ID, error) {
-	fmt.Println("Meeting", destination)
-
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(destination)
 	if err != nil {
