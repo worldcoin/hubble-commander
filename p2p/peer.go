@@ -1,11 +1,10 @@
 package p2p
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
-	"log"
 	"net"
-	"net/http"
 	netRpc "net/rpc"
 	"strconv"
 
@@ -16,8 +15,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/protocol"
+	gostream "github.com/libp2p/go-libp2p-gostream"
 	p2pstream "github.com/libp2p/go-libp2p-gostream"
-	p2phttp "github.com/libp2p/go-libp2p-http"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -83,14 +82,16 @@ func (p *Peer) Dial(destination string) (*rpc.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("libp2p://%s/", dest.Pretty())
-	log.Println(url)
+
+	// Create a socket
+	ctx := context.Background()
+	conn, err := gostream.Dial(ctx, p.host, *dest, protocolID)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create libp2p-http based Geth JSON-RPC client
-	tr := &http.Transport{}
-	tr.RegisterProtocol("libp2p", p2phttp.NewTransport(p.host, p2phttp.ProtocolOption(protocolID)))
-	http := &http.Client{Transport: tr}
-	return rpc.DialHTTPWithClient(url, http)
+	return rpc.DialIO(ctx, conn, conn)
 }
 
 func (p *Peer) PeerID(destination string) (*peer.ID, error) {

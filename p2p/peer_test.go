@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,8 @@ type IntParam struct {
 }
 
 func (t *TestRpc) Double(arg IntParam) IntParam {
-	return IntParam{arg.value * 2}
+	log.Println("RPC Called with parameter", arg.value)
+	return IntParam{arg.value*2 + 1}
 }
 
 func TestPeer(t *testing.T) {
@@ -41,6 +43,9 @@ func TestPeer(t *testing.T) {
 	client, err := bob.Dial(addr)
 	require.NoError(t, err)
 	err = client.Call(&res, "test_double", IntParam{3})
+	require.NoError(t, err)
+	fmt.Println(res.value)
+	err = client.Call(&res, "test_double", IntParam{5})
 	require.NoError(t, err)
 	fmt.Println(res.value)
 
