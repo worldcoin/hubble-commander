@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestRpc struct {
+type TestRPC struct {
 }
 
 type IntParam struct {
@@ -14,7 +14,7 @@ type IntParam struct {
 	Value int
 }
 
-func (t *TestRpc) Double(arg IntParam) IntParam {
+func (t *TestRPC) Double(arg IntParam) IntParam {
 	return IntParam{arg.Value * 2}
 }
 
@@ -22,7 +22,7 @@ func TestPeer(t *testing.T) {
 	// Create node Alice serving test_double
 	alice, err := NewPeerWithRandomKey(0)
 	require.NoError(t, err)
-	err = alice.server.RegisterName("test", &TestRpc{})
+	err = alice.server.RegisterName("test", &TestRPC{})
 	require.NoError(t, err)
 
 	// Create node Bob

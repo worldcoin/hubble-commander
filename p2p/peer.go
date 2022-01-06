@@ -47,7 +47,13 @@ func NewPeer(port int, privateKey crypto.PrivKey) (*Peer, error) {
 	// Start a libp2p-gostream based Geth JSON-RPC server
 	server := rpc.NewServer()
 	listener, _ := p2pstream.Listen(h, protocolID)
-	go server.ServeListener(listener)
+	go func() {
+		err := server.ServeListener(listener)
+		if err != nil {
+			// TODO: How do we handle errors in threads?
+			panic(err)
+		}
+	}()
 
 	p := &Peer{
 		host:     h,
@@ -121,9 +127,10 @@ func (p *Peer) ListenAddr() string {
 
 func (p *Peer) Close() error {
 	p.server.Stop()
-	err := p.listener.Close()
-	if err != nil {
-		return err
-	}
+	// TODO: Closing the listener crashes the server thread, despite it being stopped
+	// err := p.listener.Close()
+	// if err != nil {
+	// 	return err
+	// }
 	return p.host.Close()
 }
