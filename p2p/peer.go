@@ -4,26 +4,28 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/inconshreveable/muxado"
-	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/peerstore"
-	"github.com/multiformats/go-multiaddr"
 	"io"
 	"log"
 	netRpc "net/rpc"
-	"net/rpc/jsonrpc"
 	"strconv"
-	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p-core/protocol"
+	gorpc "github.com/libp2p/go-libp2p-gorpc"
+	"github.com/multiformats/go-multiaddr"
 )
 
 type Peer struct {
 	host             host.Host
+	client           *gorpc.Client
+	server           *gorpc.Server
+	service          PingService
 	handleConnection func(conn Connection)
 }
 
@@ -32,15 +34,39 @@ type Connection struct {
 	client *netRpc.Client
 }
 
+type PingArgs struct {
+	Data []byte
+}
+type PingReply struct {
+	Data []byte
+}
+
+type PingService struct{}
+
+// Name to advertise our service on the P2P network. For connecting and service discovery.
+var protocolID = protocol.ID("/worldcoin/rpc/1.0.0")
+
+func (t *PingService) Ping(ctx context.Context, argType PingArgs, replyType *PingReply) error {
+	sender, err := gorpc.GetRequestSender(ctx)
+	if err != nil {
+		return err
+	}
+	log.Println("Received a Ping call from", sender)
+	replyType.Data = argType.Data
+	return nil
+}
+
 // NewPeer creates a new transaction exchange with P2P capabilities.
 // port - is the TCP port to listen for incoming P2P connections on. Pass 0 to let OS pick the port.
 // privateKey - is the identity of the P2P instance
 func NewPeer(port int, handleConnection func(conn Connection), privateKey crypto.PrivKey) (*Peer, error) {
+	// Create a listening address
 	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
 	if err != nil {
 		return nil, err
 	}
 
+	// Create a libp2p Host
 	h, err := libp2p.New(
 		libp2p.ListenAddrs(sourceMultiAddr),
 		libp2p.Identity(privateKey),
@@ -49,14 +75,24 @@ func NewPeer(port int, handleConnection func(conn Connection), privateKey crypto
 		return nil, err
 	}
 
-	p := &Peer{
-		host:             h,
-		handleConnection: handleConnection,
+	// Create a gorpc client protocol handler
+	clt := gorpc.NewClient(h, protocolID)
+
+	// Create a gorpc server protocol handler and add the RPC service
+	svr := gorpc.NewServer(h, protocolID)
+	svc := PingService{}
+	err = svr.Register(&svc)
+	if err != nil {
+		return nil, err
 	}
 
-	h.SetStreamHandler("/worldcoin/1.0.0", func(stream network.Stream) {
-		p.handleStream(stream)
-	})
+	p := &Peer{
+		host:             h,
+		client:           clt,
+		server:           svr,
+		service:          svc,
+		handleConnection: handleConnection,
+	}
 
 	return p, nil
 }
@@ -84,73 +120,37 @@ func (c conn) SetWriteDeadline(time time.Time) error {
 	return nil
 }
 
-func (p *Peer) handleStream(stream network.Stream) {
-	fmt.Println("handleStream")
-
-	mux := muxado.Server(stream, nil)
-
-	p.handleMuxed(mux)
-
-	println("handleStream end")
-}
-
-func (p *Peer) handleDial(stream network.Stream) {
+func (p *Peer) handleDial(peer peer.ID) {
 	fmt.Println("handleDial")
 
-	mux := muxado.Client(stream, nil)
+	// Construct request
+	var args PingArgs
+	c := 64
+	b := make([]byte, c)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
 
-	time.Sleep(100 * time.Millisecond)
+	args.Data = b
 
-	p.handleMuxed(mux)
+	// Allocate reply
+	var reply PingReply
+
+	// Execute RPC request
+	log.Println("Send ping request")
+	err = p.client.Call(peer, "PingService", "Ping", args, &reply)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Received ping reply")
 
 	println("handleDial end")
 }
 
-func (p *Peer) handleMuxed(mux muxado.Session) {
-
-	conn := Connection{}
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	go func() {
-		fmt.Println("Waiting to accept")
-		serverStream, err := mux.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Accepted")
-
-		conn.server = rpc.NewServer()
-
-		go conn.server.ServeCodec(rpc.NewCodec(serverStream), 0)
-		wg.Done()
-	}()
-
-	time.Sleep(200 * time.Millisecond)
-
-	go func() {
-		clientStream, err := mux.Open()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println("Opened")
-
-		conn.client = jsonrpc.NewClient(clientStream)
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	fmt.Println("handleConnection")
-
-	p.handleConnection(conn)
-
-	fmt.Println("handleConnection end")
-}
-
 func (p *Peer) Dial(destination string) error {
+	fmt.Println("Dialing %0", destination)
+
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(destination)
 	if err != nil {
@@ -167,14 +167,8 @@ func (p *Peer) Dial(destination string) error {
 	// This will be used during connection and stream creation by libp2p.
 	p.host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
 
-	// Start a stream with the destination.
-	// Multiaddress of the destination peer is fetched from the peerstore using 'peerId'.
-	s, err := p.host.NewStream(context.Background(), info.ID, "/worldcoin/1.0.0")
-	if err != nil {
-		return err
-	}
-
-	go p.handleDial(s)
+	// Connect to destination peer
+	go p.handleDial(info.ID)
 
 	println("Dial end")
 	return nil
