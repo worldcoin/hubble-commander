@@ -75,14 +75,14 @@ func (p *Peer) Dial(destination string) (*rpc.Client, error) {
 		return nil, err
 	}
 
-	// Create a socket
+	// Create a libp2p-gostream connection
 	ctx := context.Background()
 	conn, err := p2pstream.Dial(ctx, p.host, *dest, protocolID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create libp2p-http based Geth JSON-RPC client
+	// Create libp2p-gostream based Geth JSON-RPC client
 	return rpc.DialIO(ctx, conn, conn)
 }
 
@@ -120,6 +120,10 @@ func (p *Peer) ListenAddr() string {
 }
 
 func (p *Peer) Close() error {
-	p.listener.Close()
+	p.server.Stop()
+	err := p.listener.Close()
+	if err != nil {
+		return err
+	}
 	return p.host.Close()
 }
