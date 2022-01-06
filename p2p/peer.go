@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -21,12 +22,21 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
+type Request struct {
+	Data []byte
+}
+type Response struct {
+	Data []byte
+}
+
+type Service struct{}
+
 type Peer struct {
-	host             host.Host
-	client           *gorpc.Client
-	server           *gorpc.Server
-	service          PingService
-	handleConnection func(conn Connection)
+	host    host.Host
+	rpc     *rpc.Server
+	client  *gorpc.Client
+	server  *gorpc.Server
+	service Service
 }
 
 type Connection struct {
@@ -34,32 +44,25 @@ type Connection struct {
 	client *netRpc.Client
 }
 
-type PingArgs struct {
-	Data []byte
-}
-type PingReply struct {
-	Data []byte
-}
-
-type PingService struct{}
-
 // Name to advertise our service on the P2P network. For connecting and service discovery.
 var protocolID = protocol.ID("/worldcoin/rpc/1.0.0")
+var serviceName = "RPC"
+var serviceMethod = "Call" // Same as function name below
 
-func (t *PingService) Ping(ctx context.Context, argType PingArgs, replyType *PingReply) error {
+func (t *Service) Call(ctx context.Context, req Request, res *Response) error {
 	sender, err := gorpc.GetRequestSender(ctx)
 	if err != nil {
 		return err
 	}
-	log.Println("Received a Ping call from", sender)
-	replyType.Data = argType.Data
+	log.Println("Received a request from", sender)
+	res.Data = req.Data
 	return nil
 }
 
 // NewPeer creates a new transaction exchange with P2P capabilities.
 // port - is the TCP port to listen for incoming P2P connections on. Pass 0 to let OS pick the port.
 // privateKey - is the identity of the P2P instance
-func NewPeer(port int, handleConnection func(conn Connection), privateKey crypto.PrivKey) (*Peer, error) {
+func NewPeer(port int, privateKey crypto.PrivKey) (*Peer, error) {
 	// Create a listening address
 	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
 	if err != nil {
@@ -80,31 +83,34 @@ func NewPeer(port int, handleConnection func(conn Connection), privateKey crypto
 
 	// Create a gorpc server protocol handler and add the RPC service
 	svr := gorpc.NewServer(h, protocolID)
-	svc := PingService{}
-	err = svr.Register(&svc)
+	svc := Service{}
+	err = svr.RegisterName(serviceName, &svc)
 	if err != nil {
 		return nil, err
 	}
 
+	// Create a geth RPC server
+	rpc := rpc.NewServer()
+
 	p := &Peer{
-		host:             h,
-		client:           clt,
-		server:           svr,
-		service:          svc,
-		handleConnection: handleConnection,
+		host:    h,
+		rpc:     rpc,
+		client:  clt,
+		server:  svr,
+		service: svc,
 	}
 
 	return p, nil
 }
 
-func NewPeerWithRandomKey(port int, handleConnection func(conn Connection)) (*Peer, error) {
+func NewPeerWithRandomKey(port int) (*Peer, error) {
 	// Creates a new RSA key pair for this host.
 	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewPeer(port, handleConnection, prvKey)
+	return NewPeer(port, prvKey)
 }
 
 type conn struct {
@@ -124,22 +130,20 @@ func (p *Peer) handleDial(peer peer.ID) {
 	fmt.Println("handleDial")
 
 	// Construct request
-	var args PingArgs
-	c := 64
-	b := make([]byte, c)
+	var req Request
+	b := make([]byte, 64)
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
 	}
-
-	args.Data = b
+	req.Data = b
 
 	// Allocate reply
-	var reply PingReply
+	var res Response
 
 	// Execute RPC request
 	log.Println("Send ping request")
-	err = p.client.Call(peer, "PingService", "Ping", args, &reply)
+	err = p.client.Call(peer, serviceName, "Call", req, &res)
 	if err != nil {
 		panic(err)
 	}
@@ -148,30 +152,56 @@ func (p *Peer) handleDial(peer peer.ID) {
 	println("handleDial end")
 }
 
-func (p *Peer) Dial(destination string) error {
-	fmt.Println("Dialing %0", destination)
+func (p *Peer) Call(destination string, method string, args ...interface{}) error {
+
+	// Register remote peer
+	dest, err := p.PeerID(destination)
+	if err != nil {
+		return err
+	}
+
+	// Encode request as JSON-RPC
+	var in bytes.Buffer
+	var out bytes.Buffer
+	ctx := context.Background()
+	client, err := rpc.DialIO(ctx, in, out)
+
+	// Construct requrest
+	var req Request
+	// TODO
+
+	// Call
+	var res Response
+	err = p.client.Call(*dest, serviceName, serviceMethod, req, &res)
+	if err != nil {
+		return err
+	}
+
+	// TODO
+
+	return nil
+}
+
+func (p *Peer) PeerID(destination string) (*peer.ID, error) {
+	fmt.Println("Meeting", destination)
 
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(destination)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Add the destination's peer multiaddress in the peerstore.
 	// This will be used during connection and stream creation by libp2p.
 	p.host.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
 
-	// Connect to destination peer
-	go p.handleDial(info.ID)
-
-	println("Dial end")
-	return nil
+	return &info.ID, nil
 }
 
 func (p *Peer) ListenAddr() string {

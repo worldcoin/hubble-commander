@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,43 +20,29 @@ func (t *TestRpc) Double(arg IntParam) IntParam {
 
 func TestPeer(t *testing.T) {
 	fmt.Println("# Test start")
-	alice, err := NewPeerWithRandomKey(0, func(conn Connection) {
-		fmt.Println("# Alice 1")
-		err := conn.server.RegisterName("test", &TestRpc{})
-		if err != nil {
-			panic(err)
-		}
-	})
+
+	// Create node Alice serving test_double
+	alice, err := NewPeerWithRandomKey(0)
+	require.NoError(t, err)
+	err = alice.rpc.RegisterName("test", &TestRpc{})
 	require.NoError(t, err)
 	fmt.Println("Alice id:", alice.host.ID())
 	fmt.Println("Alice addr:", alice.host.Addrs())
 
-	done := make(chan bool)
-
-	bob, err := NewPeerWithRandomKey(0, func(conn Connection) {
-		fmt.Println("# Bob 1")
-		var res IntParam
-		err := conn.client.Call("test_double", IntParam{3}, &res)
-		fmt.Println(res.value)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		done <- true
-	})
+	// Create node Bob
+	bob, err := NewPeerWithRandomKey(0)
 	require.NoError(t, err)
 	fmt.Println("Bob id:", bob.host.ID())
 	fmt.Println("Bob addr:", bob.host.Addrs())
 
-	fmt.Println("# Connect")
+	// Have Bob call Alice
+	var res IntParam
 	addr := alice.ListenAddr()
-	err = bob.Dial(addr)
+	err = bob.Call(addr, "test_double", IntParam{3}, &res)
 	require.NoError(t, err)
+	fmt.Println(res.value)
 
-	fmt.Println("# Wait done")
-	<-done
-	fmt.Println("# Done")
-
-	//require.NoError(t, alice.Close())
-	//require.NoError(t, bob.Close())
+	// Tear down
+	require.NoError(t, alice.Close())
+	require.NoError(t, bob.Close())
 }
