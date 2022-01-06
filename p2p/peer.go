@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"net"
 	"strconv"
@@ -60,8 +59,8 @@ func NewPeer(port int, privateKey crypto.PrivKey) (*Peer, error) {
 }
 
 func NewPeerWithRandomKey(port int) (*Peer, error) {
-	// Creates a new RSA key pair for this host.
-	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
+	// Creates a new key pair for this host.
+	prvKey, _, err := crypto.GenerateKeyPair(crypto.Ed25519, -1)
 	if err != nil {
 		return nil, err
 	}
