@@ -33,7 +33,8 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	ethClient := newEthClient(t, client)
 
 	tokenAddress := deployExampleToken(t, ethClient)
-	tokenID := registerToken(t, ethClient, tokenAddress)
+	tokenID, err := ethClient.RegisterTokenAndWait(tokenAddress)
+	require.NoError(t, err)
 	approveToken(t, ethClient, tokenAddress)
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
@@ -49,16 +50,6 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	}
 	_, err = chain.WaitForMultipleTxs(ethClient.Blockchain.GetBackend(), txs...)
 	require.NoError(t, err)
-}
-
-func registerToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Address) *models.Uint256 {
-	err := ethClient.RequestRegisterTokenAndWait(tokenAddress)
-	require.NoError(t, err)
-
-	tokenID, err := ethClient.FinalizeRegisterTokenAndWait(tokenAddress)
-	require.NoError(t, err)
-
-	return tokenID
 }
 
 func approveToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Address) {

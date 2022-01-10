@@ -256,35 +256,12 @@ func bootstrapFromChainState(
 		return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup, commanderMetrics)
 	}
 
-	err = compareChainStates(importedChainState, dbChainState)
-	if err != nil {
-		return nil, err
+	if !importedChainState.Equal(dbChainState) {
+		return nil, errors.WithStack(errInconsistentChainState)
 	}
 
 	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
 	return createClientFromChainState(blockchain, importedChainState, cfg.Rollup, commanderMetrics)
-}
-
-func compareChainStates(chainStateA, chainStateB *models.ChainState) error {
-	if chainStateA.ChainID != chainStateB.ChainID ||
-		chainStateA.AccountRegistryDeploymentBlock != chainStateB.AccountRegistryDeploymentBlock ||
-		chainStateA.Rollup != chainStateB.Rollup ||
-		chainStateA.AccountRegistry != chainStateB.AccountRegistry ||
-		chainStateA.TokenRegistry != chainStateB.TokenRegistry ||
-		chainStateA.DepositManager != chainStateB.DepositManager {
-		return errors.WithStack(errInconsistentChainState)
-	}
-
-	if len(chainStateA.GenesisAccounts) != len(chainStateB.GenesisAccounts) {
-		return errors.WithStack(errInconsistentChainState)
-	}
-	for i := range chainStateA.GenesisAccounts {
-		if chainStateA.GenesisAccounts[i] != chainStateB.GenesisAccounts[i] {
-			return errors.WithStack(errInconsistentChainState)
-		}
-	}
-
-	return nil
 }
 
 func bootstrapChainStateAndCommander(
@@ -371,6 +348,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 		AccountRegistry:                info.AccountRegistry,
 		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
 		TokenRegistry:                  info.TokenRegistry,
+		SpokeRegistry:                  info.SpokeRegistry,
 		DepositManager:                 info.DepositManager,
 		Rollup:                         info.Rollup,
 		GenesisAccounts:                genesisAccounts,
@@ -424,13 +402,13 @@ func createClientFromChainState(
 		SpokeRegistry:   spokeRegistry,
 		DepositManager:  depositManager,
 		ClientConfig: eth.ClientConfig{
-			TransferBatchSubmissionGasLimit:      ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
-			C2TBatchSubmissionGasLimit:           ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
-			MassMigrationBatchSubmissionGasLimit: ref.Uint64(cfg.MassMigrationBatchSubmissionGasLimit),
-			DepositBatchSubmissionGasLimit:       ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
-			TransitionDisputeGasLimit:            ref.Uint64(cfg.TransitionDisputeGasLimit),
-			SignatureDisputeGasLimit:             ref.Uint64(cfg.SignatureDisputeGasLimit),
-			BatchAccountRegistrationGasLimit:     ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
+			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
+			MMBatchSubmissionGasLimit:        ref.Uint64(cfg.MMBatchSubmissionGasLimit),
+			DepositBatchSubmissionGasLimit:   ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
+			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
+			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
 		},
 	})
 	if err != nil {

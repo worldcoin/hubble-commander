@@ -166,10 +166,6 @@ Example result (`MASS_MIGRATION`):
 }
 ```
 
-### `hubble_getTransactions(pubKey)`
-
-Returns an array of transactions (`TRANSFER` and `CREATE2TRANSFER` type) for given public key
-
 ### `hubble_getUserState(stateId)`
 
 Example result:
@@ -351,10 +347,6 @@ committed balance and finalized (non-disputable) balance.
 ### `hubble_getTransactionCount(Address)`
 
 Returns the user's transaction count. Used for setting the nonce. Should this be per token?
-
-### `hubble_getTransactions(Address)`
-
-Returns the user's list of transactions. Should this be per token? Should this have pagination?
 
 ### `hubble_getLatestCommitment()`
 

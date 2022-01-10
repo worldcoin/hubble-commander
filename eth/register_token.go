@@ -9,29 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Client) RequestRegisterTokenAndWait(tokenContract common.Address) error {
-	tx, err := c.RequestRegisterToken(tokenContract)
-	if err != nil {
-		return err
-	}
-	_, err = chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Client) RequestRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
-	tx, err := c.tokenRegistry().RequestRegistration(tokenContract)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return tx, nil
-}
-
-func (c *Client) FinalizeRegisterTokenAndWait(tokenContract common.Address) (*models.Uint256, error) {
-	tx, err := c.FinalizeRegisterToken(tokenContract)
+func (c *Client) RegisterTokenAndWait(tokenContract common.Address) (*models.Uint256, error) {
+	tx, err := c.RegisterToken(tokenContract)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +22,8 @@ func (c *Client) FinalizeRegisterTokenAndWait(tokenContract common.Address) (*mo
 	return c.retrieveRegisteredTokenID(receipt)
 }
 
-func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Transaction, error) {
-	tx, err := c.tokenRegistry().FinaliseRegistration(tokenContract)
+func (c *Client) RegisterToken(tokenContract common.Address) (*types.Transaction, error) {
+	tx, err := c.tokenRegistry().RegisterToken(tokenContract)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -52,13 +31,13 @@ func (c *Client) FinalizeRegisterToken(tokenContract common.Address) (*types.Tra
 }
 
 func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint256, error) {
-	log, err := retrieveLog(receipt, RegisteredTokenEvent)
+	log, err := retrieveLog(receipt, TokenRegisteredEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	event := new(tokenregistry.TokenRegistryRegisteredToken)
-	err = c.TokenRegistry.BoundContract.UnpackLog(event, RegisteredTokenEvent, *log)
+	event := new(tokenregistry.TokenRegistryTokenRegistered)
+	err = c.TokenRegistry.BoundContract.UnpackLog(event, TokenRegisteredEvent, *log)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -13,18 +13,22 @@ const (
 	NewBatchEvent               = "NewBatch"
 	SinglePubkeyRegisteredEvent = "SinglePubkeyRegistered"
 	BatchPubkeyRegisteredEvent  = "BatchPubkeyRegistered"
-	RegisteredTokenEvent        = "RegisteredToken"
+	TokenRegisteredEvent        = "TokenRegistered"
 	SpokeRegisteredEvent        = "SpokeRegistered"
 	DepositQueuedEvent          = "DepositQueued"
+	DepositSubTreeReadyEvent    = "DepositSubTreeReady"
+	DepositsFinalisedEvent      = "DepositsFinalised"
 )
 
 var eventTopics = map[string]common.Hash{
 	NewBatchEvent:               crypto.Keccak256Hash([]byte("NewBatch(uint256,bytes32,uint8)")),
 	SinglePubkeyRegisteredEvent: crypto.Keccak256Hash([]byte("SinglePubkeyRegistered(uint256)")),
 	BatchPubkeyRegisteredEvent:  crypto.Keccak256Hash([]byte("BatchPubkeyRegistered(uint256,uint256)")),
-	RegisteredTokenEvent:        crypto.Keccak256Hash([]byte("RegisteredToken(uint256,address)")),
+	TokenRegisteredEvent:        crypto.Keccak256Hash([]byte("TokenRegistered(uint256,address)")),
 	SpokeRegisteredEvent:        crypto.Keccak256Hash([]byte("SpokeRegistered(uint256,address)")),
 	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256,uint256,uint256)")),
+	DepositSubTreeReadyEvent:    crypto.Keccak256Hash([]byte("DepositSubTreeReady(uint256,bytes32)")),
+	DepositsFinalisedEvent:      crypto.Keccak256Hash([]byte("DepositsFinalised(uint256,bytes32,uint256)")),
 }
 
 var (

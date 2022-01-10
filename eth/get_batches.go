@@ -162,7 +162,7 @@ func (c *Client) getDepositsFinalisedEvents(filters *BatchesFilters) ([]*rollup.
 func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBatchIterator, error) {
 	it := &rollup.NewBatchIterator{}
 
-	err := c.FilterLogs(c.Rollup.BoundContract, "NewBatch", &bind.FilterOpts{
+	err := c.FilterLogs(c.Rollup.BoundContract, NewBatchEvent, &bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
 	}, it)
@@ -176,7 +176,7 @@ func (c *Client) getNewBatchLogIterator(filters *BatchesFilters) (*rollup.NewBat
 func (c *Client) getDepositsFinalisedLogIterator(filters *BatchesFilters) (*rollup.DepositsFinalisedIterator, error) {
 	it := &rollup.DepositsFinalisedIterator{}
 
-	err := c.FilterLogs(c.Rollup.BoundContract, "DepositsFinalised", &bind.FilterOpts{
+	err := c.FilterLogs(c.Rollup.BoundContract, DepositsFinalisedEvent, &bind.FilterOpts{
 		Start: filters.StartBlockInclusive,
 		End:   filters.EndBlockInclusive,
 	}, it)

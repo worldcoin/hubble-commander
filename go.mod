@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cast v1.3.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
-	github.com/timshannon/badgerhold/v4 v4.0.1
+	github.com/timshannon/badgerhold/v4 v4.0.3-0.20220105134519-0898ce32287b
 	github.com/ybbus/jsonrpc/v2 v2.1.6
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gopkg.in/yaml.v2 v2.4.0

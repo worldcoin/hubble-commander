@@ -7,12 +7,12 @@ import (
 )
 
 type RegisteredTokenIterator struct {
-	TokenRegistryRegisteredTokenIterator
+	TokenRegistryTokenRegisteredIterator
 }
 
 func (i *RegisteredTokenIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
-	i.TokenRegistryRegisteredTokenIterator.contract = contract
-	i.TokenRegistryRegisteredTokenIterator.event = event
-	i.TokenRegistryRegisteredTokenIterator.logs = logs
-	i.TokenRegistryRegisteredTokenIterator.sub = sub
+	i.TokenRegistryTokenRegisteredIterator.contract = contract
+	i.TokenRegistryTokenRegisteredIterator.event = event
+	i.TokenRegistryTokenRegisteredIterator.logs = logs
+	i.TokenRegistryTokenRegisteredIterator.sub = sub
 }

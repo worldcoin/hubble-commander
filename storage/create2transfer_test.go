@@ -160,43 +160,6 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	s.Contains(res, create2Transfer2)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
-	s.NoError(err)
-
-	_, err = s.storage.StateTree.Set(1, &models.UserState{
-		PubKeyID: 2,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(400),
-	})
-	s.NoError(err)
-
-	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(transfers, 1)
-}
-
-func (s *Create2TransferTestSuite) Test_GetCreate2TransfersByPublicKey_NoCreate2TransfersUnregisteredAccount() {
-	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&models.PublicKey{9, 9, 9})
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2TransfersRegisteredAccount() {
-	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByPublicKey_NoCreate2TransfersButSomeTransfers() {
-	err := s.storage.AddTransfer(&transfer)
-	s.NoError(err)
-
-	transfers, err := s.storage.GetCreate2TransfersByPublicKey(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
 	transfer1.CommitmentID = &txCommitment.ID
