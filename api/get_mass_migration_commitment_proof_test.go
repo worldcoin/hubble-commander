@@ -131,7 +131,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmen
 	_, err := s.api.GetMassMigrationCommitmentProof(commitmentID)
 	s.Equal(&APIError{
 		Code:    50004,
-		Message: "mass migration commitment inclusion proof not found",
+		Message: "mass migration commitment inclusion proof could not be generated",
 	}, err)
 }
 

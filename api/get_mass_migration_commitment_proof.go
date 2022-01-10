@@ -13,7 +13,7 @@ import (
 )
 
 var getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof not found"),
+	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof could not be generated"),
 }
 
 func (a *API) GetMassMigrationCommitmentProof(commitmentID models.CommitmentID) (*dto.MassMigrationCommitmentProof, error) {
