@@ -32,7 +32,7 @@ func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient) {
 func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	ethClient := newEthClient(t, client)
 
-	tokenAddress := deployExampleToken(t, ethClient)
+	_, tokenAddress := deployExampleToken(t, ethClient)
 	tokenID, err := ethClient.RegisterTokenAndWait(tokenAddress)
 	require.NoError(t, err)
 	approveToken(t, ethClient, tokenAddress)
@@ -63,8 +63,8 @@ func approveToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Addre
 	require.NoError(t, err)
 }
 
-func deployExampleToken(t *testing.T, ethClient *eth.Client) common.Address {
-	tokenAddress, tx, _, err := customtoken.DeployTestCustomToken(
+func deployExampleToken(t *testing.T, ethClient *eth.Client) (customtoken.TestCustomToken, common.Address) {
+	tokenAddress, tx, token, err := customtoken.DeployTestCustomToken(
 		ethClient.Blockchain.GetAccount(),
 		ethClient.Blockchain.GetBackend(),
 		"ExampleToken",
@@ -75,7 +75,7 @@ func deployExampleToken(t *testing.T, ethClient *eth.Client) common.Address {
 	_, err = chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
 	require.NoError(t, err)
 
-	return tokenAddress
+	return *token, tokenAddress
 }
 
 func waitForBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256) {

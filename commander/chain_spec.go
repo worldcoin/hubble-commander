@@ -42,6 +42,7 @@ func makeChainSpec(chainState *models.ChainState) models.ChainSpec {
 		TokenRegistry:                  chainState.TokenRegistry,
 		SpokeRegistry:                  chainState.SpokeRegistry,
 		DepositManager:                 chainState.DepositManager,
+		WithdrawManager:                chainState.WithdrawManager,
 		Rollup:                         chainState.Rollup,
 		GenesisAccounts:                chainState.GenesisAccounts,
 	}
@@ -55,6 +56,7 @@ func newChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState 
 		TokenRegistry:                  chainSpec.TokenRegistry,
 		SpokeRegistry:                  chainSpec.SpokeRegistry,
 		DepositManager:                 chainSpec.DepositManager,
+		WithdrawManager:                chainSpec.WithdrawManager,
 		Rollup:                         chainSpec.Rollup,
 		GenesisAccounts:                chainSpec.GenesisAccounts,
 		SyncedBlock:                    getInitialSyncedBlock(chainSpec.AccountRegistryDeploymentBlock),

@@ -16,6 +16,7 @@ var (
 		AccountRegistryDeploymentBlock: 234,
 		TokenRegistry:                  utils.RandomAddress(),
 		DepositManager:                 utils.RandomAddress(),
+		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		SyncedBlock:                    10,
 	}

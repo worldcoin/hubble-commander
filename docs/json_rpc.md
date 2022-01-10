@@ -17,7 +17,7 @@ Example result:
 This returns a number of datapoints about the current state of the system:
 
 - Ethereum network chain ID
-- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager and Rollup contract addresses
+- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager, WithdrawManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
 - Number of transactions and accounts
@@ -35,6 +35,7 @@ Example result:
     "TokenRegistry": "0x07389715ae1f0a891fba82e65099f6a3fa7da593",
     "SpokeRegistry": "0x535ca2e7dc31afce3dde4d78ded91aedf55b04b8",
     "DepositManager": "0xa3accd1cfabc8b09aea4d0e25f21f25c526c9be8",
+    "WithdrawManager": "0x7eaa005432a4602044ae2242c79234650304f290",
     "Rollup": "0xf2a409ccf78e6e32e02d5e3a3ac274ca6880d9ac",
     "BlockNumber": 2146,
     "TransactionCount": 2,
@@ -435,7 +436,7 @@ Returns the transfer/create2transfer commitment inclusion proof for the given co
 }
 ```
 
-### `hubble_getMassMigrationCommitmentProof(batchID, commitmentIndex)`
+### `hubble_getMassMigrationCommitmentProof(commitmentID)`
 
 Returns the mass migration commitment inclusion proof for the given commitment ID, see below.
 
@@ -465,7 +466,7 @@ Returns the mass migration commitment inclusion proof for the given commitment I
 }
 ```
 
-### `hubble_getWithdrawProof(batchID, commitmentIndex, transactionHash)`
+### `hubble_getWithdrawProof(commitmentID, transactionHash)`
 
 Returns the withdrawal proof for the given mass migration transaction, see below.
 

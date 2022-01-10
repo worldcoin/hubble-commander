@@ -35,12 +35,12 @@ import (
 )
 
 func TestCommanderDispute(t *testing.T) {
-	cfg := config.GetConfig().Rollup
-	cfg.MinTxsPerCommitment = 32
-	cfg.MaxTxsPerCommitment = 32
-	cfg.MinCommitmentsPerBatch = 1
+	cfg := config.GetConfig()
+	cfg.Rollup.MinTxsPerCommitment = 32
+	cfg.Rollup.MaxTxsPerCommitment = 32
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 
-	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
 	err = cmd.Start()
 	require.NoError(t, err)
@@ -435,11 +435,12 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		TokenRegistry:                  info.TokenRegistry,
 		SpokeRegistry:                  info.SpokeRegistry,
 		DepositManager:                 info.DepositManager,
+		WithdrawManager:                info.WithdrawManager,
 		Rollup:                         info.Rollup,
 	}
 
 	cfg := config.GetConfig()
-	blockchain, err := chain.NewRPCCConnection(cfg.Ethereum)
+	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
 	backend := blockchain.GetBackend()

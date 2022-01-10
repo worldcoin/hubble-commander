@@ -13,6 +13,7 @@ type NetworkInfo struct {
 	TokenRegistry                  common.Address
 	SpokeRegistry                  common.Address
 	DepositManager                 common.Address
+	WithdrawManager                common.Address
 	Rollup                         common.Address
 	BlockNumber                    uint32
 	TransactionCount               int

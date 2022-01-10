@@ -39,11 +39,11 @@ var getWithdrawProofAPIErrors = map[error]*APIError{
 	ErrMassMigrationWithTxHashNotFound: APIErrMassMigrationWithTxHashNotFound,
 }
 
-func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, transactionHash common.Hash) (*dto.WithdrawProof, error) {
+func (a *API) GetWithdrawProof(commitmentID models.CommitmentID, transactionHash common.Hash) (*dto.WithdrawProof, error) {
 	if !a.cfg.EnableProofMethods {
 		return nil, errProofMethodsDisabled
 	}
-	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(batchID, commitmentIndex, transactionHash)
+	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(commitmentID, transactionHash)
 	if err != nil {
 		return nil, sanitizeError(err, getWithdrawProofAPIErrors)
 	}
@@ -51,21 +51,15 @@ func (a *API) GetWithdrawProof(batchID models.Uint256, commitmentIndex uint8, tr
 }
 
 func (a *API) unsafeGetWithdrawProof(
-	batchID models.Uint256,
-	commitmentIndex uint8,
+	commitmentID models.CommitmentID,
 	transactionHash common.Hash,
 ) (*dto.WithdrawProof, error) {
-	batch, err := a.storage.GetBatch(batchID)
+	batch, err := a.storage.GetBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	if batch.Type != batchtype.MassMigration {
 		return nil, errors.WithStack(ErrOnlyMassMigrationBatches)
-	}
-
-	commitmentID := models.CommitmentID{
-		BatchID:      batchID,
-		IndexInBatch: commitmentIndex,
 	}
 
 	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentID)
