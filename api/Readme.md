@@ -37,10 +37,10 @@
 | `40000`    | `an error occurred while saving data to the Badger database`                                           |
 | `40001`    | `an error occurred while iterating over Badger database`                                               |
 | `50000`    | `proof methods disabled`                                                                               |
-| `50001`    | `commitment proof not found`                                                                           |
-| `50002`    | `public key proof not found`                                                                           |
-| `50003`    | `user state proof not found`                                                                           |
-| `50004`    | `mass migration commitment inclusion proof not found`                                                  |
+| `50001`    | `commitment inclusion proof could not be generated found`                                              |
+| `50002`    | `public key inclusion proof could not be generated`                                                    |
+| `50003`    | `user state inclusion proof could not be generated`                                                    |
+| `50004`    | `mass migration commitment inclusion proof could not be generated`                                     |
 | `50005`    | `withdraw proof could not be calculated for a given batch`                                             |
 | `50006`    | `invalid batch type, only mass migration batches are supported`                                        |
 | `50007`    | `mass migration with given transaction hash was not found in a given commitment`                       |
