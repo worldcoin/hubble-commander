@@ -263,7 +263,7 @@ func testGetMassMigrationCommitmentProof(
 	return &proof
 }
 
-func massMigrationCommitmentProofToGethType(proof *dto.MassMigrationCommitmentProof) withdrawmanager.TypesMMCommitmentInclusionProof {
+func massMigrationCommitmentProofToCalldata(proof *dto.MassMigrationCommitmentProof) withdrawmanager.TypesMMCommitmentInclusionProof {
 	return withdrawmanager.TypesMMCommitmentInclusionProof{
 		Commitment: withdrawmanager.TypesMassMigrationCommitment{
 			StateRoot: utils.ByteSliceTo32ByteArray(proof.StateRoot.Bytes()),
@@ -296,7 +296,7 @@ func testProcessWithdrawCommitment(
 
 	proof := testGetMassMigrationCommitmentProof(t, client, models.MakeUint256(batchID), 0)
 
-	typedProof := massMigrationCommitmentProofToGethType(proof)
+	typedProof := massMigrationCommitmentProofToCalldata(proof)
 
 	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(uint64(l2Unit))
 	testDoActionAndAssertTokenBalanceDifference(t, token, withdrawManagerAddress, expectedBalanceDifference, func() {
@@ -331,7 +331,7 @@ func testGetPublicKeyProof(t *testing.T, client jsonrpc.RPCClient, pubKeyID uint
 	return proof
 }
 
-func withdrawProofToGethType(proof *dto.WithdrawProof) withdrawmanager.TypesStateMerkleProofWithPath {
+func withdrawProofToCalldata(proof *dto.WithdrawProof) withdrawmanager.TypesStateMerkleProofWithPath {
 	return withdrawmanager.TypesStateMerkleProofWithPath{
 		State: withdrawmanager.TypesUserState{
 			PubkeyID: big.NewInt(int64(proof.UserState.PubKeyID)),
@@ -356,7 +356,7 @@ func testClaimTokens(
 ) {
 	proof := testGetWithdrawProof(t, client, models.MakeUint256(2), 0, transactionHash)
 
-	typedProof := withdrawProofToGethType(proof)
+	typedProof := withdrawProofToCalldata(proof)
 
 	message, err := sender.Sign(transactor.From.Bytes())
 	require.NoError(t, err)
