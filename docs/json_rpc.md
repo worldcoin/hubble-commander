@@ -348,10 +348,6 @@ committed balance and finalized (non-disputable) balance.
 
 Returns the user's transaction count. Used for setting the nonce. Should this be per token?
 
-### `hubble_getTransactions(Address)`
-
-Returns the user's list of transactions. Should this be per token? Should this have pagination?
-
 ### `hubble_getLatestCommitment()`
 
 Returns the latest commitment, see below.
