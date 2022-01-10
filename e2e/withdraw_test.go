@@ -109,7 +109,8 @@ func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
 
 func deployAndRegisterToken(t *testing.T, ethClient *eth.Client) (*customtoken.TestCustomToken, *models.Uint256) {
 	token, tokenAddress := deployExampleToken(t, ethClient)
-	tokenID := registerToken(t, ethClient, tokenAddress)
+	tokenID, err := ethClient.RegisterTokenAndWait(tokenAddress)
+	require.NoError(t, err)
 	approveToken(t, ethClient, tokenAddress)
 
 	return &token, tokenID

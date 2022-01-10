@@ -23,7 +23,7 @@ import (
 const maxTxsPerCommitment = 32
 
 func TestMeasureDisputeGasUsage(t *testing.T) {
-	cfg := config.GetConfig().Rollup
+	cfg := config.GetConfig()
 	cfg.Rollup.MinTxsPerCommitment = maxTxsPerCommitment
 	cfg.Rollup.MaxTxsPerCommitment = maxTxsPerCommitment
 	cfg.Rollup.MinCommitmentsPerBatch = 1
