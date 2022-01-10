@@ -200,7 +200,7 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 
 	err = c.syncStakeWithdrawals(startBlock, endBlock)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	return nil
