@@ -37,7 +37,7 @@
 | `40000`    | `an error occurred while saving data to the Badger database`                                           |
 | `40001`    | `an error occurred while iterating over Badger database`                                               |
 | `50000`    | `proof methods disabled`                                                                               |
-| `50001`    | `commitment inclusion proof could not be generated found`                                              |
+| `50001`    | `commitment inclusion proof could not be generated`                                                    |
 | `50002`    | `public key inclusion proof could not be generated`                                                    |
 | `50003`    | `user state inclusion proof could not be generated`                                                    |
 | `50004`    | `mass migration commitment inclusion proof could not be generated`                                     |
