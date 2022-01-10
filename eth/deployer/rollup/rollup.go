@@ -67,6 +67,7 @@ type RollupContracts struct {
 	Vault                  *vault.Vault
 	DepositManager         *depositmanager.DepositManager
 	DepositManagerAddress  common.Address
+	WithdrawManagerAddress common.Address
 	Transfer               *transfer.Transfer
 	MassMigration          *massmigration.MassMigration
 	Create2Transfer        *create2transfer.Create2Transfer
@@ -215,14 +216,27 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
+	log.Println("Setting Rollup address in Vault")
+	vaultInitTx, err := vaultContract.SetRollupAddress(c.GetAccount(), rollupAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	log.Println("Deploying WithdrawManager")
-	withdrawManagerAddress, withdrawManagerTx, _, err := withdrawmanager.DeployWithdrawManager(
-		c.GetAccount(),
-		c.GetBackend(),
-		tokenRegistryAddress,
-		vaultAddress,
-		rollupAddress,
+	var (
+		withdrawManagerAddress common.Address
+		withdrawManagerTx      *types.Transaction
 	)
+	withReplacedCostEstimatorAddress(costEstimatorAddress, func() {
+		withdrawManagerAddress, withdrawManagerTx, _, err = withdrawmanager.DeployWithdrawManager(
+			c.GetAccount(),
+			c.GetBackend(),
+			tokenRegistryAddress,
+			vaultAddress,
+			rollupAddress,
+		)
+	})
+
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -233,7 +247,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *withdrawManagerTx, *exampleTokenTx)
+	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *vaultInitTx, *withdrawManagerTx, *exampleTokenTx)
 	if err != nil {
 		return nil, err
 	}
@@ -272,6 +286,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		Vault:                  vaultContract,
 		DepositManager:         depositManager,
 		DepositManagerAddress:  depositManagerAddress,
+		WithdrawManagerAddress: withdrawManagerAddress,
 		Transfer:               txHelpers.Transfer,
 		MassMigration:          txHelpers.MassMigration,
 		Create2Transfer:        txHelpers.Create2Transfer,
@@ -357,15 +372,18 @@ func deployMissing(dependencies *Dependencies, c chain.Connection) error {
 //goland:noinspection GoDeprecation
 func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()) {
 	targetString := strings.ToLower(newCostEstimator.String()[2:])
+	originalWithdrawManagerBin := withdrawmanager.WithdrawManagerBin
 	originalTransferBin := transfer.TransferBin
 	originalCreate2TransferBin := create2transfer.Create2TransferBin
 	originalMassMigrationBin := massmigration.MassMigrationBin
 
+	withdrawmanager.WithdrawManagerBin = strings.Replace(originalWithdrawManagerBin, originalCostEstimatorAddress, targetString, -1)
 	transfer.TransferBin = strings.Replace(originalTransferBin, originalCostEstimatorAddress, targetString, -1)
 	create2transfer.Create2TransferBin = strings.Replace(originalCreate2TransferBin, originalCostEstimatorAddress, targetString, -1)
 	massmigration.MassMigrationBin = strings.Replace(originalMassMigrationBin, originalCostEstimatorAddress, targetString, -1)
 
 	defer func() {
+		withdrawmanager.WithdrawManagerBin = originalWithdrawManagerBin
 		transfer.TransferBin = originalTransferBin
 		create2transfer.Create2TransferBin = originalCreate2TransferBin
 		massmigration.MassMigrationBin = originalMassMigrationBin

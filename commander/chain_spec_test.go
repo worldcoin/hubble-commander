@@ -29,6 +29,7 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		AccountRegistryDeploymentBlock: 8837,
 		TokenRegistry:                  utils.RandomAddress(),
 		DepositManager:                 utils.RandomAddress(),
+		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		GenesisAccounts: models.GenesisAccounts{
 			{

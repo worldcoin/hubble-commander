@@ -63,10 +63,10 @@ func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
 	s.SetupTestWithRollupConfig(benchmarkConfig, nil)
 }
 
-func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.RollupConfig) {
+func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.Config) {
 	s.benchConfig = benchmarkConfig
 
-	commander, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	s.NoError(err)
 
 	err = commander.Start()

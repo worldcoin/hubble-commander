@@ -19,41 +19,44 @@ type InProcessCommander struct {
 	blockchain chain.Connection
 }
 
-func CreateInProcessCommander(rollupCfg *config.RollupConfig) (*InProcessCommander, error) {
-	cfg := config.GetConfig()
-	cfg.Bootstrap.Prune = true
-	if rollupCfg != nil {
-		cfg.Rollup = rollupCfg
+func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
+	if commanderConfig == nil {
+		commanderConfig = config.GetConfig()
 	}
-	return CreateInProcessCommanderWithConfig(cfg, true)
+
+	commanderConfig.Bootstrap.Prune = true
+
+	if deployerConfig == nil {
+		deployerConfig = config.GetDeployerConfig()
+	}
+
+	return CreateInProcessCommander(commanderConfig, deployerConfig)
 }
 
-func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool) (*InProcessCommander, error) {
-	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
+func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
+	blockchain, err := commander.GetChainConnection(commanderConfig.Ethereum)
 	if err != nil {
 		return nil, err
 	}
 
-	cmd := commander.NewCommander(cfg, blockchain)
-	endpoint := fmt.Sprintf("http://localhost:%s", cfg.API.Port)
+	cmd := commander.NewCommander(commanderConfig, blockchain)
+	endpoint := fmt.Sprintf("http://localhost:%s", commanderConfig.API.Port)
 	client := jsonrpc.NewClient(endpoint)
 
-	if deployContracts {
+	if deployerConfig != nil {
 		file, err := os.CreateTemp("", "in_process_commander")
 		if err != nil {
 			return nil, err
 		}
 
 		chainSpecPath := file.Name()
-		cfg.Bootstrap.ChainSpecPath = &chainSpecPath
-
-		deployerCfg := config.GetDeployerConfig()
-		chainSpec, err := commander.Deploy(deployerCfg, blockchain)
+		commanderConfig.Bootstrap.ChainSpecPath = &chainSpecPath
+		chainSpec, err := commander.Deploy(deployerConfig, blockchain)
 		if err != nil {
 			return nil, err
 		}
 
-		err = os.WriteFile(*cfg.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		err = os.WriteFile(*commanderConfig.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +65,7 @@ func CreateInProcessCommanderWithConfig(cfg *config.Config, deployContracts bool
 	return &InProcessCommander{
 		client:     client,
 		commander:  cmd,
-		cfg:        cfg,
+		cfg:        commanderConfig,
 		blockchain: blockchain,
 	}, nil
 }
