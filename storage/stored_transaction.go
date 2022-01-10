@@ -305,23 +305,6 @@ func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *store
 	return false, item.Value(storedTx.SetBytes)
 }
 
-func getTxHashesByIndexKey(txn *bdg.Txn, indexKey, typePrefix []byte) ([]common.Hash, error) {
-	item, err := txn.Get(indexKey)
-	if err != nil {
-		return nil, err
-	}
-
-	var keyList bh.KeyList
-	err = item.Value(func(val []byte) error {
-		return db.DecodeKeyList(val, &keyList)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return decodeKeyListHashes(typePrefix, keyList)
-}
-
 func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))

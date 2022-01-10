@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
-	"github.com/Worldcoin/hubble-commander/utils"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -142,85 +141,4 @@ func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, comm
 		}
 		return nil
 	})
-}
-
-func (s *Storage) GetTransfersByPublicKey(publicKey *models.PublicKey) ([]models.TransferWithBatchDetails, error) {
-	var transfers []models.TransferWithBatchDetails
-	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
-		txs, txReceipts, err := txStorage.getTransfersByPublicKey(publicKey)
-		if err != nil {
-			return err
-		}
-		transfers, err = txStorage.txsToTransfersWithBatchDetails(txs, txReceipts)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return transfers, nil
-}
-
-func (s *Storage) getTransfersByPublicKey(publicKey *models.PublicKey) ([]stored.Tx, []*stored.TxReceipt, error) {
-	leaves, err := s.GetStateLeavesByPublicKey(publicKey)
-	if IsNotFoundError(err) {
-		return nil, nil, nil
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	stateIDs := utils.ValueToInterfaceSlice(leaves, "StateID")
-
-	txs := make([]stored.Tx, 0, 1)
-	toStateIDCondition := bh.Where("ToStateID").In(stateIDs...).Index("ToStateID").
-		And("TxType").Eq(txtype.Transfer)
-	fromStateIDCondition := bh.Where("FromStateID").In(stateIDs...).Index("FromStateID").
-		And("TxType").Eq(txtype.Transfer)
-	err = s.database.Badger.Find(
-		&txs,
-		toStateIDCondition.Or(fromStateIDCondition),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	txReceipts := make([]*stored.TxReceipt, 0, len(txs))
-	for i := range txs {
-		txReceipt, err := s.getStoredTxReceipt(txs[i].Hash)
-		if err != nil {
-			return nil, nil, err
-		}
-		txReceipts = append(txReceipts, txReceipt)
-	}
-
-	return txs, txReceipts, nil
-}
-
-func (s *Storage) txsToTransfersWithBatchDetails(txs []stored.Tx, txReceipts []*stored.TxReceipt) (
-	result []models.TransferWithBatchDetails,
-	err error,
-) {
-	result = make([]models.TransferWithBatchDetails, 0, len(txs))
-	batchIDs := make(map[models.Uint256]*models.Batch)
-	for i := range txs {
-		transfer := txs[i].ToTransfer(txReceipts[i])
-		if transfer.CommitmentID == nil {
-			result = append(result, models.TransferWithBatchDetails{Transfer: *transfer})
-			continue
-		}
-		batch, ok := batchIDs[transfer.CommitmentID.BatchID]
-		if !ok {
-			batch, err = s.GetBatch(transfer.CommitmentID.BatchID)
-			if err != nil {
-				return nil, err
-			}
-			batchIDs[transfer.CommitmentID.BatchID] = batch
-		}
-
-		result = append(result, models.TransferWithBatchDetails{
-			Transfer:  *transfer,
-			BatchHash: batch.Hash,
-			BatchTime: batch.SubmissionTime,
-		})
-	}
-	return result, nil
 }
