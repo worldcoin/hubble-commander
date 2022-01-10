@@ -58,7 +58,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 
 	s.commitmentProofNotFoundAPIErr = &APIError{
 		Code:    50001,
-		Message: "commitment proof not found",
+		Message: "commitment inclusion proof could not be generated",
 	}
 }
 
@@ -100,7 +100,11 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	}
 
 	expectedCommitmentProof := &dto.CommitmentInclusionProof{
-		StateRoot: s.commitment.PostStateRoot,
+		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
+			StateRoot: s.commitment.PostStateRoot,
+			Path:      path,
+			Witness:   tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
+		},
 		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
@@ -109,8 +113,6 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 				dto.MakeTransferForCommitment(&transfer),
 			},
 		},
-		Path:    path,
-		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
 
@@ -142,7 +144,11 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	}
 
 	expectedCommitmentProof := &dto.CommitmentInclusionProof{
-		StateRoot: s.commitment.PostStateRoot,
+		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
+			StateRoot: s.commitment.PostStateRoot,
+			Path:      path,
+			Witness:   tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
+		},
 		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
@@ -151,8 +157,6 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 				dto.MakeCreate2TransferForCommitment(&transfer),
 			},
 		},
-		Path:    path,
-		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
 
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)
@@ -184,7 +188,11 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 	}
 
 	expectedCommitmentProof := &dto.CommitmentInclusionProof{
-		StateRoot: s.commitment.PostStateRoot,
+		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
+			StateRoot: s.commitment.PostStateRoot,
+			Path:      path,
+			Witness:   tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
+		},
 		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.commitment.CombinedSignature,
@@ -193,8 +201,6 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 				dto.MakeMassMigrationForCommitment(&massMigration),
 			},
 		},
-		Path:    path,
-		Witness: tree.GetWitness(uint32(s.commitment.ID.IndexInBatch)),
 	}
 
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)

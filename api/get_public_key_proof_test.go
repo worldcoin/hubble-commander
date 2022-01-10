@@ -73,7 +73,7 @@ func (s *GetPublicKeyProofTestSuite) TestGetPublicKeyProofByPubKeyID_Nonexistent
 	_, err := s.api.GetPublicKeyProofByPubKeyID(1)
 	s.Equal(&APIError{
 		Code:    50002,
-		Message: "public key proof not found",
+		Message: "public key inclusion proof could not be generated",
 	}, err)
 }
 

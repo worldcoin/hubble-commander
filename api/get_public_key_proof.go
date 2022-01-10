@@ -7,7 +7,7 @@ import (
 )
 
 var getPublicKeyProofAPIErrors = map[error]*APIError{
-	storage.AnyNotFoundError: NewAPIError(50002, "public key proof not found"),
+	storage.AnyNotFoundError: NewAPIError(50002, "public key inclusion proof could not be generated"),
 }
 
 func (a *API) GetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error) {
