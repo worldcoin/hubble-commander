@@ -58,7 +58,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 
 	s.commitmentProofNotFoundAPIErr = &APIError{
 		Code:    50001,
-		Message: "commitment proof not found",
+		Message: "commitment inclusion proof could not be generated",
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 var (
 	errProofMethodsDisabled     = NewAPIError(50000, "proof methods disabled")
 	getCommitmentProofAPIErrors = map[error]*APIError{
-		storage.AnyNotFoundError: NewAPIError(50001, "commitment proof not found"),
+		storage.AnyNotFoundError: NewAPIError(50001, "commitment inclusion proof could not be generated"),
 	}
 )
 
