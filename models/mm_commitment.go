@@ -11,6 +11,7 @@ type MMCommitment struct {
 	CombinedSignature Signature
 	BodyHash          *common.Hash
 	Meta              *MassMigrationMeta
+	WithdrawRoot      common.Hash
 }
 
 func (c *MMCommitment) GetBodyHash() common.Hash {
