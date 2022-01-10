@@ -119,23 +119,36 @@ func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_SecondMassMigrationInCo
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentBatch() {
-	_, err := s.api.GetWithdrawProof(models.MakeUint256(10), 15, utils.RandomHash())
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(10),
+		IndexInBatch: 15,
+	}
+	_, err := s.api.GetWithdrawProof(commitmentID, utils.RandomHash())
 	s.Equal(APIWithdrawProofCouldNotBeCalculated, err)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_InvalidBatchType() {
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
+
 	err := s.storage.AddBatch(&models.Batch{
-		ID:   models.MakeUint256(2),
+		ID:   commitmentID.BatchID,
 		Type: batchtype.Transfer,
 	})
 	s.NoError(err)
 
-	_, err = s.api.GetWithdrawProof(models.MakeUint256(2), 0, utils.RandomHash())
+	_, err = s.api.GetWithdrawProof(commitmentID, utils.RandomHash())
 	s.Equal(APIErrOnlyMassMigrationBatches, err)
 }
 
 func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_NonexistentMassMigrationWithGivenSenderInCommitment() {
-	_, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, utils.RandomHash())
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	_, err := s.api.GetWithdrawProof(commitmentID, utils.RandomHash())
 	s.Equal(APIErrMassMigrationWithTxHashNotFound, err)
 }
 
@@ -183,7 +196,11 @@ func (s *GetWithdrawProofTestSuite) testGetWithdrawProofEndpoint(transactionHash
 		Root:    withdrawTree.Root(),
 	}
 
-	withdrawProof, err := s.api.GetWithdrawProof(models.MakeUint256(1), 0, transactionHash)
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	withdrawProof, err := s.api.GetWithdrawProof(commitmentID, transactionHash)
 	s.NoError(err)
 	s.Equal(expected, *withdrawProof)
 }

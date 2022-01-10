@@ -436,7 +436,7 @@ Returns the transfer/create2transfer commitment inclusion proof for the given co
 }
 ```
 
-### `hubble_getMassMigrationCommitmentProof(batchID, commitmentIndex)`
+### `hubble_getMassMigrationCommitmentProof(commitmentID)`
 
 Returns the mass migration commitment inclusion proof for the given commitment ID, see below.
 
@@ -466,7 +466,7 @@ Returns the mass migration commitment inclusion proof for the given commitment I
 }
 ```
 
-### `hubble_getWithdrawProof(batchID, commitmentIndex, transactionHash)`
+### `hubble_getWithdrawProof(commitmentID, transactionHash)`
 
 Returns the withdrawal proof for the given mass migration transaction, see below.
 
