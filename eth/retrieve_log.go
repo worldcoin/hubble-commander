@@ -16,6 +16,8 @@ const (
 	TokenRegisteredEvent        = "TokenRegistered"
 	SpokeRegisteredEvent        = "SpokeRegistered"
 	DepositQueuedEvent          = "DepositQueued"
+	DepositSubTreeReadyEvent    = "DepositSubTreeReady"
+	DepositsFinalisedEvent      = "DepositsFinalised"
 )
 
 var eventTopics = map[string]common.Hash{
@@ -25,6 +27,8 @@ var eventTopics = map[string]common.Hash{
 	TokenRegisteredEvent:        crypto.Keccak256Hash([]byte("TokenRegistered(uint256,address)")),
 	SpokeRegisteredEvent:        crypto.Keccak256Hash([]byte("SpokeRegistered(uint256,address)")),
 	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256,uint256,uint256)")),
+	DepositSubTreeReadyEvent:    crypto.Keccak256Hash([]byte("DepositSubTreeReady(uint256,bytes32)")),
+	DepositsFinalisedEvent:      crypto.Keccak256Hash([]byte("DepositsFinalised(uint256,bytes32,uint256)")),
 }
 
 var (
