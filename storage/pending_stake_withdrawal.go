@@ -39,7 +39,9 @@ func (s *PendingStakeWithdrawalStorage) RemovePendingStakeWithdrawal(batchID mod
 	return nil
 }
 
-func (s *PendingStakeWithdrawalStorage) GetPendingStakeWithdrawalsByFinalisationBlock(startBlock, endBlock uint32) ([]*models.PendingStakeWithdrawal, error) {
+func (s *PendingStakeWithdrawalStorage) GetPendingStakeWithdrawalsByFinalisationBlock(startBlock, endBlock uint32) (
+	[]*models.PendingStakeWithdrawal, error,
+) {
 	var stakes []*models.PendingStakeWithdrawal
 	err := s.database.Badger.Find(&stakes, bh.Where("FinalisationBlock").Ge(startBlock).
 		And("FinalisationBlock").Le(endBlock))
