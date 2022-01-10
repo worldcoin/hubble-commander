@@ -315,12 +315,11 @@ func testProcessWithdrawCommitment(
 func testGetWithdrawProof(
 	t *testing.T,
 	client jsonrpc.RPCClient,
-	batchID models.Uint256,
-	commitmentIndex uint8,
+	commitmentID models.CommitmentID,
 	transactionHash common.Hash,
 ) *dto.WithdrawProof {
 	var proof dto.WithdrawProof
-	err := client.CallFor(&proof, "hubble_getWithdrawProof", []interface{}{batchID, commitmentIndex, transactionHash})
+	err := client.CallFor(&proof, "hubble_getWithdrawProof", []interface{}{commitmentID, transactionHash})
 	require.NoError(t, err)
 
 	return &proof
@@ -357,7 +356,11 @@ func testClaimTokens(
 	sender bls.Wallet,
 	transactionHash common.Hash,
 ) {
-	proof := testGetWithdrawProof(t, client, models.MakeUint256(2), 0, transactionHash)
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
+	proof := testGetWithdrawProof(t, client, commitmentID, transactionHash)
 
 	typedProof := withdrawProofToCalldata(proof)
 
