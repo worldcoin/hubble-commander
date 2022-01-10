@@ -2,6 +2,7 @@ package commander
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -46,7 +47,7 @@ func (c *Commander) unmeasuredSyncStakeWithdrawals(startBlock, endBlock uint64) 
 func (c *Commander) getStakeWithdrawIterator(start, end uint64) (*rollup.StakeWithdrawIterator, error) {
 	it := &rollup.StakeWithdrawIterator{}
 
-	err := c.client.FilterLogs(c.client.Rollup.BoundContract, "StakeWithdraw", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.Rollup.BoundContract, eth.StakeWithdrawEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)
