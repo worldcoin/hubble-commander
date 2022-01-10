@@ -77,10 +77,7 @@ func (s *RegisteredTokensTestSuite) registerSingleToken() models.RegisteredToken
 }
 
 func RegisterSingleToken(s *require.Assertions, testClient *eth.TestClient, tokenAddress common.Address) *models.Uint256 {
-	err := testClient.RequestRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	tokenID, err := testClient.FinalizeRegisterTokenAndWait(tokenAddress)
+	tokenID, err := testClient.RegisterTokenAndWait(tokenAddress)
 	s.NoError(err)
 
 	return tokenID

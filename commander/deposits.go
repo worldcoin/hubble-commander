@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -114,7 +115,7 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {
 	it := &depositmanager.DepositQueuedIterator{}
 
-	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositQueued", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, eth.DepositQueuedEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)
@@ -128,7 +129,7 @@ func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager
 func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
 	it := &depositmanager.DepositSubTreeReadyIterator{}
 
-	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, "DepositSubTreeReady", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, eth.DepositSubTreeReadyEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)

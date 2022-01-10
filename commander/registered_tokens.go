@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -70,7 +71,7 @@ func (c *Commander) unmeasuredSyncTokens(startBlock, endBlock uint64) (*int, err
 func (c *Commander) getRegisteredTokenIterator(start, end uint64) (*tokenregistry.RegisteredTokenIterator, error) {
 	it := &tokenregistry.RegisteredTokenIterator{}
 
-	err := c.client.FilterLogs(c.client.TokenRegistry.BoundContract, "RegisteredToken", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.TokenRegistry.BoundContract, eth.TokenRegisteredEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)
