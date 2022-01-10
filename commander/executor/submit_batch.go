@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
 var (
@@ -9,14 +10,14 @@ var (
 	ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
 )
 
-func (c *TxsContext) SubmitBatch(batch *models.Batch, batchData BatchData) error {
+func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.CommitmentWithTxs) error {
 	select {
 	case <-c.ctx.Done():
 		return ErrRollupContextCanceled
 	default:
 	}
 
-	tx, err := c.Executor.SubmitBatch(&batch.ID, batchData)
+	tx, err := c.Executor.SubmitBatch(&batch.ID, commitments)
 	if err != nil {
 		return err
 	}
@@ -27,12 +28,19 @@ func (c *TxsContext) SubmitBatch(batch *models.Batch, batchData BatchData) error
 		return err
 	}
 
-	return c.addCommitments(batchData.Commitments())
+	return c.addCommitments(commitments, batch.Type)
 }
 
-func (c *TxsContext) addCommitments(commitments []models.TxCommitmentWithTxs) error {
+func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs, batchType batchtype.BatchType) error {
 	for i := range commitments {
-		err := c.storage.AddTxCommitment(&commitments[i].TxCommitment)
+		var err error
+
+		if batchType == batchtype.Transfer || batchType == batchtype.Create2Transfer {
+			err = c.storage.AddTxCommitment(&commitments[i].(*models.TxCommitmentWithTxs).TxCommitment)
+		} else if batchType == batchtype.MassMigration {
+			err = c.storage.AddMMCommitment(&commitments[i].(*models.MMCommitmentWithTxs).MMCommitment)
+		}
+
 		if err != nil {
 			return err
 		}
