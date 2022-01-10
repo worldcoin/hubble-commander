@@ -382,3 +382,18 @@ type RegisteredSpoke struct {
     Contract common.Address
 }
 ```
+
+### Pending Stake Withdrawal
+
+- Holds batchID - finalisation block mapping
+
+Key: batchID `models.Uint256`
+
+Value: finalisation block `uint32`
+
+```go
+type PendingStakeWithdrawal struct {
+	BatchID           Uint256
+	FinalisationBlock uint32
+}
+```
