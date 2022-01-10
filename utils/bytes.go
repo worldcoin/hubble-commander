@@ -12,7 +12,7 @@ func PadLeft(bytes []byte, size int) []byte {
 	return paddedBytes
 }
 
-func ByteSliceTo32ByteSlice(source []byte) [32]byte {
+func ByteSliceTo32ByteArray(source []byte) [32]byte {
 	var target [32]byte
 	copy(target[:], source)
 

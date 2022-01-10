@@ -266,12 +266,12 @@ func testGetMassMigrationCommitmentProof(
 func massMigrationCommitmentProofToGethType(proof *dto.MassMigrationCommitmentProof) withdrawmanager.TypesMMCommitmentInclusionProof {
 	return withdrawmanager.TypesMMCommitmentInclusionProof{
 		Commitment: withdrawmanager.TypesMassMigrationCommitment{
-			StateRoot: utils.ByteSliceTo32ByteSlice(proof.StateRoot.Bytes()),
+			StateRoot: utils.ByteSliceTo32ByteArray(proof.StateRoot.Bytes()),
 			Body: withdrawmanager.TypesMassMigrationBody{
-				AccountRoot:  utils.ByteSliceTo32ByteSlice(proof.Body.AccountRoot.Bytes()),
+				AccountRoot:  utils.ByteSliceTo32ByteArray(proof.Body.AccountRoot.Bytes()),
 				Signature:    proof.Body.Signature.BigInts(),
 				SpokeID:      big.NewInt(int64(proof.Body.Meta.SpokeID)),
-				WithdrawRoot: utils.ByteSliceTo32ByteSlice(proof.Body.WithdrawRoot.Bytes()),
+				WithdrawRoot: utils.ByteSliceTo32ByteArray(proof.Body.WithdrawRoot.Bytes()),
 				TokenID:      proof.Body.Meta.TokenID.ToBig(),
 				Amount:       proof.Body.Meta.Amount.ToBig(),
 				FeeReceiver:  big.NewInt(int64(proof.Body.Meta.FeeReceiver)),
@@ -367,7 +367,7 @@ func testClaimTokens(
 	testDoActionAndAssertTokenBalanceDifference(t, token, transactor.From, expectedBalanceDifference, func() {
 		tx, err := withdrawManager.ClaimTokens(
 			transactor,
-			utils.ByteSliceTo32ByteSlice(proof.Root.Bytes()),
+			utils.ByteSliceTo32ByteArray(proof.Root.Bytes()),
 			typedProof,
 			sender.PublicKey().BigInts(),
 			message.BigInts(),
