@@ -69,5 +69,5 @@ func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
 		commitments[i].BodyHash = batch.Commitments[i].BodyHash(batch.AccountTreeRoot)
 	}
 
-	return c.storage.UpdateCommitments(commitments)
+	return c.storage.UpdateTxCommitments(commitments)
 }

@@ -23,7 +23,7 @@ func (s *CommitmentStorage) GetTxCommitment(id *models.CommitmentID) (*models.Tx
 	return commitment.ToTxCommitment(), nil
 }
 
-func (s *CommitmentStorage) UpdateCommitments(commitments []models.TxCommitment) error {
+func (s *CommitmentStorage) UpdateTxCommitments(commitments []models.TxCommitment) error {
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
 		for i := range commitments {
 			err := txDatabase.Badger.Update(commitments[i].ID, stored.MakeCommitmentFromTxCommitment(&commitments[i]))
