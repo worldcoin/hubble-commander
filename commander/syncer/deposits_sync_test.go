@@ -13,7 +13,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -139,7 +138,9 @@ func (s *SyncDepositBatchTestSuite) prepareDeposits() {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	s.registerToken(s.client.ExampleTokenAddress)
+	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
+	s.NoError(err)
+
 	s.approveTokens()
 	s.queueFourDeposits()
 	s.addGenesisBatch()
@@ -155,16 +156,6 @@ func (s *SyncDepositBatchTestSuite) addGenesisBatch() {
 	batch.PrevStateRoot = root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
-}
-
-func (s *SyncDepositBatchTestSuite) registerToken(tokenAddress common.Address) *models.Uint256 {
-	err := s.client.RequestRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	tokenID, err := s.client.FinalizeRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	return tokenID
 }
 
 func (s *SyncDepositBatchTestSuite) approveTokens() {

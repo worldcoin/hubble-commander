@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -125,7 +126,7 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {
 	it := &accountregistry.SinglePubKeyRegisteredIterator{}
 
-	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "SinglePubkeyRegistered", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, eth.SinglePubkeyRegisteredEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)
@@ -139,7 +140,7 @@ func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accou
 func (c *Commander) getBatchPubKeyRegisteredIterator(start, end uint64) (*accountregistry.BatchPubKeyRegisteredIterator, error) {
 	it := &accountregistry.BatchPubKeyRegisteredIterator{}
 
-	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, "BatchPubkeyRegistered", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.AccountRegistry.BoundContract, eth.BatchPubkeyRegisteredEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)

@@ -17,7 +17,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -174,18 +173,10 @@ func (s *DepositBatchesTestSuite) prepareDeposits() {
 	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
 	s.NoError(err)
 
-	s.registerToken(s.client.ExampleTokenAddress)
+	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
+	s.NoError(err)
+
 	s.approveTokens()
-}
-
-func (s *DepositBatchesTestSuite) registerToken(tokenAddress common.Address) *models.Uint256 {
-	err := s.client.RequestRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	tokenID, err := s.client.FinalizeRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	return tokenID
 }
 
 func (s *DepositBatchesTestSuite) approveTokens() {

@@ -29,10 +29,7 @@ func (s *RegisterTokenTestSuite) TearDownTest() {
 }
 
 func (s *RegisterTokenTestSuite) TestRegisterTokenAndWait_ReturnsCorrectToken() {
-	err := s.client.RequestRegisterTokenAndWait(s.client.ExampleTokenAddress)
-	s.NoError(err)
-
-	tokenID, err := s.client.FinalizeRegisterTokenAndWait(s.client.ExampleTokenAddress)
+	tokenID, err := s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
 	s.NoError(err)
 	s.Equal(tokenID, models.NewUint256(0))
 }
