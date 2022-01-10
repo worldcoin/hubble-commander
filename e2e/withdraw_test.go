@@ -254,11 +254,10 @@ func testSubmitWithdrawBatch(
 func testGetMassMigrationCommitmentProof(
 	t *testing.T,
 	client jsonrpc.RPCClient,
-	batchID models.Uint256,
-	commitmentIndex uint8,
+	commitmentID *models.CommitmentID,
 ) *dto.MassMigrationCommitmentProof {
 	var proof dto.MassMigrationCommitmentProof
-	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{batchID, commitmentIndex})
+	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{commitmentID})
 	require.NoError(t, err)
 
 	return &proof
@@ -293,15 +292,18 @@ func testProcessWithdrawCommitment(
 	withdrawManagerAddress common.Address,
 	token *customtoken.TestCustomToken,
 ) {
-	batchID := uint64(2)
+	commitmentID := &models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
 
-	proof := testGetMassMigrationCommitmentProof(t, client, models.MakeUint256(batchID), 0)
+	proof := testGetMassMigrationCommitmentProof(t, client, commitmentID)
 
 	typedProof := massMigrationCommitmentProofToCalldata(proof)
 
 	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(uint64(l2Unit))
 	testDoActionAndAssertTokenBalanceDifference(t, token, withdrawManagerAddress, expectedBalanceDifference, func() {
-		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, big.NewInt(int64(batchID)), typedProof)
+		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, commitmentID.BatchID.ToBig(), typedProof)
 		require.NoError(t, err)
 
 		receipt, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
