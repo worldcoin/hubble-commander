@@ -247,7 +247,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
 
 	s.addTransfers(validTxs)
-	err := s.storage.AddTransfer(nonceTooHighTx)
+	err := s.storage.AddTransaction(nonceTooHighTx)
 	s.NoError(err)
 
 	batchData, err := s.txsCtx.CreateCommitments()
@@ -394,13 +394,13 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 100)
 	transfer.Hash = common.BytesToHash([]byte{1})
-	err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	higherFeeTransfer := transfer
 	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
 	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
-	err = s.storage.AddTransfer(&higherFeeTransfer)
+	err = s.storage.AddTransaction(&higherFeeTransfer)
 	s.NoError(err)
 
 	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
@@ -434,7 +434,7 @@ func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, 
 	s.NoError(err)
 	transfer.Signature = *signature.ModelsSignature()
 
-	err = s.storage.AddTransfer(transfer)
+	err = s.storage.AddTransaction(transfer)
 	s.NoError(err)
 }
 

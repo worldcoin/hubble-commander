@@ -10,10 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *TransactionStorage) AddMassMigration(tx *models.MassMigration) error {
-	return s.AddTransaction(tx)
-}
-
 func (s *TransactionStorage) BatchAddMassMigration(txs []models.MassMigration) error {
 	return s.BatchAddTransaction(models.MakeMassMigrationArray(txs...))
 }

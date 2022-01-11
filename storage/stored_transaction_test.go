@@ -37,11 +37,11 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 }
 
 func (s *StoredTransactionTestSuite) TestSetTransactionErrors() {
-	err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
-	err = s.storage.AddCreate2Transfer(&create2Transfer)
+	err = s.storage.AddTransaction(&create2Transfer)
 	s.NoError(err)
-	err = s.storage.AddMassMigration(&massMigration)
+	err = s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
 	transferError := models.TxError{
@@ -84,7 +84,7 @@ func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 			BatchID:      models.MakeUint256(5),
 			IndexInBatch: 3,
 		}
-		err := s.storage.AddTransfer(&txs[i])
+		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
 
@@ -116,21 +116,21 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	transferInCommitment := transfer
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
 	transferInCommitment.CommitmentID = &commitmentInBatch.ID
-	err = s.storage.AddTransfer(&transferInCommitment)
+	err = s.storage.AddTransaction(&transferInCommitment)
 	s.NoError(err)
-	err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
 	c2t.CommitmentID = &commitmentInBatch.ID
-	err = s.storage.AddCreate2Transfer(&c2t)
+	err = s.storage.AddTransaction(&c2t)
 	s.NoError(err)
 
 	mm := massMigration
 	mm.Hash = common.Hash{6, 7, 8}
 	mm.CommitmentID = &commitmentInBatch.ID
-	err = s.storage.AddMassMigration(&mm)
+	err = s.storage.AddTransaction(&mm)
 	s.NoError(err)
 
 	count, err := s.storage.GetTransactionCount()
@@ -263,7 +263,7 @@ func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Ui
 			BatchID:      *batchID,
 			IndexInBatch: 0,
 		}
-		err := s.storage.AddTransfer(&transfers[i])
+		err := s.storage.AddTransaction(&transfers[i])
 		s.NoError(err)
 	}
 }

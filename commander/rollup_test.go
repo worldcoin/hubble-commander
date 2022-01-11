@@ -72,9 +72,9 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.setTxHashAndSign(&s.wallets[1], &invalidTransfer)
 
-	err := s.testStorage.AddTransfer(&validTransfer)
+	err := s.testStorage.AddTransaction(&validTransfer)
 	s.NoError(err)
-	err = s.testStorage.AddTransfer(&invalidTransfer)
+	err = s.testStorage.AddTransaction(&invalidTransfer)
 	s.NoError(err)
 
 	preStateRoot, err := s.testStorage.StateTree.Root()
@@ -100,7 +100,7 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RerunIterationWhenNotEnoughDep
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
 
-	err := s.testStorage.AddTransfer(&validTransfer)
+	err := s.testStorage.AddTransaction(&validTransfer)
 	s.NoError(err)
 
 	currentBatchType := batchtype.Deposit

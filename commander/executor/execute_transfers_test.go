@@ -114,7 +114,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
 
-	err := s.storage.BatchAddTransfer(generatedTransfers)
+	err := s.storage.BatchAddTransaction(generatedTransfers)
 	s.NoError(err)
 
 	result, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)

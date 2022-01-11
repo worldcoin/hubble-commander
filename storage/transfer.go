@@ -11,10 +11,6 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (s *TransactionStorage) AddTransfer(tx *models.Transfer) error {
-	return s.AddTransaction(tx)
-}
-
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	return s.BatchAddTransaction(models.MakeTransferArray(txs...))
 }

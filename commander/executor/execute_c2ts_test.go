@@ -96,7 +96,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
 
 	for i := range generatedTransfers {
-		err := s.storage.AddCreate2Transfer(&generatedTransfers[i])
+		err := s.storage.AddTransaction(&generatedTransfers[i])
 		s.NoError(err)
 	}
 

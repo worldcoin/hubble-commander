@@ -80,7 +80,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		},
 		ToStateID: 2,
 	}
-	err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
@@ -129,7 +129,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
 	}
-	err = s.storage.AddCreate2Transfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
@@ -178,7 +178,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 		},
 		SpokeID: 2,
 	}
-	err = s.storage.AddMassMigration(&massMigration)
+	err = s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
@@ -228,7 +228,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 		},
 		ToStateID: 2,
 	}
-	err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	commitment, err := s.api.GetCommitment(commitment.ID)

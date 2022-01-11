@@ -10,11 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *TransactionStorage) AddCreate2Transfer(tx *models.Create2Transfer) error {
-	// TODO: This used to check for ToStateID, was that important?
-	return s.AddTransaction(tx)
-}
-
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
 	return s.BatchAddTransaction(models.MakeCreate2TransferArray(txs...))
 }
