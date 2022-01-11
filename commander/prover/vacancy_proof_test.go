@@ -16,13 +16,13 @@ type VacancyProofTestSuite struct {
 	suite.Suite
 	storage        *st.TestStorage
 	proverCtx      *Context
-	depositSubtree models.PendingDepositSubTree
+	depositSubtree models.PendingDepositSubtree
 }
 
 func (s *VacancyProofTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
-	s.depositSubtree = models.PendingDepositSubTree{
+	s.depositSubtree = models.PendingDepositSubtree{
 		ID:   models.MakeUint256(1),
 		Root: utils.RandomHash(),
 		Deposits: []models.PendingDeposit{

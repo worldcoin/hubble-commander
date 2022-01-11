@@ -125,7 +125,7 @@ func getSenderUserStates(t *testing.T, client jsonrpc.RPCClient, senderPublicKey
 }
 
 func calculateDepositsCountForFullBatch(t *testing.T, ethClient *eth.Client) int {
-	subtreeDepth, err := ethClient.GetMaxSubTreeDepthParam()
+	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()
 	require.NoError(t, err)
 	depositsCount := 1 << *subtreeDepth
 

@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	depositSubTree = models.PendingDepositSubTree{
+	depositSubtree = models.PendingDepositSubtree{
 		ID:   models.MakeUint256(932),
 		Root: utils.RandomHash(),
 		Deposits: []models.PendingDeposit{
@@ -36,44 +36,44 @@ var (
 	}
 )
 
-type DepositSubTreeTestSuite struct {
+type DepositSubtreeTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *DepositSubTreeTestSuite) SetupSuite() {
+func (s *DepositSubtreeTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *DepositSubTreeTestSuite) SetupTest() {
+func (s *DepositSubtreeTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 
-func (s *DepositSubTreeTestSuite) TearDownTest() {
+func (s *DepositSubtreeTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *DepositSubTreeTestSuite) TestAddPendingDepositSubTree_AddAndRetrieve() {
-	err := s.storage.AddPendingDepositSubTree(&depositSubTree)
+func (s *DepositSubtreeTestSuite) TestAddPendingDepositSubtree_AddAndRetrieve() {
+	err := s.storage.AddPendingDepositSubtree(&depositSubtree)
 	s.NoError(err)
 
-	actual, err := s.storage.GetPendingDepositSubTree(depositSubTree.ID)
+	actual, err := s.storage.GetPendingDepositSubtree(depositSubtree.ID)
 	s.NoError(err)
-	s.Equal(depositSubTree, *actual)
+	s.Equal(depositSubtree, *actual)
 }
 
-func (s *DepositSubTreeTestSuite) TestGetPendingDepositSubTree_NonexistentTree() {
-	_, err := s.storage.GetPendingDepositSubTree(depositSubTree.ID)
+func (s *DepositSubtreeTestSuite) TestGetPendingDepositSubtree_NonexistentTree() {
+	_, err := s.storage.GetPendingDepositSubtree(depositSubtree.ID)
 	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 	s.True(IsNotFoundError(err))
 }
 
-func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
-	subTrees := []models.PendingDepositSubTree{
+func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees() {
+	subtrees := []models.PendingDepositSubtree{
 		{
 			ID:   models.MakeUint256(1),
 			Root: utils.RandomHash(),
@@ -105,45 +105,45 @@ func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees() {
 			},
 		},
 	}
-	for i := range subTrees {
-		err := s.storage.AddPendingDepositSubTree(&subTrees[i])
+	for i := range subtrees {
+		err := s.storage.AddPendingDepositSubtree(&subtrees[i])
 		s.NoError(err)
 	}
 
-	err := s.storage.DeletePendingDepositSubTrees(subTrees[0].ID, subTrees[1].ID)
+	err := s.storage.DeletePendingDepositSubtrees(subtrees[0].ID, subtrees[1].ID)
 	s.NoError(err)
 
-	for i := range subTrees {
-		_, err = s.storage.GetPendingDepositSubTree(subTrees[i].ID)
+	for i := range subtrees {
+		_, err = s.storage.GetPendingDepositSubtree(subtrees[i].ID)
 		s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 	}
 }
 
-func (s *DepositSubTreeTestSuite) TestDeletePendingDepositSubTrees_NonexistentTree() {
-	err := s.storage.DeletePendingDepositSubTrees(models.MakeUint256(1))
+func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees_NonexistentTree() {
+	err := s.storage.DeletePendingDepositSubtrees(models.MakeUint256(1))
 	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 }
 
-func (s *DepositSubTreeTestSuite) TestGetFirstPendingDepositSubTree() {
-	err := s.storage.AddPendingDepositSubTree(&depositSubTree)
+func (s *DepositSubtreeTestSuite) TestGetFirstPendingDepositSubtree() {
+	err := s.storage.AddPendingDepositSubtree(&depositSubtree)
 	s.NoError(err)
 
-	secondSubTree := depositSubTree
-	secondSubTree.ID = models.MakeUint256(1)
-	err = s.storage.AddPendingDepositSubTree(&secondSubTree)
+	secondSubtree := depositSubtree
+	secondSubtree.ID = models.MakeUint256(1)
+	err = s.storage.AddPendingDepositSubtree(&secondSubtree)
 	s.NoError(err)
 
-	subTree, err := s.storage.GetFirstPendingDepositSubTree()
+	subtree, err := s.storage.GetFirstPendingDepositSubtree()
 	s.NoError(err)
-	s.Equal(secondSubTree, *subTree)
+	s.Equal(secondSubtree, *subtree)
 }
 
-func (s *DepositSubTreeTestSuite) TestGetFirstPendingDepositSubTree_NoPendingDepositSubTrees() {
-	subTree, err := s.storage.GetFirstPendingDepositSubTree()
+func (s *DepositSubtreeTestSuite) TestGetFirstPendingDepositSubtree_NoPendingDepositSubtrees() {
+	subtree, err := s.storage.GetFirstPendingDepositSubtree()
 	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
-	s.Nil(subTree)
+	s.Nil(subtree)
 }
 
-func TestDepositSubTreeTestSuite(t *testing.T) {
-	suite.Run(t, new(DepositSubTreeTestSuite))
+func TestDepositSubtreeTestSuite(t *testing.T) {
+	suite.Run(t, new(DepositSubtreeTestSuite))
 }

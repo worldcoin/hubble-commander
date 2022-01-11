@@ -4,15 +4,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var PendingDepositSubTreePrefix = GetBadgerHoldPrefix(PendingDepositSubTree{})
+var PendingDepositSubtreePrefix = GetBadgerHoldPrefix(PendingDepositSubtree{})
 
-type PendingDepositSubTree struct {
+type PendingDepositSubtree struct {
 	ID       Uint256
 	Root     common.Hash
 	Deposits []PendingDeposit
 }
 
-func (d *PendingDepositSubTree) Bytes() []byte {
+func (d *PendingDepositSubtree) Bytes() []byte {
 	b := make([]byte, common.HashLength+DepositDataLength*len(d.Deposits))
 
 	copy(b[0:common.HashLength], d.Root.Bytes())
@@ -26,7 +26,7 @@ func (d *PendingDepositSubTree) Bytes() []byte {
 	return b
 }
 
-func (d *PendingDepositSubTree) SetBytes(data []byte) error {
+func (d *PendingDepositSubtree) SetBytes(data []byte) error {
 	dataLength := len(data)
 
 	if dataLength < common.HashLength || (dataLength-common.HashLength)%DepositDataLength != 0 {

@@ -14,7 +14,7 @@ import (
 )
 
 func (c *Commander) syncDeposits(start, end uint64) error {
-	var depositSubTrees []models.PendingDepositSubTree
+	var depositSubtrees []models.PendingDepositSubtree
 
 	duration, err := metrics.MeasureDuration(func() error {
 		var err error
@@ -24,13 +24,13 @@ func (c *Commander) syncDeposits(start, end uint64) error {
 			return err
 		}
 
-		depositSubTrees, err = c.fetchDepositSubTrees(start, end)
+		depositSubtrees, err = c.fetchDepositSubtrees(start, end)
 		if err != nil {
 			return err
 		}
 
-		if len(depositSubTrees) > 0 {
-			return c.saveSyncedSubTrees(depositSubTrees)
+		if len(depositSubtrees) > 0 {
+			return c.saveSyncedSubtrees(depositSubtrees)
 		}
 
 		return nil
@@ -82,14 +82,14 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 	return it.Error()
 }
 
-func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDepositSubTree, error) {
-	it, err := c.getDepositSubTreeReadyIterator(start, end)
+func (c *Commander) fetchDepositSubtrees(start, end uint64) ([]models.PendingDepositSubtree, error) {
+	it, err := c.getDepositSubtreeReadyIterator(start, end)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = it.Close() }()
 
-	depositSubTrees := make([]models.PendingDepositSubTree, 0, 1)
+	depositSubtrees := make([]models.PendingDepositSubtree, 0, 1)
 
 	for it.Next() {
 		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
@@ -101,15 +101,15 @@ func (c *Commander) fetchDepositSubTrees(start, end uint64) ([]models.PendingDep
 			continue // TODO handle internal transactions
 		}
 
-		subTree := models.PendingDepositSubTree{
+		subtree := models.PendingDepositSubtree{
 			ID:   models.MakeUint256FromBig(*it.Event.SubtreeID),
 			Root: it.Event.SubtreeRoot,
 		}
 
-		depositSubTrees = append(depositSubTrees, subTree)
+		depositSubtrees = append(depositSubtrees, subtree)
 	}
 
-	return depositSubTrees, it.Error()
+	return depositSubtrees, it.Error()
 }
 
 func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager.DepositQueuedIterator, error) {
@@ -126,7 +126,7 @@ func (c *Commander) getDepositQueuedIterator(start, end uint64) (*depositmanager
 	return it, nil
 }
 
-func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
+func (c *Commander) getDepositSubtreeReadyIterator(start, end uint64) (*depositmanager.DepositSubTreeReadyIterator, error) {
 	it := &depositmanager.DepositSubTreeReadyIterator{}
 
 	err := c.client.FilterLogs(c.client.DepositManager.BoundContract, eth.DepositSubTreeReadyEvent, &bind.FilterOpts{
@@ -140,16 +140,16 @@ func (c *Commander) getDepositSubTreeReadyIterator(start, end uint64) (*depositm
 	return it, nil
 }
 
-func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) error {
-	maxDepositSubTreeDepth, err := c.client.GetMaxSubTreeDepthParam()
+func (c *Commander) saveSyncedSubtrees(subtrees []models.PendingDepositSubtree) error {
+	maxDepositSubtreeDepth, err := c.client.GetMaxSubtreeDepthParam()
 	if err != nil {
 		return err
 	}
 
-	subTreeLeavesAmount := 1 << *maxDepositSubTreeDepth
+	subtreeLeavesAmount := 1 << *maxDepositSubtreeDepth
 
-	for i := range subTrees {
-		err := c.saveSingleSubTree(&subTrees[i], subTreeLeavesAmount)
+	for i := range subtrees {
+		err := c.saveSingleSubtree(&subtrees[i], subtreeLeavesAmount)
 		if err != nil {
 			return err
 		}
@@ -158,16 +158,16 @@ func (c *Commander) saveSyncedSubTrees(subTrees []models.PendingDepositSubTree) 
 	return nil
 }
 
-func (c *Commander) saveSingleSubTree(subTree *models.PendingDepositSubTree, subTreeLeavesAmount int) error {
+func (c *Commander) saveSingleSubtree(subtree *models.PendingDepositSubtree, subtreeLeavesAmount int) error {
 	return c.storage.ExecuteInTransaction(st.TxOptions{}, func(txStorage *st.Storage) error {
-		deposits, err := txStorage.GetFirstPendingDeposits(subTreeLeavesAmount)
+		deposits, err := txStorage.GetFirstPendingDeposits(subtreeLeavesAmount)
 		if err != nil {
 			return err
 		}
 
-		subTree.Deposits = deposits
+		subtree.Deposits = deposits
 
-		err = txStorage.AddPendingDepositSubTree(subTree)
+		err = txStorage.AddPendingDepositSubtree(subtree)
 		if err != nil {
 			return err
 		}

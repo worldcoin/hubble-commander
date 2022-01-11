@@ -24,8 +24,8 @@ func MakeCommitmentFromDepositCommitment(c *models.DepositCommitment) Commitment
 	return Commitment{
 		CommitmentBase: c.CommitmentBase,
 		Body: &DepositCommitmentBody{
-			SubTreeID:   c.SubTreeID,
-			SubTreeRoot: c.SubTreeRoot,
+			SubtreeID:   c.SubtreeID,
+			SubtreeRoot: c.SubtreeRoot,
 			Deposits:    c.Deposits,
 		},
 	}
@@ -85,8 +85,8 @@ func (c *Commitment) ToDepositCommitment() *models.DepositCommitment {
 
 	return &models.DepositCommitment{
 		CommitmentBase: c.CommitmentBase,
-		SubTreeID:      depositCommitmentBody.SubTreeID,
-		SubTreeRoot:    depositCommitmentBody.SubTreeRoot,
+		SubtreeID:      depositCommitmentBody.SubtreeID,
+		SubtreeRoot:    depositCommitmentBody.SubtreeRoot,
 		Deposits:       depositCommitmentBody.Deposits,
 	}
 }

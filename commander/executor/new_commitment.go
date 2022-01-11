@@ -33,7 +33,7 @@ func (c *TxsContext) newCommitment(
 
 func (c *DepositsContext) newCommitment(
 	batchID models.Uint256,
-	depositSubtree *models.PendingDepositSubTree,
+	depositSubtree *models.PendingDepositSubtree,
 ) (*models.DepositCommitment, error) {
 	stateRoot, err := c.storage.StateTree.Root()
 	if err != nil {
@@ -49,8 +49,8 @@ func (c *DepositsContext) newCommitment(
 			Type:          batchtype.Deposit,
 			PostStateRoot: *stateRoot,
 		},
-		SubTreeID:   depositSubtree.ID,
-		SubTreeRoot: depositSubtree.Root,
+		SubtreeID:   depositSubtree.ID,
+		SubtreeRoot: depositSubtree.Root,
 		Deposits:    depositSubtree.Deposits,
 	}, nil
 }

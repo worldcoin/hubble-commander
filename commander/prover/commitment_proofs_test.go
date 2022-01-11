@@ -169,8 +169,8 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			},
 			Type: batchtype.Deposit,
 		},
-		SubTreeID:   models.MakeUint256(1),
-		SubTreeRoot: common.Hash{1, 2, 3},
+		SubtreeID:   models.MakeUint256(1),
+		SubtreeRoot: common.Hash{1, 2, 3},
 		Deposits: []models.PendingDeposit{
 			{
 				ID: models.DepositID{
