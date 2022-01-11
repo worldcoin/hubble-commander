@@ -18,6 +18,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,8 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
-
-const l2Unit = 1e9
 
 func TestWithdrawProcess(t *testing.T) {
 	commanderConfig := config.GetConfig()
@@ -232,7 +231,7 @@ func testSubmitWithdrawBatch(
 	senderWallet bls.Wallet,
 	fromStateID uint32,
 ) common.Hash {
-	massMigrationWithdrawalAmount := models.MakeUint256(uint64(9 * l2Unit))
+	massMigrationWithdrawalAmount := models.MakeUint256(9 * consts.L2Unit)
 
 	var targetMassMigrationHash common.Hash
 	submitTxBatchAndWait(t, client, func() common.Hash {
@@ -301,7 +300,7 @@ func testProcessWithdrawCommitment(
 
 	typedProof := massMigrationCommitmentProofToCalldata(proof)
 
-	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(uint64(l2Unit))
+	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(consts.L2Unit)
 	testDoActionAndAssertTokenBalanceDifference(t, token, withdrawManagerAddress, expectedBalanceDifference, func() {
 		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, commitmentID.BatchID.ToBig(), typedProof)
 		require.NoError(t, err)
@@ -369,7 +368,7 @@ func testClaimTokens(
 
 	publicKeyProof := testGetPublicKeyProof(t, client, proof.UserState.PubKeyID)
 
-	expectedBalanceDifference := *proof.UserState.Balance.MulN(uint64(l2Unit))
+	expectedBalanceDifference := *proof.UserState.Balance.MulN(consts.L2Unit)
 	testDoActionAndAssertTokenBalanceDifference(t, token, transactor.From, expectedBalanceDifference, func() {
 		tx, err := withdrawManager.ClaimTokens(
 			transactor,
