@@ -483,7 +483,7 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 }
 
 func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *models.Batch {
-	err := s.cmd.storage.AddTransfer(tx)
+	err := s.cmd.storage.AddTransaction(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)

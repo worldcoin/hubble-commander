@@ -49,7 +49,7 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	expected := transfer
@@ -65,7 +65,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
 		BatchID:      models.MakeUint256(3),
 		IndexInBatch: 1,
 	}
-	err := s.storage.AddTransfer(&includedTransfer)
+	err := s.storage.AddTransaction(&includedTransfer)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
@@ -74,7 +74,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
 }
 
 func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddTransaction(&create2Transfer)
 	s.NoError(err)
 
 	_, err = s.storage.GetTransfer(create2Transfer.Hash)
@@ -86,7 +86,7 @@ func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transfer
 		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddTransfer(&txs[i])
+		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
 
@@ -158,7 +158,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID
 
-	err := s.storage.AddTransfer(&transfer1)
+	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
@@ -175,7 +175,7 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransactions() {
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfersButSomeCreate2Transfers() {
 	c2t := create2Transfer
 	c2t.CommitmentID = &txCommitment.ID
-	err := s.storage.AddCreate2Transfer(&c2t)
+	err := s.storage.AddTransaction(&c2t)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
