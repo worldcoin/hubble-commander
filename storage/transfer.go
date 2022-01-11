@@ -11,32 +11,8 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (s *TransactionStorage) AddTransfer(tx *models.Transfer) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		if tx.CommitmentID != nil || tx.ErrorMessage != nil {
-			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromTransfer(tx))
-			if err != nil {
-				return err
-			}
-		}
-		return txStorage.addStoredTx(stored.NewTxFromTransfer(tx))
-	})
-}
-
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
-	if len(txs) < 1 {
-		return errors.WithStack(ErrNoRowsAffected)
-	}
-
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txs {
-			err := txStorage.AddTransfer(&txs[i])
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.BatchAddTransaction(models.MakeTransferArray(txs...))
 }
 
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {

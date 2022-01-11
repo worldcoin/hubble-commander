@@ -53,7 +53,7 @@ func (s *Create2TransferTestSuite) TearDownTest() {
 }
 
 func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
-	err := s.storage.AddCreate2Transfer(&create2Transfer)
+	err := s.storage.AddTransaction(&create2Transfer)
 	s.NoError(err)
 
 	expected := create2Transfer
@@ -64,7 +64,7 @@ func (s *Create2TransferTestSuite) TestAddCreate2Transfer_AddAndRetrieve() {
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2Transfer_DifferentTxType() {
-	err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	_, err = s.storage.GetCreate2Transfer(transfer.Hash)
@@ -81,7 +81,7 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = create2Transfer
 		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddCreate2Transfer(&txs[i])
+		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 
 		txs[i].ToStateID = ref.Uint32(uint32(i))
@@ -163,7 +163,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer1 := create2Transfer
 	transfer1.CommitmentID = &txCommitment.ID
-	err := s.storage.AddCreate2Transfer(&transfer1)
+	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
 	otherCommitmentID := txCommitment.ID
@@ -171,7 +171,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
 	transfer2 := create2Transfer
 	transfer2.Hash = utils.RandomHash()
 	transfer2.CommitmentID = &otherCommitmentID
-	err = s.storage.AddCreate2Transfer(&transfer2)
+	err = s.storage.AddTransaction(&transfer2)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
@@ -189,7 +189,7 @@ func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoTrans
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2TransfersButSomeTransfers() {
 	transferCopy := transfer
 	transferCopy.CommitmentID = &txCommitment.ID
-	err := s.storage.AddTransfer(&transferCopy)
+	err := s.storage.AddTransaction(&transferCopy)
 	s.NoError(err)
 
 	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)

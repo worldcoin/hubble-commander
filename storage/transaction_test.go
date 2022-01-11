@@ -46,7 +46,7 @@ func (s *TransactionTestSuite) TearDownTest() {
 }
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_WithoutBatch() {
-	err := s.storage.AddTransfer(&transfer)
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	expected := models.TransactionWithBatchDetails{
@@ -63,7 +63,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
 	transferInBatch.CommitmentID = &models.CommitmentID{
 		BatchID: s.batch.ID,
 	}
-	err := s.storage.AddTransfer(&transferInBatch)
+	err := s.storage.AddTransaction(&transferInBatch)
 	s.NoError(err)
 
 	expected := models.TransactionWithBatchDetails{
@@ -81,7 +81,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfe
 	create2TransferInBatch.CommitmentID = &models.CommitmentID{
 		BatchID: s.batch.ID,
 	}
-	err := s.storage.AddCreate2Transfer(&create2TransferInBatch)
+	err := s.storage.AddTransaction(&create2TransferInBatch)
 	s.NoError(err)
 
 	expected := models.TransactionWithBatchDetails{
@@ -99,7 +99,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 	massMigrationInBatch.CommitmentID = &models.CommitmentID{
 		BatchID: s.batch.ID,
 	}
-	err := s.storage.AddMassMigration(&massMigrationInBatch)
+	err := s.storage.AddTransaction(&massMigrationInBatch)
 	s.NoError(err)
 
 	expected := models.TransactionWithBatchDetails{
@@ -115,7 +115,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
 	failedTx := transfer
 	failedTx.ErrorMessage = ref.String("some message")
-	err := s.storage.AddTransfer(&failedTx)
+	err := s.storage.AddTransaction(&failedTx)
 	s.NoError(err)
 
 	updatedTx := transfer
@@ -133,7 +133,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
 	tx.CommitmentID = &models.CommitmentID{
 		BatchID: models.MakeUint256(1),
 	}
-	err := s.storage.AddCreate2Transfer(&tx)
+	err := s.storage.AddTransaction(&tx)
 	s.NoError(err)
 
 	updatedTx := create2Transfer
@@ -143,7 +143,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
 }
 
 func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
-	err := s.storage.AddMassMigration(&massMigration)
+	err := s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
 	updatedTx := massMigration

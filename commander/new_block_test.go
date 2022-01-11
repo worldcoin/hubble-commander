@@ -162,7 +162,7 @@ func (s *NewBlockLoopTestSuite) registerAccounts(accounts []models.AccountLeaf) 
 
 func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
 	s.runInTransaction(func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
-		err := txStorage.AddTransfer(tx)
+		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
 
 		batchData, err := txsCtx.CreateCommitments()

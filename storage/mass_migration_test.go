@@ -49,7 +49,7 @@ func (s *MassMigrationTestSuite) TearDownTest() {
 }
 
 func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieve() {
-	err := s.storage.AddMassMigration(&massMigration)
+	err := s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
 	expected := massMigration
@@ -65,7 +65,7 @@ func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMass
 		BatchID:      models.MakeUint256(3),
 		IndexInBatch: 1,
 	}
-	err := s.storage.AddMassMigration(&includedMassMigration)
+	err := s.storage.AddTransaction(&includedMassMigration)
 	s.NoError(err)
 
 	res, err := s.storage.GetMassMigration(massMigration.Hash)
@@ -128,7 +128,7 @@ func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = massMigration
 		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddMassMigration(&txs[i])
+		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
 
@@ -150,7 +150,7 @@ func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID() {
 	massMigration1 := massMigration
 	massMigration1.CommitmentID = &txCommitment.ID
 
-	err := s.storage.AddMassMigration(&massMigration1)
+	err := s.storage.AddTransaction(&massMigration1)
 	s.NoError(err)
 
 	massMigrations, err := s.storage.GetMassMigrationsByCommitmentID(txCommitment.ID)
@@ -167,7 +167,7 @@ func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID_NoTransacti
 func (s *MassMigrationTestSuite) TestGetMassMigrationsByCommitmentID_NoMassMigrationsButSomeTransfers() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID
-	err := s.storage.AddTransfer(&transfer1)
+	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
 	massMigrations, err := s.storage.GetMassMigrationsByCommitmentID(txCommitment.ID)
