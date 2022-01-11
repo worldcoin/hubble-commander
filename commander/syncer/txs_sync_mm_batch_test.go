@@ -3,7 +3,6 @@ package syncer
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -26,7 +25,7 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.setTxHashAndSign(&tx)
 
 	commitments := s.submitBatch(&tx)
-	expectedCommitment := commitments[0].TxCommitment
+	expectedCommitment := commitments[0].ToMMCommitmentWithTxs().MMCommitment
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -46,7 +45,7 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.NoError(err)
 	s.Len(decodedBatches, 1)
 
-	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetMMCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	expectedCommitment.BodyHash = decodedBatches[0].ToDecodedTxBatch().Commitments[0].BodyHash(s.getAccountTreeRoot())
 	s.Equal(expectedCommitment, *commitment)
@@ -62,8 +61,8 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTokenID() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.Metas()[0].TokenID = models.MakeUint256(1234)
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().Meta.TokenID = models.MakeUint256(1234)
 	})
 
 	s.recreateDatabase()
@@ -83,8 +82,8 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentTotalAmount() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.Metas()[0].Amount = models.MakeUint256(100)
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().Meta.Amount = models.MakeUint256(100)
 	})
 
 	s.recreateDatabase()
@@ -104,8 +103,8 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentWithdrawRoot() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 400)
 	s.setTxHashAndSign(&tx)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.WithdrawRoots()[0] = common.Hash{1, 2, 3}
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().WithdrawRoot = common.Hash{1, 2, 3}
 	})
 
 	s.recreateDatabase()
@@ -121,12 +120,12 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_InvalidCommitmentWithdrawRoot() {
 	s.Equal(invalidWithdrawRootMessage, disputableErr.Reason)
 }
 
-func (s *SyncMMBatchTestSuite) submitInvalidBatch(tx models.GenericTransaction, modifier func(batchData executor.BatchData)) {
-	pendingBatch, batchData := s.createBatch(tx)
+func (s *SyncMMBatchTestSuite) submitInvalidBatch(tx models.GenericTransaction, modifier func(commitments []models.CommitmentWithTxs)) {
+	pendingBatch, commitments := s.createBatch(tx)
 
-	modifier(batchData)
+	modifier(commitments)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

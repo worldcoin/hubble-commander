@@ -58,10 +58,10 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
 
-	batch, batchData := s.createBatch(&tx2)
-	batchData.Commitments()[0].PostStateRoot = utils.RandomHash()
+	batch, commitments := s.createBatch(&tx2)
+	commitments[0].ToTxCommitmentWithTxs().PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, batchData)
+	err := s.txsCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -132,7 +132,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
 	commitments := s.submitBatch(&tx)
-	expectedCommitment := commitments[0].TxCommitment
+	expectedCommitment := commitments[0].ToTxCommitmentWithTxs().TxCommitment
 	expectedCommitment.BodyHash = commitments[0].CalcBodyHash(s.getAccountTreeRoot())
 
 	s.recreateDatabase()
@@ -168,7 +168,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.TxCommitmentWithTxs{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -179,17 +179,16 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.TxCommitmentWithTxs {
-	pendingBatch, batchData := s.createBatch(tx)
-	commitments := batchData.Commitments()
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) {
+	pendingBatch, commitments := s.createBatch(tx)
 
-	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+	commitment := commitments[0].ToTxCommitmentWithTxs()
+	commitments[0].ToTxCommitmentWithTxs().Transactions = append(commitment.Transactions, commitment.Transactions...)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-	return commitments[0]
 }
 
 func (s *SyncC2TBatchTestSuite) setTxHash(tx *models.Create2Transfer) {
