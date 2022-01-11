@@ -105,6 +105,24 @@ Key: bh_Batch, Count: 1, Size: 244
 SUM: Count: 79042, Size: 11254164
 ```
 
+### MassMigration batch
+
+Measured with `TestBenchMassMigrationsCommander`. Tx count: `10000`.
+
+Both Badger tx operations count and tx size stable for consecutive batches.
+
+```
+Key: bh_MerkleTreeNode, Count: 34848, Size: 2509056
+Key: _bhIndex:TxReceipt:CommitmentID, Count: 1024, Size: 847360
+Key: bh_StateUpdate, Count: 1056, Size: 256608
+Key: bh_StateLeaf, Count: 1056, Size: 174240
+Key: bh_TxReceipt, Count: 1024, Size: 132096
+Key: _bhIndex:StateLeaf:PubKeyID, Count: 2112, Size: 119328
+Key: bh_Commitment, Count: 32, Size: 7232
+Key: bh_Batch, Count: 1, Size: 238
+SUM: Count: 41154, Size: 4046179
+```
+
 ## Syncing
 
 ### Transfer batch
