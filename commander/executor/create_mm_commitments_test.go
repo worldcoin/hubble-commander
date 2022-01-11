@@ -37,36 +37,26 @@ func (s *MMCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
-	massMigrations := testutils.GenerateValidMassMigrations(2)
-	s.addMassMigrations(massMigrations)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Metas(), 1)
-
-	targetSpokeID := 2
-	targetTokenID := models.MakeUint256(0)
-	targetFeeReceiver := batchData.Commitments()[0].FeeReceiver
-	totalAmount := massMigrations[0].Amount.Add(&massMigrations[1].Amount)
-	s.EqualValues(targetSpokeID, batchData.Metas()[0].SpokeID)
-	s.Equal(targetTokenID, batchData.Metas()[0].TokenID)
-	s.Equal(*totalAmount, batchData.Metas()[0].Amount)
-	s.Equal(targetFeeReceiver, batchData.Metas()[0].FeeReceiver)
-}
-
-func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
 	withdrawRoot := s.generateWithdrawRoot(massMigrations)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.WithdrawRoots(), 1)
-	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
+	s.Len(commitments, 1)
+	s.Len(commitments, 1)
+
+	targetSpokeID := 2
+	targetTokenID := models.MakeUint256(0)
+	targetFeeReceiver := commitments[0].ToMMCommitmentWithTxs().FeeReceiver
+	totalAmount := massMigrations[0].Amount.Add(&massMigrations[1].Amount)
+	s.Equal(withdrawRoot, commitments[0].ToMMCommitmentWithTxs().WithdrawRoot)
+	s.EqualValues(targetSpokeID, commitments[0].ToMMCommitmentWithTxs().Meta.SpokeID)
+	s.Equal(targetTokenID, commitments[0].ToMMCommitmentWithTxs().Meta.TokenID)
+	s.Equal(*totalAmount, commitments[0].ToMMCommitmentWithTxs().Meta.Amount)
+	s.Equal(targetFeeReceiver, commitments[0].ToMMCommitmentWithTxs().Meta.FeeReceiver)
 }
 
 func TestMMCommitmentsTestSuite(t *testing.T) {

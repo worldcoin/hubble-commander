@@ -37,14 +37,14 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.addCreate2Transfers(transfers)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
+	s.Len(commitments, 1)
 
 	for i := range transfers {
 		tx, err := s.storage.GetCreate2Transfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(batchData.Commitments()[0].ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
 		s.Equal(uint32(i+3), *tx.ToStateID)
 		s.Nil(tx.ErrorMessage)
 	}
@@ -55,10 +55,10 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	s.addCreate2Transfers(transfers)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
+	s.Len(commitments, 1)
+	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
 
 	s.client.GetBackend().Commit()
 	accounts := s.getRegisteredAccounts(0)

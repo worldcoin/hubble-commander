@@ -13,28 +13,33 @@ import (
 
 type SubmitMassMigrationBatchTestSuite struct {
 	submitBatchTestSuite
-	commitment models.TxCommitmentWithTxs
-	batchData  BatchData
+	commitment *models.MMCommitmentWithTxs
 }
 
 func (s *SubmitMassMigrationBatchTestSuite) SetupTest() {
 	s.testSuiteWithTxsContext.SetupTest(batchtype.MassMigration)
 	s.setupUser()
 
-	s.commitment = baseCommitment
-	s.commitment.Type = batchtype.MassMigration
-	s.batchData = &MassMigrationBatchData{
-		commitments: make([]models.TxCommitmentWithTxs, 0, 1),
-		metas: []models.MassMigrationMeta{
-			{
+	s.commitment = &models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
+			CommitmentBase: models.CommitmentBase{
+				Type:          batchtype.MassMigration,
+				PostStateRoot: utils.RandomHash(),
+			},
+			FeeReceiver:       1,
+			CombinedSignature: models.MakeRandomSignature(),
+			BodyHash:          utils.NewRandomHash(),
+			Meta: &models.MassMigrationMeta{
 				SpokeID:     1,
 				TokenID:     models.MakeUint256(1),
 				Amount:      models.MakeUint256(10),
 				FeeReceiver: 1,
 			},
+			WithdrawRoot: utils.RandomHash(),
 		},
-		withdrawRoots: []common.Hash{utils.RandomHash()},
+		Transactions: utils.RandomBytes(8),
 	}
+	s.commitment.Type = batchtype.MassMigration
 }
 
 func (s *SubmitMassMigrationBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
@@ -42,9 +47,8 @@ func (s *SubmitMassMigrationBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOn
 	s.NoError(err)
 
 	s.commitment.ID.BatchID = pendingBatch.ID
-	s.batchData.AddCommitment(&s.commitment)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, s.batchData)
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -59,9 +63,8 @@ func (s *SubmitMassMigrationBatchTestSuite) TestSubmitBatch_StoresPendingBatchRe
 	s.NoError(err)
 
 	s.commitment.ID.BatchID = pendingBatch.ID
-	s.batchData.AddCommitment(&s.commitment)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, s.batchData)
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -77,22 +80,18 @@ func (s *SubmitMassMigrationBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.MassMigration)
 	s.NoError(err)
 
-	commitments := getCommitments(2, pendingBatch.ID, batchtype.MassMigration)
-	s.batchData.AddCommitment(&commitments[0])
-	s.batchData.AddCommitment(&commitments[1])
-	s.batchData.AddMeta(&s.batchData.Metas()[0])
-	s.batchData.AddWithdrawRoot(utils.RandomHash())
+	commitments := getMMCommitments(2, pendingBatch.ID)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, s.batchData)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
+		commit, err := s.storage.GetMMCommitment(&commitments[i].ToMMCommitmentWithTxs().ID)
 		s.NoError(err)
-		s.Equal(commitments[i].TxCommitment, *commit)
+		s.Equal(commitments[i].ToMMCommitmentWithTxs().MMCommitment, *commit)
 		s.Equal(batch.ID, commit.ID.BatchID)
 	}
 }
