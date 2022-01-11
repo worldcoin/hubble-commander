@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -51,12 +52,16 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs models.GenericTransa
 	s.NoError(err)
 	fmt.Println(*pendingBatch.PrevStateRoot)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
-	batchData.Commitments()[batchData.Len()-1].PostStateRoot = common.Hash{1, 2, 3}
+	if s.txsCtx.BatchType == batchtype.MassMigration {
+		commitments[len(commitments)-1].ToMMCommitmentWithTxs().PostStateRoot = common.Hash{1, 2, 3}
+	} else {
+		commitments[len(commitments)-1].ToTxCommitmentWithTxs().PostStateRoot = common.Hash{1, 2, 3}
+	}
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
