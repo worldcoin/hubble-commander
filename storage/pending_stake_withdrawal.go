@@ -41,8 +41,8 @@ func (s *PendingStakeWithdrawalStorage) RemovePendingStakeWithdrawal(batchID mod
 	return nil
 }
 
-func (s *PendingStakeWithdrawalStorage) GetReadyStateWithdrawals(currentBlock uint32) ([]*models.PendingStakeWithdrawal, error) {
-	stakes := make([]*models.PendingStakeWithdrawal, 0)
+func (s *PendingStakeWithdrawalStorage) GetReadyStateWithdrawals(currentBlock uint32) ([]models.PendingStakeWithdrawal, error) {
+	stakes := make([]models.PendingStakeWithdrawal, 0)
 	var stake models.PendingStakeWithdrawal
 	err := s.database.Badger.Iterator(models.PendingStakeWithdrawalPrefix, db.PrefetchIteratorOpts,
 		func(item *bdg.Item) (bool, error) {
@@ -51,9 +51,10 @@ func (s *PendingStakeWithdrawalStorage) GetReadyStateWithdrawals(currentBlock ui
 				return false, err
 			}
 			if stake.FinalisationBlock <= currentBlock {
-				stakes = append(stakes, &stake)
+				stakes = append(stakes, stake)
+				return false, nil
 			}
-			return false, nil
+			return true, nil
 		})
 	if err != nil && err != db.ErrIteratorFinished {
 		return nil, err

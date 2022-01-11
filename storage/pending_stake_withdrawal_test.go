@@ -47,18 +47,27 @@ func (s *PendingStakeWithdrawalTestSuite) TestRemovePendingStakeWithdrawal_Nonex
 }
 
 func (s *PendingStakeWithdrawalTestSuite) TestGetReadyStateWithdrawals_AddAndGet() {
-	stake := models.PendingStakeWithdrawal{
-		BatchID:           models.MakeUint256(uint64(100)),
-		FinalisationBlock: uint32(125),
+	stakes := []models.PendingStakeWithdrawal{
+		{
+			BatchID:           models.MakeUint256(uint64(2)),
+			FinalisationBlock: uint32(12),
+		},
+		{
+			BatchID:           models.MakeUint256(uint64(1)),
+			FinalisationBlock: uint32(10),
+		},
 	}
 
-	err := s.storage.AddPendingStakeWithdrawal(&stake)
-	s.NoError(err)
+	for _, stake := range stakes {
+		err := s.storage.AddPendingStakeWithdrawal(&stake)
+		s.NoError(err)
+	}
 
-	stStakes, err := s.storage.GetReadyStateWithdrawals(stake.FinalisationBlock)
+	expectedStake := stakes[1]
+	stStakes, err := s.storage.GetReadyStateWithdrawals(expectedStake.FinalisationBlock)
 	s.NoError(err)
 	s.Len(stStakes, 1)
-	s.Equal(stake, *stStakes[0])
+	s.Equal(expectedStake, stStakes[0])
 }
 
 func (s *PendingStakeWithdrawalTestSuite) TestGetReadyStateWithdrawals_NonexistentStake() {
