@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -44,20 +45,41 @@ func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment encode
 	return c.addCommitment(batch, commitment)
 }
 
-func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder.Commitment) error {
+func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder.Commitment) (err error) {
 	decodedCommitment := commitment.ToDecodedCommitment()
-	txCommitment := &models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID:            decodedCommitment.ID,
-			Type:          batch.Type,
-			PostStateRoot: decodedCommitment.StateRoot,
-		},
-		FeeReceiver:       decodedCommitment.FeeReceiver,
-		CombinedSignature: decodedCommitment.CombinedSignature,
-		BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
+
+	switch batch.Type {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		txCommitment := &models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID:            decodedCommitment.ID,
+				Type:          batch.Type,
+				PostStateRoot: decodedCommitment.StateRoot,
+			},
+			FeeReceiver:       decodedCommitment.FeeReceiver,
+			CombinedSignature: decodedCommitment.CombinedSignature,
+			BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
+		}
+		err = c.storage.AddTxCommitment(txCommitment)
+	case batchtype.MassMigration:
+		mmCommitment := &models.MMCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID:            decodedCommitment.ID,
+				Type:          batch.Type,
+				PostStateRoot: decodedCommitment.StateRoot,
+			},
+			FeeReceiver:       decodedCommitment.FeeReceiver,
+			CombinedSignature: decodedCommitment.CombinedSignature,
+			BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
+			Meta:              commitment.(*encoder.DecodedMMCommitment).Meta,
+			WithdrawRoot:      commitment.(*encoder.DecodedMMCommitment).WithdrawRoot,
+		}
+		err = c.storage.AddMMCommitment(mmCommitment)
+	default:
+		panic("invalid batch type")
 	}
 
-	return c.storage.AddTxCommitment(txCommitment)
+	return err
 }
 
 func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
