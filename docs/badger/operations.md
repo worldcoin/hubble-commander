@@ -171,7 +171,7 @@ SUM: Count: 80067, Size: 7468585
 
 Measured with `TestBenchSyncCommander` set to send and sync only MassMigration batches. Tx count: `10000`.
 
-Badger tx size stable for consecutive batches.
+Both Badger tx operations count and tx size stable for consecutive batches.
 
 ```
 Key: bh_MerkleTreeNode, Count: 34848, Size: 2509056
