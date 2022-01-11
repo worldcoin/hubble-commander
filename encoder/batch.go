@@ -107,7 +107,7 @@ func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commi
 	transactions = make([][]byte, 0, count)
 
 	for i := range commitments {
-		commitment := commitments[i].(*models.TxCommitmentWithTxs)
+		commitment := commitments[i].ToTxCommitmentWithTxs()
 
 		stateRoots = append(stateRoots, commitment.PostStateRoot)
 		signatures = append(signatures, commitment.CombinedSignature.BigInts())
@@ -139,7 +139,7 @@ func CommitmentsToSubmitMassMigrationBatchFields(
 	transactions = make([][]byte, 0, count)
 
 	for i := range commitments {
-		commitment := commitments[i].(*models.MMCommitmentWithTxs)
+		commitment := commitments[i].ToMMCommitmentWithTxs()
 
 		stateRoots = append(stateRoots, commitment.PostStateRoot)
 		signatures = append(signatures, commitment.CombinedSignature.BigInts())

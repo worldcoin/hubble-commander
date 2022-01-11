@@ -72,7 +72,7 @@ func (e *TransferExecutor) NewCreateCommitmentResult(
 ) CreateCommitmentResult {
 	return &CreateTransferCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToTransferArray(),
-		commitment: commitment.(*models.TxCommitmentWithTxs),
+		commitment: commitment.ToTxCommitmentWithTxs(),
 	}
 }
 
@@ -140,7 +140,7 @@ func (e *C2TExecutor) NewCreateCommitmentResult(
 	return &CreateC2TCommitmentResult{
 		appliedTxs:      result.AppliedTxs().ToCreate2TransferArray(),
 		pendingAccounts: result.PendingAccounts(),
-		commitment:      commitment.(*models.TxCommitmentWithTxs),
+		commitment:      commitment.ToTxCommitmentWithTxs(),
 	}
 }
 
@@ -206,7 +206,7 @@ func (e *MassMigrationExecutor) NewCreateCommitmentResult(
 ) CreateCommitmentResult {
 	return &CreateMassMigrationCommitmentResult{
 		appliedTxs: result.AppliedTxs().ToMassMigrationArray(),
-		commitment: commitment.(*models.MMCommitmentWithTxs),
+		commitment: commitment.ToMMCommitmentWithTxs(),
 	}
 }
 
@@ -241,7 +241,7 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 		SpokeID:     0,
 		TokenID:     models.MakeUint256(0),
 		Amount:      models.MakeUint256(0),
-		FeeReceiver: result.Commitment().(*models.MMCommitmentWithTxs).FeeReceiver,
+		FeeReceiver: result.Commitment().ToMMCommitmentWithTxs().FeeReceiver,
 	}
 
 	for i := range txs {
@@ -274,7 +274,7 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 		return err
 	}
 
-	mmCommitment := commitment.(*models.MMCommitmentWithTxs)
+	mmCommitment := commitment.ToMMCommitmentWithTxs()
 	mmCommitment.Meta = meta
 	mmCommitment.WithdrawRoot = merkleTree.Root()
 	return nil

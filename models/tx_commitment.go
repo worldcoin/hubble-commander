@@ -37,6 +37,14 @@ func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
+func (c *TxCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
+	return c
+}
+
+func (c *TxCommitmentWithTxs) ToMMCommitmentWithTxs() *MMCommitmentWithTxs {
+	panic("Cannot cast TxCommitmentWithTxs to MMCommitmentWithTxs")
+}
+
 func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) *common.Hash {
 	arr := make([]byte, 32+64+32+len(transactions))
 

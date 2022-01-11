@@ -36,9 +36,9 @@ func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs, batc
 		var err error
 
 		if batchType == batchtype.Transfer || batchType == batchtype.Create2Transfer {
-			err = c.storage.AddTxCommitment(&commitments[i].(*models.TxCommitmentWithTxs).TxCommitment)
+			err = c.storage.AddTxCommitment(&commitments[i].ToTxCommitmentWithTxs().TxCommitment)
 		} else if batchType == batchtype.MassMigration {
-			err = c.storage.AddMMCommitment(&commitments[i].(*models.MMCommitmentWithTxs).MMCommitment)
+			err = c.storage.AddMMCommitment(&commitments[i].ToMMCommitmentWithTxs().MMCommitment)
 		}
 
 		if err != nil {

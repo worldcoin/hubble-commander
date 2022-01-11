@@ -34,3 +34,11 @@ func (c *MMCommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
 func (c *MMCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
+
+func (c *MMCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
+	panic("Cannot cast MMCommitmentWithTxs to TxCommitmentWithTxs")
+}
+
+func (c *MMCommitmentWithTxs) ToMMCommitmentWithTxs() *MMCommitmentWithTxs {
+	return c
+}
