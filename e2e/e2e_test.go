@@ -29,7 +29,7 @@ func TestCommander(t *testing.T) {
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
-	cfg.MaxTxnDelay = 2 * time.Second
+	cfg.Rollup.MaxTxnDelay = 2 * time.Second
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
