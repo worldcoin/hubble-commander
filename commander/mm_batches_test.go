@@ -58,7 +58,7 @@ func (s *MMBatchesTestSuite) TearDownTest() {
 
 func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsBatch() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
-	err := s.storage.AddMassMigration(&tx)
+	err := s.storage.AddTransaction(&tx)
 	s.NoError(err)
 
 	s.submitBatch(s.storage.Storage)
@@ -137,7 +137,7 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	err := txStorage.AddMassMigration(tx)
+	err := txStorage.AddTransaction(tx)
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)

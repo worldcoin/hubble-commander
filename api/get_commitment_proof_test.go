@@ -88,7 +88,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	transfer.CommitmentID = &s.commitment.ID
-	err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
@@ -132,7 +132,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 
 	transfer := testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, &models.PublicKey{2, 3, 4})
 	transfer.CommitmentID = &s.commitment.ID
-	err = s.storage.AddCreate2Transfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
@@ -176,7 +176,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
 	massMigration.CommitmentID = &s.commitment.ID
-	err = s.storage.AddMassMigration(&massMigration)
+	err = s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
 	tree, err := merkletree.NewMerkleTree([]common.Hash{s.commitment.LeafHash()})
@@ -222,7 +222,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
 	transfer.CommitmentID = &s.commitment.ID
-	err = s.storage.AddTransfer(&transfer)
+	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
 	commitmentProof, err := s.api.GetCommitmentProof(s.commitment.ID)

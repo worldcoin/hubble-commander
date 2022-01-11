@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -73,25 +72,29 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 }
 
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
-	switch tx.Type() {
-	case txtype.Transfer:
-		return s.AddTransfer(tx.ToTransfer())
-	case txtype.Create2Transfer:
-		return s.AddCreate2Transfer(tx.ToCreate2Transfer())
-	case txtype.MassMigration:
-		return s.AddMassMigration(tx.ToMassMigration())
-	}
-	return nil
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		if tx.GetBase().CommitmentID != nil || tx.GetBase().ErrorMessage != nil {
+			err := txStorage.addStoredTxReceipt(stored.NewTxReceipt(tx))
+			if err != nil {
+				return err
+			}
+		}
+		return txStorage.addStoredTx(stored.NewTx(tx))
+	})
 }
 
 func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionArray) error {
-	switch txs.Type() {
-	case txtype.Transfer:
-		return s.BatchAddTransfer(txs.ToTransferArray())
-	case txtype.Create2Transfer:
-		return s.BatchAddCreate2Transfer(txs.ToCreate2TransferArray())
-	case txtype.MassMigration:
-		return s.BatchAddMassMigration(txs.ToMassMigrationArray())
+	if txs.Len() < 1 {
+		return errors.WithStack(ErrNoRowsAffected)
 	}
-	return nil
+
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := 0; i < txs.Len(); i++ {
+			err := txStorage.AddTransaction(txs.At(i))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
