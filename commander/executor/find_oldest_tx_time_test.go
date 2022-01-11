@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOldestTransaction_EmptyArray(t *testing.T) {
+func TestFindOldestTransactionTime_EmptyArray(t *testing.T) {
 	array := models.MakeTransferArray()
 	oldest := findOldestTransactionTime(array)
 	require.Nil(t, oldest)
 }
 
-func TestOldestTransaction_NoTxnHasTime(t *testing.T) {
+func TestFindOldestTransactionTime_NoTxHasTime(t *testing.T) {
 	tx := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			TxType:      txtype.Transfer,
@@ -32,7 +32,7 @@ func TestOldestTransaction_NoTxnHasTime(t *testing.T) {
 	require.Nil(t, oldest)
 }
 
-func TestOldestTransaction_FindsOldestTime(t *testing.T) {
+func TestFindOldestTransactionTime_FindsOldestTime(t *testing.T) {
 	oneSecondAgo := time.Now().Add(-time.Second)
 	twoSecondAgo := time.Now().Add(-2 * time.Second)
 
