@@ -62,5 +62,5 @@ func TestOldestTransaction_FindsOldestTime(t *testing.T) {
 	array := MakeTransferArray(txs...)
 
 	oldest := FindOldestTransactionTime(array)
-	require.Equal(t, oneSecondAgo, oldest.Time)
+	require.Equal(t, twoSecondAgo, oldest.Time)
 }

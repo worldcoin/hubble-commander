@@ -49,7 +49,7 @@ func FindOldestTransactionTime(array GenericTransactionArray) *Timestamp {
 			continue
 		}
 
-		if (oldestTime == nil) || oldestTime.Before(*txnTime) {
+		if (oldestTime == nil) || txnTime.Before(*oldestTime) {
 			oldestTime = txnTime
 		}
 	}
