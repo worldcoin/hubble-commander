@@ -58,8 +58,8 @@ func (s *PendingStakeWithdrawalTestSuite) TestGetReadyStateWithdrawals_AddAndGet
 		},
 	}
 
-	for _, stake := range stakes {
-		err := s.storage.AddPendingStakeWithdrawal(&stake)
+	for i := range stakes {
+		err := s.storage.AddPendingStakeWithdrawal(&stakes[i])
 		s.NoError(err)
 	}
 
