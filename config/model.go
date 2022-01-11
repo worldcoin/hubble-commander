@@ -65,6 +65,11 @@ type RollupConfig struct {
 	BatchAccountRegistrationGasLimit uint64
 	BatchLoopInterval                time.Duration
 	DisableSignatures                bool
+
+	// if MinTxsPerCommitment or MinCommitmentsPerBatch cause a pending transaction to
+	// wait to be included for longer than this delay then they will be ignored and a
+	// new batch will be submitted
+	MaxTxnDelay time.Duration
 }
 
 type APIConfig struct {

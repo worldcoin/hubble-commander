@@ -19,3 +19,12 @@ func (s *testSuiteWithTxsContext) SetupTestWithConfig(batchType batchtype.BatchT
 	s.testSuiteWithExecutionContext.SetupTestWithConfig(cfg)
 	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
 }
+
+// AcceptNewConfig testify does not support parameterized test fixtures and propagators are not in
+// fashion so when a test changes the RollupConfig is must also redo the relevant parts of
+// setup
+func (s *testSuiteWithTxsContext) AcceptNewConfig() {
+	batchType := s.txsCtx.BatchType
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
+}

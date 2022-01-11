@@ -19,6 +19,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -28,6 +29,7 @@ func TestCommander(t *testing.T) {
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
+	cfg.Rollup.MaxTxnDelay = 2 * time.Second
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
@@ -62,13 +64,22 @@ func TestCommander(t *testing.T) {
 		return testSubmitMassMigrationBatch(t, commander.Client(), senderWallet, 64)
 	})
 
-	testSubmitDepositBatchAndWait(t, commander.Client())
+	testMaxBatchDelay(t, commander.Client(), senderWallet, 96)
 
-	testSenderStateAfterTransfers(t, commander.Client(), senderWallet)
-	testFeeReceiverStateAfterTransfers(t, commander.Client(), feeReceiverWallet)
-	testGetBatches(t, commander.Client())
+	testSubmitDepositBatchAndWait(t, commander.Client(), 5)
 
-	testCommanderRestart(t, commander, senderWallet)
+	testSenderStateAfterTransfers(t, commander.Client(), senderWallet,
+		32*3+1,
+		32*100*3+100,
+	)
+	testFeeReceiverStateAfterTransfers(
+		t, commander.Client(), feeReceiverWallet,
+		32*10*3+10,
+	)
+
+	testGetBatches(t, commander.Client(), 6)
+
+	testCommanderRestart(t, commander, senderWallet, 97)
 }
 
 func testGetVersion(t *testing.T, client jsonrpc.RPCClient) {
@@ -239,7 +250,7 @@ func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash
 	}, 30*time.Second, testutils.TryInterval)
 }
 
-func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet) {
+func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, expectedNonce, expectedBalance uint64) {
 	var userStates []dto.UserStateWithID
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{senderWallet.PublicKey()})
 	require.NoError(t, err)
@@ -248,11 +259,11 @@ func testSenderStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, sende
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, models.MakeUint256(32+32+32), senderState.Nonce)
-	require.Equal(t, *initialBalance.SubN(32*100 + 32*100 + 32*100), senderState.Balance)
+	require.Equal(t, models.MakeUint256(expectedNonce), senderState.Nonce)
+	require.Equal(t, *initialBalance.SubN(expectedBalance), senderState.Balance)
 }
 
-func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet) {
+func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, feeReceiverWallet bls.Wallet, expectedBalance uint64) {
 	var userStates []dto.UserStateWithID
 	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{feeReceiverWallet.PublicKey()})
 	require.NoError(t, err)
@@ -261,28 +272,32 @@ func testFeeReceiverStateAfterTransfers(t *testing.T, client jsonrpc.RPCClient, 
 	require.NoError(t, err)
 
 	initialBalance := config.GetDeployerConfig().Bootstrap.GenesisAccounts[1].Balance
-	require.Equal(t, *initialBalance.AddN(32*10 + 32*10 + 32*10), feeReceiverState.Balance)
+	require.Equal(t, *initialBalance.AddN(expectedBalance), feeReceiverState.Balance)
 	require.Equal(t, models.MakeUint256(0), feeReceiverState.Nonce)
 }
 
-func testGetBatches(t *testing.T, client jsonrpc.RPCClient) {
+func testGetBatches(t *testing.T, client jsonrpc.RPCClient, expectedBatchCount int) {
 	var batches []dto.Batch
 	err := client.CallFor(&batches, "hubble_getBatches", []interface{}{nil, nil})
 	require.NoError(t, err)
-	require.Len(t, batches, 5)
+	require.Len(t, batches, expectedBatchCount)
 	require.Equal(t, models.MakeUint256(1), batches[1].ID)
-	batchTypes := []batchtype.BatchType{batches[1].Type, batches[2].Type, batches[3].Type, batches[4].Type}
+
+	batchTypes := map[batchtype.BatchType]bool{}
+	for _, batch := range batches {
+		batchTypes[batch.Type] = true
+	}
 	require.Contains(t, batchTypes, batchtype.Transfer)
 	require.Contains(t, batchTypes, batchtype.Create2Transfer)
 	require.Contains(t, batchTypes, batchtype.MassMigration)
 	require.Contains(t, batchTypes, batchtype.Deposit)
 }
 
-func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet) {
+func testCommanderRestart(t *testing.T, commander setup.Commander, senderWallet bls.Wallet, startNonce uint64) {
 	err := commander.Restart()
 	require.NoError(t, err)
 
-	testSendTransfer(t, commander.Client(), senderWallet, 96)
+	testSendTransfer(t, commander.Client(), senderWallet, startNonce)
 }
 
 func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserStateWithID, error) {
@@ -292,4 +307,26 @@ func getUserState(userStates []dto.UserStateWithID, stateID uint32) (*dto.UserSt
 		}
 	}
 	return nil, errors.New("user state with given stateID not found")
+}
+
+// confirms that batches smaller than the minimum will be submitted if any txn is left
+// pending for too long
+func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.Wallet, startNonce uint64) {
+	txnHash := testSendTransfer(t, client, senderWallet, startNonce)
+	require.NotZero(t, txnHash)
+
+	time.Sleep(1 * time.Second)
+
+	var txReceipt dto.TransactionReceipt
+	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
+	require.NoError(t, err)
+	require.NotEqual(t, txReceipt.Status, txstatus.InBatch)
+
+	log.Warn("txn is not yet in batch. waiting..")
+
+	require.Eventually(t, func() bool {
+		err = client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
+		require.NoError(t, err)
+		return txReceipt.Status == txstatus.InBatch
+	}, 10*time.Second, testutils.TryInterval)
 }

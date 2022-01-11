@@ -17,6 +17,11 @@ type TxsContext struct {
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
 	txErrorsToStore []models.TxError
+
+	// saved here because the configuration might be overridden depending on the set
+	// of currently pending transactions
+	minTxsPerCommitment    uint32
+	minCommitmentsPerBatch uint32
 }
 
 func NewTxsContext(
@@ -37,10 +42,12 @@ func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.Batch
 
 func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
 	return &TxsContext{
-		ExecutionContext: executionCtx,
-		Executor:         NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
-		BatchType:        batchType,
-		txErrorsToStore:  make([]models.TxError, 0),
+		ExecutionContext:       executionCtx,
+		Executor:               NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
+		BatchType:              batchType,
+		txErrorsToStore:        make([]models.TxError, 0),
+		minTxsPerCommitment:    executionCtx.cfg.MinTxsPerCommitment,
+		minCommitmentsPerBatch: executionCtx.cfg.MinCommitmentsPerBatch,
 	}
 }
 

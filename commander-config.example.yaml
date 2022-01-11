@@ -22,6 +22,7 @@
 #  signature_dispute_gas_limit: 7600000
 #  batch_account_registration_gas_limit: 8000000
 #  batch_loop_interval: 500ms
+#  max_txn_delay: 30min
 #
 #api:
 #  port: 8080
