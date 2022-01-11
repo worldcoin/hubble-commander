@@ -7,7 +7,7 @@ import (
 
 const InitialGenesisBalance = 1000000000000000000
 
-func CreateUnregisteredWalletsForBenchmark(txAmount int64, domain bls.Domain) ([]bls.Wallet, error) {
+func CreateUnregisteredWalletsForBenchmark(txCount int64, domain bls.Domain) ([]bls.Wallet, error) {
 	cfg := config.GetDeployerConfig()
 	accounts := cfg.Bootstrap.GenesisAccounts
 
@@ -18,7 +18,7 @@ func CreateUnregisteredWalletsForBenchmark(txAmount int64, domain bls.Domain) ([
 		}
 	}
 
-	numberOfNeededWallets := int(txAmount) * registeredAccounts
+	numberOfNeededWallets := int(txCount) * registeredAccounts
 	wallets := make([]bls.Wallet, 0, numberOfNeededWallets)
 	for i := 0; i < numberOfNeededWallets; i++ {
 		newRandomWallet, err := bls.NewRandomWallet(domain)

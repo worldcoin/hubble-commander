@@ -81,3 +81,10 @@ func MakeMassMigrationForCommitment(massMigration *models.MassMigration) MassMig
 		SpokeID:     massMigration.SpokeID,
 	}
 }
+
+type MassMigrationMeta struct {
+	SpokeID     uint32
+	TokenID     models.Uint256
+	Amount      models.Uint256
+	FeeReceiver uint32
+}

@@ -14,5 +14,5 @@ func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 			AutomineEnabled:        ref.Bool(true),
 		})
 	}
-	return chain.NewRPCCConnection(cfg)
+	return chain.NewRPCConnection(cfg)
 }

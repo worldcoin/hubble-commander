@@ -2,13 +2,10 @@ package stored
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const (
@@ -18,11 +15,7 @@ const (
 	txMassMigrationBodyLength   = 4
 )
 
-var (
-	TxName                = getTypeName(Tx{})
-	TxPrefix              = models.GetBadgerHoldPrefix(Tx{})
-	errInvalidTxIndexType = fmt.Errorf("invalid stored.Tx index type")
-)
+var TxPrefix = models.GetBadgerHoldPrefix(Tx{})
 
 type Tx struct {
 	Hash        common.Hash
@@ -259,54 +252,6 @@ func txBody(data []byte, transactionType txtype.TransactionType) (TxBody, error)
 		return body, err
 	}
 	return nil, nil
-}
-
-// nolint:gocritic
-// Type implements badgerhold.Storer
-func (t Tx) Type() string {
-	return string(TxName)
-}
-
-// nolint:gocritic
-// Indexes implements badgerhold.Storer
-func (t Tx) Indexes() map[string]bh.Index {
-	return map[string]bh.Index{
-		"FromStateID": {
-			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToTx(value)
-				if err != nil {
-					return nil, err
-				}
-				return EncodeUint32(v.FromStateID), nil
-			},
-		},
-		"ToStateID": {
-			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToTx(value)
-				if err != nil {
-					return nil, err
-				}
-
-				transferBody, ok := v.Body.(*TxTransferBody)
-				if !ok {
-					return nil, nil
-				}
-				return EncodeUint32(transferBody.ToStateID), nil
-			},
-		},
-	}
-}
-
-func interfaceToTx(value interface{}) (*Tx, error) {
-	p, ok := value.(*Tx)
-	if ok {
-		return p, nil
-	}
-	v, ok := value.(Tx)
-	if ok {
-		return &v, nil
-	}
-	return nil, errors.WithStack(errInvalidTxIndexType)
 }
 
 type TxBody interface {

@@ -29,6 +29,7 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		TokenRegistry:                  a.client.ChainState.TokenRegistry,
 		SpokeRegistry:                  a.client.ChainState.SpokeRegistry,
 		DepositManager:                 a.client.ChainState.DepositManager,
+		WithdrawManager:                a.client.ChainState.WithdrawManager,
 		Rollup:                         a.client.ChainState.Rollup,
 		BlockNumber:                    a.storage.GetLatestBlockNumber(),
 	}

@@ -10,7 +10,7 @@ func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error)
 	var account models.AccountLeaf
 	err := s.database.Badger.FindOne(
 		&account,
-		bh.Where("PublicKey").Eq(publicKey).Index("PublicKey"),
+		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey"),
 	)
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("pub key id"))

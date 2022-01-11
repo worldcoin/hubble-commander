@@ -88,7 +88,9 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_TwoBatches() {
 }
 
 func (s *SubmitDepositBatchTestSuite) prepareDeposits() {
-	s.registerToken(s.client.ExampleTokenAddress)
+	_, err := s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
+	s.NoError(err)
+
 	s.approveTokens()
 	s.queueFourDeposits()
 	s.addGenesisBatch()
@@ -104,16 +106,6 @@ func (s *SubmitDepositBatchTestSuite) addGenesisBatch() {
 	batch.PrevStateRoot = root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
-}
-
-func (s *SubmitDepositBatchTestSuite) registerToken(tokenAddress common.Address) *models.Uint256 {
-	err := s.client.RequestRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	tokenID, err := s.client.FinalizeRegisterTokenAndWait(tokenAddress)
-	s.NoError(err)
-
-	return tokenID
 }
 
 func (s *SubmitDepositBatchTestSuite) approveTokens() {

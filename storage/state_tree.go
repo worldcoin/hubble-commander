@@ -241,19 +241,25 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Wit
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
-	var storedLeaf stored.StateLeaf
-	err := s.database.Badger.FindOne(
-		&storedLeaf,
-		bh.Where("TokenID").Eq(tokenID).
-			And("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+	stateLeaves := make([]stored.StateLeaf, 0, 1)
+	err := s.database.Badger.Find(
+		&stateLeaves,
+		bh.Where("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err == bh.ErrNotFound {
+	if len(stateLeaves) == 0 {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
-	return storedLeaf.ToModelsStateLeaf(), nil
+
+	for i := range stateLeaves {
+		if stateLeaves[i].TokenID.Eq(&tokenID) {
+			return stateLeaves[i].ToModelsStateLeaf(), nil
+		}
+	}
+
+	return nil, errors.WithStack(NewNotFoundError("state leaf"))
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {

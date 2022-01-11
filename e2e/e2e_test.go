@@ -25,13 +25,13 @@ import (
 )
 
 func TestCommander(t *testing.T) {
-	cfg := config.GetConfig().Rollup
-	cfg.MinTxsPerCommitment = 32
-	cfg.MaxTxsPerCommitment = 32
-	cfg.MinCommitmentsPerBatch = 1
+	cfg := config.GetConfig()
+	cfg.Rollup.MinTxsPerCommitment = 32
+	cfg.Rollup.MaxTxsPerCommitment = 32
+	cfg.Rollup.MinCommitmentsPerBatch = 1
 	cfg.MaxTxnDelay = 2 * time.Second
 
-	commander, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
 	err = commander.Start()
 	require.NoError(t, err)

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const baseChainStateDataLength = 148
+const baseChainStateDataLength = 168
 
 type ChainState struct {
 	ChainID                        Uint256
@@ -15,6 +15,7 @@ type ChainState struct {
 	TokenRegistry                  common.Address
 	SpokeRegistry                  common.Address
 	DepositManager                 common.Address
+	WithdrawManager                common.Address
 	Rollup                         common.Address
 	SyncedBlock                    uint64
 	GenesisAccounts                GenesisAccounts `json:"-"`
@@ -27,6 +28,7 @@ type ChainSpec struct {
 	TokenRegistry                  common.Address `yaml:"token_registry"`
 	SpokeRegistry                  common.Address `yaml:"spoke_registry"`
 	DepositManager                 common.Address `yaml:"deposit_manager"`
+	WithdrawManager                common.Address `yaml:"withdraw_manager"`
 	Rollup                         common.Address
 	GenesisAccounts                GenesisAccounts `yaml:"genesis_accounts"`
 }
@@ -71,8 +73,9 @@ func (s *ChainState) Bytes() []byte {
 	copy(b[60:80], s.TokenRegistry.Bytes())
 	copy(b[80:100], s.SpokeRegistry.Bytes())
 	copy(b[100:120], s.DepositManager.Bytes())
-	copy(b[120:140], s.Rollup.Bytes())
-	binary.BigEndian.PutUint64(b[140:148], s.SyncedBlock)
+	copy(b[120:140], s.WithdrawManager.Bytes())
+	copy(b[140:160], s.Rollup.Bytes())
+	binary.BigEndian.PutUint64(b[160:168], s.SyncedBlock)
 
 	for i := range s.GenesisAccounts {
 		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
@@ -97,8 +100,9 @@ func (s *ChainState) SetBytes(data []byte) error {
 	s.TokenRegistry.SetBytes(data[60:80])
 	s.SpokeRegistry.SetBytes(data[80:100])
 	s.DepositManager.SetBytes(data[100:120])
-	s.Rollup.SetBytes(data[120:140])
-	s.SyncedBlock = binary.BigEndian.Uint64(data[140:148])
+	s.WithdrawManager.SetBytes(data[120:140])
+	s.Rollup.SetBytes(data[140:160])
+	s.SyncedBlock = binary.BigEndian.Uint64(data[160:168])
 
 	genesisAccountsCount := (dataLength - baseChainStateDataLength) / populatedGenesisAccountByteSize
 

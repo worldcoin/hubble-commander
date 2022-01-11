@@ -16,8 +16,8 @@ Example result:
 
 This returns a number of datapoints about the current state of the system:
 
-- Ethereum network chain id
-- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager and Rollup contract addresses
+- Ethereum network chain ID
+- AccountRegistry, TokenRegistry, SpokeRegistry, DepositManager, WithdrawManager and Rollup contract addresses
 - Block at which contracts were deployed (for new instance of commander to know where to start syncing events from)
 - Current ethereum block number
 - Number of transactions and accounts
@@ -35,6 +35,7 @@ Example result:
     "TokenRegistry": "0x07389715ae1f0a891fba82e65099f6a3fa7da593",
     "SpokeRegistry": "0x535ca2e7dc31afce3dde4d78ded91aedf55b04b8",
     "DepositManager": "0xa3accd1cfabc8b09aea4d0e25f21f25c526c9be8",
+    "WithdrawManager": "0x7eaa005432a4602044ae2242c79234650304f290",
     "Rollup": "0xf2a409ccf78e6e32e02d5e3a3ac274ca6880d9ac",
     "BlockNumber": 2146,
     "TransactionCount": 2,
@@ -165,10 +166,6 @@ Example result (`MASS_MIGRATION`):
     "Status": "FINALISED"
 }
 ```
-
-### `hubble_getTransactions(pubKey)`
-
-Returns an array of transactions (`TRANSFER` and `CREATE2TRANSFER` type) for given public key
 
 ### `hubble_getUserState(stateId)`
 
@@ -312,74 +309,7 @@ Example result:
 }
 ```
 
-# API usage
-
-## Sending a transaction
-
-1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
-2. Call `hubble_getUserStates(recipientPubKey)` to list recipients accounts pick one with an appropriate token index.
-3. Call `hubble_sendTransaction` with `txType=TRANSFER` using the state indexes from steps 1 & 2 and nonce from step 1.
-4. Call `hubble_getTransfer(Hash)` with the hash from step 3 to monitor transaction progress.
-
-## Alternative: Recipient doesn't have a state leaf for a given token
-
-1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
-2. Call `hubble_sendTransaction` with `txType=CREATE2TRANSFER` with the recipient's pubKey. The commander will decide the appropriate
-   account index and state index for the recipient.
-3. Call `hubble_getTransaction(Hash)` with the hash from step 2 to monitor transaction progress.
-
-DRAFT:
-
-### `hubble_getBatchByNumber(batchNumber)`
-
-Returns the information about the batch (hash, id) as well as the included commitments. Should this include transactions? Should hash and id
-be the same thing?
-
-### `hubble_getAccounts(PublicKey)`
-
-Returns the indices of an account in the account tree. Used for constructing transactions.
-
-### `hubble_getTokenIndex(Token)`
-
-Returns the index of the token. Figure out if the tokens actually do have indices. Used for constructing transactions.
-
-### `hubble_getBalanceByAddress(Address, Token)`
-
-Returns the user's balance in the specified token. Potentially in the future extend this with the ability to see the current balance,
-committed balance and finalized (non-disputable) balance.
-
-### `hubble_getTransactionCount(Address)`
-
-Returns the user's transaction count. Used for setting the nonce. Should this be per token?
-
-### `hubble_getTransactions(Address)`
-
-Returns the user's list of transactions. Should this be per token? Should this have pagination?
-
-### `hubble_getLatestCommitment()`
-
-Returns the latest commitment, see below.
-
-### `hubble_getCommitment(id)`
-
-Returns the information about the commitment (hash, id) as well as the included transactions. Should hash and id be the same thing?
-
-### `hubble_getLatestBatch()`
-
-Returns the latest batch, see below.
-
-```json
-{
-    "ID": "1",
-    "Hash": "0xb1786be90de852376032956f0ed165011bf4ef3a6f6a0753a1f9f1f59e99441f",
-    "Type": "TRANSFER",
-    "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "SubmissionBlock": 59,
-    "FinalisationBlock": 40379
-}
-```
-
-### `hubble_getUserStateProof(stateId)`
+### `hubble_getUserStateProof(stateID)`
 
 Returns the merkle proof of the state tree and associated user state for the requested ID, see below.
 
@@ -474,7 +404,7 @@ Returns the merkle path and associated public key for the requested public key I
 
 ### `hubble_getCommitmentProof(commitmentID)`
 
-Returns the transfer commitment inclusion proof for the given commitment ID, see below.
+Returns the transfer/create2transfer commitment inclusion proof for the given commitment ID, see below.
 
 ```json
 {
@@ -505,3 +435,79 @@ Returns the transfer commitment inclusion proof for the given commitment ID, see
     ]
 }
 ```
+
+### `hubble_getMassMigrationCommitmentProof(commitmentID)`
+
+Returns the mass migration commitment inclusion proof for the given commitment ID, see below.
+
+```json
+{
+    "StateRoot": "0xa3eab4d0546b75e11ea7ccbfc8a871709a0a88e6942fce470fc439c532edb3d2",
+    "Path": {
+        "Path": 0,
+        "Depth": 2
+    },
+    "Witness": [
+        "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"
+    ],
+    "Body": {
+        "AccountRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
+        "Signature": "0x21d68233870a2c1d7eb8feed7d127f18c23e42e0079b2c21deda816c7726696f059c728d03ebf0f60d732b97045018759a09b95d31fd475b618a991c51b3b44c",
+        "Meta": {
+            "SpokeID": 24,
+            "TokenID": "0",
+            "Amount": "423",
+            "FeeReceiver": 0
+        },
+        "WithdrawRoot": "0x7d70d923fadb30fe73c75e568e562e4a5447f90a6d6f83aacae76d5d5f502472",
+        // transactions are serialized and encoded using Base64 encoding format
+        "Transactions": "AAAABAGnADM="
+    }
+}
+```
+
+### `hubble_getWithdrawProof(commitmentID, transactionHash)`
+
+Returns the withdrawal proof for the given mass migration transaction, see below.
+
+```json
+{
+    "StateRoot": "0xa3eab4d0546b75e11ea7ccbfc8a871709a0a88e6942fce470fc439c532edb3d2",
+    "Path": {
+        "Path": 0,
+        "Depth": 2
+    },
+    "Witness": [
+        "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"
+    ],
+    "Body": {
+        "AccountRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
+        "Signature": "0x21d68233870a2c1d7eb8feed7d127f18c23e42e0079b2c21deda816c7726696f059c728d03ebf0f60d732b97045018759a09b95d31fd475b618a991c51b3b44c",
+        "Meta": {
+            "SpokeID": 24,
+            "TokenID": "0",
+            "Amount": "423",
+            "FeeReceiver": 0
+        },
+        "WithdrawRoot": "0x7d70d923fadb30fe73c75e568e562e4a5447f90a6d6f83aacae76d5d5f502472",
+        // mass migration transactions are serialized and encoded using Base64 encoding format
+        "Transactions": "AAAABAGnADM="
+    }
+}
+```
+
+# API usage
+
+## Sending a transaction
+
+1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
+2. Call `hubble_getUserStates(recipientPubKey)` to list recipients accounts pick one with an appropriate token index.
+3. Call `hubble_sendTransaction` with `txType=TRANSFER` using the state indexes from steps 1 & 2 and nonce from step 1.
+4. Call `hubble_getTransfer(Hash)` with the hash from step 3 to monitor transaction progress.
+
+## Alternative: Recipient doesn't have a state leaf for a given token
+
+1. Call `hubble_getUserStates(senderPubKey)` to list sender's accounts. Pick one with an appropriate token index and balance.
+2. Call `hubble_sendTransaction` with `txType=CREATE2TRANSFER` with the recipient's pubKey. The commander will decide the appropriate
+   account index and state index for the recipient.
+3. Call `hubble_getTransaction(Hash)` with the hash from step 2 to monitor transaction progress.

@@ -2,10 +2,8 @@ package storage
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -156,114 +154,6 @@ func (s *TransferTestSuite) TestGetPendingTransfers() {
 	s.Contains(res, transfers[1])
 }
 
-func (s *TransferTestSuite) TestGetTransfersByPublicKey() {
-	accounts := []models.AccountLeaf{
-		{
-			PubKeyID:  3,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-		{
-			PubKeyID:  4,
-			PublicKey: models.PublicKey{2, 3, 4},
-		},
-		{
-			PubKeyID:  5,
-			PublicKey: models.PublicKey{1, 2, 3},
-		},
-	}
-	for i := range accounts {
-		err := s.storage.AccountTree.SetSingle(&accounts[i])
-		s.NoError(err)
-	}
-
-	userStates := []models.UserState{
-		{PubKeyID: 3}, // StateID: 0
-		{PubKeyID: 4}, // StateID: 1
-		{PubKeyID: 3}, // StateID: 2
-		{PubKeyID: 5}, // StateID: 3
-		{PubKeyID: 4}, // StateID: 4
-	}
-
-	for i := range userStates {
-		_, err := s.storage.StateTree.Set(uint32(i), &userStates[i])
-		s.NoError(err)
-	}
-
-	submissionTime := &models.Timestamp{Time: time.Unix(170, 0).UTC()}
-	batch := s.addBatchAndCommitment()
-	commitmentID := &models.CommitmentID{BatchID: batch.ID}
-	transfers := make([]models.TransferWithBatchDetails, 5)
-
-	transfers[0].Transfer = transfer
-	transfers[0].Hash = utils.RandomHash()
-	transfers[0].FromStateID = 0
-	transfers[0].ToStateID = 1
-	transfers[0].CommitmentID = commitmentID
-	transfers[0].BatchHash = batch.Hash
-	transfers[0].BatchTime = submissionTime
-
-	transfers[1].Transfer = transfer
-	transfers[1].Hash = utils.RandomHash()
-	transfers[1].FromStateID = 1
-	transfers[1].ToStateID = 4
-	transfers[1].CommitmentID = commitmentID
-	transfers[1].BatchHash = batch.Hash
-
-	transfers[2].Transfer = transfer
-	transfers[2].Hash = utils.RandomHash()
-	transfers[2].FromStateID = 2
-	transfers[2].ToStateID = 1
-
-	transfers[3].Transfer = transfer
-	transfers[3].Hash = utils.RandomHash()
-	transfers[3].FromStateID = 3
-	transfers[3].ToStateID = 1
-	transfers[3].CommitmentID = commitmentID
-	transfers[3].BatchHash = batch.Hash
-	transfers[3].BatchTime = submissionTime
-
-	transfers[4].Transfer = transfer
-	transfers[4].Hash = utils.RandomHash()
-	transfers[4].FromStateID = 1
-	transfers[4].ToStateID = 2
-
-	s.batchAddTransfers(transfers)
-
-	userTransactions, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{1, 2, 3})
-	s.NoError(err)
-	s.Len(userTransactions, 4)
-	s.Contains(userTransactions, transfers[0])
-	s.Contains(userTransactions, transfers[2])
-	s.Contains(userTransactions, transfers[3])
-	s.Contains(userTransactions, transfers[4])
-}
-
-func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersUnregisteredAccount() {
-	userTransfers, err := s.storage.GetTransfersByPublicKey(&models.PublicKey{9, 9, 9})
-	s.NoError(err)
-	s.Len(userTransfers, 0)
-}
-
-func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersRegisteredAccount() {
-	err := s.storage.AccountTree.SetSingle(&account2)
-	s.NoError(err)
-	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(userTransfers, 0)
-}
-
-func (s *TransferTestSuite) TestGetTransfersByPublicKey_NoTransfersButSomeCreate2Transfers() {
-	err := s.storage.AccountTree.SetSingle(&account2)
-	s.NoError(err)
-
-	err = s.storage.AddCreate2Transfer(&create2Transfer)
-	s.NoError(err)
-
-	userTransfers, err := s.storage.GetTransfersByPublicKey(&account2.PublicKey)
-	s.NoError(err)
-	s.Len(userTransfers, 0)
-}
-
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID
@@ -291,34 +181,6 @@ func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfersButSomeCre
 	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 0)
-}
-
-func (s *TransferTestSuite) addBatchAndCommitment() *models.Batch {
-	batch := &models.Batch{
-		ID:              models.MakeUint256(1),
-		Type:            batchtype.Transfer,
-		TransactionHash: utils.RandomHash(),
-		Hash:            utils.NewRandomHash(),
-		SubmissionTime:  &models.Timestamp{Time: time.Unix(170, 0).UTC()},
-	}
-	err := s.storage.AddBatch(batch)
-	s.NoError(err)
-
-	commitmentInBatch := txCommitment
-	commitmentInBatch.ID.BatchID = batch.ID
-	err = s.storage.AddTxCommitment(&commitmentInBatch)
-	s.NoError(err)
-
-	return batch
-}
-
-func (s *TransferTestSuite) batchAddTransfers(transfers []models.TransferWithBatchDetails) {
-	txs := make([]models.Transfer, 5)
-	for i := range transfers {
-		txs[i] = transfers[i].Transfer
-	}
-	err := s.storage.BatchAddTransfer(txs)
-	s.NoError(err)
 }
 
 func TestTransferTestSuite(t *testing.T) {

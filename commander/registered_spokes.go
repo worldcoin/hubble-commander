@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -65,7 +66,7 @@ func (c *Commander) unmeasuredSyncSpokes(startBlock, endBlock uint64) error {
 func (c *Commander) getSpokeRegisteredIterator(start, end uint64) (*spokeregistry.SpokeRegisteredIterator, error) {
 	it := &spokeregistry.SpokeRegisteredIterator{}
 
-	err := c.client.FilterLogs(c.client.SpokeRegistry.BoundContract, "SpokeRegistered", &bind.FilterOpts{
+	err := c.client.FilterLogs(c.client.SpokeRegistry.BoundContract, eth.SpokeRegisteredEvent, &bind.FilterOpts{
 		Start: start,
 		End:   &end,
 	}, it)

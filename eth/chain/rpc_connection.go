@@ -22,7 +22,7 @@ type RPCConnection struct {
 	chainID *big.Int
 }
 
-func NewRPCCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
+func NewRPCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
 	chainID := big.NewInt(0).SetUint64(cfg.ChainID)
 
 	key, err := crypto.HexToECDSA(cfg.PrivateKey)

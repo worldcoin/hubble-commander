@@ -22,13 +22,13 @@ import (
 
 type BenchmarkConfig struct {
 	// Total number of transactions to be sent.
-	TxAmount int64
+	TxCount int64
 
 	// Number of transaction that will be sent in a single batch (unrelated to rollup "batches").
 	TxBatchSize int64
 
 	// Maximum number of tx batches in queue.
-	MaxQueuedBatchesAmount int64
+	MaxQueuedBatchesCount int64
 
 	// Maximum number of workers that send transactions.
 	MaxConcurrentWorkers int64
@@ -52,7 +52,7 @@ type benchmarkTestSuite struct {
 	txsSent   int64
 	txsQueued int64
 
-	lastReportedTxAmount int64
+	lastReportedTxCount int64
 }
 
 func (s *benchmarkTestSuite) SetupSuite() {
@@ -63,10 +63,10 @@ func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
 	s.SetupTestWithRollupConfig(benchmarkConfig, nil)
 }
 
-func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.RollupConfig) {
+func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.Config) {
 	s.benchConfig = benchmarkConfig
 
-	commander, err := setup.NewConfiguredCommanderFromEnv(cfg)
+	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	s.NoError(err)
 
 	err = commander.Start()
@@ -83,7 +83,7 @@ func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig Benchmark
 	s.waitGroup = sync.WaitGroup{}
 	s.txsSent = 0
 	s.txsQueued = 0
-	s.lastReportedTxAmount = 0
+	s.lastReportedTxCount = 0
 }
 
 func (s *benchmarkTestSuite) TearDownTest() {
@@ -188,12 +188,12 @@ func (s *benchmarkTestSuite) runForWallet(
 ) {
 	fmt.Printf("Starting worker on stateId %d address=%s\n", senderStateID, senderWallet.PublicKey().String())
 
-	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesAmount)
+	txsToWatch := make([]common.Hash, 0, s.benchConfig.MaxQueuedBatchesCount)
 	nonce := models.MakeUint256(0)
 
-	for s.txsSent < s.benchConfig.TxAmount {
+	for s.txsSent < s.benchConfig.TxCount {
 		// Send phase
-		for int64(len(txsToWatch)) <= s.benchConfig.MaxQueuedBatchesAmount {
+		for int64(len(txsToWatch)) <= s.benchConfig.MaxQueuedBatchesCount {
 			var lastTxHash common.Hash
 
 			for i := 0; i < int(s.benchConfig.TxBatchSize); i++ {
@@ -232,8 +232,8 @@ func (s *benchmarkTestSuite) runForWallet(
 		txsToWatch = newTxsToWatch
 
 		// Report phase
-		if s.lastReportedTxAmount != s.txsSent {
-			s.lastReportedTxAmount = s.txsSent
+		if s.lastReportedTxCount != s.txsSent {
+			s.lastReportedTxCount = s.txsSent
 			fmt.Printf(
 				"Transfers sent: %d, throughput: %f tx/s, txs in queue: %d\n",
 				s.txsSent,

@@ -18,13 +18,9 @@ type Commander interface {
 	Client() jsonrpc.RPCClient
 }
 
-func NewCommanderFromEnv() (Commander, error) {
-	return NewConfiguredCommanderFromEnv(nil)
-}
-
-func NewConfiguredCommanderFromEnv(cfg *config.RollupConfig) (Commander, error) {
-	if cfg != nil {
-		logRequiredConfig(cfg)
+func NewConfiguredCommanderFromEnv(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (Commander, error) {
+	if commanderConfig != nil {
+		logRequiredConfig(commanderConfig.Rollup)
 	}
 
 	switch os.Getenv("HUBBLE_E2E") {
@@ -37,7 +33,7 @@ func NewConfiguredCommanderFromEnv(cfg *config.RollupConfig) (Commander, error) 
 	case "local":
 		return ConnectToLocalCommander(), nil
 	case "in-process":
-		return CreateInProcessCommander(cfg)
+		return DeployAndCreateInProcessCommander(commanderConfig, deployerConfig)
 	default:
 		return nil, fmt.Errorf("invalid HUBBLE_E2E env var")
 	}
