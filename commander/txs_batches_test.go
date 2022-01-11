@@ -489,10 +489,10 @@ func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *m
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	err = s.cmd.storage.AddTxCommitment(&batchData.Commitments()[0].TxCommitment)
+	s.Len(commitments, 1)
+	err = s.cmd.storage.AddTxCommitment(&commitments[0].ToTxCommitmentWithTxs().TxCommitment)
 	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()
@@ -553,13 +553,13 @@ func submitInvalidTxsBatch(
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	batchData, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
+	s.Len(commitments, 1)
 
-	modifier(storage, &batchData.Commitments()[0])
+	modifier(storage, commitments[0].ToTxCommitmentWithTxs())
 
-	err = txsCtx.SubmitBatch(pendingBatch, batchData)
+	err = txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	return pendingBatch
