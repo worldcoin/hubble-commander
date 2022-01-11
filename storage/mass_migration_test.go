@@ -103,6 +103,7 @@ func (s *MassMigrationTestSuite) TestGetMassMigration_NonexistentMassMigration()
 	s.Nil(res)
 }
 
+// TODO: should probably remove this test, we now have three copies of the same test
 func (s *MassMigrationTestSuite) TestGetPendingMassMigrations() {
 	massMigrations := make([]models.MassMigration, 4)
 	for i := range massMigrations {

@@ -189,7 +189,7 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 func (a *API) updateDuplicatedTransaction(tx models.GenericTransaction) (*common.Hash, error) {
 	txHash := &tx.GetBase().Hash
 	logDuplicateTransaction(txHash)
-	err := a.storage.UpdateTransaction(tx)
+	err := a.storage.ReplaceFailedTransaction(tx)
 	if storage.IsNotFoundError(err) {
 		return nil, errors.WithStack(ErrPendingTransaction)
 	}

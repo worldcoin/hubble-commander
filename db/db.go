@@ -68,6 +68,13 @@ func (d *Database) RawUpdate(fn func(txn *badger.Txn) error) error {
 	return d.store.Badger().Update(fn)
 }
 
+func (d *Database) Count(result interface{}, query *bh.Query) (uint64, error) {
+	if d.duringTransaction() {
+		return d.store.TxCount(d.txn, result, query)
+	}
+	return d.store.Count(result, query)
+}
+
 func (d *Database) Find(result interface{}, query *bh.Query) error {
 	if d.duringTransaction() {
 		return d.store.TxFind(d.txn, result, query)

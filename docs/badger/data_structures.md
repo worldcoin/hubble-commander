@@ -120,15 +120,14 @@ Value: node `common.Hash` (through clever encoding of `models.MerkleTreeNode`)
 
 ## Transactions
 
-### Stored Transaction
-- Stores pending and mined transactions data
+### Pending Transaction
 
 Key: tx hash `common.Hash`
 
-Value: `stored.Tx`
+Value: `stored.PendingTx`
 
 ```go
-type Tx struct {
+type PendingTx struct {
     Hash        common.Hash
     TxType      txtype.TransactionType
     FromStateID uint32
@@ -157,6 +156,7 @@ Body: `stored.TxCreate2TransferBody`
 ```go
 type TxCreate2TransferBody struct {
     ToPublicKey models.PublicKey
+    ToStateID   *uint32
 }
 ```
 
@@ -169,33 +169,42 @@ type TxMassMigrationBody struct {
 }
 ```
 
-### Stored Transaction Receipt
-- Stores transactions details known only after it is mined
+### Batched Transaction
+
+- Stores transactions which have been added to a batch and submitted to the chain
 
 Key: tx hash `common.Hash`
 
-Value: `stored.TxReceipt`
+Value: `stored.BatchedTx`
 
 ```go
-type TxReceipt struct {
-    Hash         common.Hash
-    CommitmentID *models.CommitmentID
-    ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
-    ErrorMessage *string
+type BatchedTx struct {
+	PendingTx
+	CommitmentID *models.CommitmentID
+	ToStateID *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
+}
+```
+
+### Failed Transaction
+
+- Stores transactions which the rollup loop attempted to add to a batch, but failed
+
+Key: tx hash `common.Hash`
+
+Value: `stored.FailedTx`
+
+```go
+type FailedTx struct {
+	PendingTx
+
+	ErrorMessage *string
 }
 ```
 
 #### Index on `CommitmentID`
 Key: commitment ID `models.CommitmentID`
 
-Prefix: `_bhIndex:TxReceipt:CommitmentID:`
-
-Value: list of tx hashes `bh.KeyList`
-
-#### Index on `ToStateID`
-Key: to state ID `uint32`
-
-Prefix: `_bhIndex:TxReceipt:ToStateID:`
+Prefix: `_bhIndex:BatchedTx:CommitmentID:`
 
 Value: list of tx hashes `bh.KeyList`
 

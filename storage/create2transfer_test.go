@@ -82,10 +82,10 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = create2Transfer
 		txs[i].Hash = utils.RandomHash()
+		txs[i].ToStateID = ref.Uint32(uint32(i))
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 
-		txs[i].ToStateID = ref.Uint32(uint32(i))
 		txs[i].CommitmentID = commitmentID
 	}
 
@@ -157,6 +157,7 @@ func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
 	err = s.storage.BatchAddCreate2Transfer(create2transfers)
 	s.NoError(err)
 
+	// TODO: merge all these tests into one big test!
 	res, err := s.storage.GetPendingCreate2Transfers()
 	s.NoError(err)
 

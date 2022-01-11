@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -22,11 +21,7 @@ type TransactionStorage struct {
 type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
-	err := initializeIndex(database, stored.TxReceiptName, "ToStateID", uint32(0))
-	if err != nil {
-		return nil, err
-	}
-	err = initializeIndex(database, stored.TxReceiptName, "CommitmentID", models.CommitmentID{
+	err := initializeIndex(database, stored.BatchedTxName, "CommitmentID", models.CommitmentID{
 		BatchID:      models.MakeUint256(0),
 		IndexInBatch: 0,
 	})
@@ -57,6 +52,9 @@ func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStor
 	})
 }
 
+// Be careful. For these operations to be correctly spread across multiple transactions:
+// (1) they must popagate up any badger errors they encounter (wrapping is okay)
+// (2) they must be idempotent, because they might be retried.
 func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperation) (txCount uint, err error) {
 	txController, txStorage := s.beginTransaction(TxOptions{})
 	defer txController.Rollback(&err)
@@ -85,72 +83,60 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 	return txCount, txController.Commit()
 }
 
-func (s *TransactionStorage) addStoredTxReceipt(txReceipt *stored.TxReceipt) error {
-	return s.database.Badger.Insert(txReceipt.Hash, *txReceipt)
-}
-
-func (s *TransactionStorage) getStoredTxWithReceipt(hash common.Hash) (storedTx *stored.Tx, txReceipt *stored.TxReceipt, err error) {
-	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		storedTx, err = txStorage.getStoredTx(hash)
-		if err != nil {
-			return err
-		}
-
-		txReceipt, err = txStorage.getStoredTxReceipt(hash)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	return storedTx, txReceipt, nil
-}
-
-func (s *TransactionStorage) addStoredTx(tx *stored.Tx) error {
-	return s.database.Badger.Insert(tx.Hash, *tx)
-}
-
-func (s *TransactionStorage) updateStoredTx(tx *stored.Tx) error {
-	return s.database.Badger.Update(tx.Hash, *tx)
-}
-
-func (s *TransactionStorage) getStoredTx(hash common.Hash) (*stored.Tx, error) {
-	var storedTx stored.Tx
-	err := s.database.Badger.Get(hash, &storedTx)
-	if err == bh.ErrNotFound {
-		return nil, errors.WithStack(NewNotFoundError("transaction"))
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &storedTx, nil
-}
-
-func (s *TransactionStorage) getStoredTxReceipt(hash common.Hash) (*stored.TxReceipt, error) {
-	var storedTxReceipt stored.TxReceipt
-	err := s.database.Badger.Get(hash, &storedTxReceipt)
-	if err == bh.ErrNotFound {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &storedTxReceipt, nil
-}
-
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
-	dataType := stored.TxReceipt{}
 	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
 		for i := range txHashes {
-			err := txStorage.database.Badger.Delete(txHashes[i], dataType)
+			var pendingTx stored.PendingTx
+
+			var batchedTx stored.BatchedTx
+			err := txStorage.getAndDelete(txHashes[i], &batchedTx)
+			if err == nil {
+				pendingTx = batchedTx.PendingTx
+			} else {
+				var failedTx stored.FailedTx
+				err = txStorage.getAndDelete(txHashes[i], &failedTx)
+				if err != nil {
+					return err
+				}
+				pendingTx = failedTx.PendingTx
+			}
+
+			// TODO: this throws away the existing commitment / error
+			//       to prevent potentially useful information from being
+			//       destroyed we might want to log at least the error
+
+			err = txStorage.database.Badger.Insert(txHashes[i], pendingTx)
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
+	return s.executeInTransaction(TxOptions{ReadOnly: false}, func(txStorage *TransactionStorage) error {
+		var pendingTx stored.PendingTx
+		err := txStorage.getAndDelete(txError.TxHash, &pendingTx)
+		if err != nil {
+			return err
+		}
+
+		failedTx := stored.NewFailedTxFromError(&pendingTx, &txError.ErrorMessage)
+		return txStorage.database.Badger.Insert(txError.TxHash, *failedTx)
+	})
+}
+
+func (s *TransactionStorage) getAndDelete(key, result interface{}) error {
+	// TODO: wrap these errors so it's easier to debug them,
+	//       currently there's no way to know where the returned
+	//       error came from
+	err := s.database.Badger.Get(key, result)
+	if err != nil {
+		return err
+	}
+
+	return s.database.Badger.Delete(key, result)
 }
 
 func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) error {
@@ -163,10 +149,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 	for i := range txErrors {
 		txError := txErrors[i]
 		operations[i] = func(txStorage *TransactionStorage) error {
-			return txStorage.addStoredTxReceipt(&stored.TxReceipt{
-				Hash:         txError.TxHash,
-				ErrorMessage: &txError.ErrorMessage,
-			})
+			return txStorage.SetTransactionError(txError)
 		}
 	}
 
@@ -189,31 +172,15 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 		if err != nil {
 			return err
 		}
-		seekPrefix := db.IndexKeyPrefix(stored.TxReceiptName, "CommitmentID")
-		err = txStorage.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-			var commitmentID models.CommitmentID
-			err = db.Decode(keyValue(seekPrefix, item.Key()), &commitmentID)
-			if err != nil {
-				return false, err
-			}
-			if commitmentID.BatchID.Cmp(&latestBatch.ID) > 0 {
-				return false, nil
-			}
 
-			var keyList bh.KeyList
-			err = item.Value(func(val []byte) error {
-				return db.Decode(val, &keyList)
-			})
-			if err != nil {
-				return false, err
-			}
-			count += len(keyList)
-			return false, nil
-		})
-		if err != nil && err != db.ErrIteratorFinished {
-			return err
+		bhcount, err := txStorage.database.Badger.Count(
+			&stored.BatchedTx{},
+			bh.Where("CommitmentID.BatchID").Le(latestBatch.ID),
+		)
+		if err == nil {
+			count = int(bhcount)
 		}
-		return nil
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -222,54 +189,79 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
-	batchPrefixes := batchIdsToBatchPrefixes(batchIDs)
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
-	var keyList bh.KeyList
-	seekPrefix := db.IndexKeyPrefix(stored.TxReceiptName, "CommitmentID")
-	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-		if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
-			err := item.Value(func(val []byte) error {
-				return db.Decode(val, &keyList)
-			})
-			if err != nil {
-				return false, err
-			}
-			txHashes, err := decodeKeyListHashes(stored.TxReceiptPrefix, keyList)
-			if err != nil {
-				return false, err
-			}
-			hashes = append(hashes, txHashes...)
-		}
-		return false, nil
-	})
-	if err != nil && err != db.ErrIteratorFinished {
+	var batchedTxs []stored.BatchedTx
+	err := s.database.Badger.Find(&batchedTxs, bh.Where("CommitmentID.BatchID").In(bh.Slice(batchIDs)...))
+	if err != nil {
 		return nil, err
+	}
+
+	for i := range batchedTxs {
+		hashes = append(hashes, batchedTxs[i].Hash)
 	}
 	if len(hashes) == 0 {
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
-	return hashes, nil
+	return hashes, err
 }
 
-func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
-	switch txType {
-	case txtype.Transfer:
-		return s.GetPendingTransfers()
-	case txtype.Create2Transfer:
-		return s.GetPendingCreate2Transfers()
-	case txtype.MassMigration:
-		return s.GetPendingMassMigrations()
+func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (txs models.GenericTransactionArray, err error) {
+	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+		txs, err = txStorage.unsafeGetPendingTransactions(txType)
+		return err
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+	return txs, nil
 }
 
-func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
+func (s *TransactionStorage) unsafeGetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
+	var pendingTxs []stored.PendingTx
+
+	err := s.database.Badger.Find(&pendingTxs, bh.Where("TxType").Eq(txType))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: the tests never exercise the case where there are multiple pending txns
+	//       of different types
+
+	txs := make([]models.GenericTransaction, len(pendingTxs))
+	for i := range pendingTxs {
+		txs[i] = pendingTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(txs...), nil
+}
+
+func (s *TransactionStorage) MarkTransactionsAsIncluded(
+	txs models.GenericTransactionArray,
+	commitmentID *models.CommitmentID,
+) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := 0; i < txs.Len(); i++ {
-			txReceipt := stored.NewTxReceipt(txs.At(i))
-			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(txReceipt)
+			tx := txs.At(i)
+
+			// note: the rest of the txn is ignored. We take the existing txn
+			//       in our database and record which commitment it belongs
+			//       to. We assume that the executed transaction does not
+			//       differ from our local records.
+			hash := tx.GetBase().Hash
+
+			var pendingTx stored.PendingTx
+			err := txStorage.getAndDelete(hash, &pendingTx)
+			if err != nil {
+				return err
+			}
+
+			// this body update is only needed for ToStateID
+			pendingTx.Body = stored.NewTxBody(tx)
+			batchedTx := stored.NewBatchedTxFromPendingAndCommitment(
+				&pendingTx, commitmentID,
+			)
+			err = txStorage.database.Badger.Insert(hash, *batchedTx)
 			if err != nil {
 				return err
 			}
@@ -278,53 +270,52 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransa
 	})
 }
 
-func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *stored.Tx) (bool, error) {
-	var hash common.Hash
-	err := db.DecodeKey(item.Key(), &hash, stored.TxPrefix)
+func (s *TransactionStorage) getFailedTxByHash(hash common.Hash) (*stored.FailedTx, error) {
+	var failedTx stored.FailedTx
+	err := s.database.Badger.Get(hash, &failedTx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	txReceipt, err := s.getStoredTxReceipt(hash)
+
+	return &failedTx, nil
+}
+
+func (s *TransactionStorage) getBatchedTxByHash(hash common.Hash) (*stored.BatchedTx, error) {
+	var batchedTx stored.BatchedTx
+	err := s.database.Badger.Get(hash, &batchedTx)
 	if err != nil {
-		return false, err
-	}
-	if txReceipt != nil {
-		return true, nil
+		return nil, err
 	}
 
-	return false, item.Value(storedTx.SetBytes)
+	return &batchedTx, nil
 }
 
-func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
-	var hash common.Hash
-	hashes := make([]common.Hash, 0, len(keyList))
-	for i := range keyList {
-		err := stored.DecodeHash(keyList[i][len(keyPrefix):], &hash)
-		if err != nil {
-			return nil, err
-		}
-		hashes = append(hashes, hash)
+func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.GenericTransaction, error) {
+	batchedTx, err := s.getBatchedTxByHash(hash)
+	if err == nil {
+		return batchedTx.ToGenericTransaction(), nil
 	}
-	return hashes, nil
-}
 
-func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
-	batchPrefixes := make([][]byte, 0, len(batchIDs))
-	for i := range batchIDs {
-		batchPrefixes = append(batchPrefixes, batchIDs[i].Bytes())
+	if err != nil && !errors.Is(err, bh.ErrNotFound) {
+		return nil, err
 	}
-	return batchPrefixes
-}
 
-func keyValue(prefix, key []byte) []byte {
-	return key[len(prefix):]
-}
-
-func validForPrefixes(s []byte, prefixes [][]byte) bool {
-	for i := range prefixes {
-		if bytes.HasPrefix(s, prefixes[i]) {
-			return true
-		}
+	var pendingTx stored.PendingTx
+	err = s.database.Badger.Get(hash, &pendingTx)
+	if err == nil {
+		return pendingTx.ToGenericTransaction(), nil
 	}
-	return false
+	if err != nil && !errors.Is(err, bh.ErrNotFound) {
+		return nil, err
+	}
+
+	var failedTx stored.FailedTx
+	err = s.database.Badger.Get(hash, &failedTx)
+	if err == bh.ErrNotFound {
+		return nil, errors.WithStack(NewNotFoundError("transaction"))
+	}
+	if err != nil {
+		return nil, err
+	}
+	return failedTx.ToGenericTransaction(), nil
 }
