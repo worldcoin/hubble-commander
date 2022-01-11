@@ -40,23 +40,6 @@ type TransactionWithBatchDetails struct {
 	BatchTime   *Timestamp
 }
 
-func FindOldestTransactionTime(array GenericTransactionArray) *Timestamp {
-	var oldestTime *Timestamp
-
-	for i := 0; i < array.Len(); i++ {
-		txnTime := array.At(i).GetBase().ReceiveTime
-		if txnTime == nil {
-			continue
-		}
-
-		if (oldestTime == nil) || txnTime.Before(*oldestTime) {
-			oldestTime = txnTime
-		}
-	}
-
-	return oldestTime
-}
-
 func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {
 	switch txType {
 	case txtype.Transfer:

@@ -154,7 +154,7 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 }
 
 func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray) {
-	oldestTxnTime := models.FindOldestTransactionTime(pendingTxs)
+	oldestTxnTime := findOldestTransactionTime(pendingTxs)
 	if oldestTxnTime == nil {
 		return
 	}
