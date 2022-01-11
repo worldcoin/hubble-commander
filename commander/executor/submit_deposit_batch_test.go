@@ -88,9 +88,6 @@ func (s *SubmitDepositBatchTestSuite) TestSubmitDepositBatch_TwoBatches() {
 }
 
 func (s *SubmitDepositBatchTestSuite) prepareDeposits() {
-	_, err := s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
-	s.NoError(err)
-
 	s.approveTokens()
 	s.queueFourDeposits()
 	s.addGenesisBatch()
