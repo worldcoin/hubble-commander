@@ -39,6 +39,12 @@ func (s *RegisterTokenTestSuite) TestRegisterTokenAndWait_ReturnsCorrectToken() 
 	s.Equal(tokenID, models.NewUint256(1))
 }
 
+func (s *RegisterTokenTestSuite) TestGetRegisteredToken_ReturnsCorrectToken() {
+	registeredToken, err := s.client.GetRegisteredToken(models.NewUint256(0))
+	s.NoError(err)
+	s.Equal(registeredToken.Contract, s.client.ExampleTokenAddress)
+}
+
 func (s *RegisterTokenTestSuite) deployToken() common.Address {
 	tokenAddress, tokenTx, _, err := customtoken.DeployTestCustomToken(
 		s.client.GetAccount(),
