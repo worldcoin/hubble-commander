@@ -203,7 +203,7 @@ Value: list of tx hashes `bh.KeyList`
 
 ### Pending Deposit
 
-- Holds individual pending deposits until they are moved into **Pending Deposit SubTrees**. Individual deposits correspond to `DepositQueued` events emitted by the SCs.  
+- Holds individual pending deposits until they are moved into **Pending Deposit Subtrees**. Individual deposits correspond to `DepositQueued` events emitted by the SCs.  
 
 Key: <subtreeID, depositIndex> `models.DepositID`
 
@@ -225,16 +225,16 @@ type PendingDeposit struct {
 }
 ```
 
-### Pending Deposit SubTree
+### Pending Deposit Subtree
 
-- FIFO queue for ready Deposit SubTrees that can be submitted in a new Batch
+- FIFO queue for ready Deposit Subtrees that can be submitted in a new Batch
 
-Key: SubTreeID `models.Uint256`
+Key: SubtreeID `models.Uint256`
 
-Value: `models.PendingDepositSubTree`
+Value: `models.PendingDepositSubtree`
 
 ```go
-type PendingDepositSubTree struct {
+type PendingDepositSubtree struct {
     ID       models.Uint256          // assigned in SC
     Root     common.Hash             // subtree root that will be inserted into the state tree
     Deposits []models.PendingDeposit // deposits included in the subtree
@@ -282,14 +282,14 @@ type TxCommitmentBody struct {
 ```
 
 #### Deposit Commitment
-- When Deposit batch is created data is moved from **Pending Deposit SubTree** to **Stored Commitment**
+- When Deposit batch is created data is moved from **Pending Deposit Subtree** to **Stored Commitment**
 
 Body: `stored.DepositCommitmentBody`
 
 ```go
 type DepositCommitmentBody struct {
-    SubTreeID   Uint256
-    SubTreeRoot common.Hash
+    SubtreeID   Uint256
+    SubtreeRoot common.Hash
     Deposits    []models.PendingDeposit
 }
 ```

@@ -8,13 +8,13 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (s *DepositStorage) AddPendingDepositSubTree(subTree *models.PendingDepositSubTree) error {
-	return s.database.Badger.Upsert(subTree.ID, *subTree)
+func (s *DepositStorage) AddPendingDepositSubtree(subtree *models.PendingDepositSubtree) error {
+	return s.database.Badger.Upsert(subtree.ID, *subtree)
 }
 
-func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*models.PendingDepositSubTree, error) {
-	var subTree models.PendingDepositSubTree
-	err := s.database.Badger.Get(subTreeID, &subTree)
+func (s *DepositStorage) GetPendingDepositSubtree(subtreeID models.Uint256) (*models.PendingDepositSubtree, error) {
+	var subtree models.PendingDepositSubtree
+	err := s.database.Badger.Get(subtreeID, &subtree)
 	if err == bh.ErrNotFound {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
@@ -22,14 +22,14 @@ func (s *DepositStorage) GetPendingDepositSubTree(subTreeID models.Uint256) (*mo
 		return nil, err
 	}
 
-	subTree.ID = subTreeID
+	subtree.ID = subtreeID
 
-	return &subTree, nil
+	return &subtree, nil
 }
 
-func (s *DepositStorage) GetFirstPendingDepositSubTree() (subTree *models.PendingDepositSubTree, err error) {
-	err = s.database.Badger.Iterator(models.PendingDepositSubTreePrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
-		subTree, err = decodePendingDepositSubTree(item)
+func (s *DepositStorage) GetFirstPendingDepositSubtree() (subtree *models.PendingDepositSubtree, err error) {
+	err = s.database.Badger.Iterator(models.PendingDepositSubtreePrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+		subtree, err = decodePendingDepositSubtree(item)
 		if err != nil {
 			return false, err
 		}
@@ -38,13 +38,13 @@ func (s *DepositStorage) GetFirstPendingDepositSubTree() (subTree *models.Pendin
 	if err == db.ErrIteratorFinished {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
-	return subTree, err
+	return subtree, err
 }
 
-func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint256) error {
+func (s *DepositStorage) DeletePendingDepositSubtrees(subtreeIDs ...models.Uint256) error {
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		for i := range subTreeIDs {
-			err := txDatabase.Badger.Delete(subTreeIDs[i], models.PendingDepositSubTree{})
+		for i := range subtreeIDs {
+			err := txDatabase.Badger.Delete(subtreeIDs[i], models.PendingDepositSubtree{})
 			if err == bh.ErrNotFound {
 				return errors.WithStack(NewNotFoundError("deposit sub tree"))
 			}
@@ -56,16 +56,16 @@ func (s *DepositStorage) DeletePendingDepositSubTrees(subTreeIDs ...models.Uint2
 	})
 }
 
-func decodePendingDepositSubTree(item *bdg.Item) (*models.PendingDepositSubTree, error) {
-	var subTree models.PendingDepositSubTree
-	err := item.Value(subTree.SetBytes)
+func decodePendingDepositSubtree(item *bdg.Item) (*models.PendingDepositSubtree, error) {
+	var subtree models.PendingDepositSubtree
+	err := item.Value(subtree.SetBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.DecodeKey(item.Key(), &subTree.ID, models.PendingDepositSubTreePrefix)
+	err = db.DecodeKey(item.Key(), &subtree.ID, models.PendingDepositSubtreePrefix)
 	if err != nil {
 		return nil, err
 	}
-	return &subTree, nil
+	return &subtree, nil
 }

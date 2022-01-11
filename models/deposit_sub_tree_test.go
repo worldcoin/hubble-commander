@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPendingDepositSubTree_SetBytes_InvalidBytesLength(t *testing.T) {
-	subTree := PendingDepositSubTree{}
-	err := subTree.SetBytes([]byte{1, 2, 3})
+func TestPendingDepositSubtree_SetBytes_InvalidBytesLength(t *testing.T) {
+	subtree := PendingDepositSubtree{}
+	err := subtree.SetBytes([]byte{1, 2, 3})
 	require.ErrorIs(t, err, ErrInvalidLength)
 }
 
-func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
-	initialSubTree := PendingDepositSubTree{
+func TestPendingDepositSubtree_SetBytes_UpdatesDeposits(t *testing.T) {
+	initialSubtree := PendingDepositSubtree{
 		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
 		Deposits: []PendingDeposit{
@@ -30,18 +30,18 @@ func TestPendingDepositSubTree_SetBytes_UpdatesDeposits(t *testing.T) {
 		},
 	}
 
-	newSubTree := PendingDepositSubTree{
+	newSubtree := PendingDepositSubtree{
 		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
 	}
 
-	err := initialSubTree.SetBytes(newSubTree.Bytes())
+	err := initialSubtree.SetBytes(newSubtree.Bytes())
 	require.NoError(t, err)
-	require.Equal(t, newSubTree, initialSubTree)
+	require.Equal(t, newSubtree, initialSubtree)
 }
 
-func TestPendingDepositSubTree_Bytes(t *testing.T) {
-	subTree := PendingDepositSubTree{
+func TestPendingDepositSubtree_Bytes(t *testing.T) {
+	subtree := PendingDepositSubtree{
 		Root: utils.RandomHash(),
 		Deposits: []PendingDeposit{
 			{
@@ -65,9 +65,9 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 		},
 	}
 
-	bytes := subTree.Bytes()
+	bytes := subtree.Bytes()
 
-	decodedSubTree := PendingDepositSubTree{
+	decodedSubtree := PendingDepositSubtree{
 		ID:   MakeUint256(1),
 		Root: utils.RandomHash(),
 		Deposits: []PendingDeposit{
@@ -82,10 +82,10 @@ func TestPendingDepositSubTree_Bytes(t *testing.T) {
 			},
 		},
 	}
-	err := decodedSubTree.SetBytes(bytes)
+	err := decodedSubtree.SetBytes(bytes)
 	require.NoError(t, err)
 
-	require.Equal(t, MakeUint256(1), decodedSubTree.ID)
-	decodedSubTree.ID = subTree.ID
-	require.Equal(t, subTree, decodedSubTree)
+	require.Equal(t, MakeUint256(1), decodedSubtree.ID)
+	decodedSubtree.ID = subtree.ID
+	require.Equal(t, subtree, decodedSubtree)
 }

@@ -63,15 +63,15 @@ func (c *TxCommitmentBody) BytesLen() int {
 }
 
 type DepositCommitmentBody struct {
-	SubTreeID   models.Uint256
-	SubTreeRoot common.Hash
+	SubtreeID   models.Uint256
+	SubtreeRoot common.Hash
 	Deposits    []models.PendingDeposit
 }
 
 func (c *DepositCommitmentBody) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
-	copy(b[0:32], c.SubTreeID.Bytes())
-	copy(b[32:64], c.SubTreeRoot.Bytes())
+	copy(b[0:32], c.SubtreeID.Bytes())
+	copy(b[32:64], c.SubtreeRoot.Bytes())
 
 	startIndex := depositCommitmentBodyBaseLength
 	for i := range c.Deposits {
@@ -102,8 +102,8 @@ func (c *DepositCommitmentBody) SetBytes(data []byte) error {
 		startIndex = endIndex
 	}
 
-	c.SubTreeID.SetBytes(data[0:32])
-	c.SubTreeRoot.SetBytes(data[32:64])
+	c.SubtreeID.SetBytes(data[0:32])
+	c.SubtreeRoot.SetBytes(data[32:64])
 	return nil
 }
 

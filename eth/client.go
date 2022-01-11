@@ -52,7 +52,7 @@ type Client struct {
 	SpokeRegistry          *SpokeRegistry
 	DepositManager         *DepositManager
 	blocksToFinalise       *int64
-	maxDepositSubTreeDepth *uint8
+	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
 
 	*AccountManager

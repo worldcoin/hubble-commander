@@ -30,7 +30,7 @@ func (c *DepositsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
 }
 
 func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
-	depositSubtree, err := c.storage.GetFirstPendingDepositSubTree()
+	depositSubtree, err := c.storage.GetFirstPendingDepositSubtree()
 	if st.IsNotFoundError(err) {
 		return nil, errors.WithStack(ErrNotEnoughDeposits)
 	}
@@ -51,7 +51,7 @@ func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.Subt
 	return vacancyProof, nil
 }
 
-func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositSubTree) (*models.SubtreeVacancyProof, error) {
+func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositSubtree) (*models.SubtreeVacancyProof, error) {
 	startStateID, vacancyProof, err := c.getDepositSubtreeVacancyProof()
 	if err != nil {
 		return nil, err
@@ -62,14 +62,14 @@ func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositS
 		return nil, err
 	}
 
-	err = c.storage.DeletePendingDepositSubTrees(depositSubtree.ID)
+	err = c.storage.DeletePendingDepositSubtrees(depositSubtree.ID)
 	if err != nil {
 		return nil, err
 	}
 	return vacancyProof, nil
 }
 
-func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubTree) error {
+func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *models.PendingDepositSubtree) error {
 	commitment, err := c.newCommitment(batchID, depositSubtree)
 	if err != nil {
 		return errors.WithStack(err)
@@ -78,7 +78,7 @@ func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *
 }
 
 func (c *DepositsContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {
-	subtreeDepth, err := c.client.GetMaxSubTreeDepthParam()
+	subtreeDepth, err := c.client.GetMaxSubtreeDepthParam()
 	if err != nil {
 		return nil, nil, err
 	}

@@ -8,8 +8,8 @@ import (
 
 type DepositCommitment struct {
 	CommitmentBase
-	SubTreeID   Uint256
-	SubTreeRoot common.Hash
+	SubtreeID   Uint256
+	SubtreeRoot common.Hash
 	Deposits    []PendingDeposit
 }
 

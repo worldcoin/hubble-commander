@@ -66,24 +66,24 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	err = s.cmd.syncDeposits(0, *latestBlockNumber)
 	s.NoError(err)
 
-	subTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(1))
+	subtree, err := s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(1))
 	s.NoError(err)
 
-	_, err = s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(2))
+	_, err = s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(2))
 	s.True(st.IsNotFoundError(err))
 
-	s.Equal(deposits, subTree.Deposits)
+	s.Equal(deposits, subtree.Deposits)
 
 	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
 	s.ErrorIs(err, st.ErrRanOutOfPendingDeposits)
 }
 
-func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {
+func (s *DepositsTestSuite) TestSyncDeposits_TwoSubtrees() {
 	s.registerToken()
 	s.approveTokens()
 
-	firstSubTreeDeposits := s.queueFourDeposits()
-	secondSubTreeDeposits := s.queueFourDeposits()
+	firstSubtreeDeposits := s.queueFourDeposits()
+	secondSubtreeDeposits := s.queueFourDeposits()
 	s.queueDeposit()
 	s.queueDeposit()
 
@@ -93,17 +93,17 @@ func (s *DepositsTestSuite) TestSyncDeposits_TwoSubTrees() {
 	err = s.cmd.syncDeposits(0, *latestBlockNumber)
 	s.NoError(err)
 
-	firstSubTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(1))
+	firstSubtree, err := s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(1))
 	s.NoError(err)
 
-	secondSubTree, err := s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(2))
+	secondSubtree, err := s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(2))
 	s.NoError(err)
 
-	_, err = s.cmd.storage.GetPendingDepositSubTree(models.MakeUint256(3))
+	_, err = s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(3))
 	s.True(st.IsNotFoundError(err))
 
-	s.Equal(firstSubTreeDeposits, firstSubTree.Deposits)
-	s.Equal(secondSubTreeDeposits, secondSubTree.Deposits)
+	s.Equal(firstSubtreeDeposits, firstSubtree.Deposits)
+	s.Equal(secondSubtreeDeposits, secondSubtree.Deposits)
 
 	_, err = s.cmd.storage.GetFirstPendingDeposits(4)
 	s.ErrorIs(err, st.ErrRanOutOfPendingDeposits)
@@ -126,23 +126,23 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 	s.Equal(*deposit, syncedDeposits[0])
 }
 
-func (s *DepositsTestSuite) TestFetchDepositSubTrees() {
+func (s *DepositsTestSuite) TestFetchDepositSubtrees() {
 	s.registerToken()
 	s.approveTokens()
 
-	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubTreeDepth)
+	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubtreeDepth)
 	s.queueFourDeposits()
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	depositSubTrees, err := s.cmd.fetchDepositSubTrees(0, *latestBlockNumber)
+	depositSubtrees, err := s.cmd.fetchDepositSubtrees(0, *latestBlockNumber)
 	s.NoError(err)
 
-	s.Len(depositSubTrees, 1)
-	s.Equal(depositSubTrees[0].ID, models.MakeUint256(1))
-	s.NotEqual(depositSubTrees[0].Root, common.Hash{})
-	s.Nil(depositSubTrees[0].Deposits)
+	s.Len(depositSubtrees, 1)
+	s.Equal(depositSubtrees[0].ID, models.MakeUint256(1))
+	s.NotEqual(depositSubtrees[0].Root, common.Hash{})
+	s.Nil(depositSubtrees[0].Deposits)
 }
 
 func (s *DepositsTestSuite) registerToken() {

@@ -38,7 +38,7 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	approveToken(t, ethClient, tokenAddress)
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
-	subtreeDepth, err := ethClient.GetMaxSubTreeDepthParam()
+	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()
 	require.NoError(t, err)
 	depositCount := 1 << *subtreeDepth
 	txs := make([]types.Transaction, 0, depositCount)

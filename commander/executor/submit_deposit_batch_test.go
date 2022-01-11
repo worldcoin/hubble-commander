@@ -22,13 +22,13 @@ type SubmitDepositBatchTestSuite struct {
 	storage        *st.TestStorage
 	client         *eth.TestClient
 	depositsCtx    *DepositsContext
-	depositSubtree models.PendingDepositSubTree
+	depositSubtree models.PendingDepositSubtree
 }
 
 func (s *SubmitDepositBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
-	s.depositSubtree = models.PendingDepositSubTree{
+	s.depositSubtree = models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
@@ -133,7 +133,7 @@ func (s *SubmitDepositBatchTestSuite) queueDeposit() {
 }
 
 func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	pendingBatch, err := s.depositsCtx.NewPendingBatch(batchtype.Deposit)
