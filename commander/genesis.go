@@ -14,7 +14,8 @@ import (
 
 var ErrGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
 
-func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.PopulatedGenesisAccount {
+func AssignStateIDsAndCalculateTotalAmount(accounts []models.RegisteredGenesisAccount) (*models.Uint256, []models.PopulatedGenesisAccount) {
+	totalGenesisAmount := models.NewUint256(0)
 	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
 	for i := range accounts {
 		account := accounts[i]
@@ -26,9 +27,10 @@ func AssignStateIDs(accounts []models.RegisteredGenesisAccount) []models.Populat
 				StateID:   uint32(i),
 				Balance:   account.Balance,
 			})
+			totalGenesisAmount = totalGenesisAmount.Add(&account.Balance)
 		}
 	}
-	return populatedAccounts
+	return totalGenesisAmount, populatedAccounts
 }
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {

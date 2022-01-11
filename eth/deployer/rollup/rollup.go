@@ -20,6 +20,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -48,6 +49,7 @@ type Params struct {
 	BlocksToFinalise       *models.Uint256
 	MinGasLeft             *models.Uint256
 	MaxTxsPerCommit        *models.Uint256
+	TotalGenesisAmount     *models.Uint256
 }
 
 type Dependencies struct {
@@ -242,7 +244,12 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	log.Println("Deploying TestCustomToken")
-	exampleTokenAddress, exampleTokenTx, _, err := customtoken.DeployTestCustomToken(c.GetAccount(), c.GetBackend(), "ExampleToken", "EXP")
+	exampleTokenAddress, exampleTokenTx, exampleToken, err := customtoken.DeployTestCustomToken(
+		c.GetAccount(),
+		c.GetBackend(),
+		"ExampleToken",
+		"EXP",
+	)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -253,13 +260,32 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	// Stage 7
+	stageSevenTxs := make([]types.Transaction, 0, 3)
+
 	log.Println("Registering WithdrawManager as a spoke in SpokeRegistry")
 	spokeRegistrationTx, err := spokeRegistry.RegisterSpoke(c.GetAccount(), withdrawManagerAddress)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	stageSevenTxs = append(stageSevenTxs, *spokeRegistrationTx)
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *spokeRegistrationTx)
+	registerTokenTx, err := tokenRegistry.RegisterToken(c.GetAccount(), exampleTokenAddress)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	stageSevenTxs = append(stageSevenTxs, *registerTokenTx)
+
+	if cfg.TotalGenesisAmount != nil {
+		log.Println("Transferring genesis funds to vault")
+		var transferGenesisFundsTx *types.Transaction
+		transferGenesisFundsTx, err = transferGenesisFunds(c, exampleToken, vaultAddress, cfg.TotalGenesisAmount)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		stageSevenTxs = append(stageSevenTxs, *transferGenesisFundsTx)
+	}
+
+	_, err = chain.WaitForMultipleTxs(c.GetBackend(), stageSevenTxs...)
 	if err != nil {
 		return nil, err
 	}
@@ -390,4 +416,13 @@ func withReplacedCostEstimatorAddress(newCostEstimator common.Address, fn func()
 	}()
 
 	fn()
+}
+
+func transferGenesisFunds(
+	c chain.Connection,
+	tokenContract *customtoken.TestCustomToken,
+	recipient common.Address,
+	l2Amount *models.Uint256,
+) (*types.Transaction, error) {
+	return tokenContract.Transfer(c.GetAccount(), recipient, l2Amount.MulN(consts.L2Unit).ToBig())
 }

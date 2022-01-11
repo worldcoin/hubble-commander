@@ -79,7 +79,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	populatedAccounts := AssignStateIDs(registeredAccounts)
+	totalGenesisAmount, populatedAccounts := AssignStateIDsAndCalculateTotalAmount(registeredAccounts)
 
 	err = PopulateGenesisAccounts(storage, populatedAccounts)
 	if err != nil {
@@ -93,8 +93,9 @@ func deployContractsAndSetupGenesisState(
 
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
 		Params: rollup.Params{
-			GenesisStateRoot: stateRoot,
-			BlocksToFinalise: models.NewUint256(uint64(cfg.BlocksToFinalise)),
+			GenesisStateRoot:   stateRoot,
+			BlocksToFinalise:   models.NewUint256(uint64(cfg.BlocksToFinalise)),
+			TotalGenesisAmount: totalGenesisAmount,
 		},
 		Dependencies: rollup.Dependencies{
 			AccountRegistry: accountRegistryAddress,
