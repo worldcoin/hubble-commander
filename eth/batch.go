@@ -28,7 +28,7 @@ type DecodedBatchBase struct {
 }
 
 func NewDecodedBatchBase(
-	batch *models.Batch,
+	batch *models.BatchWithMeta,
 	transactionHash, accountRoot common.Hash,
 	submissionTime *models.Timestamp,
 ) *DecodedBatchBase {
@@ -40,6 +40,7 @@ func NewDecodedBatchBase(
 		FinalisationBlock: *batch.FinalisationBlock,
 		AccountTreeRoot:   accountRoot,
 		SubmissionTime:    *submissionTime,
+		Committer:         batch.Committer,
 	}
 }
 
@@ -53,7 +54,6 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 		AccountTreeRoot:   &b.AccountTreeRoot,
 		SubmissionTime:    &b.SubmissionTime,
 		PrevStateRoot:     &prevStateRoot,
-		Committer:         b.Committer,
 	}
 }
 

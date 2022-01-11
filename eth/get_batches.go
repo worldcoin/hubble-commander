@@ -254,9 +254,9 @@ func (c *Client) getDepositBatch(
 	}, nil
 }
 
-func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.Batch, error) {
+func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.BatchWithMeta, error) {
 	batchID := models.NewUint256FromBig(*batchEvent.BatchID)
-	batch, err := c.GetBatch(batchID)
+	batch, err := c.GetBatchWithMeta(batchID)
 	if err != nil && err.Error() == MsgInvalidBatchID {
 		return nil, errBatchAlreadyRolledBack
 	}

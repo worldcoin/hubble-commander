@@ -15,3 +15,8 @@ type Batch struct {
 	PrevStateRoot     *common.Hash
 	SubmissionTime    *Timestamp
 }
+
+type BatchWithMeta struct {
+	Batch
+	BatchMeta
+}
