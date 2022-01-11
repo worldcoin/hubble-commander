@@ -48,7 +48,8 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 			return nil, err
 		}
 
-		commitment := result.Commitment().(models.CommitmentWithTxs)
+		commitment := result.Commitment()
+		commitments = append(commitments, commitment)
 		err = c.Executor.GenerateMetaAndWithdrawRoots(commitment, result)
 		if err != nil {
 			return nil, err
@@ -77,7 +78,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
-	var commitment *models.TxCommitmentWithTxs
+	var commitment models.CommitmentWithTxs
 	var executeResult ExecuteTxsForCommitmentResult
 
 	duration, err := metrics.MeasureDuration(func() error {
@@ -117,7 +118,7 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 	}
 
 	metrics.SaveHistogramMeasurement(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
-		"type": metrics.BatchTypeToMetricsBatchType(commitment.Type),
+		"type": metrics.BatchTypeToMetricsBatchType(c.BatchType),
 	})
 
 	log.Printf(

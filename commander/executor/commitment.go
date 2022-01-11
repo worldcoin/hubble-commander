@@ -9,7 +9,7 @@ func (c *TxsContext) BuildCommitment(
 	executeResult ExecuteTxsForCommitmentResult,
 	commitmentID *models.CommitmentID,
 	feeReceiverStateID uint32,
-) (*models.TxCommitmentWithTxs, error) {
+) (models.CommitmentWithTxs, error) {
 	serializedTxs, err := c.Executor.SerializeTxs(executeResult)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,6 @@ func (c *TxsContext) BuildCommitment(
 
 	commitment, err := c.newCommitment(
 		commitmentID,
-		c.BatchType,
 		feeReceiverStateID,
 		serializedTxs,
 		combinedSignature,
