@@ -100,6 +100,10 @@ func (t TransferArray) ToMassMigrationArray() MassMigrationArray {
 
 type Create2TransferArray []Create2Transfer
 
+func MakeCreate2TransferArray(txns ...Create2Transfer) Create2TransferArray {
+	return txns
+}
+
 func (t Create2TransferArray) Len() int {
 	return len(t)
 }
@@ -141,6 +145,10 @@ func (t Create2TransferArray) ToMassMigrationArray() MassMigrationArray {
 }
 
 type MassMigrationArray []MassMigration
+
+func MakeMassMigrationArray(txns ...MassMigration) MassMigrationArray {
+	return txns
+}
 
 func (m MassMigrationArray) Len() int {
 	return len(m)

@@ -10,32 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *TransactionStorage) AddCreate2Transfer(t *models.Create2Transfer) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		if t.CommitmentID != nil || t.ErrorMessage != nil || t.ToStateID != nil {
-			err := txStorage.addStoredTxReceipt(stored.NewTxReceiptFromCreate2Transfer(t))
-			if err != nil {
-				return err
-			}
-		}
-		return txStorage.addStoredTx(stored.NewTxFromCreate2Transfer(t))
-	})
+func (s *TransactionStorage) AddCreate2Transfer(tx *models.Create2Transfer) error {
+	// TODO: This used to check for ToStateID, was that important?
+	return s.AddTransaction(tx)
 }
 
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
-	if len(txs) < 1 {
-		return errors.WithStack(ErrNoRowsAffected)
-	}
-
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txs {
-			err := txStorage.AddCreate2Transfer(&txs[i])
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.BatchAddTransaction(models.MakeCreate2TransferArray(txs...))
 }
 
 func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Create2Transfer, error) {
