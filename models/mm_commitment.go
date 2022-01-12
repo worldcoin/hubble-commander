@@ -14,12 +14,28 @@ type MMCommitment struct {
 	WithdrawRoot      common.Hash
 }
 
+func (c *MMCommitment) GetCommitmentBase() CommitmentBase {
+	return c.CommitmentBase
+}
+
 func (c *MMCommitment) GetBodyHash() common.Hash {
 	return *c.BodyHash
 }
 
 func (c *MMCommitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
+}
+
+func (c *MMCommitment) ToTxCommitment() *TxCommitment {
+	panic("cannot cast MMCommitment to TxCommitment")
+}
+
+func (c *MMCommitment) ToMMCommitment() *MMCommitment {
+	return c
+}
+
+func (c *MMCommitment) ToDepositCommitment() *DepositCommitment {
+	panic("cannot cast MMCommitment to DepositCommitment")
 }
 
 type MMCommitmentWithTxs struct {

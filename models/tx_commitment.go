@@ -16,12 +16,28 @@ type TxCommitment struct {
 	BodyHash          *common.Hash
 }
 
+func (c *TxCommitment) GetCommitmentBase() CommitmentBase {
+	return c.CommitmentBase
+}
+
 func (c *TxCommitment) GetBodyHash() common.Hash {
 	return *c.BodyHash
 }
 
 func (c *TxCommitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
+}
+
+func (c *TxCommitment) ToTxCommitment() *TxCommitment {
+	return c
+}
+
+func (c *TxCommitment) ToMMCommitment() *MMCommitment {
+	panic("cannot cast TxCommitment to MMCommitment")
+}
+
+func (c *TxCommitment) ToDepositCommitment() *DepositCommitment {
+	panic("cannot cast TxCommitment to DepositCommitment")
 }
 
 type TxCommitmentWithTxs struct {
@@ -42,7 +58,7 @@ func (c *TxCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
 }
 
 func (c *TxCommitmentWithTxs) ToMMCommitmentWithTxs() *MMCommitmentWithTxs {
-	panic("Cannot cast TxCommitmentWithTxs to MMCommitmentWithTxs")
+	panic("cannot cast TxCommitmentWithTxs to MMCommitmentWithTxs")
 }
 
 func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) *common.Hash {
