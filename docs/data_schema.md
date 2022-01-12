@@ -54,7 +54,7 @@ GetUserStateByID (duplicate of GetStateLeafByPath)
 GetUnusedPubKeyID
 - GetAccounts = O(n) - could be O(log(n))
 - for each PubKeyID use {token_index, pub_key_id} => {state_id} index
-GetTransfersByPublicKey + GetCreate2TransfersByPublicKey
+GetTransfersByPublicKey
 - GetAccounts = O(n) - could be O(log(n))
 - get stateIDs using index on pub_key_id (probably using Badger directly)
 
