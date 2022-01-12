@@ -73,15 +73,5 @@ func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.Commitmen
 }
 
 func (s *TransactionStorage) MarkMassMigrationsAsIncluded(txs []models.MassMigration, commitmentID *models.CommitmentID) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txs {
-			storedTxReceipt := stored.NewTxReceiptFromMassMigration(&txs[i])
-			storedTxReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(storedTxReceipt)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.MarkTransactionsAsIncluded(models.MakeMassMigrationArray(txs...), commitmentID)
 }
