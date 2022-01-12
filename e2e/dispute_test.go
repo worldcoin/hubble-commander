@@ -76,7 +76,7 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey(), 1)
+		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
 	})
 
 	requireBatchesCount(t, client, 1)
@@ -197,7 +197,7 @@ func sendTransferBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, 
 		},
 		Transactions: encodedTransfer,
 	}
-	submitTransfersBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, batchID)
+	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
 func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, batchID uint64) {
@@ -216,7 +216,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, 
 	sendTransferCommitment(t, ethClient, encodedTransfer, batchID)
 }
 
-func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {
+func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -244,7 +244,7 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		},
 		Transactions: encodedTransfer,
 	}
-	submitC2TBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, 1)
 }
 
 func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {
@@ -282,27 +282,25 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, batchI
 	postStateRoot := common.Hash{25, 2, 167, 141, 141, 223, 41, 53, 199, 36, 50, 52, 166, 110, 139, 144, 117, 71, 15, 68, 65, 127, 115, 174,
 		77, 40, 231, 185, 228, 186, 225, 136}
 
-	commitment := models.TxCommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
+	commitment := models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
 			},
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     tx.SpokeID,
+				TokenID:     models.MakeUint256(0),
+				Amount:      tx.Amount,
+				FeeReceiver: 0,
+			},
+			WithdrawRoot: calculateWithdrawRoot(t, tx.Amount, 1),
 		},
 		Transactions: encodedTx,
 	}
-	metas := []models.MassMigrationMeta{
-		{
-			SpokeID:     tx.SpokeID,
-			TokenID:     models.MakeUint256(0),
-			Amount:      tx.Amount,
-			FeeReceiver: 0,
-		},
-	}
 
-	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, 1)}
-	submitMMBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, metas, withdrawRoots, batchID)
+	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
 func sendMMBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, batchID uint64) {
@@ -343,10 +341,10 @@ func sendTransferCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer
 		},
 		Transactions: encodedTransfer,
 	}
-	submitTransfersBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, batchID)
+	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
-func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitmentWithTxs, batchID uint64) {
+func submitTransfersBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
 	transaction, err := ethClient.SubmitTransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
@@ -365,10 +363,10 @@ func sendC2TCommitment(t *testing.T, ethClient *eth.Client, encodedTransfer []by
 		Transactions: encodedTransfer,
 	}
 
-	submitC2TBatch(t, ethClient, []models.TxCommitmentWithTxs{commitment}, batchID)
+	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
-func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.TxCommitmentWithTxs, batchID uint64) {
+func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.CommitmentWithTxs, batchID uint64) {
 	transaction, err := ethClient.SubmitCreate2TransfersBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
@@ -376,40 +374,34 @@ func submitC2TBatch(t *testing.T, ethClient *eth.Client, commitments []models.Tx
 }
 
 func sendMMCommitment(t *testing.T, ethClient *eth.Client, encodedTxs []byte, withdrawRoot common.Hash, totalAmount, batchID uint64) {
-	commitment := models.TxCommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
+	commitment := models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: utils.RandomHash(),
 			},
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     1,
+				TokenID:     models.MakeUint256(0),
+				Amount:      models.MakeUint256(totalAmount),
+				FeeReceiver: 0,
+			},
+			WithdrawRoot: withdrawRoot,
 		},
 		Transactions: encodedTxs,
 	}
 
-	commitments := []models.TxCommitmentWithTxs{commitment}
-	metas := []models.MassMigrationMeta{
-		{
-			SpokeID:     1,
-			TokenID:     models.MakeUint256(0),
-			Amount:      models.MakeUint256(totalAmount),
-			FeeReceiver: 0,
-		},
-	}
-	withdrawRoots := []common.Hash{withdrawRoot}
-
-	submitMMBatch(t, ethClient, commitments, metas, withdrawRoots, batchID)
+	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
 func submitMMBatch(
 	t *testing.T,
 	ethClient *eth.Client,
-	commitments []models.TxCommitmentWithTxs,
-	metas []models.MassMigrationMeta,
-	roots []common.Hash,
+	commitments []models.CommitmentWithTxs,
 	batchID uint64,
 ) {
-	transaction, err := ethClient.SubmitMassMigrationsBatch(models.NewUint256(batchID), commitments, metas, roots)
+	transaction, err := ethClient.SubmitMassMigrationsBatch(models.NewUint256(batchID), commitments)
 	require.NoError(t, err)
 
 	waitForSubmittedBatch(t, ethClient, transaction, batchID)
