@@ -88,6 +88,10 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 			return nil, errors.WithStack(err)
 		}
 
+		if accounts[i].State.PubKeyID != *pubKeyID {
+			return nil, fmt.Errorf("different pubKeyID for account %s", accounts[i].PublicKey)
+		}
+
 		registeredAccounts = append(registeredAccounts, models.RegisteredGenesisAccount{
 			GenesisAccount: accounts[i],
 			PublicKey:      *accounts[i].PublicKey,

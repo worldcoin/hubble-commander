@@ -32,6 +32,7 @@ func decodeRawGenesisAccounts(rawGenesisAccounts []models.RawGenesisAccount) ([]
 			PublicKey:  nil,
 			PrivateKey: nil,
 			Balance:    models.MakeUint256(rawGenesisAccounts[i].Balance),
+			State:      rawGenesisAccounts[i].State.ToStateLeaf(),
 		}
 
 		if rawGenesisAccounts[i].PublicKey != "" {

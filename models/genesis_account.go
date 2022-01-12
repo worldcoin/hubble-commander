@@ -7,15 +7,37 @@ import (
 const populatedGenesisAccountByteSize = 168
 
 type RawGenesisAccount struct {
-	PublicKey  string `yaml:"publicKey"`
-	PrivateKey string `yaml:"privateKey"`
-	Balance    uint64 `yaml:"balance"`
+	PublicKey  string       `yaml:"publicKey"`
+	PrivateKey string       `yaml:"privateKey"`
+	Balance    uint64       `yaml:"balance"` //TODO-chan: remove later
+	State      GenesisState `yaml:"state"`
+}
+
+type GenesisState struct {
+	StateID  uint32 `yaml:"stateID"`
+	PubKeyID uint32 `yaml:"pubKeyID"`
+	TokenID  uint64 `yaml:"tokenID"`
+	Balance  uint64 `yaml:"balance"`
+	Nonce    uint64 `yaml:"nonce"`
+}
+
+func (s *GenesisState) ToStateLeaf() *StateLeaf {
+	return &StateLeaf{
+		StateID: s.StateID,
+		UserState: UserState{
+			PubKeyID: s.PubKeyID,
+			TokenID:  MakeUint256(s.TokenID),
+			Balance:  MakeUint256(s.Balance),
+			Nonce:    MakeUint256(s.Nonce),
+		},
+	}
 }
 
 type GenesisAccount struct {
 	PublicKey  *PublicKey
 	PrivateKey *[32]byte
 	Balance    Uint256
+	State      *StateLeaf
 }
 
 type RegisteredGenesisAccount struct {
