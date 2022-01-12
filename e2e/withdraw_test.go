@@ -61,16 +61,16 @@ func TestWithdrawProcess(t *testing.T) {
 	approveToken(t, ethClient, token.Contract)
 
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	depositsNeededForFullBatch := calculateDepositsCountForFullBatch(t, ethClient)
+	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
 
 	userStatesBeforeDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
-	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, transactor.From, depositsNeededForFullBatch)
+	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, transactor.From, fullDepositBatchCount)
 
 	userStatesAfterDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
 	newUserStates := userStatesDifference(userStatesAfterDeposit, userStatesBeforeDeposit)
-	require.Len(t, newUserStates, depositsNeededForFullBatch)
+	require.Len(t, newUserStates, fullDepositBatchCount)
 
 	targetMassMigrationHash := testSubmitWithdrawBatch(t, commander.Client(), senderWallet, newUserStates[0].StateID)
 

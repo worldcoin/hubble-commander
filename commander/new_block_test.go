@@ -100,7 +100,8 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
+		var userAccounts []models.AccountLeaf
+		userAccounts, err = s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
