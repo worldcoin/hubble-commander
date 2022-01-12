@@ -32,10 +32,8 @@ func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient, batch
 func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	ethClient := newEthClient(t, client)
 
-	_, tokenAddress := deployExampleToken(t, ethClient)
-	tokenID, err := ethClient.RegisterTokenAndWait(tokenAddress)
-	require.NoError(t, err)
-	approveToken(t, ethClient, tokenAddress)
+	registeredToken, _ := getDeployedToken(t, ethClient)
+	approveToken(t, ethClient, registeredToken.Contract)
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
 	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()
@@ -44,7 +42,7 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	txs := make([]types.Transaction, 0, depositCount)
 	for i := 0; i < depositCount; i++ {
 		var tx *types.Transaction
-		tx, err = ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), amount, tokenID)
+		tx, err = ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), amount, &registeredToken.ID)
 		require.NoError(t, err)
 		txs = append(txs, *tx)
 	}
@@ -63,19 +61,14 @@ func approveToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Addre
 	require.NoError(t, err)
 }
 
-func deployExampleToken(t *testing.T, ethClient *eth.Client) (customtoken.TestCustomToken, common.Address) {
-	tokenAddress, tx, token, err := customtoken.DeployTestCustomToken(
-		ethClient.Blockchain.GetAccount(),
-		ethClient.Blockchain.GetBackend(),
-		"ExampleToken",
-		"EXP",
-	)
+func getDeployedToken(t *testing.T, ethClient *eth.Client) (*models.RegisteredToken, *customtoken.TestCustomToken) {
+	registeredToken, err := ethClient.GetRegisteredToken(models.NewUint256(0))
 	require.NoError(t, err)
 
-	_, err = chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
+	tokenContract, err := customtoken.NewTestCustomToken(registeredToken.Contract, ethClient.Blockchain.GetBackend())
 	require.NoError(t, err)
 
-	return *token, tokenAddress
+	return registeredToken, tokenContract
 }
 
 func waitForBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256) {
