@@ -21,8 +21,9 @@ type GetCommitmentTestSuite struct {
 	suite.Suite
 	api                      *API
 	storage                  *st.TestStorage
-	batch                    models.Batch
-	commitment               models.TxCommitment
+	batch                    *models.Batch
+	txCommitment             *models.TxCommitment
+	mmCommitment             *models.MMCommitment
 	commitmentNotFoundAPIErr *APIError
 }
 
@@ -36,7 +37,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage}
 
-	s.batch = models.Batch{
+	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              batchtype.Transfer,
 		TransactionHash:   utils.RandomHash(),
@@ -45,9 +46,38 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
-	s.commitment = commitment
-	s.commitment.ID.BatchID = s.batch.ID
-	s.commitment.ID.IndexInBatch = 0
+	s.txCommitment = &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      s.batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Transfer,
+			PostStateRoot: utils.RandomHash(),
+		},
+		FeeReceiver:       1,
+		CombinedSignature: models.MakeRandomSignature(),
+	}
+
+	s.mmCommitment = &models.MMCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      s.batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.MassMigration,
+			PostStateRoot: utils.RandomHash(),
+		},
+		FeeReceiver:       1,
+		CombinedSignature: models.MakeRandomSignature(),
+		Meta: &models.MassMigrationMeta{
+			SpokeID:     1,
+			TokenID:     models.MakeUint256(2),
+			Amount:      models.MakeUint256(3),
+			FeeReceiver: 1,
+		},
+		WithdrawRoot: utils.RandomHash(),
+	}
 
 	s.commitmentNotFoundAPIErr = &APIError{
 		Code:    20000,
@@ -61,10 +91,10 @@ func (s *GetCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -76,7 +106,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
 			Signature:    models.MakeRandomSignature(),
-			CommitmentID: &s.commitment.ID,
+			CommitmentID: &s.txCommitment.ID,
 		},
 		ToStateID: 2,
 	}
@@ -84,11 +114,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
-		Type:              s.commitment.Type,
-		PostStateRoot:     s.commitment.PostStateRoot,
-		FeeReceiver:       s.commitment.FeeReceiver,
-		CombinedSignature: s.commitment.CombinedSignature,
+		ID:                *dto.MakeCommitmentID(&s.txCommitment.ID),
+		Type:              s.txCommitment.Type,
+		PostStateRoot:     s.txCommitment.PostStateRoot,
+		FeeReceiver:       s.txCommitment.FeeReceiver,
+		CombinedSignature: s.txCommitment.CombinedSignature,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.TransferForCommitment{{
@@ -103,17 +133,17 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		}},
 	}
 
-	commitment, err := s.api.GetCommitment(s.commitment.ID)
+	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
-	err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	s.commitment.Type = batchtype.Create2Transfer
-	err = s.storage.AddTxCommitment(&s.commitment)
+	s.txCommitment.Type = batchtype.Create2Transfer
+	err = s.storage.AddTxCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Create2Transfer{
@@ -124,7 +154,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 			Amount:       models.MakeUint256(50),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.commitment.ID,
+			CommitmentID: &s.txCommitment.ID,
 		},
 		ToStateID:   ref.Uint32(2),
 		ToPublicKey: models.PublicKey{2, 3, 4},
@@ -133,11 +163,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
-		Type:              s.commitment.Type,
-		PostStateRoot:     s.commitment.PostStateRoot,
-		FeeReceiver:       s.commitment.FeeReceiver,
-		CombinedSignature: s.commitment.CombinedSignature,
+		ID:                *dto.MakeCommitmentID(&s.txCommitment.ID),
+		Type:              s.txCommitment.Type,
+		PostStateRoot:     s.txCommitment.PostStateRoot,
+		FeeReceiver:       s.txCommitment.FeeReceiver,
+		CombinedSignature: s.txCommitment.CombinedSignature,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.Create2TransferForCommitment{{
@@ -153,17 +183,16 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		}},
 	}
 
-	commitment, err := s.api.GetCommitment(s.commitment.ID)
+	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
-	err := s.storage.AddBatch(&s.batch)
+	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	s.commitment.Type = batchtype.MassMigration
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddMMCommitment(s.mmCommitment)
 	s.NoError(err)
 
 	massMigration := models.MassMigration{
@@ -174,7 +203,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 			Amount:       models.MakeUint256(50),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.commitment.ID,
+			CommitmentID: &s.mmCommitment.ID,
 		},
 		SpokeID: 2,
 	}
@@ -182,11 +211,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.commitment.ID),
-		Type:              s.commitment.Type,
-		PostStateRoot:     s.commitment.PostStateRoot,
-		FeeReceiver:       s.commitment.FeeReceiver,
-		CombinedSignature: s.commitment.CombinedSignature,
+		ID:                *dto.MakeCommitmentID(&s.mmCommitment.ID),
+		Type:              s.mmCommitment.Type,
+		PostStateRoot:     s.mmCommitment.PostStateRoot,
+		FeeReceiver:       s.mmCommitment.FeeReceiver,
+		CombinedSignature: s.mmCommitment.CombinedSignature,
 		Status:            txstatus.InBatch,
 		BatchTime:         s.batch.SubmissionTime,
 		Transactions: []dto.MassMigrationForCommitment{{
@@ -201,19 +230,19 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 		}},
 	}
 
-	commitment, err := s.api.GetCommitment(s.commitment.ID)
+	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitment, commitment)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
-	pendingBatch := s.batch
+	pendingBatch := *s.batch
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddTxCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -224,7 +253,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 			Amount:       models.MakeUint256(50),
 			Fee:          models.MakeUint256(10),
 			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.commitment.ID,
+			CommitmentID: &s.txCommitment.ID,
 		},
 		ToStateID: 2,
 	}
