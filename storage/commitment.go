@@ -35,3 +35,26 @@ func (s *CommitmentStorage) GetCommitment(id *models.CommitmentID) (models.Commi
 		panic("invalid commitment type")
 	}
 }
+
+func (s *CommitmentStorage) GetCommitmentsByBatchID(batchID models.Uint256) ([]models.Commitment, error) {
+	storedCommitments, err := s.getStoredCommitmentsByBatchID(batchID)
+	if err != nil {
+		return nil, err
+	}
+
+	commitments := make([]models.Commitment, 0, len(storedCommitments))
+	for i := range storedCommitments {
+		switch storedCommitments[i].Type {
+		case batchtype.Transfer, batchtype.Create2Transfer:
+			commitments = append(commitments, storedCommitments[i].ToTxCommitment())
+		case batchtype.MassMigration:
+			commitments = append(commitments, storedCommitments[i].ToMMCommitment())
+		case batchtype.Deposit:
+			commitments = append(commitments, storedCommitments[i].ToDepositCommitment())
+		default:
+			panic("invalid commitment type")
+		}
+	}
+
+	return commitments, nil
+}

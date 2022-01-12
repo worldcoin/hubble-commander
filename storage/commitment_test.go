@@ -144,6 +144,36 @@ func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
 	s.Nil(res)
 }
 
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_TransfersAndC2TsBatch() {
+	err := s.storage.AddCommitment(s.txCommitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(s.txCommitment.ID.BatchID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Equal(s.txCommitment, commitments[0].ToTxCommitment())
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_MMsBatch() {
+	err := s.storage.AddCommitment(s.mmCommitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(s.mmCommitment.ID.BatchID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Equal(s.mmCommitment, commitments[0].ToMMCommitment())
+}
+
+func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_DepositsBatch() {
+	err := s.storage.AddCommitment(s.depositCommitment)
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(s.depositCommitment.ID.BatchID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Equal(s.depositCommitment, commitments[0].ToDepositCommitment())
+}
+
 func TestCommitmentTestSuite(t *testing.T) {
 	suite.Run(t, new(CommitmentTestSuite))
 }

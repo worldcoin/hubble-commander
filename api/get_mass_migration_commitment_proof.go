@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,7 +32,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID, batchtype.MassMigration)
+	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
