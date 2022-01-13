@@ -192,7 +192,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddMMCommitment(s.mmCommitment)
+	err = s.storage.AddCommitment(s.mmCommitment)
 	s.NoError(err)
 
 	massMigration := models.MassMigration{

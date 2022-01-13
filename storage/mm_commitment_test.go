@@ -56,7 +56,7 @@ func (s *MMCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *MMCommitmentTestSuite) TestAddMMCommitment_AddAndRetrieve() {
-	err := s.storage.AddMMCommitment(&mmCommitment)
+	err := s.storage.addMMCommitment(&mmCommitment)
 	s.NoError(err)
 
 	actual, err := s.storage.GetCommitment(&mmCommitment.ID)

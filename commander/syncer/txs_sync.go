@@ -74,7 +74,7 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder
 			Meta:              commitment.(*encoder.DecodedMMCommitment).Meta,
 			WithdrawRoot:      commitment.(*encoder.DecodedMMCommitment).WithdrawRoot,
 		}
-		err = c.storage.AddMMCommitment(mmCommitment)
+		err = c.storage.AddCommitment(mmCommitment)
 	default:
 		panic("invalid batch type")
 	}

@@ -12,7 +12,7 @@ func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		return s.AddTxCommitment(commitment.ToTxCommitment())
 	case batchtype.MassMigration:
-		return s.AddMMCommitment(commitment.ToMMCommitment())
+		return s.addMMCommitment(commitment.ToMMCommitment())
 	case batchtype.Deposit:
 		return s.addDepositCommitment(commitment.ToDepositCommitment())
 	default:
