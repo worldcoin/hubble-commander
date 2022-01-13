@@ -17,7 +17,7 @@ var getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
 
 func (a *API) GetMassMigrationCommitmentProof(commitmentID models.CommitmentID) (*dto.MassMigrationCommitmentProof, error) {
 	if !a.cfg.EnableProofMethods {
-		return nil, errProofMethodsDisabled
+		return nil, APIErrProofMethodsDisabled
 	}
 	commitmentInclusionProof, err := a.unsafeGetMassMigrationCommitmentProof(commitmentID)
 	if err != nil {

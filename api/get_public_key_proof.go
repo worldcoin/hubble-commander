@@ -12,7 +12,7 @@ var getPublicKeyProofAPIErrors = map[error]*APIError{
 
 func (a *API) GetPublicKeyProofByPubKeyID(id uint32) (*dto.PublicKeyProof, error) {
 	if !a.cfg.EnableProofMethods {
-		return nil, errProofMethodsDisabled
+		return nil, APIErrProofMethodsDisabled
 	}
 	publicKeyProof, err := a.unsafeGetPublicKeyProofByPubKeyID(id)
 	if err != nil {
