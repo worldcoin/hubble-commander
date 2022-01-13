@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 )
 
-const populatedGenesisAccountByteSize = 168
+const populatedGenesisAccountByteSize = 232
 
 type RawGenesisAccount struct {
 	PublicKey  string       `yaml:"publicKey"`
@@ -48,18 +48,19 @@ type RegisteredGenesisAccount struct {
 
 type PopulatedGenesisAccount struct {
 	PublicKey PublicKey `yaml:"public_key"`
-	PubKeyID  uint32    `yaml:"pub_key_id"`
 	StateID   uint32    `yaml:"state_id"`
-	Balance   Uint256
+	State     UserState `yaml:"state"`
 }
 
 func (a *PopulatedGenesisAccount) Bytes() []byte {
 	b := make([]byte, populatedGenesisAccountByteSize)
 
 	copy(b[:128], a.PublicKey.Bytes())
-	binary.BigEndian.PutUint32(b[128:132], a.PubKeyID)
-	binary.BigEndian.PutUint32(b[132:136], a.StateID)
-	copy(b[136:168], a.Balance.Bytes())
+	binary.BigEndian.PutUint32(b[128:132], a.StateID)
+	binary.BigEndian.PutUint32(b[132:136], a.State.PubKeyID)
+	copy(b[136:168], a.State.TokenID.Bytes())
+	copy(b[168:200], a.State.Balance.Bytes())
+	copy(b[200:232], a.State.Nonce.Bytes())
 
 	return b
 }
@@ -70,9 +71,11 @@ func (a *PopulatedGenesisAccount) SetBytes(data []byte) error {
 		return err
 	}
 
-	a.PubKeyID = binary.BigEndian.Uint32(data[128:132])
-	a.StateID = binary.BigEndian.Uint32(data[132:136])
-	a.Balance.SetBytes(data[136:168])
+	a.StateID = binary.BigEndian.Uint32(data[128:132])
+	a.State.PubKeyID = binary.BigEndian.Uint32(data[132:136])
+	a.State.TokenID.SetBytes(data[136:168])
+	a.State.Balance.SetBytes(data[168:200])
+	a.State.Nonce.SetBytes(data[200:232])
 
 	return nil
 }

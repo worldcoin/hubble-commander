@@ -18,9 +18,13 @@ func TestPopulatedGenesisAccount_Bytes_ReturnsACopy(t *testing.T) {
 func TestPopulatedGenesisAccount_SetBytes(t *testing.T) {
 	account := PopulatedGenesisAccount{
 		PublicKey: PublicKey{1, 2, 0, 5, 4},
-		PubKeyID:  7,
 		StateID:   44,
-		Balance:   MakeUint256(4314),
+		State: UserState{
+			PubKeyID: 7,
+			TokenID:  MakeUint256(0),
+			Balance:  MakeUint256(4314),
+			Nonce:    MakeUint256(0),
+		},
 	}
 	bytes := account.Bytes()
 	newAccount := PopulatedGenesisAccount{}
