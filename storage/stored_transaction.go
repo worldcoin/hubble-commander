@@ -273,15 +273,17 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 }
 
 func (s *TransactionStorage) MarkTransactionsAsIncluded(txs models.GenericTransactionArray, commitmentID *models.CommitmentID) error {
-	switch txs.Type() {
-	case txtype.Transfer:
-		return s.MarkTransfersAsIncluded(txs.ToTransferArray(), commitmentID)
-	case txtype.Create2Transfer:
-		return s.MarkCreate2TransfersAsIncluded(txs.ToCreate2TransferArray(), commitmentID)
-	case txtype.MassMigration:
-		return s.MarkMassMigrationsAsIncluded(txs.ToMassMigrationArray(), commitmentID)
-	}
-	return nil
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := 0; i < txs.Len(); i++ {
+			txReceipt := stored.NewTxReceipt(txs.At(i))
+			txReceipt.CommitmentID = commitmentID
+			err := txStorage.addStoredTxReceipt(txReceipt)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *TransactionStorage) getStoredTxFromItem(item *bdg.Item, storedTx *stored.Tx) (bool, error) {
