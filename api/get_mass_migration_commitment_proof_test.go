@@ -25,7 +25,7 @@ type GetMassMigrationCommitmentProofTestSuite struct {
 	api            *API
 	storage        *st.TestStorage
 	batch          *models.Batch
-	commitments    []models.CommitmentWithTxs
+	commitments    []models.MMCommitmentWithTxs
 	massMigrations []models.MassMigration
 }
 
@@ -81,32 +81,36 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 	err = s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	s.commitments = []models.CommitmentWithTxs{
+	s.commitments = []models.MMCommitmentWithTxs{
 		makeMassMigrationCommitment(
 			s.Assertions,
+			s.storage,
 			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
+				BatchID:      s.batch.ID,
 				IndexInBatch: 0,
 			},
+			1,
 			*stateRoot1,
 			accountTreeRoot,
 			[]models.MassMigration{s.massMigrations[0], s.massMigrations[1]},
 		),
 		makeMassMigrationCommitment(
 			s.Assertions,
+			s.storage,
 			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
+				BatchID:      s.batch.ID,
 				IndexInBatch: 1,
 			},
+			1,
 			*stateRoot2,
 			accountTreeRoot,
 			[]models.MassMigration{s.massMigrations[2]},
 		),
 	}
 
-	err = s.storage.AddTxCommitment(&s.commitments[0].TxCommitment)
+	err = s.storage.AddCommitment(s.commitments[0].ToMMCommitmentWithTxs())
 	s.NoError(err)
-	err = s.storage.AddTxCommitment(&s.commitments[1].TxCommitment)
+	err = s.storage.AddCommitment(s.commitments[1].ToMMCommitmentWithTxs())
 	s.NoError(err)
 }
 
@@ -140,23 +144,24 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 	witnessIndex int,
 	massMigrations []models.MassMigration,
 ) {
-	withdrawTree, meta := s.prepareWithdrawTreeAndMeta(commitmentIndex, massMigrations)
+	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(s.storage, s.commitments[commitmentIndex].FeeReceiver, massMigrations)
+	s.NoError(err)
 
 	expected := dto.MassMigrationCommitmentProof{
 		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
-			StateRoot: s.commitments[commitmentIndex].PostStateRoot,
+			StateRoot: s.commitments[commitmentIndex].ToMMCommitmentWithTxs().PostStateRoot,
 			Path: &dto.MerklePath{
 				Path:  uint32(commitmentIndex),
 				Depth: 2,
 			},
-			Witness: []common.Hash{s.commitments[witnessIndex].LeafHash()},
+			Witness: []common.Hash{s.commitments[witnessIndex].ToMMCommitmentWithTxs().LeafHash()},
 		},
 		Body: &dto.MassMigrationBody{
 			AccountRoot:  *s.batch.AccountTreeRoot,
-			Signature:    s.commitments[commitmentIndex].CombinedSignature,
-			Meta:         meta,
+			Signature:    s.commitments[commitmentIndex].ToMMCommitmentWithTxs().CombinedSignature,
+			Meta:         dto.NewMassMigrationMeta(meta),
 			WithdrawRoot: withdrawTree.Root(),
-			Transactions: s.commitments[commitmentIndex].Transactions,
+			Transactions: s.commitments[commitmentIndex].ToMMCommitmentWithTxs().Transactions,
 		},
 	}
 
@@ -170,18 +175,21 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 	s.Equal(expected, *commitmentInclusionProof)
 }
 
-func (s *GetMassMigrationCommitmentProofTestSuite) prepareWithdrawTreeAndMeta(
-	commitmentIndex int,
+func prepareWithdrawTreeAndMeta(
+	storage *st.TestStorage,
+	feeReceiver uint32,
 	massMigrations []models.MassMigration,
-) (*merkletree.MerkleTree, *dto.MassMigrationMeta) {
+) (*merkletree.MerkleTree, *models.MassMigrationMeta, error) {
 	hashes := make([]common.Hash, 0, len(massMigrations))
-	meta := &dto.MassMigrationMeta{
-		FeeReceiver: s.commitments[commitmentIndex].FeeReceiver,
+	meta := &models.MassMigrationMeta{
+		FeeReceiver: feeReceiver,
 	}
 
 	for i := range massMigrations {
-		senderLeaf, err := s.storage.StateTree.Leaf(s.massMigrations[i].FromStateID)
-		s.NoError(err)
+		senderLeaf, err := storage.StateTree.Leaf(massMigrations[i].FromStateID)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		if i == 0 {
 			meta.SpokeID = massMigrations[i].SpokeID
@@ -193,18 +201,22 @@ func (s *GetMassMigrationCommitmentProofTestSuite) prepareWithdrawTreeAndMeta(
 		hash, err := encoder.HashUserState(&models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
 			TokenID:  senderLeaf.TokenID,
-			Balance:  s.massMigrations[i].Amount,
+			Balance:  massMigrations[i].Amount,
 			Nonce:    models.MakeUint256(0),
 		})
-		s.NoError(err)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		hashes = append(hashes, *hash)
 	}
 
 	withdrawTree, err := merkletree.NewMerkleTree(hashes)
-	s.NoError(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return withdrawTree, meta
+	return withdrawTree, meta, nil
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) generateMassMigrationForTestSuite() []models.MassMigration {
@@ -268,24 +280,30 @@ func makeMassMigration(
 
 func makeMassMigrationCommitment(
 	assertion *require.Assertions,
+	storage *st.TestStorage,
 	commitmentID models.CommitmentID,
+	feeReceiver uint32,
 	stateRoot common.Hash,
 	accountRoot common.Hash,
 	massMigrations []models.MassMigration,
-) models.CommitmentWithTxs {
+) models.MMCommitmentWithTxs {
 	serializedMassMigrations, err := encoder.SerializeMassMigrations(massMigrations)
 	assertion.NoError(err)
 
-	massMigrationCommitment := models.CommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
+	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(storage, feeReceiver, massMigrations)
+	assertion.NoError(err)
+
+	massMigrationCommitment := models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID:            commitmentID,
 				Type:          batchtype.MassMigration,
 				PostStateRoot: stateRoot,
 			},
-			FeeReceiver:       1,
+			FeeReceiver:       feeReceiver,
 			CombinedSignature: models.MakeRandomSignature(),
-			BodyHash:          nil,
+			Meta:              meta,
+			WithdrawRoot:      withdrawTree.Root(),
 		},
 		Transactions: serializedMassMigrations,
 	}

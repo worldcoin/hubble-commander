@@ -88,3 +88,12 @@ type MassMigrationMeta struct {
 	Amount      models.Uint256
 	FeeReceiver uint32
 }
+
+func NewMassMigrationMeta(meta *models.MassMigrationMeta) *MassMigrationMeta {
+	return &MassMigrationMeta{
+		SpokeID:     meta.SpokeID,
+		TokenID:     meta.TokenID,
+		Amount:      meta.Amount,
+		FeeReceiver: meta.FeeReceiver,
+	}
+}
