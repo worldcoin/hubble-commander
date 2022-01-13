@@ -32,7 +32,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 
 	defer logReceivedTransaction(*hash, massMigrationDTO)
 
-	err = a.storage.AddMassMigration(massMigration)
+	err = a.storage.AddTransaction(massMigration)
 	if errors.Is(err, bh.ErrKeyExists) {
 		return a.updateDuplicatedTransaction(massMigration)
 	}

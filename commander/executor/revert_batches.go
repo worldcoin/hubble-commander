@@ -63,9 +63,9 @@ func (c *ExecutionContext) revertDepositCommitment(batchID models.Uint256) error
 		return err
 	}
 
-	return c.storage.AddPendingDepositSubTree(&models.PendingDepositSubTree{
-		ID:       commitment.SubTreeID,
-		Root:     commitment.SubTreeRoot,
+	return c.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
+		ID:       commitment.SubtreeID,
+		Root:     commitment.SubtreeRoot,
 		Deposits: commitment.Deposits,
 	})
 }

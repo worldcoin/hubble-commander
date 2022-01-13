@@ -45,9 +45,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.DepositID:
 		return nil, errors.WithStack(errPassedByPointer)
-	case models.PendingDepositSubTree:
+	case models.PendingDepositSubtree:
 		return v.Bytes(), nil
-	case *models.PendingDepositSubTree:
+	case *models.PendingDepositSubtree:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.NamespacedMerklePath:
 		return v.Bytes(), nil
@@ -135,7 +135,7 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *models.DepositID:
 		return v.SetBytes(data)
-	case *models.PendingDepositSubTree:
+	case *models.PendingDepositSubtree:
 		return v.SetBytes(data)
 	case *models.NamespacedMerklePath:
 		return v.SetBytes(data)

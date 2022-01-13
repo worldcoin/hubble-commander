@@ -24,9 +24,9 @@ import (
 
 const queueDepositGasLimit = 600_000
 
-func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient) {
+func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient, batchID uint64) {
 	makeDeposits(t, client)
-	waitForBatch(t, client, models.MakeUint256(4))
+	waitForBatch(t, client, models.MakeUint256(batchID))
 }
 
 func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
@@ -38,7 +38,7 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 	approveToken(t, ethClient, tokenAddress)
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
-	subtreeDepth, err := ethClient.GetMaxSubTreeDepthParam()
+	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()
 	require.NoError(t, err)
 	depositCount := 1 << *subtreeDepth
 	txs := make([]types.Transaction, 0, depositCount)

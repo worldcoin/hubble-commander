@@ -32,7 +32,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 
 	defer logReceivedTransaction(*hash, transferDTO)
 
-	err = a.storage.AddTransfer(transfer)
+	err = a.storage.AddTransaction(transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
 		return a.updateDuplicatedTransaction(transfer)
 	}

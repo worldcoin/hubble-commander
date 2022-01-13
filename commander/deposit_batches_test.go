@@ -27,7 +27,7 @@ type DepositBatchesTestSuite struct {
 	cmd            *Commander
 	client         *eth.TestClient
 	storage        *st.TestStorage
-	depositSubtree models.PendingDepositSubTree
+	depositSubtree models.PendingDepositSubtree
 	cfg            *config.Config
 }
 
@@ -52,7 +52,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
 
-	s.depositSubtree = models.PendingDepositSubTree{
+	s.depositSubtree = models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
@@ -170,7 +170,7 @@ func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *model
 }
 
 func (s *DepositBatchesTestSuite) prepareDeposits() {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -22,6 +23,18 @@ type TxReceipt struct {
 	CommitmentID *models.CommitmentID
 	ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
 	ErrorMessage *string
+}
+
+func NewTxReceipt(tx models.GenericTransaction) *TxReceipt {
+	switch tx.Type() {
+	case txtype.Transfer:
+		return NewTxReceiptFromTransfer(tx.ToTransfer())
+	case txtype.Create2Transfer:
+		return NewTxReceiptFromCreate2Transfer(tx.ToCreate2Transfer())
+	case txtype.MassMigration:
+		return NewTxReceiptFromMassMigration(tx.ToMassMigration())
+	}
+	return nil
 }
 
 func NewTxReceiptFromTransfer(t *models.Transfer) *TxReceipt {

@@ -28,8 +28,8 @@ func (s *DepositCommitmentTestSuite) SetupSuite() {
 			Type:          batchtype.Deposit,
 			PostStateRoot: utils.RandomHash(),
 		},
-		SubTreeID:   models.MakeUint256(1),
-		SubTreeRoot: utils.RandomHash(),
+		SubtreeID:   models.MakeUint256(1),
+		SubtreeRoot: utils.RandomHash(),
 		Deposits: []models.PendingDeposit{
 			{
 				ID:         models.DepositID{},

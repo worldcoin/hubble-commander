@@ -46,8 +46,8 @@ func TestCommitment_Bytes_DepositCommitment(t *testing.T) {
 			Type:          batchtype.Deposit,
 			PostStateRoot: utils.RandomHash(),
 		},
-		SubTreeID:   models.MakeUint256(5),
-		SubTreeRoot: utils.RandomHash(),
+		SubtreeID:   models.MakeUint256(5),
+		SubtreeRoot: utils.RandomHash(),
 		Deposits: []models.PendingDeposit{
 			{
 				ID: models.DepositID{
@@ -92,8 +92,8 @@ func TestCommitment_Bytes_DepositCommitmentWithoutPendingDeposits(t *testing.T) 
 			Type:          batchtype.Deposit,
 			PostStateRoot: utils.RandomHash(),
 		},
-		SubTreeID:   models.MakeUint256(5),
-		SubTreeRoot: utils.RandomHash(),
+		SubtreeID:   models.MakeUint256(5),
+		SubtreeRoot: utils.RandomHash(),
 		Deposits:    []models.PendingDeposit{},
 	}
 

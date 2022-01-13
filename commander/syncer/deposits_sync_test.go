@@ -24,13 +24,13 @@ type SyncDepositBatchTestSuite struct {
 	client         *eth.TestClient
 	syncCtx        *Context
 	depositsCtx    *executor.DepositsContext
-	depositSubtree models.PendingDepositSubTree
+	depositSubtree models.PendingDepositSubtree
 }
 
 func (s *SyncDepositBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
-	s.depositSubtree = models.PendingDepositSubTree{
+	s.depositSubtree = models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
@@ -73,7 +73,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Len(batches, 2)
 	s.Equal(prevStateRoot, batches[1].PrevStateRoot)
 
-	_, err = s.storage.GetFirstPendingDepositSubTree()
+	_, err = s.storage.GetFirstPendingDepositSubtree()
 	s.True(st.IsNotFoundError(err))
 
 	commitment, err := s.storage.GetDepositCommitment(&models.CommitmentID{
@@ -81,7 +81,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 		IndexInBatch: 0,
 	})
 	s.NoError(err)
-	s.Equal(s.depositSubtree.Root, commitment.SubTreeRoot)
+	s.Equal(s.depositSubtree.Root, commitment.SubtreeRoot)
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
@@ -135,7 +135,7 @@ func (s *SyncDepositBatchTestSuite) syncBatches() {
 }
 
 func (s *SyncDepositBatchTestSuite) prepareDeposits() {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)

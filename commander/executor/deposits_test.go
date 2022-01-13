@@ -18,13 +18,13 @@ type DepositsTestSuite struct {
 	storage        *st.TestStorage
 	client         *eth.TestClient
 	depositsCtx    *DepositsContext
-	depositSubtree models.PendingDepositSubTree
+	depositSubtree models.PendingDepositSubtree
 }
 
 func (s *DepositsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
-	s.depositSubtree = models.PendingDepositSubTree{
+	s.depositSubtree = models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
@@ -50,7 +50,7 @@ func (s *DepositsTestSuite) TearDownTest() {
 }
 
 func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	batchID := models.MakeUint256(1)
@@ -66,8 +66,8 @@ func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
 	})
 	s.NoError(err)
 	s.Equal(*root, commitment.PostStateRoot)
-	s.Equal(s.depositSubtree.ID, commitment.SubTreeID)
-	s.Equal(s.depositSubtree.Root, commitment.SubTreeRoot)
+	s.Equal(s.depositSubtree.ID, commitment.SubtreeID)
+	s.Equal(s.depositSubtree.Root, commitment.SubtreeRoot)
 	s.Equal(s.depositSubtree.Deposits, commitment.Deposits)
 }
 
@@ -78,7 +78,7 @@ func (s *DepositsTestSuite) TestCreateCommitment_NotEnoughDeposits() {
 }
 
 func (s *DepositsTestSuite) TestExecuteDeposits_SetsUserStates() {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	_, err = s.depositsCtx.executeDeposits(&s.depositSubtree)
@@ -92,13 +92,13 @@ func (s *DepositsTestSuite) TestExecuteDeposits_SetsUserStates() {
 }
 
 func (s *DepositsTestSuite) TestExecuteDeposits_RemovesDepositSubtree() {
-	err := s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	_, err = s.depositsCtx.executeDeposits(&s.depositSubtree)
 	s.NoError(err)
 
-	subtree, err := s.storage.GetPendingDepositSubTree(s.depositSubtree.ID)
+	subtree, err := s.storage.GetPendingDepositSubtree(s.depositSubtree.ID)
 	s.True(st.IsNotFoundError(err))
 	s.Nil(subtree)
 }
@@ -107,7 +107,7 @@ func (s *DepositsTestSuite) TestExecuteDeposits_ReturnsCorrectVacancyProof() {
 	_, err := s.depositsCtx.storage.StateTree.Set(0, &models.UserState{})
 	s.NoError(err)
 
-	err = s.storage.AddPendingDepositSubTree(&s.depositSubtree)
+	err = s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
 	vacancyProof, err := s.depositsCtx.executeDeposits(&s.depositSubtree)

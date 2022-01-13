@@ -107,7 +107,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
-	subtree := &models.PendingDepositSubTree{
+	subtree := &models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
@@ -116,14 +116,14 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
-	depositSubtree, err := s.storage.GetPendingDepositSubTree(subtree.ID)
+	depositSubtree, err := s.storage.GetPendingDepositSubtree(subtree.ID)
 	s.NoError(err)
 	s.Equal(subtree.Root, depositSubtree.Root)
 	s.Equal(subtree.Deposits, depositSubtree.Deposits)
 }
 
 func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
-	err := s.txsCtx.storage.AddTransfer(tx)
+	err := s.txsCtx.storage.AddTransaction(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
@@ -141,7 +141,7 @@ func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
 	return pendingBatch
 }
 
-func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositSubTree) *models.Batch {
+func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositSubtree) *models.Batch {
 	pendingBatch, err := s.executionCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
 
@@ -163,8 +163,8 @@ func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositS
 			Type:          batchtype.Deposit,
 			PostStateRoot: *root,
 		},
-		SubTreeID:   subtree.ID,
-		SubTreeRoot: subtree.Root,
+		SubtreeID:   subtree.ID,
+		SubtreeRoot: subtree.Root,
 		Deposits:    subtree.Deposits,
 	})
 	s.NoError(err)

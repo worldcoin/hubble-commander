@@ -79,16 +79,29 @@ func TestCommanderSync(t *testing.T) {
 		return networkInfo.LatestBatch != nil && networkInfo.LatestBatch.Cmp(latestBatch) >= 0
 	}, 30*time.Second, testutils.TryInterval)
 
-	testSenderStateAfterTransfers(t, passiveCommander.Client(), senderWallet)
-	testFeeReceiverStateAfterTransfers(t, passiveCommander.Client(), feeReceiverWallet)
-	testGetBatches(t, passiveCommander.Client())
+	testSenderStateAfterTransfers(
+		t,
+		passiveCommander.Client(),
+		senderWallet,
+		32+32+32,
+		32*100+32*100+32*100,
+	)
+
+	testFeeReceiverStateAfterTransfers(
+		t,
+		passiveCommander.Client(),
+		feeReceiverWallet,
+		32*10*3,
+	)
+
+	testGetBatches(t, passiveCommander.Client(), 5)
 }
 
 func submitBatchesAndWait(t *testing.T, activeCommander *setup.InProcessCommander, senderWallet bls.Wallet, wallets []bls.Wallet) {
 	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
 	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
-	testSubmitDepositBatchAndWait(t, activeCommander.Client())
+	testSubmitDepositBatchAndWait(t, activeCommander.Client(), 4)
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)
