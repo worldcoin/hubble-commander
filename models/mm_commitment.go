@@ -47,8 +47,8 @@ type MMCommitmentWithTxs struct {
 	Transactions []byte
 }
 
-func (c *MMCommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
-	c.BodyHash = calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+func (c *MMCommitmentWithTxs) CalcAndSetBodyHash(accountRoot common.Hash) {
+	c.SetBodyHash(calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes()))
 }
 
 func (c *MMCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
