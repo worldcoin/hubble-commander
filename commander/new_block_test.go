@@ -156,7 +156,16 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsStakeWithdrawals() {
 	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.waitForBlock(uint64(*batches[1].FinalisationBlock))
+	s.waitForBlock(uint64(*batches[1].FinalisationBlock + 1))
+
+	// s.Eventually(() => {
+	//      latestBlock = s.client.getLatestBlock()
+	// 		it = s.client.FilterLogs("StakeWithdraw", 0, latestBlock)
+	//      for it.next() {
+	//          if (it.event.committer == s.client.Account.From) return true
+	//      }
+	//      return false
+	// }, 50ms, 1s)
 
 	receipt := s.getReceiptOfTheLastTransaction()
 
