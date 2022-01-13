@@ -12,15 +12,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
+var errGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
+var errMissingGenesisPublicKey = fmt.Errorf("genesis accounts require public keys")
 
-func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccount) error {
 	seenStateIDs := make(map[uint32]bool)
 	for i := range accounts {
 		account := &accounts[i]
 
 		if seenStateIDs[account.StateID] {
-			return errors.WithStack(ErrGenesisAccountsUniqueStateID)
+			return errors.WithStack(errGenesisAccountsUniqueStateID)
 		}
 		seenStateIDs[account.StateID] = true
 
@@ -43,8 +44,14 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 
 func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) error {
 	log.Println("Registering genesis accounts")
+
+	emptyPublicKey := models.PublicKey{}
 	txs := make([]types.Transaction, 0, len(accounts))
 	for i := range accounts {
+		if accounts[i].PublicKey == emptyPublicKey {
+			return errors.WithStack(errMissingGenesisPublicKey)
+		}
+
 		tx, err := accountMgr.RegisterAccount(&accounts[i].PublicKey)
 		if err != nil {
 			return errors.WithStack(err)

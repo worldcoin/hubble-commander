@@ -46,7 +46,7 @@ func (s *VerifyCommitmentTestSuite) TestVerifyCommitment_ValidCommitmentRoot() {
 }
 
 func (s *VerifyCommitmentTestSuite) TestVerifyCommitment_InvalidCommitmentRoot() {
-	s.client.ChainState.GenesisAccounts = append(s.client.ChainState.GenesisAccounts, models.PopulatedGenesisAccount{
+	s.client.ChainState.GenesisAccounts = append(s.client.ChainState.GenesisAccounts, models.GenesisAccount{
 		PublicKey: models.PublicKey{5, 6, 7},
 		StateID:   1,
 		State: models.UserState{

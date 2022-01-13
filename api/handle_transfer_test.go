@@ -33,7 +33,7 @@ var (
 		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		SyncedBlock:                    11293,
-		GenesisAccounts: []models.PopulatedGenesisAccount{
+		GenesisAccounts: []models.GenesisAccount{
 			{
 				PublicKey: models.PublicKey{4, 4, 1, 9},
 				StateID:   32,

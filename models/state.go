@@ -9,10 +9,10 @@ import (
 var StateUpdatePrefix = GetBadgerHoldPrefix(StateUpdate{})
 
 type UserState struct {
-	PubKeyID uint32
-	TokenID  Uint256
-	Balance  Uint256
-	Nonce    Uint256
+	PubKeyID uint32  `yaml:"pub_key_id"`
+	TokenID  Uint256 `yaml:"token_id"`
+	Balance  Uint256 `yaml:"balance"`
+	Nonce    Uint256 `yaml:"nonce"`
 }
 
 type StateLeaf struct {

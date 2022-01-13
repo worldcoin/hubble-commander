@@ -7,7 +7,7 @@ import (
 )
 
 func TestPopulatedGenesisAccount_Bytes_ReturnsACopy(t *testing.T) {
-	account := PopulatedGenesisAccount{
+	account := GenesisAccount{
 		PublicKey: PublicKey{1, 2, 0, 5, 4},
 	}
 	bytes := account.Bytes()
@@ -16,7 +16,7 @@ func TestPopulatedGenesisAccount_Bytes_ReturnsACopy(t *testing.T) {
 }
 
 func TestPopulatedGenesisAccount_SetBytes(t *testing.T) {
-	account := PopulatedGenesisAccount{
+	account := GenesisAccount{
 		PublicKey: PublicKey{1, 2, 0, 5, 4},
 		StateID:   44,
 		State: UserState{
@@ -27,7 +27,7 @@ func TestPopulatedGenesisAccount_SetBytes(t *testing.T) {
 		},
 	}
 	bytes := account.Bytes()
-	newAccount := PopulatedGenesisAccount{}
+	newAccount := GenesisAccount{}
 	err := newAccount.SetBytes(bytes)
 	require.NoError(t, err)
 	require.Equal(t, account, newAccount)

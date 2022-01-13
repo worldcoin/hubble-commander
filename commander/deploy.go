@@ -72,19 +72,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	totalGenesisAmount, populatedAccounts := AssignStateIDsAndCalculateTotalAmount(registeredAccounts)
-
-
-	genesisAccounts := make([]models.PopulatedGenesisAccount, 0, len(cfg.GenesisAccounts))
-	for i := range cfg.GenesisAccounts {
-		genesisAccounts = append(genesisAccounts, models.PopulatedGenesisAccount{
-			PublicKey: cfg.GenesisAccounts[i].PublicKey,
-			StateID:   cfg.GenesisAccounts[i].State.StateID,
-			State:     cfg.GenesisAccounts[i].State.UserState,
-		})
-	}
-
-	err = PopulateGenesisAccounts(storage, genesisAccounts)
+	err = PopulateGenesisAccounts(storage, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +106,7 @@ func deployContractsAndSetupGenesisState(
 		DepositManager:                 contracts.DepositManagerAddress,
 		WithdrawManager:                contracts.WithdrawManagerAddress,
 		Rollup:                         contracts.RollupAddress,
-		GenesisAccounts:                genesisAccounts,
+		GenesisAccounts:                cfg.GenesisAccounts,
 		SyncedBlock:                    getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 

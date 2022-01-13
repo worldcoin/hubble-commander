@@ -6,43 +6,13 @@ import (
 
 const populatedGenesisAccountByteSize = 232
 
-type RawGenesisAccount struct {
-	PublicKey string       `yaml:"publicKey"`
-	State     GenesisState `yaml:"state"`
-}
-
-type GenesisState struct {
-	StateID  uint32 `yaml:"stateID"`
-	PubKeyID uint32 `yaml:"pubKeyID"`
-	TokenID  uint64 `yaml:"tokenID"`
-	Balance  uint64 `yaml:"balance"`
-	Nonce    uint64 `yaml:"nonce"`
-}
-
-func (s *GenesisState) ToStateLeaf() *StateLeaf {
-	return &StateLeaf{
-		StateID: s.StateID,
-		UserState: UserState{
-			PubKeyID: s.PubKeyID,
-			TokenID:  MakeUint256(s.TokenID),
-			Balance:  MakeUint256(s.Balance),
-			Nonce:    MakeUint256(s.Nonce),
-		},
-	}
-}
-
 type GenesisAccount struct {
-	PublicKey PublicKey
-	State     *StateLeaf
-}
-
-type PopulatedGenesisAccount struct {
 	PublicKey PublicKey `yaml:"public_key"`
 	StateID   uint32    `yaml:"state_id"`
 	State     UserState `yaml:"state"`
 }
 
-func (a *PopulatedGenesisAccount) Bytes() []byte {
+func (a *GenesisAccount) Bytes() []byte {
 	b := make([]byte, populatedGenesisAccountByteSize)
 
 	copy(b[:128], a.PublicKey.Bytes())
@@ -55,7 +25,7 @@ func (a *PopulatedGenesisAccount) Bytes() []byte {
 	return b
 }
 
-func (a *PopulatedGenesisAccount) SetBytes(data []byte) error {
+func (a *GenesisAccount) SetBytes(data []byte) error {
 	err := a.PublicKey.SetBytes(data[:128])
 	if err != nil {
 		return err
