@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"math/big"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -144,6 +146,26 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	s.Equal(tokenID, syncedToken.ID)
 }
 
+func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsStakeWithdrawals() {
+	s.startBlockLoop()
+	s.waitForLatestBlockSync()
+
+	s.submitTransferBatchInTransaction(&s.transfer)
+	s.waitForLatestBlockSync()
+
+	batches, err := s.cmd.storage.GetBatchesInRange(nil, nil)
+	s.NoError(err)
+	s.Len(batches, 2)
+	s.waitForBlock(uint64(*batches[1].FinalisationBlock))
+
+	receipt := s.getReceiptOfTheLastTransaction()
+
+	batchID, err := s.cmd.client.RetrieveStakeWithdrawBatchID(receipt)
+	s.NoError(err)
+
+	s.Equal(batches[1].ID, *batchID)
+}
+
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
 	s.cmd.startWorker("", func() error {
 		err := s.cmd.newBlockLoop()
@@ -197,6 +219,14 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 	}, time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
+func (s *NewBlockLoopTestSuite) waitForBlock(block uint64) {
+	s.Eventually(func() bool {
+		syncedBlock, err := s.cmd.storage.GetSyncedBlock()
+		s.NoError(err)
+		return *syncedBlock >= block
+	}, time.Second, 100*time.Millisecond, "timeout when waiting for finalization block sync")
+}
+
 func (s *NewBlockLoopTestSuite) setAccountsAndChainState() {
 	err := s.storage.SetChainState(&models.ChainState{
 		ChainID:     models.MakeUint256(1337),
@@ -205,6 +235,25 @@ func (s *NewBlockLoopTestSuite) setAccountsAndChainState() {
 	s.NoError(err)
 
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+}
+
+func (s *NewBlockLoopTestSuite) getReceiptOfTheLastTransaction() *types.Receipt {
+	latestBlockNumber, err := s.client.GetLatestBlockNumber()
+	s.NoError(err)
+
+	for block := *latestBlockNumber; block != 0; block-- {
+		bigBlockNumber := big.NewInt(int64(block))
+		header, err := s.client.Backend.HeaderByNumber(context.Background(), bigBlockNumber)
+		s.NoError(err)
+
+		if !header.EmptyReceipts() {
+			receipt, err := s.client.Backend.TransactionReceipt(context.Background(), header.TxHash)
+			s.NoError(err)
+			return receipt
+		}
+	}
+	s.Fail("no blocks with receipt")
+	return nil
 }
 
 func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {
