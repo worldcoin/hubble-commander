@@ -106,15 +106,5 @@ func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txs {
-			txReceipt := stored.NewTxReceiptFromTransfer(&txs[i])
-			txReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(txReceipt)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.MarkTransactionsAsIncluded(models.MakeTransferArray(txs...), commitmentID)
 }
