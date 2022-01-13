@@ -1,22 +1,33 @@
 package setup
 
 import (
+	"encoding/hex"
+	"os"
+	"path"
+
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"gopkg.in/yaml.v2"
 )
 
 func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
-	cfg := config.GetDeployerConfig()
-	accounts := cfg.Bootstrap.GenesisAccounts
+	keys, err := readKeys()
+	if err != nil {
+		return nil, err
+	}
 
 	walletsSeen := make(map[string]bool)
-	wallets := make([]bls.Wallet, 0, len(accounts))
-	for i := range accounts {
-		if accounts[i].PrivateKey == nil {
-			panic("genesis accounts for e2e tests require private keys")
+	wallets := make([]bls.Wallet, 0, len(keys))
+	for i := range keys {
+		if keys[i] == "" {
+			panic("accounts for e2e tests require private key")
 		}
 
-		wallet, err := bls.NewWallet(accounts[i].PrivateKey[:], domain)
+		privateKey, err := hex.DecodeString(keys[i])
+		if err != nil {
+			return nil, err
+		}
+		wallet, err := bls.NewWallet(privateKey, domain)
 		if err != nil {
 			return nil, err
 		}
@@ -31,4 +42,21 @@ func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 		wallets = append(wallets, *wallet)
 	}
 	return wallets, nil
+}
+
+type PrivateKeys []string
+
+func readKeys() (PrivateKeys, error) {
+	accountsPath := path.Join(utils.GetProjectRoot(), "e2e", "setup", "accounts.yaml")
+	yamlFile, err := os.ReadFile(accountsPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var keys PrivateKeys
+	err = yaml.Unmarshal(yamlFile, &keys)
+	if err != nil {
+		return nil, err
+	}
+	return keys, nil
 }

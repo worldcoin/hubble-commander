@@ -13,7 +13,6 @@ func TestReadGenesisFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, len(genesisAccounts), 0)
 	require.Equal(t, genesisAccounts[0].State.Balance.CmpN(0), 1)
-	require.Equal(t, genesisAccounts[len(genesisAccounts)-1].State.Balance.CmpN(0), 0)
 }
 
 func TestDecodeRawGenesisAccounts(t *testing.T) {
