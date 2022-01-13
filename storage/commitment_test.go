@@ -21,6 +21,12 @@ type CommitmentTestSuite struct {
 
 func (s *CommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
+}
+
+func (s *CommitmentTestSuite) SetupTest() {
+	var err error
+	s.storage, err = NewTestStorage()
+	s.NoError(err)
 
 	s.txCommitment = &models.TxCommitment{
 		CommitmentBase: models.CommitmentBase{
@@ -80,12 +86,6 @@ func (s *CommitmentTestSuite) SetupSuite() {
 	}
 }
 
-func (s *CommitmentTestSuite) SetupTest() {
-	var err error
-	s.storage, err = NewTestStorage()
-	s.NoError(err)
-}
-
 func (s *CommitmentTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
@@ -129,13 +129,9 @@ func (s *CommitmentTestSuite) TestAddCommitment_GenesisCommitment() {
 		},
 	}
 
-	s.Panicsf(
-		func() {
-			err := s.storage.AddCommitment(genesisCommitment)
-			s.NoError(err)
-		},
-		"invalid commitment type",
-	)
+	s.Panicsf(func() {
+		_ = s.storage.AddCommitment(genesisCommitment)
+	}, "invalid commitment type")
 }
 
 func (s *CommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
@@ -174,6 +170,58 @@ func (s *CommitmentTestSuite) TestGetCommitmentsByBatchID_DepositsBatch() {
 	s.Equal(s.depositCommitment, commitments[0].ToDepositCommitment())
 }
 
+func (s *CommitmentTestSuite) TestUpdateCommitments_TxCommitment() {
+	s.testUpdateCommitments(s.txCommitment)
+}
+
+func (s *CommitmentTestSuite) TestUpdateCommitments_MMCommitment() {
+	s.testUpdateCommitments(s.mmCommitment)
+}
+
+func (s *CommitmentTestSuite) TestUpdateCommitments_DepositCommitment() {
+	s.testUpdateCommitments(s.depositCommitment)
+}
+
+func (s *CommitmentTestSuite) TestUpdateCommitments_InvalidCommitmentType() {
+	commitment := models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      models.MakeUint256(10),
+				IndexInBatch: 0,
+			},
+			Type: batchtype.Genesis,
+		},
+	}
+
+	s.Panicsf(func() {
+		_ = s.storage.UpdateCommitments([]models.Commitment{&commitment})
+	}, "invalid commitment type")
+}
+
+func (s *CommitmentTestSuite) TestUpdateCommitments_NonexistentCommitment() {
+	commitment := *s.txCommitment
+	commitment.BodyHash = utils.NewRandomHash()
+	err := s.storage.UpdateCommitments([]models.Commitment{&commitment})
+	s.ErrorIs(err, NewNotFoundError("commitment"))
+}
+
 func TestCommitmentTestSuite(t *testing.T) {
 	suite.Run(t, new(CommitmentTestSuite))
+}
+
+func (s *CommitmentTestSuite) testUpdateCommitments(commitment models.Commitment) {
+	commitment.GetCommitmentBase().ID.IndexInBatch = uint8(0)
+
+	err := s.storage.AddCommitment(commitment)
+	s.NoError(err)
+
+	commitment.GetCommitmentBase().PostStateRoot = utils.RandomHash()
+
+	err = s.storage.UpdateCommitments([]models.Commitment{commitment})
+	s.NoError(err)
+
+	commitments, err := s.storage.GetCommitmentsByBatchID(commitment.GetCommitmentBase().ID.BatchID)
+	s.NoError(err)
+	s.Len(commitments, 1)
+	s.Equal(commitment, commitments[0])
 }

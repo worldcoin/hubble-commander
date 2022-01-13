@@ -83,13 +83,13 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder
 }
 
 func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
-	commitments, err := c.storage.GetTxCommitmentsByBatchID(batch.ID)
+	commitments, err := c.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return err
 	}
 	for i := range commitments {
-		commitments[i].BodyHash = batch.Commitments[i].BodyHash(batch.AccountTreeRoot)
+		commitments[i].SetBodyHash(batch.Commitments[i].BodyHash(batch.AccountTreeRoot))
 	}
 
-	return c.storage.UpdateTxCommitments(commitments)
+	return c.storage.UpdateCommitments(commitments)
 }

@@ -102,33 +102,6 @@ func (s *TxCommitmentTestSuite) TestGetTxCommitment_InvalidCommitmentType() {
 	s.Nil(res)
 }
 
-func (s *TxCommitmentTestSuite) TestUpdateTxCommitments() {
-	expectedCommitments := make([]models.TxCommitment, 2)
-	for i := range expectedCommitments {
-		expectedCommitments[i] = txCommitment
-		expectedCommitments[i].ID.IndexInBatch = uint8(i)
-
-		err := s.storage.AddTxCommitment(&expectedCommitments[i])
-		s.NoError(err)
-
-		expectedCommitments[i].BodyHash = utils.NewRandomHash()
-	}
-
-	err := s.storage.UpdateTxCommitments(expectedCommitments)
-	s.NoError(err)
-
-	commitments, err := s.storage.GetTxCommitmentsByBatchID(expectedCommitments[0].ID.BatchID)
-	s.NoError(err)
-	s.Equal(expectedCommitments, commitments)
-}
-
-func (s *TxCommitmentTestSuite) TestUpdateTxCommitments_NonexistentCommitment() {
-	commitment := txCommitment
-	commitment.BodyHash = utils.NewRandomHash()
-	err := s.storage.UpdateTxCommitments([]models.TxCommitment{commitment})
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-}
-
 func (s *TxCommitmentTestSuite) TestGetTxCommitmentsByBatchID() {
 	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)

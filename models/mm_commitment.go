@@ -14,8 +14,8 @@ type MMCommitment struct {
 	WithdrawRoot      common.Hash
 }
 
-func (c *MMCommitment) GetCommitmentBase() CommitmentBase {
-	return c.CommitmentBase
+func (c *MMCommitment) GetCommitmentBase() *CommitmentBase {
+	return &c.CommitmentBase
 }
 
 func (c *MMCommitment) SetBodyHash(bodyHash *common.Hash) {

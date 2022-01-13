@@ -92,33 +92,6 @@ func (s *MMCommitmentTestSuite) TestGetMMCommitment_InvalidCommitmentType() {
 	s.Nil(res)
 }
 
-func (s *MMCommitmentTestSuite) TestUpdateMMCommitments() {
-	expectedCommitments := make([]models.MMCommitment, 2)
-	for i := range expectedCommitments {
-		expectedCommitments[i] = mmCommitment
-		expectedCommitments[i].ID.IndexInBatch = uint8(i)
-
-		err := s.storage.AddMMCommitment(&expectedCommitments[i])
-		s.NoError(err)
-
-		expectedCommitments[i].BodyHash = utils.NewRandomHash()
-	}
-
-	err := s.storage.UpdateMMCommitments(expectedCommitments)
-	s.NoError(err)
-
-	commitments, err := s.storage.GetMMCommitmentsByBatchID(expectedCommitments[0].ID.BatchID)
-	s.NoError(err)
-	s.Equal(expectedCommitments, commitments)
-}
-
-func (s *MMCommitmentTestSuite) TestUpdateMMCommitments_NonexistentCommitment() {
-	commitment := mmCommitment
-	commitment.BodyHash = utils.NewRandomHash()
-	err := s.storage.UpdateMMCommitments([]models.MMCommitment{commitment})
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-}
-
 func (s *MMCommitmentTestSuite) TestGetMMCommitmentsByBatchID() {
 	err := s.storage.AddMMCommitment(&mmCommitment)
 	s.NoError(err)

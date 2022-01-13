@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *CommitmentStorage) AddTxCommitment(commitment *models.TxCommitment) error {
@@ -21,21 +20,6 @@ func (s *CommitmentStorage) GetTxCommitment(id *models.CommitmentID) (*models.Tx
 		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	return commitment.ToTxCommitment(), nil
-}
-
-func (s *CommitmentStorage) UpdateTxCommitments(commitments []models.TxCommitment) error {
-	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		for i := range commitments {
-			err := txDatabase.Badger.Update(commitments[i].ID, stored.MakeCommitmentFromTxCommitment(&commitments[i]))
-			if err == bh.ErrNotFound {
-				return NewNotFoundError("commitment")
-			}
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 func (s *CommitmentStorage) GetTxCommitmentsByBatchID(batchID models.Uint256) ([]models.TxCommitment, error) {

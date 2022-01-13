@@ -16,8 +16,8 @@ type TxCommitment struct {
 	BodyHash          *common.Hash
 }
 
-func (c *TxCommitment) GetCommitmentBase() CommitmentBase {
-	return c.CommitmentBase
+func (c *TxCommitment) GetCommitmentBase() *CommitmentBase {
+	return &c.CommitmentBase
 }
 
 func (c *TxCommitment) SetBodyHash(bodyHash *common.Hash) {

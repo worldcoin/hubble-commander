@@ -13,8 +13,8 @@ type DepositCommitment struct {
 	Deposits    []PendingDeposit
 }
 
-func (c *DepositCommitment) GetCommitmentBase() CommitmentBase {
-	return c.CommitmentBase
+func (c *DepositCommitment) GetCommitmentBase() *CommitmentBase {
+	return &c.CommitmentBase
 }
 
 func (c *DepositCommitment) SetBodyHash(_ *common.Hash) {

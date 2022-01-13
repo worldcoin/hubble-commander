@@ -3,6 +3,8 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {
@@ -57,4 +59,32 @@ func (s *CommitmentStorage) GetCommitmentsByBatchID(batchID models.Uint256) ([]m
 	}
 
 	return commitments, nil
+}
+
+func (s *CommitmentStorage) UpdateCommitments(commitments []models.Commitment) error {
+	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
+		for i := range commitments {
+			var commitment stored.Commitment
+
+			switch commitments[i].GetCommitmentBase().Type {
+			case batchtype.Transfer, batchtype.Create2Transfer:
+				commitment = stored.MakeCommitmentFromTxCommitment(commitments[i].ToTxCommitment())
+			case batchtype.MassMigration:
+				commitment = stored.MakeCommitmentFromMMCommitment(commitments[i].ToMMCommitment())
+			case batchtype.Deposit:
+				commitment = stored.MakeCommitmentFromDepositCommitment(commitments[i].ToDepositCommitment())
+			default:
+				panic("invalid commitment type")
+			}
+
+			err := txDatabase.Badger.Update(commitments[i].GetCommitmentBase().ID, commitment)
+			if err == bh.ErrNotFound {
+				return NewNotFoundError("commitment")
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
