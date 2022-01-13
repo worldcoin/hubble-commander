@@ -183,7 +183,7 @@ func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) {
 	pendingBatch, commitments := s.createBatch(tx)
 
 	commitment := commitments[0].ToTxCommitmentWithTxs()
-	commitments[0].ToTxCommitmentWithTxs().Transactions = append(commitment.Transactions, commitment.Transactions...)
+	commitments[0].ToTxCommitmentWithTxs().Transactions = utils.RandomBytes(uint64(2 * len(commitment.Transactions)))
 
 	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
