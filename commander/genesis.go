@@ -45,7 +45,7 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 	log.Println("Registering genesis accounts")
 	txs := make([]types.Transaction, 0, len(accounts))
 	for i := range accounts {
-		tx, err := accountMgr.RegisterAccount(accounts[i].PublicKey)
+		tx, err := accountMgr.RegisterAccount(&accounts[i].PublicKey)
 		if err != nil {
 			return errors.WithStack(err)
 		}

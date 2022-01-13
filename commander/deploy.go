@@ -13,8 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
-
 func Deploy(cfg *config.DeployerConfig, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
@@ -51,11 +49,6 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerBootstrapConfig,
 ) (*models.ChainState, error) {
-	err := validateGenesisAccounts(cfg.GenesisAccounts)
-	if err != nil {
-		return nil, err
-	}
-
 	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain)
 	if err != nil {
 		return nil, err
@@ -85,7 +78,7 @@ func deployContractsAndSetupGenesisState(
 	genesisAccounts := make([]models.PopulatedGenesisAccount, 0, len(cfg.GenesisAccounts))
 	for i := range cfg.GenesisAccounts {
 		genesisAccounts = append(genesisAccounts, models.PopulatedGenesisAccount{
-			PublicKey: *cfg.GenesisAccounts[i].PublicKey,
+			PublicKey: cfg.GenesisAccounts[i].PublicKey,
 			StateID:   cfg.GenesisAccounts[i].State.StateID,
 			State:     cfg.GenesisAccounts[i].State.UserState,
 		})
@@ -130,14 +123,4 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	return chainState, nil
-}
-
-func validateGenesisAccounts(accounts []models.GenesisAccount) error {
-	for i := range accounts {
-		if accounts[i].PublicKey == nil {
-			return ErrNoPublicKeysInGenesisAccounts
-		}
-	}
-
-	return nil
 }
