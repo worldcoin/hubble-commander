@@ -14,7 +14,7 @@ func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {
 	case batchtype.MassMigration:
 		return s.AddMMCommitment(commitment.ToMMCommitment())
 	case batchtype.Deposit:
-		return s.AddDepositCommitment(commitment.ToDepositCommitment())
+		return s.addDepositCommitment(commitment.ToDepositCommitment())
 	default:
 		panic("invalid commitment type")
 	}

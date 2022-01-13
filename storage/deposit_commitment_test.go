@@ -53,7 +53,7 @@ func (s *DepositCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_AddAndRetrieve() {
-	err := s.storage.AddDepositCommitment(&s.commitment)
+	err := s.storage.addDepositCommitment(&s.commitment)
 	s.NoError(err)
 
 	actual, err := s.storage.GetDepositCommitment(&s.commitment.ID)

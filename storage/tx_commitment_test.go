@@ -94,7 +94,7 @@ func (s *TxCommitmentTestSuite) TestGetTxCommitment_InvalidCommitmentType() {
 			},
 		},
 	}
-	err := s.storage.AddDepositCommitment(depositCommitment)
+	err := s.storage.AddCommitment(depositCommitment)
 	s.NoError(err)
 
 	res, err := s.storage.GetTxCommitment(&depositCommitment.ID)

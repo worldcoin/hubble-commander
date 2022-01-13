@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *CommitmentStorage) AddDepositCommitment(commitment *models.DepositCommitment) error {
+func (s *CommitmentStorage) addDepositCommitment(commitment *models.DepositCommitment) error {
 	return s.database.Badger.Insert(commitment.ID, stored.MakeCommitmentFromDepositCommitment(commitment))
 }
 

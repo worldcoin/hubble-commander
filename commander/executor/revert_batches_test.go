@@ -155,7 +155,7 @@ func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositS
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.executionCtx.storage.AddDepositCommitment(&models.DepositCommitment{
+	err = s.executionCtx.storage.AddCommitment(&models.DepositCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID: pendingBatch.ID,

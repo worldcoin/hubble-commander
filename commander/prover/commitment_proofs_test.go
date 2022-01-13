@@ -183,7 +183,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			},
 		},
 	}
-	err = s.storage.AddDepositCommitment(&commitment)
+	err = s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	expected := models.CommitmentInclusionProof{

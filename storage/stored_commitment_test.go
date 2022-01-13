@@ -81,7 +81,7 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_LatestDepositCommitm
 		s.NoError(err)
 	}
 
-	err := s.storage.AddDepositCommitment(&s.depositCommitment)
+	err := s.storage.AddCommitment(&s.depositCommitment)
 	s.NoError(err)
 
 	latestCommitment, err := s.storage.GetLatestCommitment()
@@ -129,7 +129,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 		BatchID:      batches[0].ID,
 		IndexInBatch: 2,
 	}
-	err := s.storage.AddDepositCommitment(&depositCommitment)
+	err := s.storage.AddCommitment(&depositCommitment)
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
