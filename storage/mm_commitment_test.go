@@ -59,9 +59,9 @@ func (s *MMCommitmentTestSuite) TestAddMMCommitment_AddAndRetrieve() {
 	err := s.storage.AddMMCommitment(&mmCommitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetMMCommitment(&mmCommitment.ID)
+	actual, err := s.storage.GetCommitment(&mmCommitment.ID)
 	s.NoError(err)
-	s.Equal(mmCommitment, *actual)
+	s.Equal(mmCommitment, *actual.ToMMCommitment())
 }
 
 func (s *MMCommitmentTestSuite) addRandomBatch() models.Uint256 {
@@ -75,21 +75,6 @@ func (s *MMCommitmentTestSuite) addRandomBatch() models.Uint256 {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 	return batch.ID
-}
-
-func (s *MMCommitmentTestSuite) TestGetMMCommitment_NonexistentCommitment() {
-	res, err := s.storage.GetMMCommitment(&mmCommitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
-}
-
-func (s *MMCommitmentTestSuite) TestGetMMCommitment_InvalidCommitmentType() {
-	err := s.storage.AddTxCommitment(&txCommitment)
-	s.NoError(err)
-
-	res, err := s.storage.GetMMCommitment(&txCommitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
 }
 
 func TestMMCommitmentTestSuite(t *testing.T) {

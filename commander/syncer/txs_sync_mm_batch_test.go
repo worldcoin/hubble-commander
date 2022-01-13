@@ -45,15 +45,15 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.NoError(err)
 	s.Len(decodedBatches, 1)
 
-	commitment, err := s.storage.GetMMCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
 	expectedCommitment.BodyHash = decodedBatches[0].ToDecodedTxBatch().Commitments[0].BodyHash(s.getAccountTreeRoot())
-	s.Equal(expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *commitment.ToMMCommitment())
 
 	massMigration, err := s.storage.GetMassMigration(tx.Hash)
 	s.NoError(err)
 	massMigration.Signature = tx.Signature
-	tx.CommitmentID = &commitment.ID
+	tx.CommitmentID = &commitment.ToMMCommitment().ID
 	s.Equal(tx, *massMigration)
 }
 

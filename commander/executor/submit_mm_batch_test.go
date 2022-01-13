@@ -89,10 +89,10 @@ func (s *SubmitMassMigrationBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetMMCommitment(&commitments[i].ToMMCommitmentWithTxs().ID)
+		commit, err := s.storage.GetCommitment(&commitments[i].ToMMCommitmentWithTxs().ID)
 		s.NoError(err)
-		s.Equal(commitments[i].ToMMCommitmentWithTxs().MMCommitment, *commit)
-		s.Equal(batch.ID, commit.ID.BatchID)
+		s.Equal(commitments[i].ToMMCommitmentWithTxs().MMCommitment, *commit.ToMMCommitment())
+		s.Equal(batch.ID, commit.ToMMCommitment().ID.BatchID)
 	}
 }
 
