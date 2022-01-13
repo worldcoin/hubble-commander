@@ -16,6 +16,7 @@ type Commitment interface {
 type CommitmentWithTxs interface {
 	CalcBodyHash(accountRoot common.Hash) *common.Hash
 	CalcAndSetBodyHash(accountRoot common.Hash)
+	ToCommitment() Commitment
 	ToTxCommitmentWithTxs() *TxCommitmentWithTxs
 	ToMMCommitmentWithTxs() *MMCommitmentWithTxs
 }

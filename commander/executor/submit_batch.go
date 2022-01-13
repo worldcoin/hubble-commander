@@ -2,7 +2,6 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
 var (
@@ -28,18 +27,14 @@ func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.Commi
 		return err
 	}
 
-	return c.addCommitments(commitments, batch.Type)
+	return c.addCommitments(commitments)
 }
 
-func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs, batchType batchtype.BatchType) error {
+func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs) error {
 	for i := range commitments {
 		var err error
 
-		if batchType == batchtype.Transfer || batchType == batchtype.Create2Transfer {
-			err = c.storage.AddTxCommitment(&commitments[i].ToTxCommitmentWithTxs().TxCommitment)
-		} else if batchType == batchtype.MassMigration {
-			err = c.storage.AddMMCommitment(&commitments[i].ToMMCommitmentWithTxs().MMCommitment)
-		}
+		err = c.storage.AddCommitment(commitments[i].ToCommitment())
 
 		if err != nil {
 			return err

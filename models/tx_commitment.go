@@ -57,6 +57,10 @@ func (c *TxCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash
 	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
 }
 
+func (c *TxCommitmentWithTxs) ToCommitment() Commitment {
+	return c.ToTxCommitment()
+}
+
 func (c *TxCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
 	return c
 }
