@@ -18,6 +18,10 @@ func (c *MMCommitment) GetCommitmentBase() CommitmentBase {
 	return c.CommitmentBase
 }
 
+func (c *MMCommitment) SetBodyHash(bodyHash *common.Hash) {
+	c.BodyHash = bodyHash
+}
+
 func (c *MMCommitment) GetBodyHash() common.Hash {
 	return *c.BodyHash
 }

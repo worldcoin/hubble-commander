@@ -17,6 +17,10 @@ func (c *DepositCommitment) GetCommitmentBase() CommitmentBase {
 	return c.CommitmentBase
 }
 
+func (c *DepositCommitment) SetBodyHash(_ *common.Hash) {
+	// NOOP
+}
+
 func (c *DepositCommitment) GetBodyHash() common.Hash {
 	return consts.ZeroHash
 }
