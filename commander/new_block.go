@@ -64,6 +64,12 @@ func (c *Commander) newBlockLoop() error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
+
+			err = c.withdrawRemainingStakes(*latestBlockNumber)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
 		}
 	}
@@ -149,11 +155,6 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	duration, err := metrics.MeasureDuration(func() error {
 		return c.syncRange(startBlock, endBlock)
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.withdrawRemainingStakes(endBlock)
 	if err != nil {
 		return nil, err
 	}
