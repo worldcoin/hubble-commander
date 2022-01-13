@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -11,15 +13,26 @@ import (
 )
 
 var (
-	errProofMethodsDisabled     = NewAPIError(50000, "proof methods disabled")
+	ErrUnsupportedCommitmentTypeForProofing = fmt.Errorf(
+		"commitment inclusion proof can only be generated for Transfer/Create2Transfer/MassMigration commitments",
+	)
+
+	APIErrProofMethodsDisabled              = NewAPIError(50000, "proof methods disabled")
+	APIErrCannotGenerateCommitmentProof     = NewAPIError(50001, "commitment inclusion proof could not be generated")
+	APIErrUnsupportedCommitmentTypeForProof = NewAPIError(
+		50008,
+		"commitment inclusion proof can only be generated for Transfer/Create2Transfer/MassMigration commitments",
+	)
+
 	getCommitmentProofAPIErrors = map[error]*APIError{
-		storage.AnyNotFoundError: NewAPIError(50001, "commitment inclusion proof could not be generated"),
+		storage.AnyNotFoundError:                APIErrCannotGenerateCommitmentProof,
+		ErrUnsupportedCommitmentTypeForProofing: APIErrUnsupportedCommitmentTypeForProof,
 	}
 )
 
 func (a *API) GetCommitmentProof(commitmentID models.CommitmentID) (*dto.CommitmentInclusionProof, error) {
 	if !a.cfg.EnableProofMethods {
-		return nil, errProofMethodsDisabled
+		return nil, APIErrProofMethodsDisabled
 	}
 	commitmentProof, err := a.unsafeGetCommitmentProof(commitmentID)
 	if err != nil {
@@ -32,6 +45,9 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 	batch, err := a.storage.GetMinedBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+	if batch.Type != batchtype.Transfer && batch.Type != batchtype.Create2Transfer && batch.Type != batchtype.MassMigration {
+		return nil, errors.WithStack(ErrUnsupportedCommitmentTypeForProofing)
 	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)

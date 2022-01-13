@@ -12,7 +12,7 @@ var getUserStateProofAPIErrors = map[error]*APIError{
 
 func (a *API) GetUserStateProof(id uint32) (*dto.StateMerkleProof, error) {
 	if !a.cfg.EnableProofMethods {
-		return nil, errProofMethodsDisabled
+		return nil, APIErrProofMethodsDisabled
 	}
 	userStateProof, err := a.unsafeGetUserStateProof(id)
 	if err != nil {
