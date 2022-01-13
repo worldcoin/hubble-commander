@@ -9,7 +9,6 @@
 - [Commitment loop](commitment/loop.md)
 - [Transaction Structure](transaction_structure.md)
 - [Contracts upgradeability](contracts-upgradeability.md)
-- [Data schema](data_schema.md)
 - [Deposits](deposits.md)
 - [Mass Migrations](mass_migration.md)
 - [State Rent](state_rent.md)
