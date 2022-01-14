@@ -1,36 +1,19 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
-var (
-	ErrOnlyMassMigrationCommitmentsForProofing = fmt.Errorf(
-		"mass migration commitment inclusion proof cannot be generated for different type of commitments",
-	)
-
-	APIErrOnlyMassMigrationCommitmentsForProofing = NewAPIError(
-		50009,
-		"mass migration commitment inclusion proof cannot be generated for different type of commitments",
-	)
-
-	APIErrCannotGenerateMMCommitmentProof = NewAPIError(50004, "mass migration commitment inclusion proof could not be generated")
-
-	getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
-		storage.AnyNotFoundError:                   APIErrCannotGenerateMMCommitmentProof,
-		ErrOnlyMassMigrationCommitmentsForProofing: APIErrOnlyMassMigrationCommitmentsForProofing,
-	}
-)
+var getMassMigrationCommitmentProofAPIErrors = map[error]*APIError{
+	storage.AnyNotFoundError: NewAPIError(50004, "mass migration commitment inclusion proof could not be generated"),
+}
 
 func (a *API) GetMassMigrationCommitmentProof(commitmentID models.CommitmentID) (*dto.MassMigrationCommitmentProof, error) {
 	if !a.cfg.EnableProofMethods {
@@ -47,10 +30,6 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 	batch, err := a.storage.GetBatch(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	if batch.Type != batchtype.MassMigration {
-		return nil, ErrOnlyMassMigrationCommitmentsForProofing
 	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
