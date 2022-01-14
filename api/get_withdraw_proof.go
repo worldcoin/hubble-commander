@@ -41,7 +41,7 @@ var getWithdrawProofAPIErrors = map[error]*APIError{
 
 func (a *API) GetWithdrawProof(commitmentID models.CommitmentID, transactionHash common.Hash) (*dto.WithdrawProof, error) {
 	if !a.cfg.EnableProofMethods {
-		return nil, APIErrProofMethodsDisabled
+		return nil, errProofMethodsDisabled
 	}
 	withdrawTreeProofAndRoot, err := a.unsafeGetWithdrawProof(commitmentID, transactionHash)
 	if err != nil {
