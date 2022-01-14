@@ -50,13 +50,14 @@ func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWith
 
 	targetSpokeID := 2
 	targetTokenID := models.MakeUint256(0)
-	targetFeeReceiver := commitments[0].ToMMCommitmentWithTxs().FeeReceiver
+	commitment := commitments[0].ToMMCommitmentWithTxs()
+	targetFeeReceiver := commitment.FeeReceiver
 	totalAmount := massMigrations[0].Amount.Add(&massMigrations[1].Amount)
-	s.Equal(withdrawRoot, commitments[0].ToMMCommitmentWithTxs().WithdrawRoot)
-	s.EqualValues(targetSpokeID, commitments[0].ToMMCommitmentWithTxs().Meta.SpokeID)
-	s.Equal(targetTokenID, commitments[0].ToMMCommitmentWithTxs().Meta.TokenID)
-	s.Equal(*totalAmount, commitments[0].ToMMCommitmentWithTxs().Meta.Amount)
-	s.Equal(targetFeeReceiver, commitments[0].ToMMCommitmentWithTxs().Meta.FeeReceiver)
+	s.Equal(withdrawRoot, commitment.WithdrawRoot)
+	s.EqualValues(targetSpokeID, commitment.Meta.SpokeID)
+	s.Equal(targetTokenID, commitment.Meta.TokenID)
+	s.Equal(*totalAmount, commitment.Meta.Amount)
+	s.Equal(targetFeeReceiver, commitment.Meta.FeeReceiver)
 }
 
 func TestMMCommitmentsTestSuite(t *testing.T) {

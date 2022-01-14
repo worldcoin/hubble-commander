@@ -65,10 +65,12 @@ func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
 		IndexInBatch: 0,
 	})
 	s.NoError(err)
-	s.Equal(*root, commitment.ToDepositCommitment().PostStateRoot)
-	s.Equal(s.depositSubtree.ID, commitment.ToDepositCommitment().SubtreeID)
-	s.Equal(s.depositSubtree.Root, commitment.ToDepositCommitment().SubtreeRoot)
-	s.Equal(s.depositSubtree.Deposits, commitment.ToDepositCommitment().Deposits)
+
+	depositCommitment := commitment.ToDepositCommitment()
+	s.Equal(*root, depositCommitment.PostStateRoot)
+	s.Equal(s.depositSubtree.ID, depositCommitment.SubtreeID)
+	s.Equal(s.depositSubtree.Root, depositCommitment.SubtreeRoot)
+	s.Equal(s.depositSubtree.Deposits, depositCommitment.Deposits)
 }
 
 func (s *DepositsTestSuite) TestCreateCommitment_NotEnoughDeposits() {

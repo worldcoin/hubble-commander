@@ -45,12 +45,13 @@ func (c *TxsContext) syncCommitment(batch *eth.DecodedTxBatch, commitment encode
 	return c.addCommitment(batch, commitment)
 }
 
-func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder.Commitment) (err error) {
-	decodedCommitment := commitment.ToDecodedCommitment()
+func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, encodedCommitment encoder.Commitment) (err error) {
+	decodedCommitment := encodedCommitment.ToDecodedCommitment()
 
+	var commitment models.Commitment
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		txCommitment := &models.TxCommitment{
+		commitment = &models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID:            decodedCommitment.ID,
 				Type:          batch.Type,
@@ -58,11 +59,10 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder
 			},
 			FeeReceiver:       decodedCommitment.FeeReceiver,
 			CombinedSignature: decodedCommitment.CombinedSignature,
-			BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
+			BodyHash:          encodedCommitment.BodyHash(batch.AccountTreeRoot),
 		}
-		err = c.storage.AddCommitment(txCommitment)
 	case batchtype.MassMigration:
-		mmCommitment := &models.MMCommitment{
+		commitment = &models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID:            decodedCommitment.ID,
 				Type:          batch.Type,
@@ -70,16 +70,15 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder
 			},
 			FeeReceiver:       decodedCommitment.FeeReceiver,
 			CombinedSignature: decodedCommitment.CombinedSignature,
-			BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
-			Meta:              commitment.(*encoder.DecodedMMCommitment).Meta,
-			WithdrawRoot:      commitment.(*encoder.DecodedMMCommitment).WithdrawRoot,
+			BodyHash:          encodedCommitment.BodyHash(batch.AccountTreeRoot),
+			Meta:              encodedCommitment.(*encoder.DecodedMMCommitment).Meta,
+			WithdrawRoot:      encodedCommitment.(*encoder.DecodedMMCommitment).WithdrawRoot,
 		}
-		err = c.storage.AddCommitment(mmCommitment)
 	default:
 		panic("invalid batch type")
 	}
 
-	return err
+	return c.storage.AddCommitment(commitment)
 }
 
 func (c *TxsContext) setCommitmentsBodyHash(batch *eth.DecodedTxBatch) error {
