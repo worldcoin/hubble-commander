@@ -118,10 +118,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	s.NotNil(batches[0].FinalisationBlock)
 	s.Equal(accountRoot, *batches[0].AccountTreeRoot)
 
-	commitments, err := s.storage.GetTxCommitmentsByBatchID(batches[0].ID)
+	commitments, err := s.storage.GetCommitmentsByBatchID(batches[0].ID)
 	s.NoError(err)
 	s.Len(commitments, 1)
-	s.NotNil(commitments[0].BodyHash)
+	s.NotNil(commitments[0].ToTxCommitment().BodyHash)
 }
 
 func (s *SyncTransferBatchTestSuite) TestSyncBatch_TooManyTxsInCommitment() {
