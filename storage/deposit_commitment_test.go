@@ -61,15 +61,6 @@ func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_AddAndRetrieve() {
 	s.Equal(s.commitment, *actual.ToDepositCommitment())
 }
 
-func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_InvalidCommitmentTyp() {
-	err := s.storage.AddCommitment(&txCommitment)
-	s.NoError(err)
-
-	res, err := s.storage.GetCommitment(&s.commitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
-}
-
 func TestDepositCommitmentTestSuite(t *testing.T) {
 	suite.Run(t, new(DepositCommitmentTestSuite))
 }
