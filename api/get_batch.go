@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -70,6 +71,33 @@ func (a *API) createBatchWithCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
+	switch batch.Type {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return a.createBatchWithTxCommitments(batch, submissionBlock, commitments)
+	case batchtype.MassMigration:
+		return a.createBatchWithMMCommitments(batch, submissionBlock, commitments)
+	default:
+		return &dto.BatchWithRootAndCommitments{
+			Batch: dto.Batch{
+				ID:                batch.ID,
+				Hash:              batch.Hash,
+				Type:              batch.Type,
+				TransactionHash:   batch.TransactionHash,
+				SubmissionBlock:   submissionBlock,
+				SubmissionTime:    batch.SubmissionTime,
+				FinalisationBlock: batch.FinalisationBlock,
+			},
+			AccountTreeRoot: batch.AccountTreeRoot,
+			Commitments:     nil,
+		}, nil
+	}
+}
+
+func (a *API) createBatchWithTxCommitments(
+	batch *models.Batch,
+	submissionBlock uint32,
+	commitments []models.Commitment,
+) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {
 		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToTxCommitment().FeeReceiver)
@@ -77,8 +105,28 @@ func (a *API) createBatchWithCommitments(
 			return nil, err
 		}
 
-		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenID(
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromTxCommitment(
 			commitments[i].ToTxCommitment(),
+			stateLeaf.TokenID,
+		))
+	}
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+}
+
+func (a *API) createBatchWithMMCommitments(
+	batch *models.Batch,
+	submissionBlock uint32,
+	commitments []models.Commitment,
+) (*dto.BatchWithRootAndCommitments, error) {
+	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
+	for i := range commitments {
+		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToMMCommitment().FeeReceiver)
+		if err != nil {
+			return nil, err
+		}
+
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromMMCommitment(
+			commitments[i].ToMMCommitment(),
 			stateLeaf.TokenID,
 		))
 	}

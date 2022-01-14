@@ -40,9 +40,11 @@ type CommitmentWithTokenID struct {
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
 	PostStateRoot      common.Hash
+	Meta               *MassMigrationMeta
+	WithdrawRoot       *common.Hash
 }
 
-func MakeCommitmentWithTokenID(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
+func MakeCommitmentWithTokenIDFromTxCommitment(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
 	return CommitmentWithTokenID{
 		ID: CommitmentID{
 			BatchID:      commitment.ID.BatchID,
@@ -53,5 +55,28 @@ func MakeCommitmentWithTokenID(commitment *models.TxCommitment, tokenID models.U
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
 		PostStateRoot:      commitment.PostStateRoot,
+		Meta:               nil,
+		WithdrawRoot:       nil,
+	}
+}
+
+func MakeCommitmentWithTokenIDFromMMCommitment(commitment *models.MMCommitment, tokenID models.Uint256) CommitmentWithTokenID {
+	return CommitmentWithTokenID{
+		ID: CommitmentID{
+			BatchID:      commitment.ID.BatchID,
+			IndexInBatch: commitment.ID.IndexInBatch,
+		},
+		LeafHash:           commitment.LeafHash(),
+		TokenID:            tokenID,
+		FeeReceiverStateID: commitment.FeeReceiver,
+		CombinedSignature:  commitment.CombinedSignature,
+		PostStateRoot:      commitment.PostStateRoot,
+		Meta: &MassMigrationMeta{
+			SpokeID:     commitment.Meta.SpokeID,
+			TokenID:     commitment.Meta.TokenID,
+			Amount:      commitment.Meta.Amount,
+			FeeReceiver: commitment.Meta.FeeReceiver,
+		},
+		WithdrawRoot: &commitment.WithdrawRoot,
 	}
 }
