@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -62,19 +61,6 @@ func (s *MMCommitmentTestSuite) TestAddMMCommitment_AddAndRetrieve() {
 	actual, err := s.storage.GetCommitment(&mmCommitment.ID)
 	s.NoError(err)
 	s.Equal(mmCommitment, *actual.ToMMCommitment())
-}
-
-func (s *MMCommitmentTestSuite) addRandomBatch() models.Uint256 {
-	batch := models.Batch{
-		ID:                models.MakeUint256(123),
-		Type:              batchtype.MassMigration,
-		TransactionHash:   utils.RandomHash(),
-		Hash:              utils.NewRandomHash(),
-		FinalisationBlock: ref.Uint32(1234),
-	}
-	err := s.storage.AddBatch(&batch)
-	s.NoError(err)
-	return batch.ID
 }
 
 func TestMMCommitmentTestSuite(t *testing.T) {

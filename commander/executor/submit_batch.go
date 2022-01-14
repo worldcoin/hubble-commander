@@ -32,10 +32,7 @@ func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.Commi
 
 func (c *TxsContext) addCommitments(commitments []models.CommitmentWithTxs) error {
 	for i := range commitments {
-		var err error
-
-		err = c.storage.AddCommitment(commitments[i].ToCommitment())
-
+		err := c.storage.AddCommitment(commitments[i].ToCommitment())
 		if err != nil {
 			return err
 		}
