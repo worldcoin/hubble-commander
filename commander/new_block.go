@@ -65,7 +65,7 @@ func (c *Commander) newBlockLoop() error {
 				return errors.WithStack(err)
 			}
 
-			err = c.withdrawRemainingStakes(*latestBlockNumber)
+			err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -214,6 +214,10 @@ func (c *Commander) withdrawRemainingStakes(finalizationBlock uint64) error {
 	}
 	for _, stake := range stakes {
 		err = c.client.WithdrawStake(&stake.BatchID)
+		if err != nil {
+			return err
+		}
+		err = c.storage.RemovePendingStakeWithdrawal(stake.BatchID)
 		if err != nil {
 			return err
 		}

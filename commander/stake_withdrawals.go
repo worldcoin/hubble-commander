@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -37,7 +38,7 @@ func (c *Commander) unmeasuredSyncStakeWithdrawals(startBlock, endBlock uint64) 
 		}
 
 		err = c.storage.RemovePendingStakeWithdrawal(models.MakeUint256FromBig(*it.Event.BatchID))
-		if err != nil {
+		if err != nil && !storage.IsNotFoundError(err) {
 			return err
 		}
 	}
