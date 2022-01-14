@@ -52,13 +52,13 @@ func (c *TxCommitmentBody) SetBytes(data []byte) error {
 		return models.ErrInvalidLength
 	}
 
-	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
 	err := c.CombinedSignature.SetBytes(data[4:68])
 	if err != nil {
 		return err
 	}
-	c.BodyHash = decodeHashPointer(data[68:101])
 
+	c.FeeReceiver = binary.BigEndian.Uint32(data[0:4])
+	c.BodyHash = decodeHashPointer(data[68:101])
 	return nil
 }
 

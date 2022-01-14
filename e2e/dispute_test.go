@@ -76,7 +76,7 @@ func testDisputeSignatureTransfer(t *testing.T, client jsonrpc.RPCClient, ethCli
 
 func testDisputeSignatureC2T(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client, receiverWallet bls.Wallet) {
 	requireRollbackCompleted(t, ethClient, func() {
-		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey())
+		sendC2TBatchWithInvalidSignature(t, ethClient, receiverWallet.PublicKey(), 1)
 	})
 
 	requireBatchesCount(t, client, 1)
@@ -216,7 +216,7 @@ func sendTransferBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, 
 	sendTransferCommitment(t, ethClient, encodedTransfer, batchID)
 }
 
-func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey) {
+func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -244,7 +244,7 @@ func sendC2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, toPub
 		},
 		Transactions: encodedTransfer,
 	}
-	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, batchID)
 }
 
 func sendC2TBatchWithInvalidStateRoot(t *testing.T, ethClient *eth.Client, toPublicKey *models.PublicKey, batchID uint64) {

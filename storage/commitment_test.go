@@ -205,10 +205,6 @@ func (s *CommitmentTestSuite) TestUpdateCommitments_NonexistentCommitment() {
 	s.ErrorIs(err, NewNotFoundError("commitment"))
 }
 
-func TestCommitmentTestSuite(t *testing.T) {
-	suite.Run(t, new(CommitmentTestSuite))
-}
-
 func (s *CommitmentTestSuite) testUpdateCommitments(commitment models.Commitment) {
 	commitment.GetCommitmentBase().ID.IndexInBatch = uint8(0)
 
@@ -224,4 +220,8 @@ func (s *CommitmentTestSuite) testUpdateCommitments(commitment models.Commitment
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Equal(commitment, commitments[0])
+}
+
+func TestCommitmentTestSuite(t *testing.T) {
+	suite.Run(t, new(CommitmentTestSuite))
 }
