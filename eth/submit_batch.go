@@ -33,7 +33,7 @@ func (c *Client) SubmitMassMigrationsBatch(
 	return c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.MMBatchSubmissionGasLimit).
-		SubmitMassMigration(encoder.CommitmentsToSubmitMassMigrationBatchFields(batchID, commitments))
+		SubmitMassMigration(encoder.CommitmentsToSubmitMMBatchFields(batchID, commitments))
 }
 
 func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {

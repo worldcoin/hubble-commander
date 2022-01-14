@@ -118,7 +118,7 @@ func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commi
 }
 
 //nolint:gocritic
-func CommitmentsToSubmitMassMigrationBatchFields(
+func CommitmentsToSubmitMMBatchFields(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (

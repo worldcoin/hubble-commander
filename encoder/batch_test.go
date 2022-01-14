@@ -71,7 +71,7 @@ func TestDecodeMMBatchCalldata(t *testing.T) {
 		Transactions: utils.RandomBytes(8),
 	}
 
-	arg1, arg2, arg3, arg4, arg5, arg6 := CommitmentsToSubmitMassMigrationBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	arg1, arg2, arg3, arg4, arg5, arg6 := CommitmentsToSubmitMMBatchFields(batchID, []models.CommitmentWithTxs{commitment})
 	calldata, err := rollupABI.Pack("submitMassMigration", arg1, arg2, arg3, arg4, arg5, arg6)
 	require.NoError(t, err)
 
