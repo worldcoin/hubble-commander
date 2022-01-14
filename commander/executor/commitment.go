@@ -25,7 +25,7 @@ func (c *TxsContext) BuildCommitment(
 		return nil, err
 	}
 
-	commitment, err := c.newCommitment(
+	commitment, err := c.Executor.NewCommitment(
 		commitmentID,
 		feeReceiverStateID,
 		serializedTxs,

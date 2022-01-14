@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
@@ -21,6 +22,12 @@ type TransactionExecutor interface {
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
 	SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 	GenerateMetaAndWithdrawRoots(commitment models.CommitmentWithTxs, result CreateCommitmentResult) error
+	NewCommitment(
+		commitmentID *models.CommitmentID,
+		feeReceiverStateID uint32,
+		serializedTxs []byte,
+		combinedSignature *models.Signature,
+	) (models.CommitmentWithTxs, error)
 }
 
 func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
@@ -98,6 +105,31 @@ func (e *TransferExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithT
 	return nil
 }
 
+func (e *TransferExecutor) NewCommitment(
+	commitmentID *models.CommitmentID,
+	feeReceiverStateID uint32,
+	serializedTxs []byte,
+	combinedSignature *models.Signature,
+) (models.CommitmentWithTxs, error) {
+	stateRoot, err := e.storage.StateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID:            *commitmentID,
+				Type:          batchtype.Transfer,
+				PostStateRoot: *stateRoot,
+			},
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
+		},
+		Transactions: serializedTxs,
+	}, nil
+}
+
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
@@ -167,6 +199,31 @@ func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.
 
 func (e *C2TExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
 	return nil
+}
+
+func (e *C2TExecutor) NewCommitment(
+	commitmentID *models.CommitmentID,
+	feeReceiverStateID uint32,
+	serializedTxs []byte,
+	combinedSignature *models.Signature,
+) (models.CommitmentWithTxs, error) {
+	stateRoot, err := e.storage.StateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID:            *commitmentID,
+				Type:          batchtype.Create2Transfer,
+				PostStateRoot: *stateRoot,
+			},
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
+		},
+		Transactions: serializedTxs,
+	}, nil
 }
 
 // MassMigrationExecutor implements TransactionExecutor
@@ -278,4 +335,29 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 	mmCommitment.Meta = meta
 	mmCommitment.WithdrawRoot = merkleTree.Root()
 	return nil
+}
+
+func (e *MassMigrationExecutor) NewCommitment(
+	commitmentID *models.CommitmentID,
+	feeReceiverStateID uint32,
+	serializedTxs []byte,
+	combinedSignature *models.Signature,
+) (models.CommitmentWithTxs, error) {
+	stateRoot, err := e.storage.StateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID:            *commitmentID,
+				Type:          batchtype.MassMigration,
+				PostStateRoot: *stateRoot,
+			},
+			FeeReceiver:       feeReceiverStateID,
+			CombinedSignature: *combinedSignature,
+		},
+		Transactions: serializedTxs,
+	}, nil
 }
