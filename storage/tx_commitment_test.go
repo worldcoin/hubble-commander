@@ -52,9 +52,9 @@ func (s *TxCommitmentTestSuite) TestAddTxCommitment_AddAndRetrieve() {
 	err := s.storage.AddTxCommitment(&txCommitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetTxCommitment(&txCommitment.ID)
+	actual, err := s.storage.GetCommitment(&txCommitment.ID)
 	s.NoError(err)
-	s.Equal(txCommitment, *actual)
+	s.Equal(txCommitment, *actual.ToTxCommitment())
 }
 
 func (s *TxCommitmentTestSuite) addRandomBatch() models.Uint256 {
@@ -68,38 +68,6 @@ func (s *TxCommitmentTestSuite) addRandomBatch() models.Uint256 {
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 	return batch.ID
-}
-
-func (s *TxCommitmentTestSuite) TestGetTxCommitment_NonexistentCommitment() {
-	res, err := s.storage.GetTxCommitment(&txCommitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
-}
-
-func (s *TxCommitmentTestSuite) TestGetTxCommitment_InvalidCommitmentType() {
-	depositCommitment := &models.DepositCommitment{
-		CommitmentBase: models.CommitmentBase{
-			ID: models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 1,
-			},
-			Type: batchtype.Deposit,
-		},
-		Deposits: []models.PendingDeposit{
-			{
-				ID: models.DepositID{
-					SubtreeID:    models.MakeUint256(1),
-					DepositIndex: models.MakeUint256(0),
-				},
-			},
-		},
-	}
-	err := s.storage.AddCommitment(depositCommitment)
-	s.NoError(err)
-
-	res, err := s.storage.GetTxCommitment(&depositCommitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
 }
 
 func TestTxCommitmentTestSuite(t *testing.T) {

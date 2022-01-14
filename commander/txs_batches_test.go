@@ -145,9 +145,9 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 		CombinedSignature: remoteCommitment.CombinedSignature,
 		BodyHash:          remoteTxBatch.Commitments[0].BodyHash(remoteTxBatch.AccountTreeRoot),
 	}
-	storedCommitment, err := s.cmd.storage.GetTxCommitment(&expectedCommitment.ID)
+	storedCommitment, err := s.cmd.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(expectedCommitment, *storedCommitment)
+	s.Equal(expectedCommitment, *storedCommitment.ToTxCommitment())
 
 	// Correct tx stored
 	expectedTx := remoteTx

@@ -153,14 +153,14 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Len(batches, 1)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
-	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *commitment.ToTxCommitment())
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.CommitmentID = &commitment.ID
+	tx.CommitmentID = &commitment.ToTxCommitment().ID
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }

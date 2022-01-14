@@ -71,10 +71,10 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetTxCommitment(&commitments[i].ToTxCommitmentWithTxs().ID)
+		commit, err := s.storage.GetCommitment(&commitments[i].ToTxCommitmentWithTxs().ID)
 		s.NoError(err)
-		s.Equal(commitments[i].ToTxCommitmentWithTxs().TxCommitment, *commit)
-		s.Equal(batch.ID, commit.ID.BatchID)
+		s.Equal(commitments[i].ToTxCommitmentWithTxs().TxCommitment, *commit.ToTxCommitment())
+		s.Equal(batch.ID, commit.ToTxCommitment().ID.BatchID)
 	}
 }
 
