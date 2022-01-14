@@ -29,7 +29,7 @@ func MakeTransactionBase(tx *models.TransactionBase) TransactionBase {
 		Nonce:        tx.Nonce,
 		Signature:    tx.Signature,
 		ReceiveTime:  tx.ReceiveTime,
-		CommitmentID: MakeCommitmentID(tx.CommitmentID),
+		CommitmentID: NewCommitmentID(tx.CommitmentID),
 		ErrorMessage: tx.ErrorMessage,
 	}
 }

@@ -43,7 +43,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 	commitmentBase := commitment.GetCommitmentBase()
 
 	commitmentDTO := &dto.Commitment{
-		ID:            *dto.MakeCommitmentID(&commitmentBase.ID),
+		ID:            *dto.NewCommitmentID(&commitmentBase.ID),
 		Type:          commitmentBase.Type,
 		PostStateRoot: commitmentBase.PostStateRoot,
 		Status:        *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),

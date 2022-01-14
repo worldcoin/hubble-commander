@@ -12,7 +12,7 @@ type CommitmentID struct {
 	IndexInBatch uint8
 }
 
-func MakeCommitmentID(id *models.CommitmentID) *CommitmentID {
+func NewCommitmentID(id *models.CommitmentID) *CommitmentID {
 	if id == nil {
 		return nil
 	}
@@ -40,16 +40,13 @@ type CommitmentWithTokenID struct {
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
 	PostStateRoot      common.Hash
-	Meta               *MassMigrationMeta
-	WithdrawRoot       *common.Hash
+	Meta               *MassMigrationMeta `json:",omitempty"`
+	WithdrawRoot       *common.Hash       `json:",omitempty"`
 }
 
 func MakeCommitmentWithTokenIDFromTxCommitment(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
 	return CommitmentWithTokenID{
-		ID: CommitmentID{
-			BatchID:      commitment.ID.BatchID,
-			IndexInBatch: commitment.ID.IndexInBatch,
-		},
+		ID:                 *NewCommitmentID(&commitment.ID),
 		LeafHash:           commitment.LeafHash(),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
@@ -62,21 +59,13 @@ func MakeCommitmentWithTokenIDFromTxCommitment(commitment *models.TxCommitment, 
 
 func MakeCommitmentWithTokenIDFromMMCommitment(commitment *models.MMCommitment, tokenID models.Uint256) CommitmentWithTokenID {
 	return CommitmentWithTokenID{
-		ID: CommitmentID{
-			BatchID:      commitment.ID.BatchID,
-			IndexInBatch: commitment.ID.IndexInBatch,
-		},
+		ID:                 *NewCommitmentID(&commitment.ID),
 		LeafHash:           commitment.LeafHash(),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
 		PostStateRoot:      commitment.PostStateRoot,
-		Meta: &MassMigrationMeta{
-			SpokeID:     commitment.Meta.SpokeID,
-			TokenID:     commitment.Meta.TokenID,
-			Amount:      commitment.Meta.Amount,
-			FeeReceiver: commitment.Meta.FeeReceiver,
-		},
-		WithdrawRoot: &commitment.WithdrawRoot,
+		Meta:               NewMassMigrationMeta(commitment.Meta),
+		WithdrawRoot:       &commitment.WithdrawRoot,
 	}
 }

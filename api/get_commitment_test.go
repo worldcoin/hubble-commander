@@ -114,7 +114,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.txCommitment.ID),
+		ID:                *dto.NewCommitmentID(&s.txCommitment.ID),
 		Type:              s.txCommitment.Type,
 		PostStateRoot:     s.txCommitment.PostStateRoot,
 		FeeReceiver:       s.txCommitment.FeeReceiver,
@@ -163,7 +163,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.txCommitment.ID),
+		ID:                *dto.NewCommitmentID(&s.txCommitment.ID),
 		Type:              s.txCommitment.Type,
 		PostStateRoot:     s.txCommitment.PostStateRoot,
 		FeeReceiver:       s.txCommitment.FeeReceiver,
@@ -211,7 +211,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	s.NoError(err)
 
 	expectedCommitment := &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&s.mmCommitment.ID),
+		ID:                *dto.NewCommitmentID(&s.mmCommitment.ID),
 		Type:              s.mmCommitment.Type,
 		PostStateRoot:     s.mmCommitment.PostStateRoot,
 		FeeReceiver:       s.mmCommitment.FeeReceiver,
