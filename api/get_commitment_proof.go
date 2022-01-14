@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,7 +34,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := a.storage.GetTxCommitmentsByBatchID(commitmentID.BatchID)
+	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -52,7 +53,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 		Depth: tree.Depth(),
 	}
 
-	commitment, err := a.storage.GetTxCommitment(&commitmentID)
+	commitment, err := a.storage.GetCommitment(&commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -62,20 +63,28 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 		return nil, errors.WithStack(err)
 	}
 
+	body := &dto.CommitmentProofBody{
+		AccountRoot:  *batch.AccountTreeRoot,
+		Transactions: transactions,
+	}
+
+	if commitment.GetCommitmentBase().Type == batchtype.MassMigration {
+		body.Signature = commitment.ToMMCommitment().CombinedSignature
+		body.FeeReceiver = commitment.ToMMCommitment().FeeReceiver
+	} else {
+		body.Signature = commitment.ToTxCommitment().CombinedSignature
+		body.FeeReceiver = commitment.ToTxCommitment().FeeReceiver
+	}
+
 	return &dto.CommitmentInclusionProof{
 		CommitmentInclusionProofBase: dto.CommitmentInclusionProofBase{
-			StateRoot: commitment.PostStateRoot,
+			StateRoot: commitment.GetCommitmentBase().PostStateRoot,
 			Path: &dto.MerklePath{
 				Path:  path.Path,
 				Depth: path.Depth,
 			},
 			Witness: tree.GetWitness(uint32(commitmentID.IndexInBatch)),
 		},
-		Body: &dto.CommitmentProofBody{
-			AccountRoot:  *batch.AccountTreeRoot,
-			Signature:    commitment.CombinedSignature,
-			FeeReceiver:  commitment.FeeReceiver,
-			Transactions: transactions,
-		},
+		Body: body,
 	}, nil
 }

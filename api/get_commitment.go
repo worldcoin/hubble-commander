@@ -21,41 +21,58 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 }
 
 func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
-	commitment, err := a.storage.GetTxCommitment(&id)
+	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err
 	}
 
+	batch, err := a.storage.GetMinedBatch(commitment.GetCommitmentBase().ID.BatchID)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.createCommitmentDTO(commitment, batch)
+}
+
+func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Batch) (*dto.Commitment, error) {
 	transactions, err := a.getTransactionsForCommitment(commitment)
 	if err != nil {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetMinedBatch(commitment.ID.BatchID)
-	if err != nil {
-		return nil, err
+	commitmentBase := commitment.GetCommitmentBase()
+
+	commitmentDTO := &dto.Commitment{
+		ID:            *dto.NewCommitmentID(&commitmentBase.ID),
+		Type:          commitmentBase.Type,
+		PostStateRoot: commitmentBase.PostStateRoot,
+		Status:        *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
+		BatchTime:     batch.SubmissionTime,
+		Transactions:  transactions,
 	}
 
-	return &dto.Commitment{
-		ID:                *dto.MakeCommitmentID(&commitment.ID),
-		Type:              commitment.Type,
-		PostStateRoot:     commitment.PostStateRoot,
-		FeeReceiver:       commitment.FeeReceiver,
-		CombinedSignature: commitment.CombinedSignature,
-		Status:            *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
-		BatchTime:         batch.SubmissionTime,
-		Transactions:      transactions,
-	}, nil
+	if commitmentBase.Type == batchtype.Transfer || commitmentBase.Type == batchtype.Create2Transfer {
+		txCommitment := commitment.ToTxCommitment()
+		commitmentDTO.FeeReceiver = txCommitment.FeeReceiver
+		commitmentDTO.CombinedSignature = txCommitment.CombinedSignature
+	} else if commitmentBase.Type == batchtype.MassMigration {
+		mmCommitment := commitment.ToMMCommitment()
+		commitmentDTO.FeeReceiver = mmCommitment.FeeReceiver
+		commitmentDTO.CombinedSignature = mmCommitment.CombinedSignature
+	}
+
+	return commitmentDTO, nil
 }
 
-func (a *API) getTransactionsForCommitment(commitment *models.TxCommitment) (interface{}, error) {
-	switch commitment.Type {
+func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interface{}, error) {
+	commitmentBase := commitment.GetCommitmentBase()
+	switch commitmentBase.Type {
 	case batchtype.Transfer:
-		return a.getTransfersForCommitment(commitment.ID)
+		return a.getTransfersForCommitment(commitment.(*models.TxCommitment).ID)
 	case batchtype.Create2Transfer:
-		return a.getCreate2TransfersForCommitment(commitment.ID)
+		return a.getCreate2TransfersForCommitment(commitmentBase.ID)
 	case batchtype.MassMigration:
-		return a.getMassMigrationsForCommitment(commitment.ID)
+		return a.getMassMigrationsForCommitment(commitmentBase.ID)
 	case batchtype.Genesis, batchtype.Deposit:
 		return nil, dto.ErrNotImplemented
 	}

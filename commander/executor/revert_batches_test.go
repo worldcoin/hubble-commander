@@ -129,13 +129,13 @@ func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.txsCtx.addCommitments(batchData.Commitments())
+	err = s.txsCtx.addCommitments(commitments)
 	s.NoError(err)
 
 	return pendingBatch
@@ -155,7 +155,7 @@ func (s *RevertBatchesTestSuite) addDepositBatch(subtree *models.PendingDepositS
 	err = s.storage.AddBatch(pendingBatch)
 	s.NoError(err)
 
-	err = s.executionCtx.storage.AddDepositCommitment(&models.DepositCommitment{
+	err = s.executionCtx.storage.AddCommitment(&models.DepositCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID: pendingBatch.ID,

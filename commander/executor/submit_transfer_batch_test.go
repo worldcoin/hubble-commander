@@ -26,7 +26,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -43,7 +43,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord(
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -58,19 +58,19 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord(
 func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
-	commitments := getCommitments(2, pendingBatch.ID, batchtype.Transfer)
+	commitments := getTxCommitments(2, pendingBatch.ID, batchtype.Transfer)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: commitments})
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
+		commit, err := s.storage.GetCommitment(&commitments[i].ToTxCommitmentWithTxs().ID)
 		s.NoError(err)
-		s.Equal(commitments[i].TxCommitment, *commit)
-		s.Equal(batch.ID, commit.ID.BatchID)
+		s.Equal(commitments[i].ToTxCommitmentWithTxs().TxCommitment, *commit.ToTxCommitment())
+		s.Equal(batch.ID, commit.ToTxCommitment().ID.BatchID)
 	}
 }
 

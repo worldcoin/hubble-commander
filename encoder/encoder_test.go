@@ -75,7 +75,7 @@ func (s *EncoderTestSuite) TestCommitmentWithTxs_CalcBodyHash() {
 	})
 	s.NoError(err)
 
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type: batchtype.Transfer,
@@ -86,7 +86,8 @@ func (s *EncoderTestSuite) TestCommitmentWithTxs_CalcBodyHash() {
 		Transactions: txs,
 	}
 
-	s.Equal(expectedHash[:], commitment.CalcBodyHash(accountRoot).Bytes())
+	commitment.CalcAndSetBodyHash(accountRoot)
+	s.Equal(expectedHash[:], commitment.BodyHash.Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

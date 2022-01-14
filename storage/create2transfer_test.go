@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -129,8 +130,12 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction
 }
 
 func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
-	commitment := &models.TxCommitment{}
-	err := s.storage.AddTxCommitment(commitment)
+	commitment := &models.TxCommitment{
+		CommitmentBase: models.CommitmentBase{
+			Type: batchtype.Transfer,
+		},
+	}
+	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
 	create2Transfer2 := create2Transfer

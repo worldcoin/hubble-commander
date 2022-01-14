@@ -3,7 +3,6 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
@@ -132,29 +131,4 @@ func getCommitmentPrefixWithBatchID(batchID *models.Uint256) []byte {
 	copy(prefix[:storedCommitmentPrefixLen], stored.CommitmentPrefix)
 	copy(prefix[storedCommitmentPrefixLen:], batchID.Bytes())
 	return prefix
-}
-
-func (s *CommitmentStorage) GetCommitmentsByBatchID(batchID models.Uint256, commitmentType batchtype.BatchType) (
-	[]models.Commitment,
-	error,
-) {
-	if commitmentType == batchtype.Deposit {
-		commitment, err := s.GetDepositCommitment(&models.CommitmentID{
-			BatchID:      batchID,
-			IndexInBatch: 0,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return []models.Commitment{commitment}, nil
-	}
-	txCommitments, err := s.GetTxCommitmentsByBatchID(batchID)
-	if err != nil {
-		return nil, err
-	}
-	commitments := make([]models.Commitment, 0, len(txCommitments))
-	for i := range txCommitments {
-		commitments = append(commitments, &txCommitments[i])
-	}
-	return commitments, nil
 }

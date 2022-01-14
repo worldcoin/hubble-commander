@@ -51,7 +51,7 @@ func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *
 		return err
 	}
 
-	return c.storage.AddDepositCommitment(
+	return c.storage.AddCommitment(
 		&models.DepositCommitment{
 			CommitmentBase: models.CommitmentBase{
 				ID: models.CommitmentID{

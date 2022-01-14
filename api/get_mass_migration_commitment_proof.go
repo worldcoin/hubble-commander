@@ -5,7 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,7 +32,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 		return nil, errors.WithStack(err)
 	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID, batchtype.MassMigration)
+	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -52,12 +51,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 		return nil, errors.WithStack(err)
 	}
 
-	commitment := commitments[commitmentID.IndexInBatch].(*models.TxCommitment)
-
-	withdrawTree, meta, err := a.generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(commitment, massMigrations)
-	if err != nil {
-		return nil, err
-	}
+	commitment := commitments[commitmentID.IndexInBatch].ToMMCommitment()
 
 	leafHashes := make([]common.Hash, 0, len(commitments))
 	for i := range commitments {
@@ -82,52 +76,9 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 		Body: &dto.MassMigrationBody{
 			AccountRoot:  *batch.AccountTreeRoot,
 			Signature:    commitment.CombinedSignature,
-			Meta:         meta,
-			WithdrawRoot: withdrawTree.Root(),
+			Meta:         dto.NewMassMigrationMeta(commitment.Meta),
+			WithdrawRoot: commitment.WithdrawRoot,
 			Transactions: serializedMassMigrations,
 		},
 	}, nil
-}
-
-func (a *API) generateWithdrawTreeAndMetaForMassMigrationCommitmentProof(
-	commitment *models.TxCommitment,
-	massMigrations []models.MassMigration,
-) (*merkletree.MerkleTree, *dto.MassMigrationMeta, error) {
-	meta := &dto.MassMigrationMeta{
-		Amount:      models.MakeUint256(0),
-		FeeReceiver: commitment.FeeReceiver,
-	}
-
-	hashes := make([]common.Hash, 0, len(massMigrations))
-
-	for i := range massMigrations {
-		meta.Amount = *meta.Amount.Add(&massMigrations[i].Amount)
-
-		senderLeaf, err := a.storage.StateTree.Leaf(massMigrations[i].FromStateID)
-		if err != nil {
-			return nil, nil, err
-		}
-		if i == 0 {
-			meta.TokenID = senderLeaf.TokenID
-			meta.SpokeID = massMigrations[0].SpokeID
-		}
-
-		hash, err := encoder.HashUserState(&models.UserState{
-			PubKeyID: senderLeaf.PubKeyID,
-			TokenID:  meta.TokenID,
-			Balance:  massMigrations[i].Amount,
-			Nonce:    models.MakeUint256(0),
-		})
-		if err != nil {
-			return nil, nil, errors.WithStack(err)
-		}
-		hashes = append(hashes, *hash)
-	}
-
-	withdrawTree, err := merkletree.NewMerkleTree(hashes)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-
-	return withdrawTree, meta, nil
 }

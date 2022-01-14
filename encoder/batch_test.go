@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.Transfer,
@@ -30,7 +29,7 @@ func TestDecodeBatchCalldata(t *testing.T) {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
-	arg1, arg2, arg3, arg4, arg5 := CommitmentsToTransferAndC2TSubmitBatchFields(batchID, []models.CommitmentWithTxs{commitment})
+	arg1, arg2, arg3, arg4, arg5 := CommitmentsToTransferAndC2TSubmitBatchFields(batchID, []models.CommitmentWithTxs{&commitment})
 	calldata, err := rollupABI.Pack("submitTransfer", arg1, arg2, arg3, arg4, arg5)
 	require.NoError(t, err)
 
@@ -53,26 +52,26 @@ func TestDecodeMMBatchCalldata(t *testing.T) {
 	require.NoError(t, err)
 
 	batchID := models.NewUint256(1)
-	commitments := []models.CommitmentWithTxs{{
-		TxCommitment: models.TxCommitment{
+	commitment := &models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.MassMigration,
 				PostStateRoot: utils.RandomHash(),
 			},
 			FeeReceiver:       uint32(1234),
 			CombinedSignature: models.MakeRandomSignature(),
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     1,
+				TokenID:     models.MakeUint256(1),
+				Amount:      models.MakeUint256(100),
+				FeeReceiver: 1,
+			},
+			WithdrawRoot: utils.RandomHash(),
 		},
 		Transactions: utils.RandomBytes(8),
-	}}
-	metas := []models.MassMigrationMeta{{
-		SpokeID:     1,
-		TokenID:     models.MakeUint256(1),
-		Amount:      models.MakeUint256(100),
-		FeeReceiver: 1,
-	}}
-	withdrawRoots := []common.Hash{utils.RandomHash()}
+	}
 
-	arg1, arg2, arg3, arg4, arg5, arg6 := CommitmentsToSubmitMassMigrationBatchFields(batchID, commitments, metas, withdrawRoots)
+	arg1, arg2, arg3, arg4, arg5, arg6 := CommitmentsToSubmitMMBatchFields(batchID, []models.CommitmentWithTxs{commitment})
 	calldata, err := rollupABI.Pack("submitMassMigration", arg1, arg2, arg3, arg4, arg5, arg6)
 	require.NoError(t, err)
 
@@ -81,12 +80,12 @@ func TestDecodeMMBatchCalldata(t *testing.T) {
 	require.Equal(t, 1, len(decodedCommitments))
 
 	decoded := &decodedCommitments[0]
-	require.Equal(t, commitments[0].PostStateRoot, decoded.StateRoot)
-	require.Equal(t, commitments[0].CombinedSignature, decoded.CombinedSignature)
-	require.Equal(t, metas[0], *decoded.Meta)
-	require.Equal(t, metas[0].FeeReceiver, decoded.FeeReceiver)
-	require.Equal(t, withdrawRoots[0], decoded.WithdrawRoot)
-	require.Equal(t, commitments[0].Transactions, decoded.Transactions)
+	require.Equal(t, commitment.PostStateRoot, decoded.StateRoot)
+	require.Equal(t, commitment.CombinedSignature, decoded.CombinedSignature)
+	require.Equal(t, commitment.Meta, decoded.Meta)
+	require.Equal(t, commitment.Meta.FeeReceiver, decoded.FeeReceiver)
+	require.Equal(t, commitment.WithdrawRoot, decoded.WithdrawRoot)
+	require.Equal(t, commitment.Transactions, decoded.Transactions)
 	require.Equal(t, *batchID, decoded.ID.BatchID)
 	require.EqualValues(t, 0, decoded.ID.IndexInBatch)
 }
