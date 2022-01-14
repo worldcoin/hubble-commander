@@ -492,7 +492,7 @@ func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *m
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
-	err = s.cmd.storage.AddTxCommitment(&commitments[0].ToTxCommitmentWithTxs().TxCommitment)
+	err = s.cmd.storage.AddCommitment(&commitments[0].ToTxCommitmentWithTxs().TxCommitment)
 	s.NoError(err)
 
 	pendingBatch.TransactionHash = utils.RandomHash()

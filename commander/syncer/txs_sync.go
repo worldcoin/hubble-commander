@@ -60,7 +60,7 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, commitment encoder
 			CombinedSignature: decodedCommitment.CombinedSignature,
 			BodyHash:          commitment.BodyHash(batch.AccountTreeRoot),
 		}
-		err = c.storage.AddTxCommitment(txCommitment)
+		err = c.storage.AddCommitment(txCommitment)
 	case batchtype.MassMigration:
 		mmCommitment := &models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{

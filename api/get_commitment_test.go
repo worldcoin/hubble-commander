@@ -94,7 +94,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	err := s.storage.AddBatch(s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(s.txCommitment)
+	err = s.storage.AddCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{
@@ -143,7 +143,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	s.NoError(err)
 
 	s.txCommitment.Type = batchtype.Create2Transfer
-	err = s.storage.AddTxCommitment(s.txCommitment)
+	err = s.storage.AddCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Create2Transfer{
@@ -242,7 +242,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(s.txCommitment)
+	err = s.storage.AddCommitment(s.txCommitment)
 	s.NoError(err)
 
 	transfer := models.Transfer{

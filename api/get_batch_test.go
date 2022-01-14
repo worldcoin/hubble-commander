@@ -69,7 +69,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
@@ -115,7 +115,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID() {
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(s.batch.ID)

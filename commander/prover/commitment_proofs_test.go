@@ -128,7 +128,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		},
 	}
 	for i := range commitments {
-		err = s.storage.AddTxCommitment(&commitments[i])
+		err = s.storage.AddCommitment(&commitments[i])
 		s.NoError(err)
 	}
 

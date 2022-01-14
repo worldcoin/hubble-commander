@@ -49,7 +49,7 @@ func (s *TxCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *TxCommitmentTestSuite) TestAddTxCommitment_AddAndRetrieve() {
-	err := s.storage.AddTxCommitment(&txCommitment)
+	err := s.storage.addTxCommitment(&txCommitment)
 	s.NoError(err)
 
 	actual, err := s.storage.GetCommitment(&txCommitment.ID)

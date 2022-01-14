@@ -62,7 +62,7 @@ func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_AddAndRetrieve() {
 }
 
 func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_InvalidCommitmentTyp() {
-	err := s.storage.AddTxCommitment(&txCommitment)
+	err := s.storage.AddCommitment(&txCommitment)
 	s.NoError(err)
 
 	res, err := s.storage.GetCommitment(&s.commitment.ID)

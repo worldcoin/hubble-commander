@@ -10,7 +10,7 @@ import (
 func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {
 	switch commitment.GetCommitmentBase().Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		return s.AddTxCommitment(commitment.ToTxCommitment())
+		return s.addTxCommitment(commitment.ToTxCommitment())
 	case batchtype.MassMigration:
 		return s.addMMCommitment(commitment.ToMMCommitment())
 	case batchtype.Deposit:
