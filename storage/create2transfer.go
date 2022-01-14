@@ -73,15 +73,5 @@ func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.Commitm
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txs {
-			storedTxReceipt := stored.NewTxReceiptFromCreate2Transfer(&txs[i])
-			storedTxReceipt.CommitmentID = commitmentID
-			err := txStorage.addStoredTxReceipt(storedTxReceipt)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return s.MarkTransactionsAsIncluded(models.MakeCreate2TransferArray(txs...), commitmentID)
 }
