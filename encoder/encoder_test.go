@@ -86,7 +86,8 @@ func (s *EncoderTestSuite) TestCommitmentWithTxs_CalcBodyHash() {
 		Transactions: txs,
 	}
 
-	s.Equal(expectedHash[:], commitment.CalcBodyHash(accountRoot).Bytes())
+	commitment.CalcAndSetBodyHash(accountRoot)
+	s.Equal(expectedHash[:], commitment.BodyHash.Bytes())
 }
 
 func TestEncoderTestSuite(t *testing.T) {

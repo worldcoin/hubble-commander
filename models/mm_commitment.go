@@ -51,16 +51,12 @@ func (c *MMCommitmentWithTxs) CalcAndSetBodyHash(accountRoot common.Hash) {
 	c.SetBodyHash(calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes()))
 }
 
-func (c *MMCommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
-	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
-}
-
 func (c *MMCommitmentWithTxs) ToCommitment() Commitment {
 	return c.ToMMCommitment()
 }
 
 func (c *MMCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
-	panic("Cannot cast MMCommitmentWithTxs to TxCommitmentWithTxs")
+	panic("cannot cast MMCommitmentWithTxs to TxCommitmentWithTxs")
 }
 
 func (c *MMCommitmentWithTxs) ToMMCommitmentWithTxs() *MMCommitmentWithTxs {

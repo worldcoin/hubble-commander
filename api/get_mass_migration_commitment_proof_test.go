@@ -308,8 +308,7 @@ func makeMassMigrationCommitment(
 		Transactions: serializedMassMigrations,
 	}
 
-	massMigrationCommitment.BodyHash = massMigrationCommitment.CalcBodyHash(accountRoot)
-
+	massMigrationCommitment.CalcAndSetBodyHash(accountRoot)
 	return massMigrationCommitment
 }
 
