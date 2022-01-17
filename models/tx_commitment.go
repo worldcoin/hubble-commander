@@ -16,6 +16,14 @@ type TxCommitment struct {
 	BodyHash          *common.Hash
 }
 
+func (c *TxCommitment) GetCommitmentBase() *CommitmentBase {
+	return &c.CommitmentBase
+}
+
+func (c *TxCommitment) SetBodyHash(bodyHash *common.Hash) {
+	c.BodyHash = bodyHash
+}
+
 func (c *TxCommitment) GetBodyHash() common.Hash {
 	return *c.BodyHash
 }
@@ -24,17 +32,37 @@ func (c *TxCommitment) LeafHash() common.Hash {
 	return utils.HashTwo(c.PostStateRoot, *c.BodyHash)
 }
 
-type CommitmentWithTxs struct {
+func (c *TxCommitment) ToTxCommitment() *TxCommitment {
+	return c
+}
+
+func (c *TxCommitment) ToMMCommitment() *MMCommitment {
+	panic("cannot cast TxCommitment to MMCommitment")
+}
+
+func (c *TxCommitment) ToDepositCommitment() *DepositCommitment {
+	panic("cannot cast TxCommitment to DepositCommitment")
+}
+
+type TxCommitmentWithTxs struct {
 	TxCommitment
 	Transactions []byte
 }
 
-func (c *CommitmentWithTxs) SetBodyHash(accountRoot common.Hash) {
-	c.BodyHash = calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+func (c *TxCommitmentWithTxs) CalcAndSetBodyHash(accountRoot common.Hash) {
+	c.SetBodyHash(calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes()))
 }
 
-func (c *CommitmentWithTxs) CalcBodyHash(accountRoot common.Hash) *common.Hash {
-	return calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes())
+func (c *TxCommitmentWithTxs) ToCommitment() Commitment {
+	return c.ToTxCommitment()
+}
+
+func (c *TxCommitmentWithTxs) ToTxCommitmentWithTxs() *TxCommitmentWithTxs {
+	return c
+}
+
+func (c *TxCommitmentWithTxs) ToMMCommitmentWithTxs() *MMCommitmentWithTxs {
+	panic("cannot cast TxCommitmentWithTxs to MMCommitmentWithTxs")
 }
 
 func calcBodyHash(feeReceiver uint32, combinedSignature Signature, transactions, accountTreeRoot []byte) *common.Hash {

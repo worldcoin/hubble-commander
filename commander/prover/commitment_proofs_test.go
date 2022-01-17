@@ -128,7 +128,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		},
 	}
 	for i := range commitments {
-		err = s.storage.AddTxCommitment(&commitments[i])
+		err = s.storage.AddCommitment(&commitments[i])
 		s.NoError(err)
 	}
 
@@ -183,7 +183,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			},
 		},
 	}
-	err = s.storage.AddDepositCommitment(&commitment)
+	err = s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	expected := models.CommitmentInclusionProof{

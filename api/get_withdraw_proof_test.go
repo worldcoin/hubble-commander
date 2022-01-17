@@ -22,7 +22,7 @@ type GetWithdrawProofTestSuite struct {
 	suite.Suite
 	api            *API
 	storage        *st.TestStorage
-	commitment     models.CommitmentWithTxs
+	commitment     models.MMCommitmentWithTxs
 	massMigrations []models.MassMigration
 }
 
@@ -86,16 +86,18 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	accountTreeRoot := utils.RandomHash()
 	s.commitment = makeMassMigrationCommitment(
 		s.Assertions,
+		s.storage,
 		models.CommitmentID{
 			BatchID:      models.MakeUint256(1),
 			IndexInBatch: 0,
 		},
+		1,
 		*stateRoot,
 		accountTreeRoot,
 		s.massMigrations,
 	)
 
-	err = s.storage.AddTxCommitment(&s.commitment.TxCommitment)
+	err = s.storage.AddCommitment(&s.commitment)
 	s.NoError(err)
 
 	err = s.storage.AddBatch(&models.Batch{

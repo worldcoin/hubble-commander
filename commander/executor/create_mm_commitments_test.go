@@ -37,36 +37,27 @@ func (s *MMCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMeta() {
-	massMigrations := testutils.GenerateValidMassMigrations(2)
-	s.addMassMigrations(massMigrations)
-
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Metas(), 1)
-
-	targetSpokeID := 2
-	targetTokenID := models.MakeUint256(0)
-	targetFeeReceiver := batchData.Commitments()[0].FeeReceiver
-	totalAmount := massMigrations[0].Amount.Add(&massMigrations[1].Amount)
-	s.EqualValues(targetSpokeID, batchData.Metas()[0].SpokeID)
-	s.Equal(targetTokenID, batchData.Metas()[0].TokenID)
-	s.Equal(*totalAmount, batchData.Metas()[0].Amount)
-	s.Equal(targetFeeReceiver, batchData.Metas()[0].FeeReceiver)
-}
-
-func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectWithdrawRoot() {
+func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
 	s.addMassMigrations(massMigrations)
 
 	withdrawRoot := s.generateWithdrawRoot(massMigrations)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.WithdrawRoots(), 1)
-	s.Equal(withdrawRoot, batchData.WithdrawRoots()[0])
+	s.Len(commitments, 1)
+	s.Len(commitments, 1)
+
+	targetSpokeID := 2
+	targetTokenID := models.MakeUint256(0)
+	commitment := commitments[0].ToMMCommitmentWithTxs()
+	targetFeeReceiver := commitment.FeeReceiver
+	totalAmount := massMigrations[0].Amount.Add(&massMigrations[1].Amount)
+	s.Equal(withdrawRoot, commitment.WithdrawRoot)
+	s.EqualValues(targetSpokeID, commitment.Meta.SpokeID)
+	s.Equal(targetTokenID, commitment.Meta.TokenID)
+	s.Equal(*totalAmount, commitment.Meta.Amount)
+	s.Equal(targetFeeReceiver, commitment.Meta.FeeReceiver)
 }
 
 func TestMMCommitmentsTestSuite(t *testing.T) {

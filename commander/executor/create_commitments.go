@@ -22,7 +22,7 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *TxsContext) CreateCommitments() (BatchData, error) {
+func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	txQueue, err := c.queryPendingTxs()
 	if err != nil {
 		return nil, err
@@ -33,10 +33,10 @@ func (c *TxsContext) CreateCommitments() (BatchData, error) {
 		return nil, err
 	}
 
-	batchData := c.Executor.NewBatchData(c.cfg.MaxCommitmentsPerBatch)
+	commitments := make([]models.CommitmentWithTxs, 0, c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
-	for i := uint8(0); batchData.Len() != int(c.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
@@ -48,15 +48,16 @@ func (c *TxsContext) CreateCommitments() (BatchData, error) {
 			return nil, err
 		}
 
-		batchData.AddCommitment(result.Commitment())
-		err = c.Executor.GenerateMetaAndWithdrawRoots(batchData, result)
+		commitment := result.Commitment()
+		commitments = append(commitments, commitment)
+		err = c.Executor.GenerateMetaAndWithdrawRoots(commitment, result)
 		if err != nil {
 			return nil, err
 		}
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
 
-	if batchData.Len() < int(c.minCommitmentsPerBatch) {
+	if len(commitments) < int(c.minCommitmentsPerBatch) {
 		return nil, errors.WithStack(ErrNotEnoughCommitments)
 	}
 
@@ -71,13 +72,13 @@ func (c *TxsContext) CreateCommitments() (BatchData, error) {
 		return nil, err
 	}
 
-	return batchData, nil
+	return commitments, nil
 }
 
 func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
-	var commitment *models.CommitmentWithTxs
+	var commitment models.CommitmentWithTxs
 	var executeResult ExecuteTxsForCommitmentResult
 
 	duration, err := metrics.MeasureDuration(func() error {
@@ -117,7 +118,7 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 	}
 
 	metrics.SaveHistogramMeasurement(duration, c.commanderMetrics.CommitmentBuildDuration, prometheus.Labels{
-		"type": metrics.BatchTypeToMetricsBatchType(commitment.Type),
+		"type": metrics.BatchTypeToMetricsBatchType(c.BatchType),
 	})
 
 	log.Printf(

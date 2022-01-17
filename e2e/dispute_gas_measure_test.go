@@ -171,7 +171,7 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 	postStateRoot := common.Hash{45, 76, 35, 230, 155, 178, 7, 67, 241, 86, 195, 114, 225, 244, 169, 166, 182, 213, 46, 60, 106, 107, 252,
 		125, 107, 78, 157, 106, 126, 38, 160, 137}
 
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
@@ -181,7 +181,7 @@ func send32TransfersBatchWithInvalidSignature(t *testing.T, ethClient *eth.Clien
 		},
 		Transactions: bytes.Repeat(encodedTransfer, maxTxsPerCommitment),
 	}
-	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
+	submitTransfersBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, 1)
 }
 
 func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wallets []bls.Wallet) {
@@ -200,7 +200,7 @@ func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wal
 	postStateRoot := common.Hash{9, 165, 135, 45, 162, 158, 64, 129, 26, 232, 17, 209, 169, 198, 175, 189, 42, 40, 119, 15, 11, 78, 238,
 		158, 35, 163, 205, 164, 23, 120, 249, 253}
 
-	commitment := models.CommitmentWithTxs{
+	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
@@ -210,7 +210,7 @@ func send32C2TBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, wal
 		},
 		Transactions: encodedTransfers,
 	}
-	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, 1)
+	submitC2TBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, 1)
 }
 
 func send32MMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
@@ -229,27 +229,25 @@ func send32MMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 	postStateRoot := common.Hash{68, 198, 251, 28, 54, 95, 42, 7, 136, 120, 20, 253, 146, 124, 84, 119, 183, 52, 27, 44, 225, 192, 165, 206,
 		154, 69, 207, 53, 239, 253, 79, 216}
 
-	commitment := models.CommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
+	commitment := models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
 			},
 			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     tx.SpokeID,
+				TokenID:     models.MakeUint256(0),
+				Amount:      *tx.Amount.MulN(uint64(maxTxsPerCommitment)),
+				FeeReceiver: 0,
+			},
+			WithdrawRoot: calculateWithdrawRoot(t, tx.Amount, maxTxsPerCommitment),
 		},
 		Transactions: bytes.Repeat(encodedTx, maxTxsPerCommitment),
 	}
-	metas := []models.MassMigrationMeta{
-		{
-			SpokeID:     tx.SpokeID,
-			TokenID:     models.MakeUint256(0),
-			Amount:      *tx.Amount.MulN(uint64(maxTxsPerCommitment)),
-			FeeReceiver: 0,
-		},
-	}
 
-	withdrawRoots := []common.Hash{calculateWithdrawRoot(t, tx.Amount, maxTxsPerCommitment)}
-	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{commitment}, metas, withdrawRoots, 1)
+	submitMMBatch(t, ethClient, []models.CommitmentWithTxs{&commitment}, 1)
 }
 
 func calculateWithdrawRoot(t *testing.T, receiverBalance models.Uint256, txCount int) common.Hash {

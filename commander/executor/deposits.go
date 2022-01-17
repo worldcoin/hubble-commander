@@ -74,7 +74,7 @@ func (c *DepositsContext) addCommitment(batchID models.Uint256, depositSubtree *
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	return c.storage.AddDepositCommitment(commitment)
+	return c.storage.AddCommitment(commitment)
 }
 
 func (c *DepositsContext) getDepositSubtreeVacancyProof() (*uint32, *models.SubtreeVacancyProof, error) {

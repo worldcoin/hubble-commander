@@ -44,7 +44,7 @@ func (s *ValidateStateRootTestSuite) TestValidateStateRoot_SameStateRootHash() {
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}
-	err = s.storage.AddTxCommitment(&commitment)
+	err = s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)
@@ -60,7 +60,7 @@ func (s *ValidateStateRootTestSuite) TestValidateStateRoot_DifferentStateRootHas
 		FeeReceiver:       0,
 		CombinedSignature: models.Signature{},
 	}
-	err := s.storage.AddTxCommitment(&commitment)
+	err := s.storage.AddCommitment(&commitment)
 	s.NoError(err)
 
 	err = validateStateRoot(s.storage.Storage)

@@ -11,51 +11,58 @@ import (
 )
 
 var (
-	txCommitment = models.TxCommitment{
+	mmCommitment = models.MMCommitment{
 		CommitmentBase: models.CommitmentBase{
 			ID: models.CommitmentID{
 				BatchID:      models.MakeUint256(1),
 				IndexInBatch: 0,
 			},
-			Type:          batchtype.Transfer,
+			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
 		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		BodyHash:          utils.NewRandomHash(),
+		Meta: &models.MassMigrationMeta{
+			SpokeID:     1,
+			TokenID:     models.MakeUint256(2),
+			Amount:      models.MakeUint256(3),
+			FeeReceiver: 4,
+		},
+		WithdrawRoot: utils.RandomHash(),
 	}
 )
 
-type TxCommitmentTestSuite struct {
+type MMCommitmentTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *TestStorage
 }
 
-func (s *TxCommitmentTestSuite) SetupSuite() {
+func (s *MMCommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxCommitmentTestSuite) SetupTest() {
+func (s *MMCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorage()
 	s.NoError(err)
 }
 
-func (s *TxCommitmentTestSuite) TearDownTest() {
+func (s *MMCommitmentTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *TxCommitmentTestSuite) TestAddTxCommitment_AddAndRetrieve() {
-	err := s.storage.addTxCommitment(&txCommitment)
+func (s *MMCommitmentTestSuite) TestAddMMCommitment_AddAndRetrieve() {
+	err := s.storage.addMMCommitment(&mmCommitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetCommitment(&txCommitment.ID)
+	actual, err := s.storage.GetCommitment(&mmCommitment.ID)
 	s.NoError(err)
-	s.Equal(txCommitment, *actual.ToTxCommitment())
+	s.Equal(mmCommitment, *actual.ToMMCommitment())
 }
 
-func TestTxCommitmentTestSuite(t *testing.T) {
-	suite.Run(t, new(TxCommitmentTestSuite))
+func TestMMCommitmentTestSuite(t *testing.T) {
+	suite.Run(t, new(MMCommitmentTestSuite))
 }

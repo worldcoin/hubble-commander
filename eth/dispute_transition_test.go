@@ -32,7 +32,7 @@ func (s *DisputeTransitionTestSuite) TearDownTest() {
 }
 
 func (s *DisputeTransitionTestSuite) TestDisputeTransitionTransfer_ReturnsRevertMessage() {
-	commitment := models.CommitmentWithTxs{
+	commitment := &models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.Transfer,

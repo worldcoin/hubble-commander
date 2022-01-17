@@ -51,12 +51,12 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs models.GenericTransa
 	s.NoError(err)
 	fmt.Println(*pendingBatch.PrevStateRoot)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
-	batchData.Commitments()[batchData.Len()-1].PostStateRoot = common.Hash{1, 2, 3}
+	commitments[len(commitments)-1].ToCommitment().GetCommitmentBase().PostStateRoot = common.Hash{1, 2, 3}
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

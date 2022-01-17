@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -58,10 +59,10 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	tx2 := testutils.MakeCreate2Transfer(0, nil, 1, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx2)
 
-	batch, batchData := s.createBatch(&tx2)
-	batchData.Commitments()[0].PostStateRoot = utils.RandomHash()
+	batch, commitments := s.createBatch(&tx2)
+	commitments[0].ToTxCommitmentWithTxs().PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, batchData)
+	err := s.txsCtx.SubmitBatch(batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -132,8 +133,8 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 400, s.wallets[0].PublicKey())
 	s.setTxHashAndSign(&tx)
 	commitments := s.submitBatch(&tx)
-	expectedCommitment := commitments[0].TxCommitment
-	expectedCommitment.BodyHash = commitments[0].CalcBodyHash(s.getAccountTreeRoot())
+	commitments[0].ToTxCommitmentWithTxs().CalcAndSetBodyHash(s.getAccountTreeRoot())
+	expectedCommitment := commitments[0].ToTxCommitmentWithTxs().TxCommitment
 
 	s.recreateDatabase()
 	s.syncAllBatches()
@@ -153,14 +154,14 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	s.Len(batches, 1)
 	s.Equal(treeRoot, *batches[0].AccountTreeRoot)
 
-	commitment, err := s.storage.GetTxCommitment(&expectedCommitment.ID)
+	commitment, err := s.storage.GetCommitment(&expectedCommitment.ID)
 	s.NoError(err)
-	s.Equal(expectedCommitment, *commitment)
+	s.Equal(expectedCommitment, *commitment.ToTxCommitment())
 
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.CommitmentID = &commitment.ID
+	tx.CommitmentID = &commitment.ToTxCommitment().ID
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }
@@ -168,7 +169,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	commitment := s.createCommitmentWithEmptyTransactions(batchtype.Create2Transfer)
 
-	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{commitment})
+	_, err := s.client.SubmitCreate2TransfersBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -179,17 +180,16 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_CommitmentWithoutTxs() {
 	s.NoError(err)
 }
 
-func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) models.CommitmentWithTxs {
-	pendingBatch, batchData := s.createBatch(tx)
-	commitments := batchData.Commitments()
+func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) {
+	pendingBatch, commitments := s.createBatch(tx)
 
-	commitments[0].Transactions = append(commitments[0].Transactions, commitments[0].Transactions...)
+	commitment := commitments[0].ToTxCommitmentWithTxs()
+	commitment.Transactions = bytes.Repeat(commitment.Transactions, 2)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, batchData)
+	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
-	return commitments[0]
 }
 
 func (s *SyncC2TBatchTestSuite) setTxHash(tx *models.Create2Transfer) {

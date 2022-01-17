@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	baseCommitment = models.CommitmentWithTxs{
+	baseCommitment = models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
 			CommitmentBase: models.CommitmentBase{
 				Type:          batchtype.Transfer,
@@ -36,7 +36,7 @@ func (s *submitBatchTestSuite) setupUser() {
 	s.NoError(err)
 }
 
-func getCommitments(count int, batchID models.Uint256, batchType batchtype.BatchType) []models.CommitmentWithTxs {
+func getTxCommitments(count int, batchID models.Uint256, batchType batchtype.BatchType) []models.CommitmentWithTxs {
 	commitments := make([]models.CommitmentWithTxs, 0, count)
 	for i := 0; i < count; i++ {
 		commitment := baseCommitment
@@ -44,7 +44,36 @@ func getCommitments(count int, batchID models.Uint256, batchType batchtype.Batch
 		commitment.ID.BatchID = batchID
 		commitment.ID.IndexInBatch = uint8(i)
 
-		commitments = append(commitments, commitment)
+		commitments = append(commitments, &commitment)
+	}
+	return commitments
+}
+
+func getMMCommitments(count int, batchID models.Uint256) []models.CommitmentWithTxs {
+	commitments := make([]models.CommitmentWithTxs, 0, count)
+	for i := 0; i < count; i++ {
+		commitment := models.MMCommitmentWithTxs{
+			MMCommitment: models.MMCommitment{
+				CommitmentBase: models.CommitmentBase{
+					Type:          batchtype.MassMigration,
+					PostStateRoot: utils.RandomHash(),
+				},
+				Meta: &models.MassMigrationMeta{
+					SpokeID:     1,
+					TokenID:     models.MakeUint256(2),
+					Amount:      models.MakeUint256(3),
+					FeeReceiver: 1,
+				},
+				FeeReceiver:       1,
+				CombinedSignature: models.MakeRandomSignature(),
+				WithdrawRoot:      utils.RandomHash(),
+			},
+			Transactions: utils.RandomBytes(8),
+		}
+		commitment.ID.BatchID = batchID
+		commitment.ID.IndexInBatch = uint8(i)
+
+		commitments = append(commitments, &commitment)
 	}
 	return commitments
 }
