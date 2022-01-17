@@ -269,6 +269,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 	stageSevenTxs = append(stageSevenTxs, *spokeRegistrationTx)
 
+	log.Println("Registering TestCustomToken in TokenRegistry")
 	registerTokenTx, err := tokenRegistry.RegisterToken(c.GetAccount(), exampleTokenAddress)
 	if err != nil {
 		return nil, errors.WithStack(err)
