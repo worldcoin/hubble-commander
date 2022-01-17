@@ -41,7 +41,7 @@ func ExportStateLeaves(filePath string) (err error) {
 
 func exportStateLeaves(storage *st.Storage, file *os.File) (int, error) {
 	writer := bufio.NewWriter(file)
-	_, err := writer.WriteString("[\n")
+	err := writer.WriteByte('[')
 	if err != nil {
 		return 0, err
 	}
@@ -75,7 +75,7 @@ func exportStateLeaves(storage *st.Storage, file *os.File) (int, error) {
 }
 
 func writeLeaf(writer *bufio.Writer, leaf *models.StateLeaf) error {
-	bytes, err := json.MarshalIndent(leaf, "", "\t")
+	bytes, err := json.Marshal(leaf)
 	if err != nil {
 		return err
 	}
