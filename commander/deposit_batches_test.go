@@ -173,9 +173,6 @@ func (s *DepositBatchesTestSuite) prepareDeposits() {
 	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
 	s.NoError(err)
 
-	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
-	s.NoError(err)
-
 	s.approveTokens()
 }
 

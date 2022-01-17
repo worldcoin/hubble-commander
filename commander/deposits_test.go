@@ -51,7 +51,6 @@ func (s *DepositsTestSuite) TearDownTest() {
 }
 
 func (s *DepositsTestSuite) TestSyncDeposits() {
-	s.registerToken()
 	s.approveTokens()
 
 	// Smart contract needs 4 deposits to create a subtree (depth specified in rollup contract deployment)
@@ -79,7 +78,6 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 }
 
 func (s *DepositsTestSuite) TestSyncDeposits_TwoSubtrees() {
-	s.registerToken()
 	s.approveTokens()
 
 	firstSubtreeDeposits := s.queueFourDeposits()
@@ -110,7 +108,6 @@ func (s *DepositsTestSuite) TestSyncDeposits_TwoSubtrees() {
 }
 
 func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
-	s.registerToken()
 	s.approveTokens()
 
 	deposit := s.queueDeposit()
@@ -127,7 +124,6 @@ func (s *DepositsTestSuite) TestSyncQueuedDeposits() {
 }
 
 func (s *DepositsTestSuite) TestFetchDepositSubtrees() {
-	s.registerToken()
 	s.approveTokens()
 
 	// Smart contract needs 4 deposits to create a subtree (depth specified in cfg.Rollup.MaxDepositSubtreeDepth)
@@ -143,10 +139,6 @@ func (s *DepositsTestSuite) TestFetchDepositSubtrees() {
 	s.Equal(depositSubtrees[0].ID, models.MakeUint256(1))
 	s.NotEqual(depositSubtrees[0].Root, common.Hash{})
 	s.Nil(depositSubtrees[0].Deposits)
-}
-
-func (s *DepositsTestSuite) registerToken() {
-	RegisterSingleToken(s.Assertions, s.testClient, s.testClient.ExampleTokenAddress)
 }
 
 func (s *DepositsTestSuite) approveTokens() {
