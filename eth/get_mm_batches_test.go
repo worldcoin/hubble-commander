@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,40 +15,32 @@ import (
 type GetMMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	client        *TestClient
-	commitments   []models.CommitmentWithTxs
-	metas         []models.MassMigrationMeta
-	withdrawRoots []common.Hash
+	client     *TestClient
+	commitment *models.MMCommitmentWithTxs
 }
 
 func (s *GetMMBatchesTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.commitments = []models.CommitmentWithTxs{
-		{
-			TxCommitment: models.TxCommitment{
-				CommitmentBase: models.CommitmentBase{
-					ID: models.CommitmentID{
-						BatchID:      models.MakeUint256(1),
-						IndexInBatch: 0,
-					},
-					Type: batchtype.MassMigration,
+	s.commitment = &models.MMCommitmentWithTxs{
+		MMCommitment: models.MMCommitment{
+			CommitmentBase: models.CommitmentBase{
+				ID: models.CommitmentID{
+					BatchID:      models.MakeUint256(1),
+					IndexInBatch: 0,
 				},
-				FeeReceiver:       0,
-				CombinedSignature: *mockSignature(s.Assertions),
+				Type: batchtype.MassMigration,
 			},
-			Transactions: []uint8{0, 0, 0, 0, 32, 4, 0, 0},
+			FeeReceiver:       0,
+			CombinedSignature: *mockSignature(s.Assertions),
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     1,
+				TokenID:     models.MakeUint256(0),
+				Amount:      models.MakeUint256(400),
+				FeeReceiver: 0,
+			},
+			WithdrawRoot: utils.RandomHash(),
 		},
-	}
-	s.metas = []models.MassMigrationMeta{
-		{
-			SpokeID:     1,
-			TokenID:     models.MakeUint256(0),
-			Amount:      models.MakeUint256(400),
-			FeeReceiver: 0,
-		},
-	}
-	s.withdrawRoots = []common.Hash{
-		{1, 2, 3},
+		Transactions: []uint8{0, 0, 0, 0, 32, 4, 0, 0},
 	}
 }
 
@@ -63,7 +55,7 @@ func (s *GetMMBatchesTestSuite) TearDownTest() {
 }
 
 func (s *GetMMBatchesTestSuite) TestGetBatches() {
-	batch, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), s.commitments, s.metas, s.withdrawRoots)
+	batch, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 
 	batches, err := s.client.GetBatches(&BatchesFilters{
@@ -79,7 +71,7 @@ func (s *GetMMBatchesTestSuite) TestGetBatches() {
 
 func (s *GetMMBatchesTestSuite) TestGetTxBatch() {
 	batchID := models.MakeUint256(1)
-	tx, err := s.client.SubmitMassMigrationsBatch(&batchID, s.commitments, s.metas, s.withdrawRoots)
+	tx, err := s.client.SubmitMassMigrationsBatch(&batchID, []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -97,13 +89,13 @@ func (s *GetMMBatchesTestSuite) TestGetTxBatch() {
 	decodedMMBatch := decodedBatch.ToDecodedTxBatch()
 	s.Equal(batchID, decodedMMBatch.ID)
 	s.EqualValues(event.BatchType, decodedMMBatch.Type)
-	s.Len(decodedMMBatch.Commitments, len(s.commitments))
+	s.Len(decodedMMBatch.Commitments, 1)
 	s.EqualValues(event.AccountRoot, decodedMMBatch.AccountTreeRoot)
 }
 
 func (s *GetMMBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenCurrentBatchHasDifferentHash() {
 	batchID := models.NewUint256(1)
-	tx, err := s.client.SubmitMassMigrationsBatch(batchID, s.commitments, s.metas, s.withdrawRoots)
+	tx, err := s.client.SubmitMassMigrationsBatch(batchID, []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 

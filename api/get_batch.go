@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -30,10 +31,11 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetTxCommitmentsByBatchID(batch.ID)
+	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
@@ -56,25 +58,77 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 		return nil, err
 	}
 
-	commitments, err := a.storage.GetTxCommitmentsByBatchID(batch.ID)
+	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
 }
 
 func (a *API) createBatchWithCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
-	commitments []models.TxCommitment,
+	commitments []models.Commitment,
+) (*dto.BatchWithRootAndCommitments, error) {
+	switch batch.Type {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return a.createBatchWithTxCommitments(batch, submissionBlock, commitments)
+	case batchtype.MassMigration:
+		return a.createBatchWithMMCommitments(batch, submissionBlock, commitments)
+	default:
+		return &dto.BatchWithRootAndCommitments{
+			Batch: dto.Batch{
+				ID:                batch.ID,
+				Hash:              batch.Hash,
+				Type:              batch.Type,
+				TransactionHash:   batch.TransactionHash,
+				SubmissionBlock:   submissionBlock,
+				SubmissionTime:    batch.SubmissionTime,
+				FinalisationBlock: batch.FinalisationBlock,
+			},
+			AccountTreeRoot: batch.AccountTreeRoot,
+			Commitments:     nil,
+		}, nil
+	}
+}
+
+func (a *API) createBatchWithTxCommitments(
+	batch *models.Batch,
+	submissionBlock uint32,
+	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
 	for i := range commitments {
-		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].FeeReceiver)
+		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToTxCommitment().FeeReceiver)
 		if err != nil {
 			return nil, err
 		}
-		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenID(&commitments[i], stateLeaf.TokenID))
+
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromTxCommitment(
+			commitments[i].ToTxCommitment(),
+			stateLeaf.TokenID,
+		))
+	}
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+}
+
+func (a *API) createBatchWithMMCommitments(
+	batch *models.Batch,
+	submissionBlock uint32,
+	commitments []models.Commitment,
+) (*dto.BatchWithRootAndCommitments, error) {
+	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
+	for i := range commitments {
+		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToMMCommitment().FeeReceiver)
+		if err != nil {
+			return nil, err
+		}
+
+		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromMMCommitment(
+			commitments[i].ToMMCommitment(),
+			stateLeaf.TokenID,
+		))
 	}
 	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
 }

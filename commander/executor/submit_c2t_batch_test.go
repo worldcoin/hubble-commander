@@ -12,7 +12,7 @@ import (
 
 type SubmitC2TBatchTestSuite struct {
 	submitBatchTestSuite
-	baseCommitment models.CommitmentWithTxs
+	baseCommitment models.TxCommitmentWithTxs
 }
 
 func (s *SubmitC2TBatchTestSuite) SetupTest() {
@@ -30,7 +30,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain() {
 	commitment := s.baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -47,7 +47,7 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 	commitment := s.baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: []models.CommitmentWithTxs{commitment}})
+	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -62,19 +62,19 @@ func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord() {
 func (s *SubmitC2TBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Create2Transfer)
 	s.NoError(err)
-	commitments := getCommitments(2, pendingBatch.ID, batchtype.Create2Transfer)
+	commitments := getTxCommitments(2, pendingBatch.ID, batchtype.Create2Transfer)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, &TxBatchData{commitments: commitments})
+	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
 	s.NoError(err)
 
 	for i := range commitments {
-		commit, err := s.storage.GetTxCommitment(&commitments[i].ID)
+		commit, err := s.storage.GetCommitment(&commitments[i].ToTxCommitmentWithTxs().ID)
 		s.NoError(err)
-		s.Equal(commitments[i].TxCommitment, *commit)
-		s.Equal(batch.ID, commit.ID.BatchID)
+		s.Equal(commitments[i].ToTxCommitmentWithTxs().TxCommitment, *commit.ToTxCommitment())
+		s.Equal(batch.ID, commit.ToTxCommitment().ID.BatchID)
 	}
 }
 

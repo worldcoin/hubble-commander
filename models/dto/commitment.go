@@ -12,7 +12,7 @@ type CommitmentID struct {
 	IndexInBatch uint8
 }
 
-func MakeCommitmentID(id *models.CommitmentID) *CommitmentID {
+func NewCommitmentID(id *models.CommitmentID) *CommitmentID {
 	if id == nil {
 		return nil
 	}
@@ -40,18 +40,32 @@ type CommitmentWithTokenID struct {
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
 	PostStateRoot      common.Hash
+	Meta               *MassMigrationMeta `json:",omitempty"`
+	WithdrawRoot       *common.Hash       `json:",omitempty"`
 }
 
-func MakeCommitmentWithTokenID(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
+func MakeCommitmentWithTokenIDFromTxCommitment(commitment *models.TxCommitment, tokenID models.Uint256) CommitmentWithTokenID {
 	return CommitmentWithTokenID{
-		ID: CommitmentID{
-			BatchID:      commitment.ID.BatchID,
-			IndexInBatch: commitment.ID.IndexInBatch,
-		},
+		ID:                 *NewCommitmentID(&commitment.ID),
 		LeafHash:           commitment.LeafHash(),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
 		PostStateRoot:      commitment.PostStateRoot,
+		Meta:               nil,
+		WithdrawRoot:       nil,
+	}
+}
+
+func MakeCommitmentWithTokenIDFromMMCommitment(commitment *models.MMCommitment, tokenID models.Uint256) CommitmentWithTokenID {
+	return CommitmentWithTokenID{
+		ID:                 *NewCommitmentID(&commitment.ID),
+		LeafHash:           commitment.LeafHash(),
+		TokenID:            tokenID,
+		FeeReceiverStateID: commitment.FeeReceiver,
+		CombinedSignature:  commitment.CombinedSignature,
+		PostStateRoot:      commitment.PostStateRoot,
+		Meta:               NewMassMigrationMeta(commitment.Meta),
+		WithdrawRoot:       &commitment.WithdrawRoot,
 	}
 }

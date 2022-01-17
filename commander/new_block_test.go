@@ -8,8 +8,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -91,13 +93,15 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	tokenID := *RegisterSingleToken(s.Assertions, s.client, s.client.ExampleTokenAddress)
+	registeredToken, err := s.client.GetRegisteredToken(models.NewUint256(0))
+	s.NoError(err)
 
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
 	for i := range accounts {
-		userAccounts, err := s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
+		var userAccounts []models.AccountLeaf
+		userAccounts, err = s.cmd.storage.AccountTree.Leaves(&accounts[i].PublicKey)
 		s.NoError(err)
 		s.Len(userAccounts, 1)
 		s.Equal(accounts[i], userAccounts[0])
@@ -110,7 +114,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
 	s.NoError(err)
 	s.Equal(s.client.ExampleTokenAddress, syncedToken.Contract)
-	s.Equal(tokenID, syncedToken.ID)
+	s.Equal(registeredToken.ID, syncedToken.ID)
 }
 
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndTokensAddedWhileRunning() {
@@ -123,7 +127,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	}
 	s.registerAccounts(accounts)
 	s.submitTransferBatchInTransaction(&s.transfer)
-	tokenID := *RegisterSingleToken(s.Assertions, s.client, s.client.ExampleTokenAddress)
+	registeredToken := s.deployAndRegisterSingleToken()
 
 	s.waitForLatestBlockSync()
 
@@ -138,10 +142,9 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 	s.NoError(err)
 	s.Len(batches, 2)
 
-	syncedToken, err := s.cmd.storage.GetRegisteredToken(models.MakeUint256(0))
+	syncedToken, err := s.cmd.storage.GetRegisteredToken(registeredToken.ID)
 	s.NoError(err)
-	s.Equal(s.client.ExampleTokenAddress, syncedToken.Contract)
-	s.Equal(tokenID, syncedToken.ID)
+	s.Equal(*registeredToken, *syncedToken)
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
@@ -165,13 +168,13 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
 
-		batchData, err := txsCtx.CreateCommitments()
+		commitments, err := txsCtx.CreateCommitments()
 		s.NoError(err)
-		s.Len(batchData.Commitments(), 1)
+		s.Len(commitments, 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, batchData)
+		err = txsCtx.SubmitBatch(batch, commitments)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 	})
@@ -208,6 +211,26 @@ func setChainState(t *testing.T, storage *st.TestStorage) {
 		SyncedBlock: 0,
 	})
 	require.NoError(t, err)
+}
+
+func (s *NewBlockLoopTestSuite) deployAndRegisterSingleToken() *models.RegisteredToken {
+	tokenAddress, tokenTx, _, err := customtoken.DeployTestCustomToken(
+		s.client.GetAccount(),
+		s.client.GetBackend(),
+		"NewToken",
+		"NEW",
+	)
+	s.NoError(err)
+	_, err = chain.WaitToBeMined(s.client.Backend, tokenTx)
+	s.NoError(err)
+
+	tokenID, err := s.client.RegisterTokenAndWait(tokenAddress)
+	s.NoError(err)
+
+	return &models.RegisteredToken{
+		ID:       *tokenID,
+		Contract: tokenAddress,
+	}
 }
 
 func signTransfer(t *testing.T, wallet *bls.Wallet, transfer *models.Transfer) {

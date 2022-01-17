@@ -53,21 +53,12 @@ func (s *DepositCommitmentTestSuite) TearDownTest() {
 }
 
 func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_AddAndRetrieve() {
-	err := s.storage.AddDepositCommitment(&s.commitment)
+	err := s.storage.addDepositCommitment(&s.commitment)
 	s.NoError(err)
 
-	actual, err := s.storage.GetDepositCommitment(&s.commitment.ID)
+	actual, err := s.storage.GetCommitment(&s.commitment.ID)
 	s.NoError(err)
-	s.Equal(s.commitment, *actual)
-}
-
-func (s *DepositCommitmentTestSuite) TestAddDepositCommitment_InvalidCommitmentTyp() {
-	err := s.storage.AddTxCommitment(&txCommitment)
-	s.NoError(err)
-
-	res, err := s.storage.GetDepositCommitment(&s.commitment.ID)
-	s.ErrorIs(err, NewNotFoundError("commitment"))
-	s.Nil(res)
+	s.Equal(s.commitment, *actual.ToDepositCommitment())
 }
 
 func TestDepositCommitmentTestSuite(t *testing.T) {

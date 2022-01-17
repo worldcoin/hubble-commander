@@ -5,32 +5,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 )
 
-func (c *TxsContext) newCommitment(
-	commitmentID *models.CommitmentID,
-	batchType batchtype.BatchType,
-	feeReceiverStateID uint32,
-	serializedTxs []byte,
-	combinedSignature *models.Signature,
-) (*models.CommitmentWithTxs, error) {
-	stateRoot, err := c.storage.StateTree.Root()
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.CommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
-			CommitmentBase: models.CommitmentBase{
-				ID:            *commitmentID,
-				Type:          batchType,
-				PostStateRoot: *stateRoot,
-			},
-			FeeReceiver:       feeReceiverStateID,
-			CombinedSignature: *combinedSignature,
-		},
-		Transactions: serializedTxs,
-	}, nil
-}
-
 func (c *DepositsContext) newCommitment(
 	batchID models.Uint256,
 	depositSubtree *models.PendingDepositSubtree,

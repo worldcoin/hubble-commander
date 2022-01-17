@@ -1,6 +1,8 @@
 package stored
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+)
 
 var CommitmentPrefix = models.GetBadgerHoldPrefix(Commitment{})
 
@@ -16,6 +18,21 @@ func MakeCommitmentFromTxCommitment(c *models.TxCommitment) Commitment {
 			FeeReceiver:       c.FeeReceiver,
 			CombinedSignature: c.CombinedSignature,
 			BodyHash:          c.BodyHash,
+		},
+	}
+}
+
+func MakeCommitmentFromMMCommitment(c *models.MMCommitment) Commitment {
+	return Commitment{
+		CommitmentBase: c.CommitmentBase,
+		Body: &MMCommitmentBody{
+			TxCommitmentBody: TxCommitmentBody{
+				FeeReceiver:       c.FeeReceiver,
+				CombinedSignature: c.CombinedSignature,
+				BodyHash:          c.BodyHash,
+			},
+			Meta:         *c.Meta,
+			WithdrawRoot: c.WithdrawRoot,
 		},
 	}
 }
@@ -74,6 +91,22 @@ func (c *Commitment) ToTxCommitment() *models.TxCommitment {
 		FeeReceiver:       txCommitmentBody.FeeReceiver,
 		CombinedSignature: txCommitmentBody.CombinedSignature,
 		BodyHash:          txCommitmentBody.BodyHash,
+	}
+}
+
+func (c *Commitment) ToMMCommitment() *models.MMCommitment {
+	mmCommitmentBody, ok := c.Body.(*MMCommitmentBody)
+	if !ok {
+		panic("invalid MMCommitment body type")
+	}
+
+	return &models.MMCommitment{
+		CommitmentBase:    c.CommitmentBase,
+		FeeReceiver:       mmCommitmentBody.FeeReceiver,
+		CombinedSignature: mmCommitmentBody.CombinedSignature,
+		BodyHash:          mmCommitmentBody.BodyHash,
+		Meta:              &mmCommitmentBody.Meta,
+		WithdrawRoot:      mmCommitmentBody.WithdrawRoot,
 	}
 }
 

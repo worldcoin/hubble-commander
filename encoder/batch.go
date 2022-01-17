@@ -107,20 +107,20 @@ func CommitmentsToTransferAndC2TSubmitBatchFields(batchID *models.Uint256, commi
 	transactions = make([][]byte, 0, count)
 
 	for i := range commitments {
-		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
-		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
-		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitments[i].FeeReceiver)))
-		transactions = append(transactions, commitments[i].Transactions)
+		commitment := commitments[i].ToTxCommitmentWithTxs()
+
+		stateRoots = append(stateRoots, commitment.PostStateRoot)
+		signatures = append(signatures, commitment.CombinedSignature.BigInts())
+		feeReceivers = append(feeReceivers, new(big.Int).SetUint64(uint64(commitment.FeeReceiver)))
+		transactions = append(transactions, commitment.Transactions)
 	}
 	return
 }
 
 //nolint:gocritic
-func CommitmentsToSubmitMassMigrationBatchFields(
+func CommitmentsToSubmitMMBatchFields(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
-	metas []models.MassMigrationMeta,
-	withdrawRoots []common.Hash,
 ) (
 	bigBatchID *big.Int,
 	stateRoots [][32]byte,
@@ -139,11 +139,13 @@ func CommitmentsToSubmitMassMigrationBatchFields(
 	transactions = make([][]byte, 0, count)
 
 	for i := range commitments {
-		stateRoots = append(stateRoots, commitments[i].PostStateRoot)
-		signatures = append(signatures, commitments[i].CombinedSignature.BigInts())
-		meta = append(meta, metas[i].BigInts())
-		bytesWithdrawRoots = append(bytesWithdrawRoots, withdrawRoots[i])
-		transactions = append(transactions, commitments[i].Transactions)
+		commitment := commitments[i].ToMMCommitmentWithTxs()
+
+		stateRoots = append(stateRoots, commitment.PostStateRoot)
+		signatures = append(signatures, commitment.CombinedSignature.BigInts())
+		meta = append(meta, commitment.Meta.BigInts())
+		bytesWithdrawRoots = append(bytesWithdrawRoots, commitment.WithdrawRoot)
+		transactions = append(transactions, commitment.Transactions)
 	}
 	return
 }

@@ -84,15 +84,15 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitme
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
+	s.Len(commitments, 1)
+	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
+	s.Equal(commitments[0].ToTxCommitmentWithTxs().PostStateRoot, *postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
@@ -103,15 +103,15 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPer
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
+	s.Len(commitments, 1)
+	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
+	s.Equal(commitments[0].ToTxCommitmentWithTxs().PostStateRoot, *postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitmentsInBatch() {
@@ -139,17 +139,17 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitment
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 3)
-	s.Len(batchData.Commitments()[0].Transactions, s.maxTxBytesInCommitment)
-	s.Len(batchData.Commitments()[1].Transactions, s.maxTxBytesInCommitment)
-	s.Len(batchData.Commitments()[2].Transactions, encoder.TransferLength)
+	s.Len(commitments, 3)
+	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, s.maxTxBytesInCommitment)
+	s.Len(commitments[1].ToTxCommitmentWithTxs().Transactions, s.maxTxBytesInCommitment)
+	s.Len(commitments[2].ToTxCommitmentWithTxs().Transactions, encoder.TransferLength)
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[2].PostStateRoot, *postRoot)
+	s.Equal(commitments[2].ToTxCommitmentWithTxs().PostStateRoot, *postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) invalidateTransfers(transfers []models.Transfer) {
@@ -163,8 +163,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
@@ -189,8 +189,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
@@ -207,39 +207,38 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitme
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * int(transfersCount)
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	s.Len(batchData.Commitments()[0].Transactions, expectedTxsLength)
-	s.Equal(batchData.Commitments()[0].FeeReceiver, uint32(2))
+	s.Len(commitments, 1)
+	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
+	s.Equal(commitments[0].ToTxCommitmentWithTxs().FeeReceiver, uint32(2))
 
 	postRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 	s.NotEqual(preRoot, postRoot)
-	s.Equal(batchData.Commitments()[0].PostStateRoot, *postRoot)
+	s.Equal(commitments[0].ToTxCommitmentWithTxs().PostStateRoot, *postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingTransfers(5)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
+	s.Len(commitments, 1)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
 	transfers := testutils.GenerateValidTransfers(4)
 	s.addTransfers(transfers)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	commitment := &batchData.Commitments()[0]
+	s.Len(commitments, 1)
 
 	for i := range transfers {
 		tx, err := s.storage.GetTransfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitment.ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
 		s.Nil(tx.ErrorMessage)
 	}
 }
@@ -254,16 +253,15 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 	err := s.storage.AddTransaction(nonceTooHighTx)
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
-	commitment := &batchData.Commitments()[0]
+	s.Len(commitments, 1)
 
 	for i := range validTxs {
 		var tx *models.Transfer
 		tx, err = s.storage.GetTransfer(validTxs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitment.ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
 	}
 
 	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
@@ -288,8 +286,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 }
 
@@ -323,8 +321,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 }
 
@@ -335,8 +333,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
 	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	s.Len(s.txsCtx.txErrorsToStore, 1)
@@ -353,8 +351,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWh
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	batchData, err := s.txsCtx.CreateCommitments()
-	s.Nil(batchData)
+	commitments, err := s.txsCtx.CreateCommitments()
+	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
 
 	postStateRoot, err := s.storage.StateTree.Root()
@@ -387,9 +385,9 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 		context.Background(),
 		batchtype.Transfer,
 	)
-	batchData, err := tempTxsCtx.CreateCommitments()
+	commitments, err := tempTxsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Equal(batchData.Len(), 1)
+	s.Len(commitments, 1)
 
 	expectedPostStateRoot, err := tempTxsCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -405,9 +403,9 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[2])
 	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
 
-	batchData, err = s.txsCtx.CreateCommitments()
+	commitments, err = s.txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Equal(batchData.Len(), 1)
+	s.Len(commitments, 1)
 
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)

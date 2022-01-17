@@ -76,12 +76,12 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 	_, err = s.storage.GetFirstPendingDepositSubtree()
 	s.True(st.IsNotFoundError(err))
 
-	commitment, err := s.storage.GetDepositCommitment(&models.CommitmentID{
+	commitment, err := s.storage.GetCommitment(&models.CommitmentID{
 		BatchID:      batches[1].ID,
 		IndexInBatch: 0,
 	})
 	s.NoError(err)
-	s.Equal(s.depositSubtree.Root, commitment.SubtreeRoot)
+	s.Equal(s.depositSubtree.Root, commitment.ToDepositCommitment().SubtreeRoot)
 }
 
 func (s *SyncDepositBatchTestSuite) TestSyncBatch_SetsUserStates() {
@@ -136,9 +136,6 @@ func (s *SyncDepositBatchTestSuite) syncBatches() {
 
 func (s *SyncDepositBatchTestSuite) prepareDeposits() {
 	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
-	s.NoError(err)
-
-	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
 	s.NoError(err)
 
 	s.approveTokens()

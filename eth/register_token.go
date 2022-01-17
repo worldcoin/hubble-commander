@@ -46,3 +46,15 @@ func (c *Client) retrieveRegisteredTokenID(receipt *types.Receipt) (*models.Uint
 
 	return &tokenID, nil
 }
+
+func (c *Client) GetRegisteredToken(tokenID *models.Uint256) (*models.RegisteredToken, error) {
+	tokenAddress, _, err := c.TokenRegistry.SafeGetRecord(nil, tokenID.ToBig())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &models.RegisteredToken{
+		ID:       *tokenID,
+		Contract: tokenAddress,
+	}, nil
+}

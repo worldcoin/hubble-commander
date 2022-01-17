@@ -18,6 +18,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,8 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
-
-const l2Unit = 1e9
 
 func TestWithdrawProcess(t *testing.T) {
 	commanderConfig := config.GetConfig()
@@ -58,25 +57,26 @@ func TestWithdrawProcess(t *testing.T) {
 	withdrawManager, withdrawManagerAddress := getWithdrawManager(t, commander.Client(), commanderConfig)
 	transactor := getTransactor(t, commanderConfig)
 
-	token, tokenID := deployAndRegisterToken(t, ethClient)
+	token, tokenContract := getDeployedToken(t, ethClient)
+	approveToken(t, ethClient, token.Contract)
 
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	depositsNeededForFullBatch := calculateDepositsCountForFullBatch(t, ethClient)
+	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
 
 	userStatesBeforeDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
-	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, tokenID, token, transactor.From, depositsNeededForFullBatch)
+	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, transactor.From, fullDepositBatchCount)
 
 	userStatesAfterDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
 	newUserStates := userStatesDifference(userStatesAfterDeposit, userStatesBeforeDeposit)
-	require.Len(t, newUserStates, depositsNeededForFullBatch)
+	require.Len(t, newUserStates, fullDepositBatchCount)
 
 	targetMassMigrationHash := testSubmitWithdrawBatch(t, commander.Client(), senderWallet, newUserStates[0].StateID)
 
-	testProcessWithdrawCommitment(t, commander.Client(), ethClient, transactor, withdrawManager, withdrawManagerAddress, token)
+	testProcessWithdrawCommitment(t, commander.Client(), ethClient, transactor, withdrawManager, withdrawManagerAddress, tokenContract)
 
-	testClaimTokens(t, commander.Client(), ethClient, transactor, withdrawManager, token, senderWallet, targetMassMigrationHash)
+	testClaimTokens(t, commander.Client(), ethClient, transactor, withdrawManager, tokenContract, senderWallet, targetMassMigrationHash)
 }
 
 func getWithdrawManager(t *testing.T, client jsonrpc.RPCClient, cfg *config.Config) (*withdrawmanager.WithdrawManager, common.Address) {
@@ -105,15 +105,6 @@ func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
 	require.NoError(t, err)
 
 	return account
-}
-
-func deployAndRegisterToken(t *testing.T, ethClient *eth.Client) (*customtoken.TestCustomToken, *models.Uint256) {
-	token, tokenAddress := deployExampleToken(t, ethClient)
-	tokenID, err := ethClient.RegisterTokenAndWait(tokenAddress)
-	require.NoError(t, err)
-	approveToken(t, ethClient, tokenAddress)
-
-	return &token, tokenID
 }
 
 func getSenderUserStates(t *testing.T, client jsonrpc.RPCClient, senderPublicKey *models.PublicKey) []dto.UserStateWithID {
@@ -232,7 +223,7 @@ func testSubmitWithdrawBatch(
 	senderWallet bls.Wallet,
 	fromStateID uint32,
 ) common.Hash {
-	massMigrationWithdrawalAmount := models.MakeUint256(uint64(9 * l2Unit))
+	massMigrationWithdrawalAmount := models.MakeUint256(9 * consts.L2Unit)
 
 	var targetMassMigrationHash common.Hash
 	submitTxBatchAndWait(t, client, func() common.Hash {
@@ -301,7 +292,7 @@ func testProcessWithdrawCommitment(
 
 	typedProof := massMigrationCommitmentProofToCalldata(proof)
 
-	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(uint64(l2Unit))
+	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(consts.L2Unit)
 	testDoActionAndAssertTokenBalanceDifference(t, token, withdrawManagerAddress, expectedBalanceDifference, func() {
 		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, commitmentID.BatchID.ToBig(), typedProof)
 		require.NoError(t, err)
@@ -369,7 +360,7 @@ func testClaimTokens(
 
 	publicKeyProof := testGetPublicKeyProof(t, client, proof.UserState.PubKeyID)
 
-	expectedBalanceDifference := *proof.UserState.Balance.MulN(uint64(l2Unit))
+	expectedBalanceDifference := *proof.UserState.Balance.MulN(consts.L2Unit)
 	testDoActionAndAssertTokenBalanceDifference(t, token, transactor.From, expectedBalanceDifference, func() {
 		tx, err := withdrawManager.ClaimTokens(
 			transactor,

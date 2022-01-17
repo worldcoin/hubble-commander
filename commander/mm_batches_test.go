@@ -82,8 +82,8 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsBatch() {
 func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithMismatchedTotalAmount() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.Metas()[0].Amount = models.MakeUint256(110)
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().Meta.Amount = models.MakeUint256(110)
 	})
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -100,8 +100,8 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithMismatchedTota
 func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidWithdrawRoot() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.WithdrawRoots()[0] = common.Hash{1, 2, 3}
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().WithdrawRoot = common.Hash{1, 2, 3}
 	})
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -118,8 +118,8 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidWithdra
 func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenID() {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 
-	s.submitInvalidBatch(&tx, func(batchData executor.BatchData) {
-		batchData.Metas()[0].TokenID = models.MakeUint256(110)
+	s.submitInvalidBatch(&tx, func(commitments []models.CommitmentWithTxs) {
+		commitments[0].ToMMCommitmentWithTxs().Meta.TokenID = models.MakeUint256(110)
 	})
 
 	remoteBatches, err := s.client.GetAllBatches()
@@ -133,7 +133,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenID
 	s.Equal(result.BadFromTokenID, getDisputeResult(s.Assertions, s.client))
 }
 
-func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifier func(batchData executor.BatchData)) {
+func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifier func(commitments []models.CommitmentWithTxs)) {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
@@ -146,13 +146,13 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	batchData, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments()
 	s.NoError(err)
-	s.Len(batchData.Commitments(), 1)
+	s.Len(commitments, 1)
 
-	modifier(batchData)
+	modifier(commitments)
 
-	err = txsCtx.SubmitBatch(pendingBatch, batchData)
+	err = txsCtx.SubmitBatch(pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

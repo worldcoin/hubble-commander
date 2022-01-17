@@ -136,7 +136,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
-	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.CommitmentWithTxs) {
+	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.TxCommitmentWithTxs) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)
 	})
 	s.client.Blockchain.GetBackend().Commit()
@@ -173,9 +173,6 @@ func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *model
 
 func (s *DepositBatchesTestSuite) prepareDeposits() {
 	err := s.storage.AddPendingDepositSubtree(&s.depositSubtree)
-	s.NoError(err)
-
-	_, err = s.client.RegisterTokenAndWait(s.client.ExampleTokenAddress)
 	s.NoError(err)
 
 	s.approveTokens()

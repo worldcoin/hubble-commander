@@ -5,7 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 )
 
-const InitialGenesisBalance = 1000000000000000000
+const InitialGenesisBalance = 1_000_000_000
 
 func CreateUnregisteredWalletsForBenchmark(txCount int64, domain bls.Domain) ([]bls.Wallet, error) {
 	cfg := config.GetDeployerConfig()

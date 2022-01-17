@@ -57,14 +57,14 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment() {
 	expected := txCommitment
 	for i := 0; i < 2; i++ {
 		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddTxCommitment(&expected)
+		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
 
 	expected.ID.BatchID = models.MakeUint256(5)
 	for i := 0; i < 2; i++ {
 		expected.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddTxCommitment(&expected)
+		err := s.storage.AddCommitment(&expected)
 		s.NoError(err)
 	}
 
@@ -77,11 +77,11 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_LatestDepositCommitm
 	for i := 0; i < 2; i++ {
 		commitment := txCommitment
 		commitment.ID.IndexInBatch = uint8(i)
-		err := s.storage.AddTxCommitment(&commitment)
+		err := s.storage.AddCommitment(&commitment)
 		s.NoError(err)
 	}
 
-	err := s.storage.AddDepositCommitment(&s.depositCommitment)
+	err := s.storage.AddCommitment(&s.depositCommitment)
 	s.NoError(err)
 
 	latestCommitment, err := s.storage.GetLatestCommitment()
@@ -119,7 +119,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 			commitmentInBatch := txCommitment
 			commitmentInBatch.ID.BatchID = batches[i].ID
 			commitmentInBatch.ID.IndexInBatch = uint8(j)
-			err = s.storage.AddTxCommitment(&commitmentInBatch)
+			err = s.storage.AddCommitment(&commitmentInBatch)
 			s.NoError(err)
 		}
 	}
@@ -129,7 +129,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 		BatchID:      batches[0].ID,
 		IndexInBatch: 2,
 	}
-	err := s.storage.AddDepositCommitment(&depositCommitment)
+	err := s.storage.AddCommitment(&depositCommitment)
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
@@ -143,13 +143,13 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 
 func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
 	batchID := s.addRandomBatch()
-	err := s.storage.AddTxCommitment(&txCommitment)
+	err := s.storage.AddCommitment(&txCommitment)
 	s.NoError(err)
 
 	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
 	s.ErrorIs(err, NewNotFoundError("commitments"))
 
-	_, err = s.storage.GetTxCommitment(&txCommitment.ID)
+	_, err = s.storage.GetCommitment(&txCommitment.ID)
 	s.NoError(err)
 }
 

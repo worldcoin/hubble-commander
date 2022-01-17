@@ -21,7 +21,8 @@ type GetBatchTestSuite struct {
 	api                 *API
 	storage             *st.TestStorage
 	testClient          *eth.TestClient
-	commitment          models.TxCommitment
+	txCommitment        models.TxCommitment
+	mmCommitment        models.MMCommitment
 	batch               models.Batch
 	batchNotFoundAPIErr *APIError
 }
@@ -48,9 +49,30 @@ func (s *GetBatchTestSuite) SetupTest() {
 		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
-	s.commitment = commitment
-	s.commitment.ID.BatchID = s.batch.ID
-	s.commitment.BodyHash = utils.NewRandomHash()
+	s.txCommitment = commitment
+	s.txCommitment.ID.BatchID = s.batch.ID
+	s.txCommitment.BodyHash = utils.NewRandomHash()
+
+	s.mmCommitment = models.MMCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      s.batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.MassMigration,
+			PostStateRoot: utils.RandomHash(),
+		},
+		FeeReceiver:       1,
+		CombinedSignature: models.MakeRandomSignature(),
+		BodyHash:          utils.NewRandomHash(),
+		Meta: &models.MassMigrationMeta{
+			SpokeID:     1,
+			TokenID:     models.MakeUint256(1),
+			Amount:      models.MakeUint256(1),
+			FeeReceiver: 1,
+		},
+		WithdrawRoot: utils.RandomHash(),
+	}
 
 	s.batchNotFoundAPIErr = &APIError{
 		Code:    30000,
@@ -64,12 +86,35 @@ func (s *GetBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByHash() {
+func (s *GetBatchTestSuite) TestGetBatchByHash_TxBatch() {
 	s.addStateLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.txCommitment)
+	s.NoError(err)
+
+	result, err := s.api.GetBatchByHash(*s.batch.Hash)
+	s.NoError(err)
+	s.NotNil(result)
+	s.Len(result.Commitments, 1)
+	s.Equal(s.batch.ID, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+}
+
+func (s *GetBatchTestSuite) TestGetBatchByHash_MassMigrationBatch() {
+	s.addStateLeaf()
+
+	s.batch.Type = batchtype.MassMigration
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	err = s.storage.AddCommitment(&s.mmCommitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
@@ -110,12 +155,35 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_NonexistentBatch() {
 	s.Nil(result)
 }
 
-func (s *GetBatchTestSuite) TestGetBatchByID() {
+func (s *GetBatchTestSuite) TestGetBatchByID_TxBatch() {
 	s.addStateLeaf()
 	err := s.storage.AddBatch(&s.batch)
 	s.NoError(err)
 
-	err = s.storage.AddTxCommitment(&s.commitment)
+	err = s.storage.AddCommitment(&s.txCommitment)
+	s.NoError(err)
+
+	result, err := s.api.GetBatchByID(s.batch.ID)
+	s.NoError(err)
+	s.NotNil(result)
+	s.Len(result.Commitments, 1)
+	s.Equal(s.batch.ID, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+}
+
+func (s *GetBatchTestSuite) TestGetBatchByID_MassMigrationBatch() {
+	s.addStateLeaf()
+
+	s.batch.Type = batchtype.MassMigration
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	err = s.storage.AddCommitment(&s.mmCommitment)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByID(s.batch.ID)
