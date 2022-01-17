@@ -121,7 +121,7 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	if err != nil {
 		return err
 	}
-	err = c.getDisputeRevertMessage(tx, receipt)
+	err = c.GetRevertMessage(tx, receipt)
 	if err != nil {
 		return NewDisputeTxRevertedError(batchID.Uint64(), err.Error())
 	}
