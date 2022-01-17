@@ -1,12 +1,8 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
-
-	"github.com/Worldcoin/hubble-commander/scripts"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -14,23 +10,6 @@ const (
 	deploy = "deploy"
 	export = "export"
 )
-
-var (
-	deployCommand = flag.NewFlagSet(deploy, flag.ExitOnError)
-	chainSpecFile = deployCommand.String("file", "chain-spec.yaml", "target file to save the chain spec to")
-
-	exportCommand = flag.NewFlagSet(export, flag.ExitOnError)
-	exportType    = exportCommand.String("type", "state", "type of data to export")
-	exportFile    = exportCommand.String("file", "exported-data.json", "target file to save exported data to")
-)
-
-func exitWithHelpMessage() {
-	fmt.Printf("Subcommand required:\n" +
-		"start - starts the commander\n" +
-		"deploy - deploys contracts and saves chain spec. Usage:\n")
-	deployCommand.PrintDefaults()
-	os.Exit(1)
-}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -49,37 +28,15 @@ func main() {
 	}
 }
 
-func handleStartCommand() {
-	err := startCommander()
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-}
+func exitWithHelpMessage() {
+	fmt.Printf(`
+Available subcomands:
+start - starts the commander
+deploy - deploys contracts and saves chain spec		
+`)
+	deployFlagSet.Usage()
 
-func handleDeployCommand(args []string) {
-	err := deployCommand.Parse(args)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-	err = deployCommanderContracts(*chainSpecFile)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-}
-
-func handleExportCommand(args []string) {
-	err := exportCommand.Parse(args)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	switch *exportType {
-	case "state":
-		err = scripts.ExportStateLeaves(*exportFile)
-	default:
-		exitWithHelpMessage()
-	}
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
+	fmt.Println("export - exports data to file in json format")
+	exportFlagSet.Usage()
+	os.Exit(1)
 }
