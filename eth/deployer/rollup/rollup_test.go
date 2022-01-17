@@ -52,12 +52,6 @@ func (s *RollupDeployerTestSuite) TestDeployConfiguredRollup_TransfersGenesisFun
 	rollupContracts, err := DeployConfiguredRollup(s.sim, deploymentCfg)
 	s.NoError(err)
 
-	id, err := rollupContracts.Rollup.DomainSeparator(&bind.CallOpts{})
-	s.NoError(err)
-
-	var emptyBytes [32]byte
-	s.NotEqual(emptyBytes, id)
-
 	customToken, err := customtoken.NewTestCustomToken(rollupContracts.ExampleTokenAddress, s.sim.Backend)
 	s.NoError(err)
 
