@@ -42,40 +42,45 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccou
 	return nil
 }
 
-func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) error {
+func RegisterGenesisAccountsAndCalculateTotalAmount(
+	accountMgr *eth.AccountManager,
+	accounts []models.GenesisAccount,
+) (*models.Uint256, error) {
 	log.Println("Registering genesis accounts")
 
 	emptyPublicKey := models.PublicKey{}
 	txs := make([]types.Transaction, 0, len(accounts))
 	for i := range accounts {
 		if accounts[i].PublicKey == emptyPublicKey {
-			return errors.WithStack(errMissingGenesisPublicKey)
+			return nil, errors.WithStack(errMissingGenesisPublicKey)
 		}
 
 		tx, err := accountMgr.RegisterAccount(&accounts[i].PublicKey)
 		if err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 		txs = append(txs, *tx)
 	}
 
 	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	totalGenesisAmount := models.NewUint256(0)
 	for i := range accounts {
 		pubKeyID, err := accountMgr.RetrieveRegisteredPubKeyID(&receipts[i])
 		if err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 
 		if accounts[i].State.PubKeyID != *pubKeyID {
-			return fmt.Errorf("different pubKeyID for account %s", accounts[i].PublicKey)
+			return nil, fmt.Errorf("different pubKeyID for account %s", accounts[i].PublicKey)
 		}
+		totalGenesisAmount = totalGenesisAmount.Add(&accounts[i].State.Balance)
 	}
 
-	return nil
+	return totalGenesisAmount, nil
 }
 
 func (c *Commander) addGenesisBatch() error {

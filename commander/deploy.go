@@ -67,7 +67,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	err = RegisterGenesisAccounts(accountManager, cfg.GenesisAccounts)
+	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(accountManager, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
