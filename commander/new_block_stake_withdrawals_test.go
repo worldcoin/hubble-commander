@@ -112,7 +112,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) submitTransferBatchInTransac
 
 		batchData, err := txsCtx.CreateCommitments()
 		s.NoError(err)
-		s.Len(batchData.Commitments(), 1)
+		s.Len(batchData, 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)

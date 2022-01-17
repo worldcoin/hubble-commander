@@ -58,7 +58,8 @@ func (s *StakeWithdrawalsTestSuite) TestSyncStakeWithdrawals() {
 	})
 	s.NoError(err)
 
-	_, err = s.testClient.SubmitTransfersBatchAndWait(&batchID, s.createSingleCommitmentInSlice(batchtype.Transfer))
+	commitments := s.createSingleCommitmentInSlice(batchtype.Transfer)
+	_, err = s.testClient.SubmitTransfersBatchAndWait(&batchID, commitments)
 	s.NoError(err)
 	err = s.testClient.WithdrawStakeAndWait(&batchID)
 	s.NoError(err)
@@ -75,19 +76,18 @@ func (s *StakeWithdrawalsTestSuite) createSingleCommitmentInSlice(commitmentType
 	stateRoot, err := s.cmd.storage.StateTree.Root()
 	s.NoError(err)
 
-	return []models.CommitmentWithTxs{
-		{
-			TxCommitment: models.TxCommitment{
-				CommitmentBase: models.CommitmentBase{
-					Type:          commitmentType,
-					PostStateRoot: *stateRoot,
-				},
-				FeeReceiver:       0,
-				CombinedSignature: models.Signature{},
+	commitment := models.TxCommitmentWithTxs{
+		TxCommitment: models.TxCommitment{
+			CommitmentBase: models.CommitmentBase{
+				Type:          commitmentType,
+				PostStateRoot: *stateRoot,
 			},
-			Transactions: []byte{},
+			FeeReceiver:       0,
+			CombinedSignature: models.Signature{},
 		},
-	}
+		Transactions: []byte{}}
+
+	return []models.CommitmentWithTxs{&commitment}
 }
 
 func TestStakeWithdrawalsTestSuite(t *testing.T) {
