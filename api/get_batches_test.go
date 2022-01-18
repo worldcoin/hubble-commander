@@ -38,6 +38,13 @@ func (s *GetBatchesTestSuite) SetupTest() {
 
 	s.batches = []models.Batch{
 		{
+			ID:                models.MakeUint256(0),
+			Type:              batchtype.Genesis,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(42000),
+		},
+		{
 			ID:                models.MakeUint256(1),
 			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
@@ -61,6 +68,14 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			FinalisationBlock: ref.Uint32(44000),
 			SubmissionTime:    models.NewTimestamp(time.Unix(160, 0).UTC()),
 		},
+		{
+			ID:                models.MakeUint256(4),
+			Type:              batchtype.Deposit,
+			TransactionHash:   utils.RandomHash(),
+			Hash:              utils.NewRandomHash(),
+			FinalisationBlock: ref.Uint32(44000),
+			SubmissionTime:    models.NewTimestamp(time.Unix(160, 0).UTC()),
+		},
 	}
 }
 
@@ -76,16 +91,22 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(200))
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result, 3)
+	s.Len(result, 5)
 
 	for i := range s.batches {
 		s.Equal(s.batches[i].ID, result[i].ID)
 		s.Equal(s.batches[i].Hash, result[i].Hash)
 		s.Equal(s.batches[i].Type, result[i].Type)
 		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
-		s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, result[i].SubmissionBlock)
 		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
 		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
+		s.NotZero(result[i].SubmissionBlock)
+
+		if s.batches[i].Type == batchtype.Genesis {
+			s.Equal(*s.batches[i].FinalisationBlock, result[i].SubmissionBlock)
+		} else {
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, result[i].SubmissionBlock)
+		}
 	}
 }
 
