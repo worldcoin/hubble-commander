@@ -50,19 +50,12 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisStateAndFastBlockFinalization(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
-	s.cmd.client = s.client.Client
-	s.cmd.storage = s.storage.Storage
-	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
-
-	err = s.cmd.addGenesisBatch()
-	s.NoError(err)
-
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-	s.setAccountsAndChainState()
+
+	s.setupCommander()
+
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
@@ -94,14 +87,14 @@ func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesntSendStakeWithdraw
 	s.Eventually(s.getStakeWithdrawSendingCondition(0), time.Second, time.Millisecond*50,
 		"timeout when waiting for StakeWithdrawEvent")
 
-	var err error
 	stopCommander(s.cmd)
-	s.storage, err = st.NewTestStorage()
-	s.NoError(err)
 
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+	s.setupCommander()
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
@@ -182,7 +175,6 @@ func (s *SyncStakeWithdrawalsTestSuite) getStakeWithdrawSendingCondition(startBl
 }
 
 func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st.TestStorage) *eth.TestClient {
-	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
 
@@ -195,6 +187,20 @@ func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st
 	require.NoError(t, err)
 
 	return client
+}
+
+func (s *SyncStakeWithdrawalsTestSuite) setupCommander() {
+	setStateLeaves(s.T(), s.storage.Storage)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
+	s.cmd.client = s.client.Client
+	s.cmd.storage = s.storage.Storage
+	s.cmd.metrics = metrics.NewCommanderMetrics()
+	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
+
+	err := s.cmd.addGenesisBatch()
+	s.NoError(err)
+
+	s.setAccountsAndChainState()
 }
 
 func TestNewBlockLoopSyncStakeWithdrawalsTestSuite(t *testing.T) {
