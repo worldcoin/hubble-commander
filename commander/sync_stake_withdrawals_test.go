@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type NewBlockLoopSyncStakeWithdrawalsTestSuite struct {
+type SyncStakeWithdrawalsTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	cmd      *Commander
@@ -32,7 +32,7 @@ type NewBlockLoopSyncStakeWithdrawalsTestSuite struct {
 	wallets  []bls.Wallet
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) SetupSuite() {
+func (s *SyncStakeWithdrawalsTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = config.GetTestConfig()
 	s.cfg.Rollup.MinCommitmentsPerBatch = 1
@@ -44,7 +44,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) SetupSuite() {
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) SetupTest() {
+func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -66,14 +66,14 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) SetupTest() {
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TearDownTest() {
+func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TestNewBlockLoop_SyncStakeWithdrawals() {
+func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_WithdrawsStakesAfterBatchesGetFinalised() {
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
@@ -84,7 +84,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TestNewBlockLoop_SyncStakeWi
 		"timeout when waiting for StakeWithdrawEvent")
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TestNewBlockLoop_SyncStakeWithdrawals_FromScratch() {
+func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesntSendStakeWithdrawalsTwiceAfterRunningCommanderFromScratch() {
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
@@ -109,7 +109,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TestNewBlockLoop_SyncStakeWi
 		"StakeWithdraw must not be sent after restarting the commander")
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
+func (s *SyncStakeWithdrawalsTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
 	s.runInTransaction(func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
@@ -126,7 +126,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) submitTransferBatchInTransac
 	})
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) runInTransaction(handler func(*st.Storage, *executor.TxsContext)) {
+func (s *SyncStakeWithdrawalsTestSuite) runInTransaction(handler func(*st.Storage, *executor.TxsContext)) {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
@@ -135,12 +135,12 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) runInTransaction(handler fun
 	handler(txStorage, txsCtx)
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) setAccountsAndChainState() {
+func (s *SyncStakeWithdrawalsTestSuite) setAccountsAndChainState() {
 	setChainState(s.T(), s.storage)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) startBlockLoop() {
+func (s *SyncStakeWithdrawalsTestSuite) startBlockLoop() {
 	s.cmd.startWorker("", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
@@ -148,7 +148,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) startBlockLoop() {
 	})
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) waitForLatestBlockSync() {
+func (s *SyncStakeWithdrawalsTestSuite) waitForLatestBlockSync() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -159,7 +159,7 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) waitForLatestBlockSync() {
 	}, time.Hour, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
-func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) getStakeWithdrawSendingCondition(startBlock uint64) func() bool {
+func (s *SyncStakeWithdrawalsTestSuite) getStakeWithdrawSendingCondition(startBlock uint64) func() bool {
 	return func() bool {
 		it := &rollupContract.StakeWithdrawIterator{}
 		latestBlock, err := s.client.GetLatestBlockNumber()
@@ -198,5 +198,5 @@ func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st
 }
 
 func TestNewBlockLoopSyncStakeWithdrawalsTestSuite(t *testing.T) {
-	suite.Run(t, new(NewBlockLoopSyncStakeWithdrawalsTestSuite))
+	suite.Run(t, new(SyncStakeWithdrawalsTestSuite))
 }
