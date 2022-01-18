@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// TODO add status to batch
 type Batch struct {
 	ID                models.Uint256
 	Hash              *common.Hash
@@ -19,7 +20,7 @@ type Batch struct {
 type BatchWithRootAndCommitments struct {
 	Batch
 	AccountTreeRoot *common.Hash
-	Commitments     []CommitmentWithTokenID
+	Commitments     []BatchCommitment
 }
 
 func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
@@ -37,7 +38,7 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 func MakeBatchWithRootAndCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
-	commitments []CommitmentWithTokenID,
+	commitments []BatchCommitment,
 ) *BatchWithRootAndCommitments {
 	return &BatchWithRootAndCommitments{
 		Batch:           *MakeBatch(batch, submissionBlock),
