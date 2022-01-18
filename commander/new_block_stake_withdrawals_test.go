@@ -94,7 +94,11 @@ func (s *NewBlockLoopSyncStakeWithdrawalsTestSuite) TestNewBlockLoop_SyncStakeWi
 	s.Eventually(s.getStakeWithdrawSendingCondition(0), time.Second, time.Millisecond*50,
 		"timeout when waiting for StakeWithdrawEvent")
 
+	var err error
 	stopCommander(s.cmd)
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
