@@ -59,6 +59,7 @@ func TestWithdrawProcess(t *testing.T) {
 
 	token, tokenContract := getDeployedToken(t, ethClient)
 	approveToken(t, ethClient, token.Contract)
+	transactor.GasLimit = 1_000_000
 
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
 	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
