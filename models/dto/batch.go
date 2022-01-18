@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// TODO add status to batch
 type Batch struct {
 	ID                models.Uint256
 	Hash              *common.Hash
