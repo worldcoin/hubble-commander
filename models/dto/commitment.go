@@ -64,7 +64,7 @@ type depositCommitmentDetails struct {
 func MakeTxCommitment(
 	commitment *models.TxCommitment,
 	tokenID models.Uint256,
-	status txstatus.TransactionStatus,
+	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
 ) Commitment {
@@ -76,7 +76,7 @@ func MakeTxCommitment(
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
-		Status:             status,
+		Status:             *status,
 		BatchTime:          batchTime,
 		Transactions:       transactions,
 	}
@@ -85,7 +85,7 @@ func MakeTxCommitment(
 func MakeMMCommitment(
 	commitment *models.MMCommitment,
 	tokenID models.Uint256,
-	status txstatus.TransactionStatus,
+	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
 ) Commitment {
@@ -97,7 +97,7 @@ func MakeMMCommitment(
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
-		Status:             status,
+		Status:             *status,
 		BatchTime:          batchTime,
 		Transactions:       transactions,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
@@ -114,8 +114,7 @@ func MakeMMCommitment(
 
 func MakeDepositCommitment(
 	commitment *models.DepositCommitment,
-	tokenID models.Uint256,
-	status txstatus.TransactionStatus,
+	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
 ) Commitment {
@@ -124,8 +123,7 @@ func MakeDepositCommitment(
 		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
 		LeafHash:      commitment.LeafHash(),
-		TokenID:       tokenID,
-		Status:        status,
+		Status:        *status,
 		BatchTime:     batchTime,
 		Transactions:  transactions,
 		depositCommitmentDetails: depositCommitmentDetails{

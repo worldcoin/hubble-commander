@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -40,28 +41,18 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 		return nil, err
 	}
 
-	commitmentBase := commitment.GetCommitmentBase()
+	status := calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
-	commitmentDTO := &dto.Commitment{
-		ID:            *dto.NewCommitmentID(&commitmentBase.ID),
-		Type:          commitmentBase.Type,
-		PostStateRoot: commitmentBase.PostStateRoot,
-		Status:        *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
-		BatchTime:     batch.SubmissionTime,
-		Transactions:  transactions,
+	switch batch.Type {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return a.createTxCommitmentDTO(commitment, batch, transactions, status)
+	case batchtype.MassMigration:
+		return a.createMMCommitmentDTO(commitment, batch, transactions, status)
+	case batchtype.Deposit:
+		return a.createDepositCommitmentDTO(commitment, batch, transactions, status)
+	default:
+		panic("invalid commitment type")
 	}
-
-	if commitmentBase.Type == batchtype.Transfer || commitmentBase.Type == batchtype.Create2Transfer {
-		txCommitment := commitment.ToTxCommitment()
-		commitmentDTO.FeeReceiver = txCommitment.FeeReceiver
-		commitmentDTO.CombinedSignature = txCommitment.CombinedSignature
-	} else if commitmentBase.Type == batchtype.MassMigration {
-		mmCommitment := commitment.ToMMCommitment()
-		commitmentDTO.FeeReceiver = mmCommitment.FeeReceiver
-		commitmentDTO.CombinedSignature = mmCommitment.CombinedSignature
-	}
-
-	return commitmentDTO, nil
 }
 
 func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interface{}, error) {
@@ -116,4 +107,32 @@ func (a *API) getMassMigrationsForCommitment(id models.CommitmentID) (interface{
 		txs = append(txs, dto.MakeMassMigrationForCommitment(&massMigrations[i]))
 	}
 	return txs, nil
+}
+
+func (a *API) createTxCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	commitmentDTO := dto.MakeTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
+
+	return &commitmentDTO, nil
+}
+
+func (a *API) createMMCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToMMCommitment().FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	commitmentDTO := dto.MakeMMCommitment(commitment.ToMMCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
+
+	return &commitmentDTO, nil
+}
+
+func (a *API) createDepositCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+	commitmentDTO := dto.MakeDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime, transactions)
+
+	return &commitmentDTO, nil
 }
