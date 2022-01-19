@@ -10,3 +10,4 @@ commander-config.yaml
 deployer-config.yaml
 e2e/geth-data/geth
 chain-spec.yaml
+exported-data.json

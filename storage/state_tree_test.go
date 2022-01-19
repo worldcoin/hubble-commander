@@ -440,6 +440,47 @@ func (s *StateTreeTestSuite) TestRevertTo_NonexistentRootHash() {
 	s.ErrorIs(err, ErrNonexistentState)
 }
 
+func (s *StateTreeTestSuite) TestIterateLeaves() {
+	state := s.leaf.UserState
+	expectedLeaves := []models.StateLeaf{
+		{
+			StateID:   0,
+			DataHash:  s.leaf.DataHash,
+			UserState: state,
+		},
+		{
+			StateID:   1,
+			DataHash:  s.leaf.DataHash,
+			UserState: state,
+		},
+	}
+
+	for i := range expectedLeaves {
+		_, err := s.storage.StateTree.Set(expectedLeaves[i].StateID, &expectedLeaves[i].UserState)
+		s.NoError(err)
+	}
+
+	leaves := make([]models.StateLeaf, 0, len(expectedLeaves))
+	err := s.storage.StateTree.IterateLeaves(func(stateLeaf *models.StateLeaf) error {
+		leaves = append(leaves, *stateLeaf)
+		return nil
+	})
+	s.NoError(err)
+
+	s.Len(leaves, len(expectedLeaves))
+	s.Equal(expectedLeaves, leaves)
+}
+
+func (s *StateTreeTestSuite) TestIterateLeaves_NoLeaves() {
+	leaves := make([]models.StateLeaf, 0, 1)
+	err := s.storage.StateTree.IterateLeaves(func(stateLeaf *models.StateLeaf) error {
+		leaves = append(leaves, *stateLeaf)
+		return nil
+	})
+	s.NoError(err)
+	s.Len(leaves, 0)
+}
+
 func TestStateTreeTestSuite(t *testing.T) {
 	suite.Run(t, new(StateTreeTestSuite))
 }
