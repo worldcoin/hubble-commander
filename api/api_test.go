@@ -28,7 +28,7 @@ func TestStartApiServer(t *testing.T) {
 
 	cfg := config.APIConfig{Version: "v0123"}
 	commanderMetrics := metrics.NewCommanderMetrics()
-	server, err := getAPIServer(&cfg, nil, eth.DomainOnlyTestClient, commanderMetrics, false)
+	server, err := getAPIServer(&cfg, nil, eth.DomainOnlyTestClient, commanderMetrics, false, func(enable bool) {})
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()
