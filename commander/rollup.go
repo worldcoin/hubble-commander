@@ -14,18 +14,35 @@ import (
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
-	if isProposer && !c.rollupLoopRunning {
+	if isProposer && !c.rollupLoopRunning && c.batchCreationEnabled {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
-		var ctx context.Context
-		ctx, cancel = context.WithCancel(c.workersContext)
-		c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
-		c.rollupLoopRunning = true
+		c.startRollupLoop()
 	} else if !isProposer && c.rollupLoopRunning {
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
-		cancel()
-		c.rollupLoopRunning = false
+		c.stopRollupLoop()
 	}
 	return cancel
+}
+
+func (c *Commander) startRollupLoop() {
+	if c.rollupLoopRunning {
+		return
+	}
+
+	ctx, cancel := context.WithCancel(c.workersContext)
+	c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
+	c.cancelRollupLoop = cancel
+	c.rollupLoopRunning = true
+}
+
+func (c *Commander) stopRollupLoop() {
+	if !c.rollupLoopRunning {
+		return
+	}
+	if c.cancelRollupLoop != nil {
+		c.cancelRollupLoop()
+	}
+	c.rollupLoopRunning = false
 }
 
 func (c *Commander) rollupLoop(ctx context.Context) (err error) {
