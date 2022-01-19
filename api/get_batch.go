@@ -83,19 +83,7 @@ func (a *API) createBatchWithCommitments(
 	case batchtype.Deposit:
 		return a.createBatchWithDepositCommitments(batch, submissionBlock, commitments)
 	default:
-		return &dto.BatchWithRootAndCommitments{
-			Batch: dto.Batch{
-				ID:                batch.ID,
-				Hash:              batch.Hash,
-				Type:              batch.Type,
-				TransactionHash:   batch.TransactionHash,
-				SubmissionBlock:   submissionBlock,
-				SubmissionTime:    batch.SubmissionTime,
-				FinalisationBlock: batch.FinalisationBlock,
-			},
-			AccountTreeRoot: batch.AccountTreeRoot,
-			Commitments:     nil,
-		}, nil
+		return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, nil), nil
 	}
 }
 

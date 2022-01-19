@@ -39,9 +39,15 @@ func MakeBatchWithRootAndCommitments(
 	submissionBlock uint32,
 	commitments []BatchCommitment,
 ) *BatchWithRootAndCommitments {
-	return &BatchWithRootAndCommitments{
-		Batch:           *MakeBatch(batch, submissionBlock),
-		AccountTreeRoot: batch.AccountTreeRoot,
-		Commitments:     commitments,
+	batchDTO := &BatchWithRootAndCommitments{
+		Batch:       *MakeBatch(batch, submissionBlock),
+		Commitments: commitments,
 	}
+
+	// AccountRoot is always equal to zero hash for genesis and deposit batches, so we set it to nil
+	if batch.Type != batchtype.Genesis && batch.Type != batchtype.Deposit {
+		batchDTO.AccountTreeRoot = batch.AccountTreeRoot
+	}
+
+	return batchDTO
 }
