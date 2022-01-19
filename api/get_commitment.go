@@ -47,9 +47,9 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 	case batchtype.Transfer, batchtype.Create2Transfer:
 		return a.createTxCommitmentDTO(commitment, batch, transactions, status)
 	case batchtype.MassMigration:
-		return a.createMMCommitmentDTO(commitment, batch, transactions, status)
+		return dto.NewMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions), nil
 	case batchtype.Deposit:
-		return a.createDepositCommitmentDTO(commitment, batch, transactions, status)
+		return dto.NewDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime, transactions), nil
 	default:
 		panic("invalid commitment type")
 	}
@@ -122,29 +122,7 @@ func (a *API) createTxCommitmentDTO(
 		return nil, err
 	}
 
-	commitmentDTO := dto.MakeTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
+	commitmentDTO := dto.NewTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
 
-	return &commitmentDTO, nil
-}
-
-func (a *API) createMMCommitmentDTO(
-	commitment models.Commitment,
-	batch *models.Batch,
-	transactions interface{},
-	status *txstatus.TransactionStatus,
-) (*dto.Commitment, error) {
-	commitmentDTO := dto.MakeMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions)
-
-	return &commitmentDTO, nil
-}
-
-func (a *API) createDepositCommitmentDTO(
-	commitment models.Commitment,
-	batch *models.Batch,
-	transactions interface{},
-	status *txstatus.TransactionStatus,
-) (*dto.Commitment, error) {
-	commitmentDTO := dto.MakeDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime, transactions)
-
-	return &commitmentDTO, nil
+	return commitmentDTO, nil
 }

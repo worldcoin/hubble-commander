@@ -62,14 +62,14 @@ type depositCommitmentDetails struct {
 	Deposits    []PendingDeposit `json:",omitempty"`
 }
 
-func MakeTxCommitment(
+func NewTxCommitment(
 	commitment *models.TxCommitment,
 	tokenID models.Uint256,
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
-) Commitment {
-	return Commitment{
+) *Commitment {
+	return &Commitment{
 		ID:                 *NewCommitmentID(&commitment.ID),
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
@@ -83,13 +83,13 @@ func MakeTxCommitment(
 	}
 }
 
-func MakeMMCommitment(
+func NewMMCommitment(
 	commitment *models.MMCommitment,
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
-) Commitment {
-	return Commitment{
+) *Commitment {
+	return &Commitment{
 		ID:                *NewCommitmentID(&commitment.ID),
 		Type:              commitment.Type,
 		PostStateRoot:     commitment.PostStateRoot,
@@ -110,13 +110,13 @@ func MakeMMCommitment(
 	}
 }
 
-func MakeDepositCommitment(
+func NewDepositCommitment(
 	commitment *models.DepositCommitment,
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
-) Commitment {
-	return Commitment{
+) *Commitment {
+	return &Commitment{
 		ID:            *NewCommitmentID(&commitment.ID),
 		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
