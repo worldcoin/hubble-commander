@@ -90,15 +90,14 @@ func MakeMMCommitment(
 	transactions interface{},
 ) Commitment {
 	return Commitment{
-		ID:                 *NewCommitmentID(&commitment.ID),
-		Type:               commitment.Type,
-		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           commitment.LeafHash(),
-		FeeReceiverStateID: &commitment.FeeReceiver,
-		CombinedSignature:  &commitment.CombinedSignature,
-		Status:             *status,
-		BatchTime:          batchTime,
-		Transactions:       transactions,
+		ID:                *NewCommitmentID(&commitment.ID),
+		Type:              commitment.Type,
+		PostStateRoot:     commitment.PostStateRoot,
+		LeafHash:          commitment.LeafHash(),
+		CombinedSignature: &commitment.CombinedSignature,
+		Status:            *status,
+		BatchTime:         batchTime,
+		Transactions:      transactions,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
 			WithdrawRoot: &commitment.WithdrawRoot,
 			Meta: &MassMigrationMeta{
