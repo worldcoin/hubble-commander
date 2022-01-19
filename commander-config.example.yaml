@@ -27,6 +27,7 @@
 #api:
 #  port: 8080
 #  enable_proof_methods: false
+#  authentication_key: secret_authentication_key
 #
 #metrics:
 #  port: 2112
