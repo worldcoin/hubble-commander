@@ -152,6 +152,23 @@ func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 	return &nextPubKeyID, nil
 }
 
+func (s *AccountTree) IterateLeaves(action func(stateLeaf *models.AccountLeaf) error) error {
+	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		var accountLeaf models.AccountLeaf
+		err := item.Value(accountLeaf.SetBytes)
+		if err != nil {
+			return false, err
+		}
+
+		err = action(&accountLeaf)
+		return false, err
+	})
+	if err != nil && err != db.ErrIteratorFinished {
+		return err
+	}
+	return nil
+}
+
 func isValidBatchAccount(leaf *models.AccountLeaf) bool {
 	return leaf.PubKeyID < AccountBatchOffset || leaf.PubKeyID > rightSubtreeMaxValue
 }

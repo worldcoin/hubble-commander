@@ -11,7 +11,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func ExportStateLeaves(filePath string) (err error) {
+type exportFunc func(storage *st.Storage, writer *bufio.Writer) (int, error)
+
+func ExportStateLeaves(filePath string) error {
+	return exportLeaves(filePath, exportAndCountStateLeaves)
+}
+
+func exportLeaves(filePath string, exportDataFunc exportFunc) (err error) {
 	cfg := config.GetCommanderConfigAndSetupLogger()
 	storage, err := st.NewStorage(cfg)
 	if err != nil {
@@ -30,7 +36,7 @@ func ExportStateLeaves(filePath string) (err error) {
 		}
 	}()
 
-	leavesCount, err := exportStateLeaves(storage, file)
+	leavesCount, err := exportData(storage, file, exportDataFunc)
 	if err != nil {
 		return err
 	}
@@ -39,25 +45,14 @@ func ExportStateLeaves(filePath string) (err error) {
 	return nil
 }
 
-func exportStateLeaves(storage *st.Storage, file *os.File) (int, error) {
+func exportData(storage *st.Storage, file *os.File, exportDataFunc exportFunc) (int, error) {
 	writer := bufio.NewWriter(file)
 	err := writer.WriteByte('[')
 	if err != nil {
 		return 0, err
 	}
-	count := 0
 
-	err = storage.StateTree.IterateLeaves(func(stateLeaf *models.StateLeaf) error {
-		if count > 0 {
-			err = writer.WriteByte(',')
-			if err != nil {
-				return err
-			}
-		}
-		count++
-
-		return writeLeaf(writer, stateLeaf)
-	})
+	count, err := exportDataFunc(storage, writer)
 	if err != nil {
 		return 0, err
 	}
@@ -74,8 +69,27 @@ func exportStateLeaves(storage *st.Storage, file *os.File) (int, error) {
 	return count, nil
 }
 
-func writeLeaf(writer *bufio.Writer, leaf *models.StateLeaf) error {
-	bytes, err := json.Marshal(leaf)
+func exportAndCountStateLeaves(storage *st.Storage, writer *bufio.Writer) (int, error) {
+	count := 0
+	err := storage.StateTree.IterateLeaves(func(stateLeaf *models.StateLeaf) error {
+		if count > 0 {
+			err := writer.WriteByte(',')
+			if err != nil {
+				return err
+			}
+		}
+		count++
+
+		return writeData(writer, stateLeaf)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func writeData(writer *bufio.Writer, data interface{}) error {
+	bytes, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
