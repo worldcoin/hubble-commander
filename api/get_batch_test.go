@@ -287,13 +287,19 @@ func (s *GetBatchTestSuite) validateTxCommitment(result *dto.BatchWithRootAndCom
 	s.Equal(*dto.NewCommitmentID(&s.txCommitment.ID), commitment.ID)
 	s.Equal(s.txCommitment.PostStateRoot, commitment.PostStateRoot)
 	s.Equal(s.txCommitment.LeafHash(), commitment.LeafHash)
-	s.Equal(s.txCommitment.FeeReceiver, commitment.FeeReceiverStateID)
-	s.Equal(s.txCommitment.CombinedSignature, commitment.CombinedSignature)
+	s.Equal(s.txCommitment.FeeReceiver, *commitment.FeeReceiverStateID)
+	s.Equal(s.txCommitment.CombinedSignature, *commitment.CombinedSignature)
 
 	stateLeaf, err := s.storage.StateTree.Leaf(s.txCommitment.FeeReceiver)
 	s.NoError(err)
 
-	s.Equal(stateLeaf.TokenID, commitment.TokenID)
+	s.Equal(stateLeaf.TokenID, *commitment.TokenID)
+
+	s.Nil(commitment.Meta)
+	s.Nil(commitment.WithdrawRoot)
+	s.Nil(commitment.SubtreeID)
+	s.Nil(commitment.SubtreeRoot)
+	s.Nil(commitment.Deposits)
 }
 
 func (s *GetBatchTestSuite) validateMMCommitment(result *dto.BatchWithRootAndCommitments) {
@@ -303,13 +309,9 @@ func (s *GetBatchTestSuite) validateMMCommitment(result *dto.BatchWithRootAndCom
 	s.Equal(*dto.NewCommitmentID(&s.mmCommitment.ID), commitment.ID)
 	s.Equal(s.mmCommitment.PostStateRoot, commitment.PostStateRoot)
 	s.Equal(s.mmCommitment.LeafHash(), commitment.LeafHash)
-	s.Equal(s.mmCommitment.FeeReceiver, commitment.FeeReceiverStateID)
-	s.Equal(s.mmCommitment.CombinedSignature, commitment.CombinedSignature)
-
-	stateLeaf, err := s.storage.StateTree.Leaf(s.mmCommitment.FeeReceiver)
-	s.NoError(err)
-
-	s.Equal(stateLeaf.TokenID, commitment.TokenID)
+	s.Nil(commitment.TokenID)
+	s.Nil(commitment.FeeReceiverStateID)
+	s.Equal(s.mmCommitment.CombinedSignature, *commitment.CombinedSignature)
 
 	expectedMeta := &dto.MassMigrationMeta{
 		SpokeID:            s.mmCommitment.Meta.SpokeID,
@@ -319,6 +321,11 @@ func (s *GetBatchTestSuite) validateMMCommitment(result *dto.BatchWithRootAndCom
 	}
 
 	s.Equal(expectedMeta, commitment.Meta)
+	s.Equal(s.mmCommitment.WithdrawRoot, *commitment.WithdrawRoot)
+
+	s.Nil(commitment.SubtreeID)
+	s.Nil(commitment.SubtreeRoot)
+	s.Nil(commitment.Deposits)
 }
 
 func (s *GetBatchTestSuite) validateDepositCommitment(result *dto.BatchWithRootAndCommitments) {
@@ -327,8 +334,11 @@ func (s *GetBatchTestSuite) validateDepositCommitment(result *dto.BatchWithRootA
 	commitment := result.Commitments[0]
 	s.Equal(*dto.NewCommitmentID(&s.depositCommitment.ID), commitment.ID)
 	s.Equal(s.depositCommitment.PostStateRoot, commitment.PostStateRoot)
-	s.Equal(s.depositCommitment.SubtreeID, commitment.SubtreeID)
-	s.Equal(s.depositCommitment.SubtreeRoot, commitment.SubtreeRoot)
+	s.Nil(commitment.TokenID)
+	s.Nil(commitment.FeeReceiverStateID)
+	s.Nil(commitment.CombinedSignature)
+	s.Equal(s.depositCommitment.SubtreeID, *commitment.SubtreeID)
+	s.Equal(s.depositCommitment.SubtreeRoot, *commitment.SubtreeRoot)
 	s.Len(s.depositCommitment.Deposits, 1)
 
 	expectedDeposit := dto.PendingDeposit{
@@ -341,6 +351,9 @@ func (s *GetBatchTestSuite) validateDepositCommitment(result *dto.BatchWithRootA
 		L2Amount:   s.depositCommitment.Deposits[0].L2Amount,
 	}
 	s.Equal(expectedDeposit, commitment.Deposits[0])
+
+	s.Nil(commitment.Meta)
+	s.Nil(commitment.WithdrawRoot)
 }
 
 func TestGetBatchTestSuite(t *testing.T) {

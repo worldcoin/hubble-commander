@@ -339,7 +339,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment
 	s.Equal(s.mmCommitment.PostStateRoot, commitment.PostStateRoot)
 	s.Equal(s.mmCommitment.LeafHash(), commitment.LeafHash)
 	s.Nil(commitment.TokenID)
-	s.Equal(s.mmCommitment.FeeReceiver, *commitment.FeeReceiverStateID)
+	s.Nil(commitment.FeeReceiverStateID)
 	s.Equal(s.mmCommitment.CombinedSignature, *commitment.CombinedSignature)
 	s.Equal(txstatus.InBatch, commitment.Status)
 	s.Equal(s.batch.SubmissionTime, commitment.BatchTime)
