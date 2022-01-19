@@ -17,7 +17,7 @@ type UserState struct {
 
 type StateLeaf struct {
 	StateID  uint32
-	DataHash common.Hash
+	DataHash common.Hash `json:"-"`
 	UserState
 }
 

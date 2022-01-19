@@ -130,6 +130,7 @@ There is a number of scripts defined in the Makefile:
 * `make run-prune` - clean database and run the compiled binary with `start` flag
 * `make run-dev` - run-prune without transaction signature validation
 * `make start-dev` - deploy and run-dev
+* `make export-state` - exports state leaves to a file
 * `make lint` - run linter
 * `make test` - run all tests unit tests
 * `make test-hardhat` - run all tests that depend on Hardhat node
