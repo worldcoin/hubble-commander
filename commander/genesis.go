@@ -12,8 +12,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var errGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
-var errMissingGenesisPublicKey = fmt.Errorf("genesis accounts require public keys")
+var (
+	errGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
+	errMissingGenesisPublicKey      = fmt.Errorf("genesis accounts require public keys")
+)
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccount) error {
 	seenStateIDs := make(map[uint32]bool)
