@@ -33,18 +33,26 @@ var (
 		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
 		SyncedBlock:                    11293,
-		GenesisAccounts: []models.PopulatedGenesisAccount{
+		GenesisAccounts: []models.GenesisAccount{
 			{
 				PublicKey: models.PublicKey{4, 4, 1, 9},
-				PubKeyID:  77,
 				StateID:   32,
-				Balance:   models.MakeUint256(29384),
+				State: models.UserState{
+					PubKeyID: 77,
+					TokenID:  models.MakeUint256(0),
+					Balance:  models.MakeUint256(29384),
+					Nonce:    models.Uint256{},
+				},
 			},
 			{
 				PublicKey: models.PublicKey{7, 3, 1, 1},
-				PubKeyID:  443,
 				StateID:   293,
-				Balance:   models.MakeUint256(3004),
+				State: models.UserState{
+					PubKeyID: 443,
+					TokenID:  models.MakeUint256(0),
+					Balance:  models.MakeUint256(3004),
+					Nonce:    models.Uint256{},
+				},
 			},
 		},
 	}

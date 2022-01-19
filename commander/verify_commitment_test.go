@@ -46,14 +46,16 @@ func (s *VerifyCommitmentTestSuite) TestVerifyCommitment_ValidCommitmentRoot() {
 }
 
 func (s *VerifyCommitmentTestSuite) TestVerifyCommitment_InvalidCommitmentRoot() {
-	s.client.ChainState.GenesisAccounts = append(s.client.ChainState.GenesisAccounts, []models.PopulatedGenesisAccount{
-		{
-			PublicKey: models.PublicKey{5, 6, 7},
-			PubKeyID:  1,
-			StateID:   1,
-			Balance:   models.MakeUint256(500),
+	s.client.ChainState.GenesisAccounts = append(s.client.ChainState.GenesisAccounts, models.GenesisAccount{
+		PublicKey: models.PublicKey{5, 6, 7},
+		StateID:   1,
+		State: models.UserState{
+			PubKeyID: 10,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(500),
+			Nonce:    models.MakeUint256(0),
 		},
-	}...)
+	})
 	err := PopulateGenesisAccounts(s.storage, s.client.ChainState.GenesisAccounts)
 	s.NoError(err)
 
