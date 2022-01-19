@@ -6,7 +6,7 @@ require (
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/ethereum/go-ethereum v1.10.9
+	github.com/ethereum/go-ethereum v1.10.15
 	github.com/holiman/uint256 v1.2.0
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
 	github.com/pkg/errors v0.9.1
