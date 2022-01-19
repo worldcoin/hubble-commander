@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_exportStateLeaves(t *testing.T) {
+func TestExportStateLeaves(t *testing.T) {
 	storage, err := st.NewTestStorage()
 	require.NoError(t, err)
 
