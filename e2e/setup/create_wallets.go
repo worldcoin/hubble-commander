@@ -20,7 +20,7 @@ func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 	wallets := make([]bls.Wallet, 0, len(keys))
 	for i := range keys {
 		if keys[i] == "" {
-			panic("accounts for e2e tests require private key")
+			panic("accounts for e2e tests require private keys")
 		}
 
 		privateKey, err := hex.DecodeString(keys[i])
