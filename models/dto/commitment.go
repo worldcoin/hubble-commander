@@ -42,9 +42,9 @@ type BatchCommitment struct {
 	ID                 CommitmentID
 	PostStateRoot      common.Hash
 	LeafHash           common.Hash
-	TokenID            models.Uint256   `json:",omitempty"`
-	FeeReceiverStateID uint32           `json:",omitempty"`
-	CombinedSignature  models.Signature `json:",omitempty"`
+	TokenID            *models.Uint256   `json:",omitempty"`
+	FeeReceiverStateID *uint32           `json:",omitempty"`
+	CombinedSignature  *models.Signature `json:",omitempty"`
 
 	massMigrationCommitmentDetails
 	depositCommitmentDetails
@@ -56,8 +56,8 @@ type massMigrationCommitmentDetails struct {
 }
 
 type depositCommitmentDetails struct {
-	SubtreeID   models.Uint256   `json:",omitempty"`
-	SubtreeRoot common.Hash      `json:",omitempty"`
+	SubtreeID   *models.Uint256  `json:",omitempty"`
+	SubtreeRoot *common.Hash     `json:",omitempty"`
 	Deposits    []PendingDeposit `json:",omitempty"`
 }
 
@@ -102,10 +102,10 @@ func MakeMMCommitment(
 		Transactions:       transactions,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
 			Meta: &MassMigrationMeta{
-				SpokeID:     commitment.Meta.SpokeID,
-				TokenID:     commitment.Meta.TokenID,
-				Amount:      commitment.Meta.Amount,
-				FeeReceiver: commitment.Meta.FeeReceiver,
+				SpokeID:            commitment.Meta.SpokeID,
+				TokenID:            commitment.Meta.TokenID,
+				Amount:             commitment.Meta.Amount,
+				FeeReceiverStateID: commitment.Meta.FeeReceiver,
 			},
 			WithdrawRoot: &commitment.WithdrawRoot,
 		},
@@ -127,8 +127,8 @@ func MakeDepositCommitment(
 		BatchTime:     batchTime,
 		Transactions:  transactions,
 		depositCommitmentDetails: depositCommitmentDetails{
-			SubtreeID:   commitment.SubtreeID,
-			SubtreeRoot: commitment.SubtreeRoot,
+			SubtreeID:   &commitment.SubtreeID,
+			SubtreeRoot: &commitment.SubtreeRoot,
 			Deposits:    modelsPendingDepositsToDTOPendingDeposits(commitment.Deposits),
 		},
 	}
@@ -142,29 +142,26 @@ func MakeTxBatchCommitment(
 		ID:                 *NewCommitmentID(&commitment.ID),
 		PostStateRoot:      commitment.PostStateRoot,
 		LeafHash:           commitment.LeafHash(),
-		TokenID:            tokenID,
-		FeeReceiverStateID: commitment.FeeReceiver,
-		CombinedSignature:  commitment.CombinedSignature,
+		TokenID:            &tokenID,
+		FeeReceiverStateID: &commitment.FeeReceiver,
+		CombinedSignature:  &commitment.CombinedSignature,
 	}
 }
 
 func MakeMMBatchCommitment(
 	commitment *models.MMCommitment,
-	tokenID models.Uint256,
 ) BatchCommitment {
 	return BatchCommitment{
-		ID:                 *NewCommitmentID(&commitment.ID),
-		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           commitment.LeafHash(),
-		TokenID:            tokenID,
-		FeeReceiverStateID: commitment.FeeReceiver,
-		CombinedSignature:  commitment.CombinedSignature,
+		ID:                *NewCommitmentID(&commitment.ID),
+		PostStateRoot:     commitment.PostStateRoot,
+		LeafHash:          commitment.LeafHash(),
+		CombinedSignature: &commitment.CombinedSignature,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
 			Meta: &MassMigrationMeta{
-				SpokeID:     commitment.Meta.SpokeID,
-				TokenID:     commitment.Meta.TokenID,
-				Amount:      commitment.Meta.Amount,
-				FeeReceiver: commitment.Meta.FeeReceiver,
+				SpokeID:            commitment.Meta.SpokeID,
+				TokenID:            commitment.Meta.TokenID,
+				Amount:             commitment.Meta.Amount,
+				FeeReceiverStateID: commitment.Meta.FeeReceiver,
 			},
 			WithdrawRoot: &commitment.WithdrawRoot,
 		},
@@ -179,8 +176,8 @@ func MakeDepositBatchCommitment(
 		PostStateRoot: commitment.PostStateRoot,
 		LeafHash:      commitment.LeafHash(),
 		depositCommitmentDetails: depositCommitmentDetails{
-			SubtreeID:   commitment.SubtreeID,
-			SubtreeRoot: commitment.SubtreeRoot,
+			SubtreeID:   &commitment.SubtreeID,
+			SubtreeRoot: &commitment.SubtreeRoot,
 			Deposits:    modelsPendingDepositsToDTOPendingDeposits(commitment.Deposits),
 		},
 	}

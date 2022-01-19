@@ -312,10 +312,10 @@ func (s *GetBatchTestSuite) validateMMCommitment(result *dto.BatchWithRootAndCom
 	s.Equal(stateLeaf.TokenID, commitment.TokenID)
 
 	expectedMeta := &dto.MassMigrationMeta{
-		SpokeID:     s.mmCommitment.Meta.SpokeID,
-		TokenID:     s.mmCommitment.Meta.TokenID,
-		Amount:      s.mmCommitment.Meta.Amount,
-		FeeReceiver: s.mmCommitment.Meta.FeeReceiver,
+		SpokeID:            s.mmCommitment.Meta.SpokeID,
+		TokenID:            s.mmCommitment.Meta.TokenID,
+		Amount:             s.mmCommitment.Meta.Amount,
+		FeeReceiverStateID: s.mmCommitment.Meta.FeeReceiver,
 	}
 
 	s.Equal(expectedMeta, commitment.Meta)

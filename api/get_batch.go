@@ -126,14 +126,8 @@ func (a *API) createBatchWithMMCommitments(
 ) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.BatchCommitment, 0, len(commitments))
 	for i := range commitments {
-		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToMMCommitment().FeeReceiver)
-		if err != nil {
-			return nil, err
-		}
-
 		batchCommitments = append(batchCommitments, dto.MakeMMBatchCommitment(
 			commitments[i].ToMMCommitment(),
-			stateLeaf.TokenID,
 		))
 	}
 	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
