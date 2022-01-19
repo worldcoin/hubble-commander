@@ -32,10 +32,11 @@ type Commitment struct {
 	CombinedSignature  models.Signature
 	Status             txstatus.TransactionStatus
 	BatchTime          *models.Timestamp
-	Transactions       interface{}
 
 	massMigrationCommitmentDetails
 	depositCommitmentDetails
+
+	Transactions interface{}
 }
 
 type BatchCommitment struct {
@@ -51,8 +52,8 @@ type BatchCommitment struct {
 }
 
 type massMigrationCommitmentDetails struct {
-	Meta         *MassMigrationMeta `json:",omitempty"`
 	WithdrawRoot *common.Hash       `json:",omitempty"`
+	Meta         *MassMigrationMeta `json:",omitempty"`
 }
 
 type depositCommitmentDetails struct {
@@ -101,13 +102,13 @@ func MakeMMCommitment(
 		BatchTime:          batchTime,
 		Transactions:       transactions,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
+			WithdrawRoot: &commitment.WithdrawRoot,
 			Meta: &MassMigrationMeta{
 				SpokeID:            commitment.Meta.SpokeID,
 				TokenID:            commitment.Meta.TokenID,
 				Amount:             commitment.Meta.Amount,
 				FeeReceiverStateID: commitment.Meta.FeeReceiver,
 			},
-			WithdrawRoot: &commitment.WithdrawRoot,
 		},
 	}
 }
@@ -157,13 +158,13 @@ func MakeMMBatchCommitment(
 		LeafHash:          commitment.LeafHash(),
 		CombinedSignature: &commitment.CombinedSignature,
 		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
+			WithdrawRoot: &commitment.WithdrawRoot,
 			Meta: &MassMigrationMeta{
 				SpokeID:            commitment.Meta.SpokeID,
 				TokenID:            commitment.Meta.TokenID,
 				Amount:             commitment.Meta.Amount,
 				FeeReceiverStateID: commitment.Meta.FeeReceiver,
 			},
-			WithdrawRoot: &commitment.WithdrawRoot,
 		},
 	}
 }
