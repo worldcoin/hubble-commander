@@ -27,16 +27,16 @@ type Commitment struct {
 	Type               batchtype.BatchType
 	PostStateRoot      common.Hash
 	LeafHash           common.Hash
-	TokenID            models.Uint256
-	FeeReceiverStateID uint32
-	CombinedSignature  models.Signature
+	TokenID            *models.Uint256   `json:",omitempty"`
+	FeeReceiverStateID *uint32           `json:",omitempty"`
+	CombinedSignature  *models.Signature `json:",omitempty"`
 	Status             txstatus.TransactionStatus
 	BatchTime          *models.Timestamp
 
 	massMigrationCommitmentDetails
 	depositCommitmentDetails
 
-	Transactions interface{}
+	Transactions interface{} `json:",omitempty"`
 }
 
 type BatchCommitment struct {
@@ -74,9 +74,9 @@ func MakeTxCommitment(
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
 		LeafHash:           commitment.LeafHash(),
-		TokenID:            tokenID,
-		FeeReceiverStateID: commitment.FeeReceiver,
-		CombinedSignature:  commitment.CombinedSignature,
+		TokenID:            &tokenID,
+		FeeReceiverStateID: &commitment.FeeReceiver,
+		CombinedSignature:  &commitment.CombinedSignature,
 		Status:             *status,
 		BatchTime:          batchTime,
 		Transactions:       transactions,
@@ -85,7 +85,6 @@ func MakeTxCommitment(
 
 func MakeMMCommitment(
 	commitment *models.MMCommitment,
-	tokenID models.Uint256,
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
@@ -95,9 +94,8 @@ func MakeMMCommitment(
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
 		LeafHash:           commitment.LeafHash(),
-		TokenID:            tokenID,
-		FeeReceiverStateID: commitment.FeeReceiver,
-		CombinedSignature:  commitment.CombinedSignature,
+		FeeReceiverStateID: &commitment.FeeReceiver,
+		CombinedSignature:  &commitment.CombinedSignature,
 		Status:             *status,
 		BatchTime:          batchTime,
 		Transactions:       transactions,
