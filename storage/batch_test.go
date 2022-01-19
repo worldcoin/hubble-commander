@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -359,6 +360,57 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	err := s.storage.DeleteBatches(models.MakeUint256(1))
 	s.ErrorIs(err, NewNotFoundError("batch"))
+}
+
+func (s *BatchTestSuite) TestGetPendingBatches() {
+	batches := []models.Batch{
+		{
+			ID:              models.MakeUint256(1),
+			Type:            batchtype.Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            nil,
+		},
+		{
+			ID:              models.MakeUint256(2),
+			Type:            batchtype.Create2Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+		},
+		{
+			ID:              models.MakeUint256(3),
+			Type:            batchtype.MassMigration,
+			TransactionHash: utils.RandomHash(),
+			Hash:            nil,
+		},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
+		s.NoError(err)
+	}
+
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 2)
+}
+
+func (s *BatchTestSuite) TestGetPendingBatches_OmitsBatchWithZeroHash() {
+	err := s.storage.AddBatch(&models.Batch{
+		ID:              models.MakeUint256(1),
+		Type:            batchtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            &common.Hash{},
+	})
+	s.NoError(err)
+
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 0)
+}
+
+func (s *BatchTestSuite) TestGetPendingBatches_NoPendingBatches() {
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 0)
 }
 
 func TestBatchTestSuite(t *testing.T) {
