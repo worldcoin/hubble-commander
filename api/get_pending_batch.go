@@ -4,10 +4,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
+var getPendingBatchesAPIErrors map[error]*APIError
+
 func (a *API) GetPendingBatches() ([]dto.Batch, error) {
 	batches, err := a.unsafeGetPendingBatches()
 	if err != nil {
-		return nil, sanitizeError(err, map[error]*APIError{})
+		return nil, sanitizeError(err, getPendingBatchesAPIErrors)
 	}
 
 	return batches, nil

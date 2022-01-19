@@ -178,6 +178,7 @@ Example result (`MASS_MIGRATION`):
 ### `hubble_getUserState(stateId)`
 
 Example result:
+
 ```json
 {
     "StateID": 3,
@@ -216,6 +217,7 @@ Example result:
 ### `hubble_getPublicKeyByPubKeyID(pubKeyId)`
 
 Example result:
+
 ```json
 "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
@@ -223,6 +225,7 @@ Example result:
 ### `hubble_getPublicKeyByStateID(stateID)`
 
 Example result:
+
 ```json
 "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
@@ -811,6 +814,24 @@ Returns the withdrawal proof for the given mass migration transaction, see below
     ],
     "Root": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866"
 }
+```
+
+### `hubble_getPendingBatches()`
+
+Returns pending batches that haven't been mined yet, see below
+
+```json
+[
+    {
+        "ID": "3",
+        "Hash": null,
+        "Type": "TRANSFER",
+        "TransactionHash": "0x25160163b59d54e28549141441c22873b3a80044694beaf624795459b9a214f6",
+        "SubmissionBlock": 0,
+        "SubmissionTime": null,
+        "FinalisationBlock": null
+    }
+]
 ```
 
 # API usage

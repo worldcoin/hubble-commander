@@ -167,6 +167,29 @@
             "response": []
         },
         {
+            "name": "hubble_getPendingBatches",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPendingBatches\",\n    \"params\": [],\n    \"id\": 1\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{commander}}",
+                    "host": [
+                        "{{commander}}"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
             "name": "hubble_getUserStates",
             "request": {
                 "method": "POST",
