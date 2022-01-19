@@ -248,6 +248,21 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	s.Equal(expectedMassMigrations, commitment.Transactions)
 }
 
+func (s *GetCommitmentTestSuite) TestGetCommitment_DepositType() {
+	s.addStateLeaf()
+	s.batch.Type = batchtype.Deposit
+	err := s.storage.AddBatch(s.batch)
+	s.NoError(err)
+
+	err = s.storage.AddCommitment(s.depositCommitment)
+	s.NoError(err)
+
+	commitment, err := s.api.GetCommitment(s.depositCommitment.ID)
+	s.NoError(err)
+	s.NotNil(commitment)
+	s.validateDepositCommitment(commitment)
+}
+
 func (s *GetCommitmentTestSuite) TestGetCommitment_PendingBatch() {
 	s.addStateLeaf()
 	pendingBatch := *s.batch
@@ -300,15 +315,22 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.Commitment
 	s.Equal(s.txCommitment.Type, commitment.Type)
 	s.Equal(s.txCommitment.PostStateRoot, commitment.PostStateRoot)
 	s.Equal(s.txCommitment.LeafHash(), commitment.LeafHash)
-	s.Equal(s.txCommitment.FeeReceiver, commitment.FeeReceiverStateID)
-	s.Equal(s.txCommitment.CombinedSignature, commitment.CombinedSignature)
+	s.Equal(s.txCommitment.FeeReceiver, *commitment.FeeReceiverStateID)
+	s.Equal(s.txCommitment.CombinedSignature, *commitment.CombinedSignature)
 	s.Equal(txstatus.InBatch, commitment.Status)
 	s.Equal(s.batch.SubmissionTime, commitment.BatchTime)
+	s.NotNil(commitment.Transactions)
 
 	stateLeaf, err := s.storage.StateTree.Leaf(s.txCommitment.FeeReceiver)
 	s.NoError(err)
 
-	s.Equal(stateLeaf.TokenID, commitment.TokenID)
+	s.Equal(stateLeaf.TokenID, *commitment.TokenID)
+
+	s.Nil(commitment.Meta)
+	s.Nil(commitment.WithdrawRoot)
+	s.Nil(commitment.SubtreeID)
+	s.Nil(commitment.SubtreeRoot)
+	s.Nil(commitment.Deposits)
 }
 
 func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment) {
@@ -316,15 +338,12 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment
 	s.Equal(s.mmCommitment.Type, commitment.Type)
 	s.Equal(s.mmCommitment.PostStateRoot, commitment.PostStateRoot)
 	s.Equal(s.mmCommitment.LeafHash(), commitment.LeafHash)
-	s.Equal(s.mmCommitment.FeeReceiver, commitment.FeeReceiverStateID)
-	s.Equal(s.mmCommitment.CombinedSignature, commitment.CombinedSignature)
+	s.Nil(commitment.TokenID)
+	s.Equal(s.mmCommitment.FeeReceiver, *commitment.FeeReceiverStateID)
+	s.Equal(s.mmCommitment.CombinedSignature, *commitment.CombinedSignature)
 	s.Equal(txstatus.InBatch, commitment.Status)
 	s.Equal(s.batch.SubmissionTime, commitment.BatchTime)
-
-	stateLeaf, err := s.storage.StateTree.Leaf(s.mmCommitment.FeeReceiver)
-	s.NoError(err)
-
-	s.Equal(stateLeaf.TokenID, commitment.TokenID)
+	s.NotNil(commitment.Transactions)
 
 	expectedMeta := &dto.MassMigrationMeta{
 		SpokeID:            s.mmCommitment.Meta.SpokeID,
@@ -334,6 +353,43 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment
 	}
 
 	s.Equal(expectedMeta, commitment.Meta)
+	s.Equal(s.mmCommitment.WithdrawRoot, *commitment.WithdrawRoot)
+
+	s.Nil(commitment.SubtreeID)
+	s.Nil(commitment.SubtreeRoot)
+	s.Nil(commitment.Deposits)
+}
+
+func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.Commitment) {
+	s.Equal(*dto.NewCommitmentID(&s.depositCommitment.ID), commitment.ID)
+	s.Equal(s.depositCommitment.Type, commitment.Type)
+	s.Equal(s.depositCommitment.PostStateRoot, commitment.PostStateRoot)
+	s.Equal(s.depositCommitment.LeafHash(), commitment.LeafHash)
+	s.Nil(commitment.TokenID)
+	s.Nil(commitment.FeeReceiverStateID)
+	s.Nil(commitment.CombinedSignature)
+	s.Equal(txstatus.InBatch, commitment.Status)
+	s.Equal(s.batch.SubmissionTime, commitment.BatchTime)
+	s.Equal(s.depositCommitment.SubtreeID, *commitment.SubtreeID)
+	s.Equal(s.depositCommitment.SubtreeRoot, *commitment.SubtreeRoot)
+
+	expectedDeposits := []dto.PendingDeposit{
+		{
+			ID: dto.DepositID{
+				SubtreeID:    s.depositCommitment.Deposits[0].ID.SubtreeID,
+				DepositIndex: s.depositCommitment.Deposits[0].ID.DepositIndex,
+			},
+			ToPubKeyID: s.depositCommitment.Deposits[0].ToPubKeyID,
+			TokenID:    s.depositCommitment.Deposits[0].TokenID,
+			L2Amount:   s.depositCommitment.Deposits[0].L2Amount,
+		},
+	}
+
+	s.Equal(expectedDeposits, commitment.Deposits)
+
+	s.Nil(commitment.Transactions)
+	s.Nil(commitment.Meta)
+	s.Nil(commitment.WithdrawRoot)
 }
 
 func TestGetCommitmentTestSuite(t *testing.T) {

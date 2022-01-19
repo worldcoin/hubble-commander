@@ -64,7 +64,9 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 		return a.getCreate2TransfersForCommitment(commitmentBase.ID)
 	case batchtype.MassMigration:
 		return a.getMassMigrationsForCommitment(commitmentBase.ID)
-	case batchtype.Genesis, batchtype.Deposit:
+	case batchtype.Deposit:
+		return nil, nil
+	case batchtype.Genesis:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
@@ -121,12 +123,7 @@ func (a *API) createTxCommitmentDTO(commitment models.Commitment, batch *models.
 }
 
 func (a *API) createMMCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
-	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToMMCommitment().FeeReceiver)
-	if err != nil {
-		return nil, err
-	}
-
-	commitmentDTO := dto.MakeMMCommitment(commitment.ToMMCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
+	commitmentDTO := dto.MakeMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions)
 
 	return &commitmentDTO, nil
 }
