@@ -1,28 +1,20 @@
 package stored
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 const batchDataLength = 185
 
-var (
-	BatchName                = getTypeName(Batch{})
-	BatchPrefix              = models.GetBadgerHoldPrefix(Batch{})
-	errInvalidBatchIndexType = fmt.Errorf("invalid stored.Batch index type")
-)
+var BatchPrefix = models.GetBadgerHoldPrefix(Batch{})
 
 type Batch struct {
 	ID                models.Uint256
 	BType             batchtype.BatchType
 	TransactionHash   common.Hash
-	Hash              *common.Hash // root of tree containing all commitments included in this batch
+	Hash              *common.Hash `badgerhold:"index"` // root of tree containing all commitments included in this batch
 	FinalisationBlock *uint32
 	AccountTreeRoot   *common.Hash
 	PrevStateRoot     *common.Hash
@@ -87,41 +79,4 @@ func (b *Batch) SetBytes(data []byte) error {
 	b.PrevStateRoot = decodeHashPointer(data[136:169])
 	b.SubmissionTime = timestamp
 	return nil
-}
-
-// nolint:gocritic
-// Type implements badgerhold.Storer
-func (b Batch) Type() string {
-	return string(BatchName)
-}
-
-// nolint:gocritic
-// Indexes implements badgerhold.Storer
-func (b Batch) Indexes() map[string]bh.Index {
-	return map[string]bh.Index{
-		"Hash": {
-			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
-				v, err := interfaceToBatch(value)
-				if err != nil {
-					return nil, err
-				}
-				if v.Hash == nil {
-					return nil, nil
-				}
-				return v.Hash.Bytes(), nil
-			},
-		},
-	}
-}
-
-func interfaceToBatch(value interface{}) (*Batch, error) {
-	p, ok := value.(*Batch)
-	if ok {
-		return p, nil
-	}
-	v, ok := value.(Batch)
-	if ok {
-		return &v, nil
-	}
-	return nil, errors.WithStack(errInvalidBatchIndexType)
 }
