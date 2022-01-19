@@ -50,7 +50,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 	}
 
 	if batch.Type != batchtype.MassMigration {
-		return nil, ErrOnlyMassMigrationCommitmentsForProofing
+		return nil, errors.WithStack(ErrOnlyMassMigrationCommitmentsForProofing)
 	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(commitmentID.BatchID)
