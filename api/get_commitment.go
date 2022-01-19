@@ -111,7 +111,12 @@ func (a *API) getMassMigrationsForCommitment(id models.CommitmentID) (interface{
 	return txs, nil
 }
 
-func (a *API) createTxCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+func (a *API) createTxCommitmentDTO(
+	commitment models.Commitment,
+	batch *models.Batch,
+	transactions interface{},
+	status *txstatus.TransactionStatus,
+) (*dto.Commitment, error) {
 	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
 	if err != nil {
 		return nil, err
@@ -122,13 +127,23 @@ func (a *API) createTxCommitmentDTO(commitment models.Commitment, batch *models.
 	return &commitmentDTO, nil
 }
 
-func (a *API) createMMCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+func (a *API) createMMCommitmentDTO(
+	commitment models.Commitment,
+	batch *models.Batch,
+	transactions interface{},
+	status *txstatus.TransactionStatus,
+) (*dto.Commitment, error) {
 	commitmentDTO := dto.MakeMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions)
 
 	return &commitmentDTO, nil
 }
 
-func (a *API) createDepositCommitmentDTO(commitment models.Commitment, batch *models.Batch, transactions interface{}, status *txstatus.TransactionStatus) (*dto.Commitment, error) {
+func (a *API) createDepositCommitmentDTO(
+	commitment models.Commitment,
+	batch *models.Batch,
+	transactions interface{},
+	status *txstatus.TransactionStatus,
+) (*dto.Commitment, error) {
 	commitmentDTO := dto.MakeDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime, transactions)
 
 	return &commitmentDTO, nil

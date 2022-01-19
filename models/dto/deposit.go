@@ -14,7 +14,7 @@ type PendingDeposit struct {
 	L2Amount   models.Uint256
 }
 
-func MakePendingDeposit(pendingDeposit models.PendingDeposit) PendingDeposit {
+func MakePendingDeposit(pendingDeposit *models.PendingDeposit) PendingDeposit {
 	return PendingDeposit{
 		ID: DepositID{
 			SubtreeID:    pendingDeposit.ID.SubtreeID,
@@ -30,7 +30,7 @@ func modelsPendingDepositsToDTOPendingDeposits(deposits []models.PendingDeposit)
 	dtoDeposits := make([]PendingDeposit, 0, len(deposits))
 
 	for i := range deposits {
-		dtoDeposits = append(dtoDeposits, MakePendingDeposit(deposits[i]))
+		dtoDeposits = append(dtoDeposits, MakePendingDeposit(&deposits[i]))
 	}
 
 	return dtoDeposits
