@@ -12,39 +12,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
+var (
+	errGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
+	errMissingGenesisPublicKey      = fmt.Errorf("genesis accounts require public keys")
+)
 
-func AssignStateIDsAndCalculateTotalAmount(accounts []models.RegisteredGenesisAccount) (*models.Uint256, []models.PopulatedGenesisAccount) {
-	totalGenesisAmount := models.NewUint256(0)
-	populatedAccounts := make([]models.PopulatedGenesisAccount, 0, len(accounts))
-	for i := range accounts {
-		account := accounts[i]
-
-		if account.Balance.CmpN(0) > 0 {
-			populatedAccounts = append(populatedAccounts, models.PopulatedGenesisAccount{
-				PublicKey: account.PublicKey,
-				PubKeyID:  account.PubKeyID,
-				StateID:   uint32(i),
-				Balance:   account.Balance,
-			})
-			totalGenesisAmount = totalGenesisAmount.Add(&account.Balance)
-		}
-	}
-	return totalGenesisAmount, populatedAccounts
-}
-
-func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGenesisAccount) error {
+func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccount) error {
 	seenStateIDs := make(map[uint32]bool)
 	for i := range accounts {
 		account := &accounts[i]
 
 		if seenStateIDs[account.StateID] {
-			return errors.WithStack(ErrGenesisAccountsUniqueStateID)
+			return errors.WithStack(errGenesisAccountsUniqueStateID)
 		}
 		seenStateIDs[account.StateID] = true
 
 		leaf := &models.AccountLeaf{
-			PubKeyID:  account.PubKeyID,
+			PubKeyID:  account.State.PubKeyID,
 			PublicKey: account.PublicKey,
 		}
 		_, err := saveSyncedSingleAccount(storage.AccountTree, leaf)
@@ -52,12 +36,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 			return err
 		}
 
-		_, err = storage.StateTree.Set(account.StateID, &models.UserState{
-			PubKeyID: account.PubKeyID,
-			TokenID:  models.MakeUint256(0),
-			Balance:  account.Balance,
-			Nonce:    models.MakeUint256(0),
-		})
+		_, err = storage.StateTree.Set(account.StateID, &account.State)
 		if err != nil {
 			return err
 		}
@@ -65,11 +44,20 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.PopulatedGen
 	return nil
 }
 
-func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.GenesisAccount) ([]models.RegisteredGenesisAccount, error) {
+func RegisterGenesisAccountsAndCalculateTotalAmount(
+	accountMgr *eth.AccountManager,
+	accounts []models.GenesisAccount,
+) (*models.Uint256, error) {
 	log.Println("Registering genesis accounts")
+
+	emptyPublicKey := models.PublicKey{}
 	txs := make([]types.Transaction, 0, len(accounts))
 	for i := range accounts {
-		tx, err := accountMgr.RegisterAccount(accounts[i].PublicKey)
+		if accounts[i].PublicKey == emptyPublicKey {
+			return nil, errors.WithStack(errMissingGenesisPublicKey)
+		}
+
+		tx, err := accountMgr.RegisterAccount(&accounts[i].PublicKey)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -81,21 +69,20 @@ func RegisterGenesisAccounts(accountMgr *eth.AccountManager, accounts []models.G
 		return nil, err
 	}
 
-	registeredAccounts := make([]models.RegisteredGenesisAccount, 0, len(accounts))
+	totalGenesisAmount := models.NewUint256(0)
 	for i := range accounts {
 		pubKeyID, err := accountMgr.RetrieveRegisteredPubKeyID(&receipts[i])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		registeredAccounts = append(registeredAccounts, models.RegisteredGenesisAccount{
-			GenesisAccount: accounts[i],
-			PublicKey:      *accounts[i].PublicKey,
-			PubKeyID:       *pubKeyID,
-		})
+		if accounts[i].State.PubKeyID != *pubKeyID {
+			return nil, fmt.Errorf("different pubKeyID for account %s", accounts[i].PublicKey)
+		}
+		totalGenesisAmount = totalGenesisAmount.Add(&accounts[i].State.Balance)
 	}
 
-	return registeredAccounts, nil
+	return totalGenesisAmount, nil
 }
 
 func (c *Commander) addGenesisBatch() error {

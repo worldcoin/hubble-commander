@@ -56,15 +56,23 @@ Example result:
 [
     {
         "PublicKey": "0x0df68cb87856229b0bc3f158fff8b82b04deb1a4c23dadbf3ed2da4ec6f6efcb1c165c6b47d8c89ab2ddb0831c182237b27a4b3d9701775ad6c180303f87ef260566cb2f0bcc7b89c2260de2fee8ec29d7b5e575a1e36eb4bcead52a74a511b7188d7df7c9d08f94b9daa9d89105fbdf22bf14e30b84f8adefb3695ebff00e88",
-        "PubKeyID": 0,
         "StateID": 0,
-        "Balance": "1000000000000000000"
+        "State": {
+            "PubKeyID": 0,
+            "TokenID": "0",
+            "Balance": "1000000000000000000",
+            "Nonce": "0"
+        }
     },
     {
         "PublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc",
-        "PubKeyID": 1,
         "StateID": 1,
-        "Balance": "1000000000000000000"
+        "State": {
+            "PubKeyID": 1,
+            "TokenID": "0",
+            "Balance": "1000000000000000000",
+            "Nonce": "0"
+        }
     }
 ]
 ```

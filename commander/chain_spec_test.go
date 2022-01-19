@@ -34,21 +34,33 @@ func (s *ChainSpecTestSuite) SetupTest() {
 		GenesisAccounts: models.GenesisAccounts{
 			{
 				PublicKey: models.PublicKey{1, 2, 3, 4},
-				PubKeyID:  17,
 				StateID:   554,
-				Balance:   models.MakeUint256(4534532),
+				State: models.UserState{
+					PubKeyID: 17,
+					TokenID:  models.Uint256{},
+					Balance:  models.MakeUint256(4534532),
+					Nonce:    models.Uint256{},
+				},
 			},
 			{
 				PublicKey: models.PublicKey{3, 4, 5, 6},
-				PubKeyID:  93,
 				StateID:   882,
-				Balance:   models.MakeUint256(48391),
+				State: models.UserState{
+					PubKeyID: 93,
+					TokenID:  models.Uint256{},
+					Balance:  models.MakeUint256(48391),
+					Nonce:    models.Uint256{},
+				},
 			},
 			{
 				PublicKey: models.PublicKey{5, 6, 7, 8},
-				PubKeyID:  119,
 				StateID:   1183,
-				Balance:   models.MakeUint256(300920),
+				State: models.UserState{
+					PubKeyID: 119,
+					TokenID:  models.Uint256{},
+					Balance:  models.MakeUint256(300920),
+					Nonce:    models.Uint256{},
+				},
 			},
 		},
 		SyncedBlock: 7738,

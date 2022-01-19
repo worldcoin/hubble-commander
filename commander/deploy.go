@@ -13,8 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrNoPublicKeysInGenesisAccounts = fmt.Errorf("genesis accounts for deployment require public keys")
-
 func Deploy(cfg *config.DeployerConfig, blockchain chain.Connection) (chainSpec *string, err error) {
 	tempStorage, err := st.NewTemporaryStorage()
 	if err != nil {
@@ -51,11 +49,6 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerBootstrapConfig,
 ) (*models.ChainState, error) {
-	err := validateGenesisAccounts(cfg.GenesisAccounts)
-	if err != nil {
-		return nil, err
-	}
-
 	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain)
 	if err != nil {
 		return nil, err
@@ -74,14 +67,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	registeredAccounts, err := RegisterGenesisAccounts(accountManager, cfg.GenesisAccounts)
+	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(accountManager, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
 
-	totalGenesisAmount, populatedAccounts := AssignStateIDsAndCalculateTotalAmount(registeredAccounts)
-
-	err = PopulateGenesisAccounts(storage, populatedAccounts)
+	err = PopulateGenesisAccounts(storage, cfg.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -115,19 +106,9 @@ func deployContractsAndSetupGenesisState(
 		DepositManager:                 contracts.DepositManagerAddress,
 		WithdrawManager:                contracts.WithdrawManagerAddress,
 		Rollup:                         contracts.RollupAddress,
-		GenesisAccounts:                populatedAccounts,
+		GenesisAccounts:                cfg.GenesisAccounts,
 		SyncedBlock:                    getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 
 	return chainState, nil
-}
-
-func validateGenesisAccounts(accounts []models.GenesisAccount) error {
-	for i := range accounts {
-		if accounts[i].PublicKey == nil {
-			return ErrNoPublicKeysInGenesisAccounts
-		}
-	}
-
-	return nil
 }
