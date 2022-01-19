@@ -143,7 +143,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
-	s.NotNil(commitment)
 	s.validateTxCommitment(commitment)
 
 	expectedTransactions := []dto.TransferForCommitment{{
@@ -187,7 +186,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
-	s.NotNil(commitment)
 	s.validateTxCommitment(commitment)
 
 	expectedTransactions := []dto.Create2TransferForCommitment{{
@@ -231,7 +229,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
-	s.NotNil(commitment)
 	s.validateMMCommitment(commitment)
 
 	expectedMassMigrations := []dto.MassMigrationForCommitment{{
@@ -259,7 +256,6 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_DepositType() {
 
 	commitment, err := s.api.GetCommitment(s.depositCommitment.ID)
 	s.NoError(err)
-	s.NotNil(commitment)
 	s.validateDepositCommitment(commitment)
 }
 
@@ -311,6 +307,8 @@ func (s *GetCommitmentTestSuite) addStateLeaf() {
 }
 
 func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.Commitment) {
+	s.NotNil(commitment)
+
 	s.Equal(*dto.NewCommitmentID(&s.txCommitment.ID), commitment.ID)
 	s.Equal(s.txCommitment.Type, commitment.Type)
 	s.Equal(s.txCommitment.PostStateRoot, commitment.PostStateRoot)
@@ -334,6 +332,8 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.Commitment
 }
 
 func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment) {
+	s.NotNil(commitment)
+
 	s.Equal(*dto.NewCommitmentID(&s.mmCommitment.ID), commitment.ID)
 	s.Equal(s.mmCommitment.Type, commitment.Type)
 	s.Equal(s.mmCommitment.PostStateRoot, commitment.PostStateRoot)
@@ -361,6 +361,8 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.Commitment
 }
 
 func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.Commitment) {
+	s.NotNil(commitment)
+
 	s.Equal(*dto.NewCommitmentID(&s.depositCommitment.ID), commitment.ID)
 	s.Equal(s.depositCommitment.Type, commitment.Type)
 	s.Equal(s.depositCommitment.PostStateRoot, commitment.PostStateRoot)
