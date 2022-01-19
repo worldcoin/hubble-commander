@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_exportAccounts(t *testing.T) {
+func TestExportAccounts(t *testing.T) {
 	storage, err := st.NewTestStorage()
 	require.NoError(t, err)
 
@@ -29,18 +29,18 @@ func Test_exportAccounts(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	exportedLeaves, err := exportData(storage.Storage, file, exportAndCountAccounts)
+	exportedLeavesCount, err := exportData(storage.Storage, file, exportAndCountAccounts)
 	require.NoError(t, err)
-	require.Len(t, expectedLeaves, exportedLeaves)
+	require.Len(t, expectedLeaves, exportedLeavesCount)
 
 	err = file.Close()
 	require.NoError(t, err)
 
-	leaves := readAccountsFromFile(t, file.Name())
+	leaves := getAccountsFromFile(t, file.Name())
 	require.Equal(t, expectedLeaves, leaves)
 }
 
-func readAccountsFromFile(t *testing.T, fileName string) []models.AccountLeaf {
+func getAccountsFromFile(t *testing.T, fileName string) []models.AccountLeaf {
 	bytes, err := os.ReadFile(fileName)
 	require.NoError(t, err)
 

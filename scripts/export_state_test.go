@@ -29,7 +29,7 @@ func TestExportStateLeaves(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	exportedLeavesCount, err := exportStateLeaves(storage.Storage, file)
+	exportedLeavesCount, err := exportData(storage.Storage, file, exportAndCountStateLeaves)
 	require.NoError(t, err)
 	require.Len(t, expectedLeaves, exportedLeavesCount)
 
