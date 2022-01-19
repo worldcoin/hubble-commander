@@ -44,7 +44,7 @@ func MakeBatchWithRootAndCommitments(
 		Commitments: commitments,
 	}
 
-	// AccountRoot is always equal to zero hash for genesis and deposit batches, so we set it to nil
+	// AccountRoot is always a zero hash for genesis and deposit batches, so we set it to nil
 	if batch.Type != batchtype.Genesis && batch.Type != batchtype.Deposit {
 		batchDTO.AccountTreeRoot = batch.AccountTreeRoot
 	}
