@@ -242,6 +242,7 @@ Example result:
         "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "SubmissionBlock": 44009,
         "SubmissionTime": null,
+        "Status": "FINALISED",
         "FinalisationBlock": 44009
     },
     {
@@ -251,6 +252,7 @@ Example result:
         "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
         "SubmissionBlock": 46332,
         "SubmissionTime": 1642591575,
+        "Status": "IN_BATCH",
         "FinalisationBlock": 86652
     },
     {
@@ -260,6 +262,7 @@ Example result:
         "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
         "SubmissionBlock": 46412,
         "SubmissionTime": 1642591655,
+        "Status": "IN_BATCH",
         "FinalisationBlock": 86732
     },
     {
@@ -269,6 +272,7 @@ Example result:
         "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
         "SubmissionBlock": 46398,
         "SubmissionTime": 1642591641,
+        "Status": "IN_BATCH",
         "FinalisationBlock": 86718
     },
     {
@@ -278,6 +282,7 @@ Example result:
         "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
         "SubmissionBlock": 44027,
         "SubmissionTime": 1642589195,
+        "Status": "IN_BATCH",
         "FinalisationBlock": 84347
     }
 ]
@@ -297,6 +302,7 @@ Example result (`TRANSFER`):
     "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
     "SubmissionBlock": 46332,
     "SubmissionTime": 1642591575,
+    "Status": "IN_BATCH",
     "FinalisationBlock": 86652,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
     "Commitments": [
@@ -325,6 +331,7 @@ Example result (`CREATE2TRANSFER`):
     "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
     "SubmissionBlock": 46412,
     "SubmissionTime": 1642591655,
+    "Status": "IN_BATCH",
     "FinalisationBlock": 86732,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
     "Commitments": [
@@ -353,6 +360,7 @@ Example result (`MASS_MIGRATION`):
     "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
     "SubmissionBlock": 46398,
     "SubmissionTime": 1642591641,
+    "Status": "IN_BATCH",
     "FinalisationBlock": 86718,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
     "Commitments": [
@@ -386,6 +394,7 @@ Example result (`DEPOSIT`):
     "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
     "SubmissionBlock": 44027,
     "SubmissionTime": 1642589195,
+    "Status": "IN_BATCH",
     "FinalisationBlock": 84347,
     "AccountTreeRoot": null,
     "Commitments": [
@@ -451,6 +460,7 @@ Example result (`GENESIS`):
     "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "SubmissionBlock": 44009,
     "SubmissionTime": null,
+    "Status": "FINALISED",
     "FinalisationBlock": 44009,
     "AccountTreeRoot": null,
     "Commitments": null
