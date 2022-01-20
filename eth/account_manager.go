@@ -15,6 +15,7 @@ type AccountManager struct {
 	Blockchain                       chain.Connection
 	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit *uint64
+	registrationTxsTracker           *TxsTracker
 }
 
 //goland:noinspection GoDeprecation
@@ -32,6 +33,7 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 			Contract:        MakeContract(&accountRegistryAbi, accountRegistryContract),
 		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+		registrationTxsTracker:           NewTxsTracker(blockchain),
 	}, nil
 }
 
