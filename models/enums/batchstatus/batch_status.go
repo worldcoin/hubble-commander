@@ -11,13 +11,13 @@ type BatchStatus uint
 const (
 	Pending BatchStatus = iota + 1000
 	InBatch
-	Finalised
+	Finalised // nolint:misspell
 )
 
 var BatchStatuses = map[BatchStatus]string{
 	Pending:   "PENDING",
 	InBatch:   "IN_BATCH",
-	Finalised: "FINALISED",
+	Finalised: "FINALISED", // nolint:misspell
 }
 
 func (s BatchStatus) Ref() *BatchStatus {

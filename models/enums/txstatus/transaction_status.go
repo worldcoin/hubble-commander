@@ -12,14 +12,14 @@ type TransactionStatus uint
 const (
 	Pending                     = TransactionStatus(batchstatus.Pending)
 	InBatch                     = TransactionStatus(batchstatus.InBatch)
-	Finalised                   = TransactionStatus(batchstatus.Finalised)
+	Finalised                   = TransactionStatus(batchstatus.Finalised) // nolint:misspell
 	Error     TransactionStatus = 5000
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
 	Pending:   batchstatus.BatchStatuses[batchstatus.Pending],
 	InBatch:   batchstatus.BatchStatuses[batchstatus.InBatch],
-	Finalised: batchstatus.BatchStatuses[batchstatus.Finalised],
+	Finalised: batchstatus.BatchStatuses[batchstatus.Finalised], // nolint:misspell
 	Error:     "ERROR",
 }
 
