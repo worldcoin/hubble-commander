@@ -81,17 +81,3 @@ func MakeTransferForCommitment(transfer *models.Transfer) TransferForCommitment 
 		ToStateID:   transfer.ToStateID,
 	}
 }
-
-type TransferWithBatchDetails struct {
-	TransactionBase
-	ToStateID uint32
-	BatchHash *common.Hash
-	BatchTime *models.Timestamp
-}
-
-func MakeTransferWithBatchDetailsFromTransfer(transfer *models.Transfer) TransferWithBatchDetails {
-	return TransferWithBatchDetails{
-		TransactionBase: MakeTransactionBase(&transfer.TransactionBase),
-		ToStateID:       transfer.ToStateID,
-	}
-}
