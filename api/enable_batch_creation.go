@@ -1,6 +1,5 @@
 package api
 
-func (a *API) EnableBatchCreation(enable bool) error {
+func (a *API) EnableBatchCreation(enable bool) {
 	a.enableBatchCreation(enable)
-	return nil
 }

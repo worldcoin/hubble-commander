@@ -12,11 +12,9 @@ func TestAPIEnableBatchCreation(t *testing.T) {
 		enabled = enable
 	}}
 
-	err := api.EnableBatchCreation(true)
-	require.NoError(t, err)
+	api.EnableBatchCreation(true)
 	require.Equal(t, true, enabled)
 
-	err = api.EnableBatchCreation(false)
-	require.NoError(t, err)
+	api.EnableBatchCreation(false)
 	require.Equal(t, false, enabled)
 }
