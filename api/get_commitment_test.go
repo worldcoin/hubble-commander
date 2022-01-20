@@ -6,8 +6,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -314,7 +314,7 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.TxCommitme
 		TokenID:            models.MakeUint256(1),
 		FeeReceiverStateID: s.txCommitment.FeeReceiver,
 		CombinedSignature:  s.txCommitment.CombinedSignature,
-		Status:             txstatus.InBatch,
+		Status:             batchstatus.InBatch,
 		BatchTime:          *s.batch.SubmissionTime,
 		Transactions:       transactions,
 	}
@@ -334,7 +334,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.MMCommitme
 		PostStateRoot:     s.mmCommitment.PostStateRoot,
 		LeafHash:          s.mmCommitment.LeafHash(),
 		CombinedSignature: s.mmCommitment.CombinedSignature,
-		Status:            txstatus.InBatch,
+		Status:            batchstatus.InBatch,
 		BatchTime:         *s.batch.SubmissionTime,
 		WithdrawRoot:      s.mmCommitment.WithdrawRoot,
 		Meta: dto.MassMigrationMeta{
@@ -360,7 +360,7 @@ func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.Depos
 		Type:          s.depositCommitment.Type,
 		PostStateRoot: s.depositCommitment.PostStateRoot,
 		LeafHash:      s.depositCommitment.LeafHash(),
-		Status:        txstatus.InBatch,
+		Status:        batchstatus.InBatch,
 		BatchTime:     *s.batch.SubmissionTime,
 		SubtreeID:     s.depositCommitment.SubtreeID,
 		SubtreeRoot:   s.depositCommitment.SubtreeRoot,

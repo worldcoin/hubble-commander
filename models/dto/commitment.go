@@ -2,8 +2,8 @@ package dto
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -30,7 +30,7 @@ type TxCommitment struct {
 	TokenID            models.Uint256
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
-	Status             txstatus.TransactionStatus
+	Status             batchstatus.BatchStatus
 	BatchTime          models.Timestamp
 	Transactions       interface{}
 }
@@ -53,7 +53,7 @@ type DepositCommitment struct {
 	Type          batchtype.BatchType
 	PostStateRoot common.Hash
 	LeafHash      common.Hash
-	Status        txstatus.TransactionStatus
+	Status        batchstatus.BatchStatus
 	BatchTime     models.Timestamp
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
@@ -63,7 +63,7 @@ type DepositCommitment struct {
 func NewTxCommitment(
 	commitment *models.TxCommitment,
 	tokenID models.Uint256,
-	status *txstatus.TransactionStatus,
+	status *batchstatus.BatchStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
 ) *TxCommitment {
@@ -83,7 +83,7 @@ func NewTxCommitment(
 
 func NewMMCommitment(
 	commitment *models.MMCommitment,
-	status *txstatus.TransactionStatus,
+	status *batchstatus.BatchStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
 ) *MMCommitment {
@@ -108,7 +108,7 @@ func NewMMCommitment(
 
 func NewDepositCommitment(
 	commitment *models.DepositCommitment,
-	status *txstatus.TransactionStatus,
+	status *batchstatus.BatchStatus,
 	batchTime *models.Timestamp,
 ) *DepositCommitment {
 	return &DepositCommitment{
