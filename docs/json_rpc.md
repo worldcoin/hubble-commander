@@ -294,7 +294,7 @@ Example result (`TRANSFER`):
     "Commitments": [
         {
             "ID": {
-                "BatchID": "2",
+                "BatchID": "1",
                 "IndexInBatch": 0
             },
             "PostStateRoot": "0x1be2feecb81d0338bf049a6e3324a254cd5b5a93f481d941a7f9e31dabc7cc9c",
@@ -322,7 +322,7 @@ Example result (`CREATE2TRANSFER`):
     "Commitments": [
         {
             "ID": {
-                "BatchID": "4",
+                "BatchID": "2",
                 "IndexInBatch": 0
             },
             "PostStateRoot": "0x795a9e9e4bd52ac321c67eca39f5bb120f3c22181b0c825339df9be67a988ae6",
@@ -383,7 +383,7 @@ Example result (`DEPOSIT`):
     "Commitments": [
         {
             "ID": {
-                "BatchID": "1",
+                "BatchID": "4",
                 "IndexInBatch": 0
             },
             "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
@@ -481,6 +481,7 @@ Example result (`TRANSFER`):
             "Fee": "1",
             "Nonce": "0",
             "Signature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
             "ReceiveTime": 1642591573,
             "ToStateID": 2
         }
@@ -512,6 +513,7 @@ Example result (`CREATE2TRANSFER`):
             "Fee": "1",
             "Nonce": "0",
             "Signature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
             "ReceiveTime": 1642591653,
             "ToStateID": 6,
             "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
@@ -548,7 +550,8 @@ Example result (`MASS_MIGRATION`):
             "Amount": "50",
             "Fee": "1",
             "Nonce": "1",
-            "Signature": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "Signature": "0x028aafebc011dd95f2138740f66a05f7e8986111416227164a0e88a9e745ac06112d75e267d4be5aaa9e5509949f298529a0da1a6e86de0c9d5fc98325a8af4d",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
             "ReceiveTime": 1642591627,
             "SpokeID": 1
         }
