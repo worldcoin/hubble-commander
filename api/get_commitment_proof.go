@@ -14,14 +14,14 @@ import (
 
 var (
 	ErrUnsupportedCommitmentTypeForProofing = fmt.Errorf(
-		"commitment inclusion proof can only be generated for Transfer/Create2Transfer/MassMigration commitments",
+		"commitment inclusion proof can only be generated for Transfer/Create2Transfer commitments",
 	)
 
 	APIErrProofMethodsDisabled              = NewAPIError(50000, "proof methods disabled")
 	APIErrCannotGenerateCommitmentProof     = NewAPIError(50001, "commitment inclusion proof could not be generated")
 	APIErrUnsupportedCommitmentTypeForProof = NewAPIError(
 		50008,
-		"commitment inclusion proof can only be generated for Transfer/Create2Transfer/MassMigration commitments",
+		"commitment inclusion proof can only be generated for Transfer/Create2Transfer commitments",
 	)
 
 	getCommitmentProofAPIErrors = map[error]*APIError{
@@ -46,7 +46,8 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if batch.Type != batchtype.Transfer && batch.Type != batchtype.Create2Transfer && batch.Type != batchtype.MassMigration {
+	if batch.Type != batchtype.Transfer && batch.Type != batchtype.Create2Transfer {
+		//TODO: support MassMigration and Deposit types
 		return nil, errors.WithStack(ErrUnsupportedCommitmentTypeForProofing)
 	}
 

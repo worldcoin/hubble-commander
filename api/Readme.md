@@ -44,7 +44,7 @@
 | `50005`    | `withdraw proof could not be calculated for a given batch`                                                |
 | `50006`    | `invalid batch type, only mass migration batches are supported`                                           |
 | `50007`    | `mass migration with given transaction hash was not found in a given commitment`                          |
-| `50008`    | `commitment inclusion proof can only be generated for Transfer/Create2Transfer/MassMigration commitments` |
+| `50008`    | `commitment inclusion proof can only be generated for Transfer/Create2Transfer commitments`               |
 | `50009`    | `mass migration commitment inclusion proof cannot be generated for different type of commitments`         |
 | `99000`    | `an error occurred while fetching the account count`                                                      |
 | `99001`    | `public key not found`                                                                                    |
