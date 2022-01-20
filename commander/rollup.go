@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
+func (c *Commander) manageRollupLoop(isProposer bool) {
 	if isProposer && !c.rollupLoopRunning && c.batchCreationEnabled {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		c.startRollupLoop()
@@ -21,7 +21,6 @@ func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool)
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
 		c.stopRollupLoop()
 	}
-	return cancel
 }
 
 func (c *Commander) startRollupLoop() {
