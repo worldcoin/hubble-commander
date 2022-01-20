@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -98,8 +99,9 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.Equal(s.batches[i].Hash, result[i].Hash)
 		s.Equal(s.batches[i].Type, result[i].Type)
 		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
-		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
 		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
+		s.Equal(batchstatus.InBatch, result[i].Status)
+		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
 		s.NotZero(result[i].SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {

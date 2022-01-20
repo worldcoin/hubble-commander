@@ -41,13 +41,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 		return nil, err
 	}
 
-	var status *batchstatus.BatchStatus
-
-	if a.storage.GetLatestBlockNumber() < *batch.FinalisationBlock {
-		status = batchstatus.InBatch.Ref()
-	} else {
-		status = batchstatus.Finalised.Ref()
-	}
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
