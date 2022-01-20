@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -56,7 +57,7 @@ func GetConfig() *Config {
 			Version:            "0.5.0-rc2",
 			Port:               getString("api.port", "8080"),
 			EnableProofMethods: getBool("api.enable_proof_methods", false),
-			AuthenticationKey:  getString("api.enable_proof_methods", "secret_authorization_key"),
+			AuthenticationKey:  getStringOrNil("api.enable_proof_methods"),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", getBadgerPath()),
@@ -104,7 +105,7 @@ func GetTestConfig() *Config {
 			Version:            "dev-0.5.0-rc2",
 			Port:               "8080",
 			EnableProofMethods: true,
-			AuthenticationKey:  getString("api.enable_proof_methods", "secret_authorization_key"),
+			AuthenticationKey:  ref.String("secret_authentication_key"),
 		},
 		Badger: &BadgerConfig{
 			Path: getTestBadgerPath(),

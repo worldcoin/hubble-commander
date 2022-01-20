@@ -76,7 +76,7 @@ type APIConfig struct {
 	Version            string
 	Port               string
 	EnableProofMethods bool
-	AuthenticationKey  string `json:"-"`
+	AuthenticationKey  *string `json:"-"`
 }
 
 type BadgerConfig struct {
