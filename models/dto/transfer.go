@@ -89,13 +89,6 @@ type TransferWithBatchDetails struct {
 	BatchTime *models.Timestamp
 }
 
-func MakeTransferWithBatchDetails(transfer *models.TransferWithBatchDetails) TransferWithBatchDetails {
-	out := MakeTransferWithBatchDetailsFromTransfer(transfer.ToTransfer())
-	out.BatchHash = transfer.BatchHash
-	out.BatchTime = transfer.BatchTime
-	return out
-}
-
 func MakeTransferWithBatchDetailsFromTransfer(transfer *models.Transfer) TransferWithBatchDetails {
 	return TransferWithBatchDetails{
 		TransactionBase: MakeTransactionBase(&transfer.TransactionBase),
