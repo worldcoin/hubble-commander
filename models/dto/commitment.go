@@ -127,7 +127,7 @@ func NewDepositCommitment(
 		depositCommitmentDetails: depositCommitmentDetails{
 			SubtreeID:   &commitment.SubtreeID,
 			SubtreeRoot: &commitment.SubtreeRoot,
-			Deposits:    modelsPendingDepositsToDTOPendingDeposits(commitment.Deposits),
+			Deposits:    makePendingDeposits(commitment.Deposits),
 		},
 	}
 }
@@ -176,7 +176,7 @@ func MakeDepositBatchCommitment(
 		depositCommitmentDetails: depositCommitmentDetails{
 			SubtreeID:   &commitment.SubtreeID,
 			SubtreeRoot: &commitment.SubtreeRoot,
-			Deposits:    modelsPendingDepositsToDTOPendingDeposits(commitment.Deposits),
+			Deposits:    makePendingDeposits(commitment.Deposits),
 		},
 	}
 }
