@@ -1,6 +1,6 @@
 # 🛰 JSON RPC
 
-The default namespace would be `hubble`. We could also have other ones like `admin`.
+## Hubble API
 
 ### `hubble_getVersion()`
 
@@ -816,9 +816,13 @@ Returns the withdrawal proof for the given mass migration transaction, see below
 }
 ```
 
-### `hubble_getPendingBatches()`
+## Admin API
 
-Returns pending batches that haven't been mined yet, see below
+Admin API endpoints requires authentication via authentication key specified in config.
+
+### `admin_getPendingBatches()`
+
+Returns pending batches that haven't been mined yet, see below.
 
 ```json
 [
