@@ -156,7 +156,7 @@ func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
 
 func calculateBatchStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
 	if latestBlockNumber < finalisationBlock {
-		return batchstatus.InBatch.Ref()
+		return batchstatus.Submitted.Ref()
 	}
 
 	return batchstatus.Finalised.Ref()

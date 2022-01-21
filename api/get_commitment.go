@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/commitmentstatus"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -41,7 +41,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 		return nil, err
 	}
 
-	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
+	status := calculateCommitmentStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
@@ -115,7 +115,7 @@ func (a *API) createTxCommitmentDTO(
 	commitment models.Commitment,
 	batch *models.Batch,
 	transactions interface{},
-	status *batchstatus.BatchStatus,
+	status *commitmentstatus.CommitmentStatus,
 ) (interface{}, error) {
 	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
 	if err != nil {
@@ -125,4 +125,12 @@ func (a *API) createTxCommitmentDTO(
 	commitmentDTO := dto.NewTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
 
 	return commitmentDTO, nil
+}
+
+func calculateCommitmentStatus(latestBlockNumber, finalisationBlock uint32) *commitmentstatus.CommitmentStatus {
+	if latestBlockNumber < finalisationBlock {
+		return commitmentstatus.InBatch.Ref()
+	}
+
+	return commitmentstatus.Finalised.Ref()
 }

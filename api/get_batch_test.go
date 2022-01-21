@@ -277,7 +277,7 @@ func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitment
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
 	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
-	s.Equal(batchstatus.InBatch, result.Status)
+	s.Equal(batchstatus.Submitted, result.Status)
 	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
 }

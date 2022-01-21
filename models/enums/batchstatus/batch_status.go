@@ -10,13 +10,13 @@ type BatchStatus uint
 
 const (
 	Pending BatchStatus = iota + 1000
-	InBatch
+	Submitted
 	Finalised // nolint:misspell
 )
 
 var BatchStatuses = map[BatchStatus]string{
 	Pending:   "PENDING",
-	InBatch:   "IN_BATCH",
+	Submitted: "SUBMITTED",
 	Finalised: "FINALISED", // nolint:misspell
 }
 
