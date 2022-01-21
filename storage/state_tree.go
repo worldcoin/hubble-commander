@@ -285,6 +285,23 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 	return currentRootHash, nil
 }
 
+func (s *StateTree) IterateLeaves(action func(stateLeaf *models.StateLeaf) error) error {
+	err := s.database.Badger.Iterator(stored.StateLeafPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		var stateLeaf stored.StateLeaf
+		err := item.Value(stateLeaf.SetBytes)
+		if err != nil {
+			return false, err
+		}
+
+		err = action(stateLeaf.ToModelsStateLeaf())
+		return false, err
+	})
+	if err != nil && err != db.ErrIteratorFinished {
+		return err
+	}
+	return nil
+}
+
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {
 	dataHash, err := encoder.HashUserState(state)
 	if err != nil {

@@ -19,7 +19,7 @@ type Batch struct {
 type BatchWithRootAndCommitments struct {
 	Batch
 	AccountTreeRoot *common.Hash
-	Commitments     []CommitmentWithTokenID
+	Commitments     interface{}
 }
 
 func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
@@ -37,11 +37,17 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 func MakeBatchWithRootAndCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
-	commitments []CommitmentWithTokenID,
+	commitments interface{},
 ) *BatchWithRootAndCommitments {
-	return &BatchWithRootAndCommitments{
-		Batch:           *MakeBatch(batch, submissionBlock),
-		AccountTreeRoot: batch.AccountTreeRoot,
-		Commitments:     commitments,
+	batchDTO := &BatchWithRootAndCommitments{
+		Batch:       *MakeBatch(batch, submissionBlock),
+		Commitments: commitments,
 	}
+
+	// AccountRoot is always a zero hash for genesis and deposit batches, so we set it to nil
+	if batch.Type != batchtype.Genesis && batch.Type != batchtype.Deposit {
+		batchDTO.AccountTreeRoot = batch.AccountTreeRoot
+	}
+
+	return batchDTO
 }

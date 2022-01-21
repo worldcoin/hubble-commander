@@ -83,17 +83,17 @@ func MakeMassMigrationForCommitment(massMigration *models.MassMigration) MassMig
 }
 
 type MassMigrationMeta struct {
-	SpokeID     uint32
-	TokenID     models.Uint256
-	Amount      models.Uint256
-	FeeReceiver uint32
+	SpokeID            uint32
+	TokenID            models.Uint256
+	Amount             models.Uint256
+	FeeReceiverStateID uint32
 }
 
 func NewMassMigrationMeta(meta *models.MassMigrationMeta) *MassMigrationMeta {
 	return &MassMigrationMeta{
-		SpokeID:     meta.SpokeID,
-		TokenID:     meta.TokenID,
-		Amount:      meta.Amount,
-		FeeReceiver: meta.FeeReceiver,
+		SpokeID:            meta.SpokeID,
+		TokenID:            meta.TokenID,
+		Amount:             meta.Amount,
+		FeeReceiverStateID: meta.FeeReceiver,
 	}
 }

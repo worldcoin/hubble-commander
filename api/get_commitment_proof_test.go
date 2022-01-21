@@ -21,12 +21,11 @@ import (
 type GetCommitmentProofTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api                           *API
-	storage                       *st.TestStorage
-	batch                         models.Batch
-	txCommitment                  models.TxCommitment
-	mmCommitment                  models.MMCommitment
-	commitmentProofNotFoundAPIErr *APIError
+	api          *API
+	storage      *st.TestStorage
+	batch        models.Batch
+	txCommitment models.TxCommitment
+	mmCommitment models.MMCommitment
 }
 
 func (s *GetCommitmentProofTestSuite) SetupSuite() {
@@ -76,11 +75,6 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 		},
 		BodyHash:     utils.NewRandomHash(),
 		WithdrawRoot: utils.RandomHash(),
-	}
-
-	s.commitmentProofNotFoundAPIErr = &APIError{
-		Code:    50001,
-		Message: "commitment inclusion proof could not be generated",
 	}
 }
 
@@ -229,6 +223,16 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 	s.Equal(expectedCommitmentProof, commitmentProof)
 }
 
+func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_DepositType() {
+	s.batch.Type = batchtype.Deposit
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
+	s.Equal(APIErrUnsupportedCommitmentTypeForProof, err)
+	s.Nil(commitmentProof)
+}
+
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	pendingBatch := s.batch
 	pendingBatch.Hash = nil
@@ -247,13 +251,13 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	s.NoError(err)
 
 	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
-	s.Equal(s.commitmentProofNotFoundAPIErr, err)
+	s.Equal(APIErrCannotGenerateCommitmentProof, err)
 	s.Nil(commitmentProof)
 }
 
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_NonexistentCommitment() {
 	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
-	s.Equal(s.commitmentProofNotFoundAPIErr, err)
+	s.Equal(APIErrCannotGenerateCommitmentProof, err)
 	s.Nil(commitmentProof)
 }
 

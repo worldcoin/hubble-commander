@@ -20,15 +20,23 @@ var testChainState = ChainState{
 	GenesisAccounts: GenesisAccounts{
 		{
 			PublicKey: PublicKey{1, 2, 0, 5, 4},
-			PubKeyID:  7,
 			StateID:   44,
-			Balance:   MakeUint256(4314),
+			State: UserState{
+				PubKeyID: 7,
+				TokenID:  MakeUint256(0),
+				Balance:  MakeUint256(4314),
+				Nonce:    MakeUint256(0),
+			},
 		},
 		{
 			PublicKey: PublicKey{3, 2, 1, 1},
-			PubKeyID:  83,
 			StateID:   99,
-			Balance:   MakeUint256(173212),
+			State: UserState{
+				PubKeyID: 83,
+				TokenID:  MakeUint256(0),
+				Balance:  MakeUint256(173212),
+				Nonce:    MakeUint256(0),
+			},
 		},
 	},
 }
