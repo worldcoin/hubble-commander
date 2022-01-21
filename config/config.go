@@ -1,11 +1,11 @@
 package config
 
 import (
+	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -25,7 +25,7 @@ const (
 )
 
 func GetConfig() *Config {
-	setupViper(getCommanderConfigPath())
+	setupViper("commander-config")
 
 	return &Config{
 		Log:     getLogConfig(),
@@ -60,14 +60,14 @@ func GetConfig() *Config {
 			AuthenticationKey:  getStringOrNil("api.enable_proof_methods"),
 		},
 		Badger: &BadgerConfig{
-			Path: getString("badger.path", getBadgerPath()),
+			Path: getString("badger.path", "./db/data/hubble"),
 		},
 		Ethereum: getEthereumConfig(),
 	}
 }
 
 func GetTestConfig() *Config {
-	setupViper(getCommanderConfigPath())
+	setupViper("commander-config")
 
 	return &Config{
 		Log: &LogConfig{
@@ -108,7 +108,7 @@ func GetTestConfig() *Config {
 			AuthenticationKey:  ref.String("secret_authentication_key"),
 		},
 		Badger: &BadgerConfig{
-			Path: getTestBadgerPath(),
+			Path: "./db/data/hubble_test",
 		},
 		Ethereum: &EthereumConfig{
 			RPCURL:     "simulator",
@@ -118,31 +118,34 @@ func GetTestConfig() *Config {
 	}
 }
 
-func setupViper(configPath string) {
-	viper.SetConfigFile(configPath)
+func setupViper(configName string) {
+	// Find the config file
+	viper.SetConfigName(configName)
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("/etc/hubble")
+	viper.AddConfigPath("$HOME/.hubble")
+	viper.AddConfigPath(".") // Current working dir
+
+	// Add the *parent* of folder containing the executable
+	// So when it's run from `some_dir/build/hubble` we will look in `some_dir`
+	// TODO: Remove
+	exe_path, err := os.Executable()
+	if err != nil {
+		log.Panic("Could not find exe location: %s", err)
+	}
+	viper.AddConfigPath(path.Join(path.Dir(exe_path), ".."))
+
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file not found (%s). Continuing with default config (possibly overridden by env vars).", configPath)
+			log.Printf("Configuration file `commander-config.yaml` not found. Continuing with default config (possibly overridden by env vars).")
 		} else {
 			log.Panicf("failed to read in config: %s", err)
 		}
 	}
-}
-
-func getCommanderConfigPath() string {
-	return path.Join(utils.GetProjectRoot(), "commander-config.yaml")
-}
-
-func getBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble")
-}
-
-func getTestBadgerPath() string {
-	return path.Join(utils.GetProjectRoot(), "db", "data", "hubble_test")
 }
 
 func getLogConfig() *LogConfig {
