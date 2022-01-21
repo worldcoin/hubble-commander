@@ -14,7 +14,7 @@ import (
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
-		a.countRejectedTx(transfer.TxType)
+		a.countRejectedTx(txtype.Transfer)
 		return nil, err
 	}
 
