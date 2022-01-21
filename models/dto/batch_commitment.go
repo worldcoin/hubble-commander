@@ -2,99 +2,58 @@ package dto
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type CommitmentID struct {
-	BatchID      models.Uint256
-	IndexInBatch uint8
-}
-
-func NewCommitmentID(id *models.CommitmentID) *CommitmentID {
-	if id == nil {
-		return nil
-	}
-	return &CommitmentID{
-		BatchID:      id.BatchID,
-		IndexInBatch: id.IndexInBatch,
-	}
-}
-
-type TxCommitment struct {
+type BatchTxCommitment struct {
 	ID                 CommitmentID
-	Type               batchtype.BatchType
 	PostStateRoot      common.Hash
 	LeafHash           common.Hash
 	TokenID            models.Uint256
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
-	Status             txstatus.TransactionStatus
-	BatchTime          models.Timestamp
-	Transactions       interface{}
 }
 
-type MMCommitment struct {
+type BatchMMCommitment struct {
 	ID                CommitmentID
-	Type              batchtype.BatchType
 	PostStateRoot     common.Hash
 	LeafHash          common.Hash
 	CombinedSignature models.Signature
-	Status            txstatus.TransactionStatus
-	BatchTime         models.Timestamp
 	WithdrawRoot      common.Hash
 	Meta              MassMigrationMeta
-	Transactions      interface{}
 }
 
-type DepositCommitment struct {
+type BatchDepositCommitment struct {
 	ID            CommitmentID
-	Type          batchtype.BatchType
 	PostStateRoot common.Hash
 	LeafHash      common.Hash
-	Status        txstatus.TransactionStatus
-	BatchTime     models.Timestamp
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
 	Deposits      []PendingDeposit
 }
 
-func NewTxCommitment(
+func MakeBatchTxCommitment(
 	commitment *models.TxCommitment,
 	tokenID models.Uint256,
-	status *txstatus.TransactionStatus,
-	batchTime *models.Timestamp,
-	transactions interface{},
-) *TxCommitment {
-	return &TxCommitment{
+) BatchTxCommitment {
+	return BatchTxCommitment{
 		ID:                 *NewCommitmentID(&commitment.ID),
-		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
 		LeafHash:           commitment.LeafHash(),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
-		Status:             *status,
-		BatchTime:          *batchTime,
-		Transactions:       transactions,
 	}
 }
 
-func NewMMCommitment(
+func MakeBatchMMCommitment(
 	commitment *models.MMCommitment,
-	status *txstatus.TransactionStatus,
-	batchTime *models.Timestamp,
-	transactions interface{},
-) *MMCommitment {
-	return &MMCommitment{
+) BatchMMCommitment {
+	return BatchMMCommitment{
 		ID:                *NewCommitmentID(&commitment.ID),
-		Type:              commitment.Type,
 		PostStateRoot:     commitment.PostStateRoot,
 		LeafHash:          commitment.LeafHash(),
 		CombinedSignature: commitment.CombinedSignature,
-		Status:            *status,
-		BatchTime:         *batchTime,
 		WithdrawRoot:      commitment.WithdrawRoot,
 		Meta: MassMigrationMeta{
 			SpokeID:            commitment.Meta.SpokeID,
@@ -102,22 +61,16 @@ func NewMMCommitment(
 			Amount:             commitment.Meta.Amount,
 			FeeReceiverStateID: commitment.Meta.FeeReceiver,
 		},
-		Transactions: transactions,
 	}
 }
 
-func NewDepositCommitment(
+func MakeBatchDepositCommitment(
 	commitment *models.DepositCommitment,
-	status *txstatus.TransactionStatus,
-	batchTime *models.Timestamp,
-) *DepositCommitment {
-	return &DepositCommitment{
+) BatchDepositCommitment {
+	return BatchDepositCommitment{
 		ID:            *NewCommitmentID(&commitment.ID),
-		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
 		LeafHash:      commitment.LeafHash(),
-		Status:        *status,
-		BatchTime:     *batchTime,
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
 		Deposits:      MakePendingDeposits(commitment.Deposits),

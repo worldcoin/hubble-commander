@@ -265,7 +265,7 @@ func massMigrationCommitmentProofToCalldata(proof *dto.MassMigrationCommitmentPr
 				WithdrawRoot: utils.ByteSliceTo32ByteArray(proof.Body.WithdrawRoot.Bytes()),
 				TokenID:      proof.Body.Meta.TokenID.ToBig(),
 				Amount:       proof.Body.Meta.Amount.ToBig(),
-				FeeReceiver:  big.NewInt(int64(proof.Body.Meta.FeeReceiver)),
+				FeeReceiver:  big.NewInt(int64(proof.Body.Meta.FeeReceiverStateID)),
 				Txs:          proof.Body.Transactions,
 			},
 		},

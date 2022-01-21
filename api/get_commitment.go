@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -11,7 +12,7 @@ var getCommitmentAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(20000, "commitment not found"),
 }
 
-func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+func (a *API) GetCommitment(id models.CommitmentID) (interface{}, error) {
 	commitment, err := a.unsafeGetCommitment(id)
 	if err != nil {
 		return nil, sanitizeError(err, getCommitmentAPIErrors)
@@ -20,7 +21,7 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	return commitment, nil
 }
 
-func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+func (a *API) unsafeGetCommitment(id models.CommitmentID) (interface{}, error) {
 	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err
@@ -34,34 +35,24 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 	return a.createCommitmentDTO(commitment, batch)
 }
 
-func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Batch) (*dto.Commitment, error) {
+func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Batch) (interface{}, error) {
 	transactions, err := a.getTransactionsForCommitment(commitment)
 	if err != nil {
 		return nil, err
 	}
 
-	commitmentBase := commitment.GetCommitmentBase()
+	status := calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
-	commitmentDTO := &dto.Commitment{
-		ID:            *dto.NewCommitmentID(&commitmentBase.ID),
-		Type:          commitmentBase.Type,
-		PostStateRoot: commitmentBase.PostStateRoot,
-		Status:        *calculateFinalisedStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock),
-		BatchTime:     batch.SubmissionTime,
-		Transactions:  transactions,
+	switch batch.Type {
+	case batchtype.Transfer, batchtype.Create2Transfer:
+		return a.createTxCommitmentDTO(commitment, batch, transactions, status)
+	case batchtype.MassMigration:
+		return dto.NewMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions), nil
+	case batchtype.Deposit:
+		return dto.NewDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime), nil
+	default:
+		panic("invalid commitment type")
 	}
-
-	if commitmentBase.Type == batchtype.Transfer || commitmentBase.Type == batchtype.Create2Transfer {
-		txCommitment := commitment.ToTxCommitment()
-		commitmentDTO.FeeReceiver = txCommitment.FeeReceiver
-		commitmentDTO.CombinedSignature = txCommitment.CombinedSignature
-	} else if commitmentBase.Type == batchtype.MassMigration {
-		mmCommitment := commitment.ToMMCommitment()
-		commitmentDTO.FeeReceiver = mmCommitment.FeeReceiver
-		commitmentDTO.CombinedSignature = mmCommitment.CombinedSignature
-	}
-
-	return commitmentDTO, nil
 }
 
 func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interface{}, error) {
@@ -73,7 +64,9 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 		return a.getCreate2TransfersForCommitment(commitmentBase.ID)
 	case batchtype.MassMigration:
 		return a.getMassMigrationsForCommitment(commitmentBase.ID)
-	case batchtype.Genesis, batchtype.Deposit:
+	case batchtype.Deposit:
+		return nil, nil
+	case batchtype.Genesis:
 		return nil, dto.ErrNotImplemented
 	}
 	return nil, dto.ErrNotImplemented
@@ -116,4 +109,20 @@ func (a *API) getMassMigrationsForCommitment(id models.CommitmentID) (interface{
 		txs = append(txs, dto.MakeMassMigrationForCommitment(&massMigrations[i]))
 	}
 	return txs, nil
+}
+
+func (a *API) createTxCommitmentDTO(
+	commitment models.Commitment,
+	batch *models.Batch,
+	transactions interface{},
+	status *txstatus.TransactionStatus,
+) (interface{}, error) {
+	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	commitmentDTO := dto.NewTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
+
+	return commitmentDTO, nil
 }

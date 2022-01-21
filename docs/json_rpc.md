@@ -236,13 +236,49 @@ Example result:
 ```json
 [
     {
+        "ID": "0",
+        "Hash": "0x97222c9001ff4b2e8c328d15c02fc508259f2f9bec5af8b286a932813fe920d6",
+        "Type": "GENESIS",
+        "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "SubmissionBlock": 44009,
+        "SubmissionTime": null,
+        "FinalisationBlock": 44009
+    },
+    {
         "ID": "1",
-        "Hash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
+        "Hash": "0xb286d51f69b2f2ff52d387663b449c78eb7f4e6aa86e81ac1efac5ef2020d505",
         "Type": "TRANSFER",
-        "TransactionHash": "0xf341a59fa9d525e17e264a5256f2f9a62e9a4a0a034f0742625d06d72971d807",
-        "SubmissionBlock": 243,
-        "SubmissionTime": 1633692591,
-        "FinalisationBlock": 40563
+        "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
+        "SubmissionBlock": 46332,
+        "SubmissionTime": 1642591575,
+        "FinalisationBlock": 86652
+    },
+    {
+        "ID": "2",
+        "Hash": "0xedd8e1b9ef9e3279f80df1434bd3a0b46b073a95d9b8be5aa4a645b6ef0c7a25",
+        "Type": "CREATE2TRANSFER",
+        "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
+        "SubmissionBlock": 46412,
+        "SubmissionTime": 1642591655,
+        "FinalisationBlock": 86732
+    },
+    {
+        "ID": "3",
+        "Hash": "0x612d7e555b246b82a93ef412377631bc0edeb566a0d6fb57f23f14d705ce21e8",
+        "Type": "MASS_MIGRATION",
+        "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
+        "SubmissionBlock": 46398,
+        "SubmissionTime": 1642591641,
+        "FinalisationBlock": 86718
+    },
+    {
+        "ID": "4",
+        "Hash": "0xe3df23dfda31fc9498bdf990f05f65ca47a18a3c1247709bf9ae634a27970677",
+        "Type": "DEPOSIT",
+        "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
+        "SubmissionBlock": 44027,
+        "SubmissionTime": 1642589195,
+        "FinalisationBlock": 84347
     }
 ]
 ```
@@ -251,17 +287,17 @@ Example result:
 
 Returns batch information and list of included commitments in batch.
 
-Example result:
+Example result (`TRANSFER`):
 
 ```json
 {
     "ID": "1",
-    "Hash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
+    "Hash": "0xb286d51f69b2f2ff52d387663b449c78eb7f4e6aa86e81ac1efac5ef2020d505",
     "Type": "TRANSFER",
-    "TransactionHash": "0xf341a59fa9d525e17e264a5256f2f9a62e9a4a0a034f0742625d06d72971d807",
-    "SubmissionBlock": 243,
-    "SubmissionTime": 1633692591,
-    "FinalisationBlock": 40563,
+    "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
+    "SubmissionBlock": 46332,
+    "SubmissionTime": 1642591575,
+    "FinalisationBlock": 86652,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
     "Commitments": [
         {
@@ -269,13 +305,155 @@ Example result:
                 "BatchID": "1",
                 "IndexInBatch": 0
             },
-            "LeafHash": "0x0ac0612b86133439657556401f18b5b433dd0fe1faf7cef92e3882197f93ba6c",
+            "PostStateRoot": "0x1be2feecb81d0338bf049a6e3324a254cd5b5a93f481d941a7f9e31dabc7cc9c",
+            "LeafHash": "0xcb4df4741da627b1a21f85c793cde72c86d06b1402d968cab6ba6c2635348b01",
             "TokenID": "0",
             "FeeReceiverStateID": 0,
-            "CombinedSignature": "0x1152450e7da64c68023921d3a37ea750df4158bb17203317bf7af9ac7d8c6a3216d982a417c204593c82dc1f64851cad49361a4a4175636e0c062497c7ef2f9c",
-            "PostStateRoot": "0x81cf78ec55d3393ff2e9c0e081dc6ced3cd4a7e9e42f3c6e441b035035a6839a"
+            "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36"
         }
     ]
+}
+```
+
+Example result (`CREATE2TRANSFER`):
+
+```json
+{
+    "ID": "2",
+    "Hash": "0xedd8e1b9ef9e3279f80df1434bd3a0b46b073a95d9b8be5aa4a645b6ef0c7a25",
+    "Type": "CREATE2TRANSFER",
+    "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
+    "SubmissionBlock": 46412,
+    "SubmissionTime": 1642591655,
+    "FinalisationBlock": 86732,
+    "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
+    "Commitments": [
+        {
+            "ID": {
+                "BatchID": "2",
+                "IndexInBatch": 0
+            },
+            "PostStateRoot": "0x795a9e9e4bd52ac321c67eca39f5bb120f3c22181b0c825339df9be67a988ae6",
+            "LeafHash": "0x03cfbdcb60a9372138d84a33738d3992b9d7c0e969f0ebcdad6f82259dfb9a3a",
+            "TokenID": "0",
+            "FeeReceiverStateID": 0,
+            "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36"
+        }
+    ]
+}
+```
+
+Example result (`MASS_MIGRATION`):
+
+```json
+{
+    "ID": "3",
+    "Hash": "0x612d7e555b246b82a93ef412377631bc0edeb566a0d6fb57f23f14d705ce21e8",
+    "Type": "MASS_MIGRATION",
+    "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
+    "SubmissionBlock": 46398,
+    "SubmissionTime": 1642591641,
+    "FinalisationBlock": 86718,
+    "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
+    "Commitments": [
+        {
+            "ID": {
+                "BatchID": "3",
+                "IndexInBatch": 0
+            },
+            "PostStateRoot": "0xe2afe7bb8d8f0310cf68636777794b97327f3ce3633127b58c4f5f566cbf8ac7",
+            "LeafHash": "0x44f03af79586fd8ab74b442be1bb920e40eefd467f50d85cea6b29fc98ebd7a8",
+            "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+            "WithdrawRoot": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866",
+            "Meta": {
+                "SpokeID": 1,
+                "TokenID": "0",
+                "Amount": "50",
+                "FeeReceiverStateID": 0
+            }
+        }
+    ]
+}
+```
+
+Example result (`DEPOSIT`):
+
+```json
+{
+    "ID": "4",
+    "Hash": "0xe3df23dfda31fc9498bdf990f05f65ca47a18a3c1247709bf9ae634a27970677",
+    "Type": "DEPOSIT",
+    "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
+    "SubmissionBlock": 44027,
+    "SubmissionTime": 1642589195,
+    "FinalisationBlock": 84347,
+    "AccountTreeRoot": null,
+    "Commitments": [
+        {
+            "ID": {
+                "BatchID": "4",
+                "IndexInBatch": 0
+            },
+            "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
+            "LeafHash": "0x920330642c6cc8464fa50ef9ce46e0988b3f2013bc0d8a33fcfc00efec96f04d",
+            "SubtreeID": "1",
+            "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
+            "Deposits": [
+                {
+                    "ID": {
+                        "SubtreeID": "1",
+                        "DepositIndex": "0"
+                    },
+                    "ToPubKeyID": 1,
+                    "TokenID": "0",
+                    "L2Amount": "10000000000"
+                },
+                {
+                    "ID": {
+                        "SubtreeID": "1",
+                        "DepositIndex": "1"
+                    },
+                    "ToPubKeyID": 2,
+                    "TokenID": "0",
+                    "L2Amount": "10000000000"
+                },
+                {
+                    "ID": {
+                        "SubtreeID": "1",
+                        "DepositIndex": "2"
+                    },
+                    "ToPubKeyID": 3,
+                    "TokenID": "0",
+                    "L2Amount": "10000000000"
+                },
+                {
+                    "ID": {
+                        "SubtreeID": "1",
+                        "DepositIndex": "3"
+                    },
+                    "ToPubKeyID": 4,
+                    "TokenID": "0",
+                    "L2Amount": "10000000000"
+                }
+            ]
+        }
+    ]
+}
+```
+
+Example result (`GENESIS`):
+
+```json
+{
+    "ID": "0",
+    "Hash": "0x97222c9001ff4b2e8c328d15c02fc508259f2f9bec5af8b286a932813fe920d6",
+    "Type": "GENESIS",
+    "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "SubmissionBlock": 44009,
+    "SubmissionTime": null,
+    "FinalisationBlock": 44009,
+    "AccountTreeRoot": null,
+    "Commitments": null
 }
 ```
 
@@ -287,7 +465,7 @@ Same as hubble_getBatchByHash(hash)
 
 Returns commitment information and list of included transactions
 
-Example result:
+Example result (`TRANSFER`):
 
 ```json
 {
@@ -296,11 +474,13 @@ Example result:
         "IndexInBatch": 0
     },
     "Type": "TRANSFER",
-    "FeeReceiver": 0,
-    "CombinedSignature": "0x1152450e7da64c68023921d3a37ea750df4158bb17203317bf7af9ac7d8c6a3216d982a417c204593c82dc1f64851cad49361a4a4175636e0c062497c7ef2f9c",
-    "PostStateRoot": "0x81cf78ec55d3393ff2e9c0e081dc6ced3cd4a7e9e42f3c6e441b035035a6839a",
-    "Status": "FINALISED",
-    "BatchTime": 1633692591,
+    "PostStateRoot": "0x1be2feecb81d0338bf049a6e3324a254cd5b5a93f481d941a7f9e31dabc7cc9c",
+    "LeafHash": "0xcb4df4741da627b1a21f85c793cde72c86d06b1402d968cab6ba6c2635348b01",
+    "TokenID": "0",
+    "FeeReceiverStateID": 0,
+    "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+    "Status": "IN_BATCH",
+    "BatchTime": 1642591575,
     "Transactions": [
         {
             "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
@@ -308,10 +488,136 @@ Example result:
             "Amount": "50",
             "Fee": "1",
             "Nonce": "0",
-            "Signature": "0x28c71cc24191b4fd335bc5b2045d27e723820dc1071ad20882f2ec4347cccfff302d354a7adb570b1a53aebd6a59537271648391eb20e72c8fe4d83a2e6e4df6",
+            "Signature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
             // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
-            "ReceiveTime": 1625153276,
+            "ReceiveTime": 1642591573,
             "ToStateID": 2
+        }
+    ]
+}
+```
+
+Example result (`CREATE2TRANSFER`):
+
+```json
+{
+    "ID": {
+        "BatchID": "2",
+        "IndexInBatch": 0
+    },
+    "Type": "CREATE2TRANSFER",
+    "PostStateRoot": "0x795a9e9e4bd52ac321c67eca39f5bb120f3c22181b0c825339df9be67a988ae6",
+    "LeafHash": "0x03cfbdcb60a9372138d84a33738d3992b9d7c0e969f0ebcdad6f82259dfb9a3a",
+    "TokenID": "0",
+    "FeeReceiverStateID": 0,
+    "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+    "Status": "IN_BATCH",
+    "BatchTime": 1642591655,
+    "Transactions": [
+        {
+            "Hash": "0x3b98cb3f5c10647a80c753108ef14f44b4edebf096fe21fa49c7b578f4069ae0",
+            "FromStateID": 2,
+            "Amount": "50",
+            "Fee": "1",
+            "Nonce": "0",
+            "Signature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            "ReceiveTime": 1642591653,
+            "ToStateID": 6,
+            "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
+        }
+    ]
+}
+```
+
+Example result (`MASS_MIGRATION`):
+
+```json
+{
+    "ID": {
+        "BatchID": "3",
+        "IndexInBatch": 0
+    },
+    "Type": "MASS_MIGRATION",
+    "PostStateRoot": "0xe2afe7bb8d8f0310cf68636777794b97327f3ce3633127b58c4f5f566cbf8ac7",
+    "LeafHash": "0x44f03af79586fd8ab74b442be1bb920e40eefd467f50d85cea6b29fc98ebd7a8",
+    "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
+    "Status": "IN_BATCH",
+    "BatchTime": 1642591641,
+    "WithdrawRoot": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866",
+    "Meta": {
+        "SpokeID": 1,
+        "TokenID": "0",
+        "Amount": "50",
+        "FeeReceiverStateID": 0
+    },
+    "Transactions": [
+        {
+            "Hash": "0x716e1a2788c96e446e0248c3011b24c792afe7860fc674c9ac40b584a0b4953c",
+            "FromStateID": 1,
+            "Amount": "50",
+            "Fee": "1",
+            "Nonce": "1",
+            "Signature": "0x028aafebc011dd95f2138740f66a05f7e8986111416227164a0e88a9e745ac06112d75e267d4be5aaa9e5509949f298529a0da1a6e86de0c9d5fc98325a8af4d",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            "ReceiveTime": 1642591627,
+            "SpokeID": 1
+        }
+    ]
+}
+```
+
+Example result (`DEPOSIT`):
+
+```json
+{
+    "ID": {
+        "BatchID": "4",
+        "IndexInBatch": 0
+    },
+    "Type": "DEPOSIT",
+    "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
+    "LeafHash": "0x920330642c6cc8464fa50ef9ce46e0988b3f2013bc0d8a33fcfc00efec96f04d",
+    "Status": "IN_BATCH",
+    "BatchTime": 1642589195,
+    "SubtreeID": "1",
+    "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
+    "Deposits": [
+        {
+            "ID": {
+                "SubtreeID": "1",
+                "DepositIndex": "0"
+            },
+            "ToPubKeyID": 1,
+            "TokenID": "0",
+            "L2Amount": "10000000000"
+        },
+        {
+            "ID": {
+                "SubtreeID": "1",
+                "DepositIndex": "1"
+            },
+            "ToPubKeyID": 2,
+            "TokenID": "0",
+            "L2Amount": "10000000000"
+        },
+        {
+            "ID": {
+                "SubtreeID": "1",
+                "DepositIndex": "2"
+            },
+            "ToPubKeyID": 3,
+            "TokenID": "0",
+            "L2Amount": "10000000000"
+        },
+        {
+            "ID": {
+                "SubtreeID": "1",
+                "DepositIndex": "3"
+            },
+            "ToPubKeyID": 4,
+            "TokenID": "0",
+            "L2Amount": "10000000000"
         }
     ]
 }
@@ -450,7 +756,7 @@ Returns the mass migration commitment inclusion proof for the given commitment I
 
 ```json
 {
-    "StateRoot": "0xa3eab4d0546b75e11ea7ccbfc8a871709a0a88e6942fce470fc439c532edb3d2",
+    "StateRoot": "0xe2afe7bb8d8f0310cf68636777794b97327f3ce3633127b58c4f5f566cbf8ac7",
     "Path": {
         "Path": 0,
         "Depth": 2
@@ -460,16 +766,16 @@ Returns the mass migration commitment inclusion proof for the given commitment I
     ],
     "Body": {
         "AccountRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
-        "Signature": "0x21d68233870a2c1d7eb8feed7d127f18c23e42e0079b2c21deda816c7726696f059c728d03ebf0f60d732b97045018759a09b95d31fd475b618a991c51b3b44c",
+        "Signature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
         "Meta": {
-            "SpokeID": 24,
+            "SpokeID": 1,
             "TokenID": "0",
-            "Amount": "423",
-            "FeeReceiver": 0
+            "Amount": "50",
+            "FeeReceiverStateID": 0
         },
-        "WithdrawRoot": "0x7d70d923fadb30fe73c75e568e562e4a5447f90a6d6f83aacae76d5d5f502472",
+        "WithdrawRoot": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866",
         // transactions are serialized and encoded using Base64 encoding format
-        "Transactions": "AAAABAGnADM="
+        "Transactions": "AAAAARAFAAE="
     }
 }
 ```
@@ -480,7 +786,12 @@ Returns the withdrawal proof for the given mass migration transaction, see below
 
 ```json
 {
-    "StateRoot": "0xa3eab4d0546b75e11ea7ccbfc8a871709a0a88e6942fce470fc439c532edb3d2",
+    "UserState": {
+        "PubKeyID": 1,
+        "TokenID": "0",
+        "Balance": "50",
+        "Nonce": "0"
+    },
     "Path": {
         "Path": 0,
         "Depth": 2
@@ -488,19 +799,7 @@ Returns the withdrawal proof for the given mass migration transaction, see below
     "Witness": [
         "0x290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"
     ],
-    "Body": {
-        "AccountRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
-        "Signature": "0x21d68233870a2c1d7eb8feed7d127f18c23e42e0079b2c21deda816c7726696f059c728d03ebf0f60d732b97045018759a09b95d31fd475b618a991c51b3b44c",
-        "Meta": {
-            "SpokeID": 24,
-            "TokenID": "0",
-            "Amount": "423",
-            "FeeReceiver": 0
-        },
-        "WithdrawRoot": "0x7d70d923fadb30fe73c75e568e562e4a5447f90a6d6f83aacae76d5d5f502472",
-        // mass migration transactions are serialized and encoded using Base64 encoding format
-        "Transactions": "AAAABAGnADM="
-    }
+    "Root": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866"
 }
 ```
 

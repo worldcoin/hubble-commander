@@ -26,17 +26,8 @@ func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommi
 	if err != nil {
 		return nil, err
 	}
-	submissionBlock, err := a.getSubmissionBlock(batch)
-	if err != nil {
-		return nil, err
-	}
 
-	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
+	return a.getCommitmentsAndCreateBatchDTO(batch)
 }
 
 func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
@@ -53,9 +44,22 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 	if err != nil {
 		return nil, err
 	}
+
+	return a.getCommitmentsAndCreateBatchDTO(batch)
+}
+
+func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWithRootAndCommitments, error) {
+	batch, err := a.storage.GetMinedBatch(batch.ID)
+	if err != nil {
+		return nil, err
+	}
 	submissionBlock, err := a.getSubmissionBlock(batch)
 	if err != nil {
 		return nil, err
+	}
+
+	if batch.Type == batchtype.Genesis {
+		return a.createBatchWithCommitments(batch, submissionBlock, nil)
 	}
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
@@ -76,20 +80,10 @@ func (a *API) createBatchWithCommitments(
 		return a.createBatchWithTxCommitments(batch, submissionBlock, commitments)
 	case batchtype.MassMigration:
 		return a.createBatchWithMMCommitments(batch, submissionBlock, commitments)
+	case batchtype.Deposit:
+		return a.createBatchWithDepositCommitments(batch, submissionBlock, commitments)
 	default:
-		return &dto.BatchWithRootAndCommitments{
-			Batch: dto.Batch{
-				ID:                batch.ID,
-				Hash:              batch.Hash,
-				Type:              batch.Type,
-				TransactionHash:   batch.TransactionHash,
-				SubmissionBlock:   submissionBlock,
-				SubmissionTime:    batch.SubmissionTime,
-				FinalisationBlock: batch.FinalisationBlock,
-			},
-			AccountTreeRoot: batch.AccountTreeRoot,
-			Commitments:     nil,
-		}, nil
+		return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, nil), nil
 	}
 }
 
@@ -98,14 +92,14 @@ func (a *API) createBatchWithTxCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
-	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
+	batchCommitments := make([]dto.BatchTxCommitment, 0, len(commitments))
 	for i := range commitments {
 		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToTxCommitment().FeeReceiver)
 		if err != nil {
 			return nil, err
 		}
 
-		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromTxCommitment(
+		batchCommitments = append(batchCommitments, dto.MakeBatchTxCommitment(
 			commitments[i].ToTxCommitment(),
 			stateLeaf.TokenID,
 		))
@@ -118,16 +112,24 @@ func (a *API) createBatchWithMMCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
-	batchCommitments := make([]dto.CommitmentWithTokenID, 0, len(commitments))
+	batchCommitments := make([]dto.BatchMMCommitment, 0, len(commitments))
 	for i := range commitments {
-		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToMMCommitment().FeeReceiver)
-		if err != nil {
-			return nil, err
-		}
-
-		batchCommitments = append(batchCommitments, dto.MakeCommitmentWithTokenIDFromMMCommitment(
+		batchCommitments = append(batchCommitments, dto.MakeBatchMMCommitment(
 			commitments[i].ToMMCommitment(),
-			stateLeaf.TokenID,
+		))
+	}
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+}
+
+func (a *API) createBatchWithDepositCommitments(
+	batch *models.Batch,
+	submissionBlock uint32,
+	commitments []models.Commitment,
+) (*dto.BatchWithRootAndCommitments, error) {
+	batchCommitments := make([]dto.BatchDepositCommitment, 0, len(commitments))
+	for i := range commitments {
+		batchCommitments = append(batchCommitments, dto.MakeBatchDepositCommitment(
+			commitments[i].ToDepositCommitment(),
 		))
 	}
 	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
