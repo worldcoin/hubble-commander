@@ -12,6 +12,11 @@ import (
 
 func startCommander() error {
 	cfg := config.GetCommanderConfigAndSetupLogger()
+	err := cfg.Validate()
+	if err != nil {
+		return err
+	}
+
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err

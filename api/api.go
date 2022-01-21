@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/Worldcoin/hubble-commander/api/middleware"
+	"github.com/Worldcoin/hubble-commander/api/rpc"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
