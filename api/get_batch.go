@@ -92,14 +92,14 @@ func (a *API) createBatchWithTxCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
-	batchCommitments := make([]dto.BatchCommitment, 0, len(commitments))
+	batchCommitments := make([]dto.BatchTxCommitment, 0, len(commitments))
 	for i := range commitments {
 		stateLeaf, err := a.storage.StateTree.Leaf(commitments[i].ToTxCommitment().FeeReceiver)
 		if err != nil {
 			return nil, err
 		}
 
-		batchCommitments = append(batchCommitments, dto.MakeTxBatchCommitment(
+		batchCommitments = append(batchCommitments, dto.MakeBatchTxCommitment(
 			commitments[i].ToTxCommitment(),
 			stateLeaf.TokenID,
 		))
@@ -112,9 +112,9 @@ func (a *API) createBatchWithMMCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
-	batchCommitments := make([]dto.BatchCommitment, 0, len(commitments))
+	batchCommitments := make([]dto.BatchMMCommitment, 0, len(commitments))
 	for i := range commitments {
-		batchCommitments = append(batchCommitments, dto.MakeMMBatchCommitment(
+		batchCommitments = append(batchCommitments, dto.MakeBatchMMCommitment(
 			commitments[i].ToMMCommitment(),
 		))
 	}
@@ -126,9 +126,9 @@ func (a *API) createBatchWithDepositCommitments(
 	submissionBlock uint32,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
-	batchCommitments := make([]dto.BatchCommitment, 0, len(commitments))
+	batchCommitments := make([]dto.BatchDepositCommitment, 0, len(commitments))
 	for i := range commitments {
-		batchCommitments = append(batchCommitments, dto.MakeDepositBatchCommitment(
+		batchCommitments = append(batchCommitments, dto.MakeBatchDepositCommitment(
 			commitments[i].ToDepositCommitment(),
 		))
 	}

@@ -19,7 +19,7 @@ type Batch struct {
 type BatchWithRootAndCommitments struct {
 	Batch
 	AccountTreeRoot *common.Hash
-	Commitments     []BatchCommitment
+	Commitments     interface{}
 }
 
 func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
@@ -37,7 +37,7 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 func MakeBatchWithRootAndCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
-	commitments []BatchCommitment,
+	commitments interface{},
 ) *BatchWithRootAndCommitments {
 	batchDTO := &BatchWithRootAndCommitments{
 		Batch:       *MakeBatch(batch, submissionBlock),

@@ -26,7 +26,7 @@ func MakePendingDeposit(pendingDeposit *models.PendingDeposit) PendingDeposit {
 	}
 }
 
-func makePendingDeposits(deposits []models.PendingDeposit) []PendingDeposit {
+func MakePendingDeposits(deposits []models.PendingDeposit) []PendingDeposit {
 	dtoDeposits := make([]PendingDeposit, 0, len(deposits))
 
 	for i := range deposits {

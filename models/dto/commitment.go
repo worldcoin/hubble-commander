@@ -39,18 +39,6 @@ type Commitment struct {
 	Transactions interface{} `json:",omitempty"`
 }
 
-type BatchCommitment struct {
-	ID                 CommitmentID
-	PostStateRoot      common.Hash
-	LeafHash           common.Hash
-	TokenID            *models.Uint256   `json:",omitempty"`
-	FeeReceiverStateID *uint32           `json:",omitempty"`
-	CombinedSignature  *models.Signature `json:",omitempty"`
-
-	massMigrationCommitmentDetails
-	depositCommitmentDetails
-}
-
 type massMigrationCommitmentDetails struct {
 	WithdrawRoot *common.Hash       `json:",omitempty"`
 	Meta         *MassMigrationMeta `json:",omitempty"`
@@ -127,56 +115,7 @@ func NewDepositCommitment(
 		depositCommitmentDetails: depositCommitmentDetails{
 			SubtreeID:   &commitment.SubtreeID,
 			SubtreeRoot: &commitment.SubtreeRoot,
-			Deposits:    makePendingDeposits(commitment.Deposits),
-		},
-	}
-}
-
-func MakeTxBatchCommitment(
-	commitment *models.TxCommitment,
-	tokenID models.Uint256,
-) BatchCommitment {
-	return BatchCommitment{
-		ID:                 *NewCommitmentID(&commitment.ID),
-		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           commitment.LeafHash(),
-		TokenID:            &tokenID,
-		FeeReceiverStateID: &commitment.FeeReceiver,
-		CombinedSignature:  &commitment.CombinedSignature,
-	}
-}
-
-func MakeMMBatchCommitment(
-	commitment *models.MMCommitment,
-) BatchCommitment {
-	return BatchCommitment{
-		ID:                *NewCommitmentID(&commitment.ID),
-		PostStateRoot:     commitment.PostStateRoot,
-		LeafHash:          commitment.LeafHash(),
-		CombinedSignature: &commitment.CombinedSignature,
-		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
-			WithdrawRoot: &commitment.WithdrawRoot,
-			Meta: &MassMigrationMeta{
-				SpokeID:            commitment.Meta.SpokeID,
-				TokenID:            commitment.Meta.TokenID,
-				Amount:             commitment.Meta.Amount,
-				FeeReceiverStateID: commitment.Meta.FeeReceiver,
-			},
-		},
-	}
-}
-
-func MakeDepositBatchCommitment(
-	commitment *models.DepositCommitment,
-) BatchCommitment {
-	return BatchCommitment{
-		ID:            *NewCommitmentID(&commitment.ID),
-		PostStateRoot: commitment.PostStateRoot,
-		LeafHash:      commitment.LeafHash(),
-		depositCommitmentDetails: depositCommitmentDetails{
-			SubtreeID:   &commitment.SubtreeID,
-			SubtreeRoot: &commitment.SubtreeRoot,
-			Deposits:    makePendingDeposits(commitment.Deposits),
+			Deposits:    MakePendingDeposits(commitment.Deposits),
 		},
 	}
 }
