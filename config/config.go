@@ -25,7 +25,7 @@ const (
 )
 
 func GetConfig() *Config {
-	setupViper("commander-config")
+	setupViper("commander-config.yaml")
 
 	return &Config{
 		Log:     getLogConfig(),
@@ -67,7 +67,7 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
-	setupViper("commander-config")
+	setupViper("commander-config.yaml")
 
 	return &Config{
 		Log: &LogConfig{
@@ -121,7 +121,6 @@ func GetTestConfig() *Config {
 func setupViper(configName string) {
 	// Find the config file
 	viper.SetConfigName(configName)
-	viper.SetConfigType("yaml")
 	viper.AddConfigPath("/etc/hubble")
 	viper.AddConfigPath("$HOME/.hubble")
 	viper.AddConfigPath(".") // Current working dir
@@ -140,8 +139,9 @@ func setupViper(configName string) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err = viper.ReadInConfig()
 	if err != nil {
-		if strings.Contains(err.Error(), "no such file or directory") {
-			log.Printf("Configuration file `commander-config.yaml` not found. Continuing with default config (possibly overridden by env vars).")
+		if strings.Contains(err.Error(), "Not Found in") {
+			log.Warn(err)
+			log.Warn("Continuing with default config (possibly overridden by env vars).")
 		} else {
 			log.Panicf("failed to read in config: %s", err)
 		}
