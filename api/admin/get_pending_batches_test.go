@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+const authKeyValue = "secret key"
 
 type GetPendingBatchesTestSuite struct {
 	*require.Assertions
@@ -33,7 +36,11 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
-	s.api = &API{storage: s.storage.Storage, client: s.client.Client}
+	s.api = &API{
+		cfg:     &config.APIConfig{AuthenticationKey: ref.String(authKeyValue)},
+		storage: s.storage.Storage,
+		client:  s.client.Client,
+	}
 
 	s.batches = []models.Batch{
 		{
@@ -66,7 +73,7 @@ func (s *GetPendingBatchesTestSuite) TearDownTest() {
 func (s *GetPendingBatchesTestSuite) TestGetPendingBatches() {
 	s.addBatches()
 
-	batches, err := s.api.GetPendingBatches()
+	batches, err := s.api.GetPendingBatches(contextWithAuthKey(authKeyValue))
 	s.NoError(err)
 
 	expected := s.batches[1:]
@@ -78,7 +85,7 @@ func (s *GetPendingBatchesTestSuite) TestGetPendingBatches() {
 }
 
 func (s *GetPendingBatchesTestSuite) TestGetPendingBatches_NoBatches() {
-	batches, err := s.api.GetPendingBatches()
+	batches, err := s.api.GetPendingBatches(contextWithAuthKey(authKeyValue))
 	s.NoError(err)
 	s.Len(batches, 0)
 }

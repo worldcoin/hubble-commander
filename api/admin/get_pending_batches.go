@@ -1,10 +1,17 @@
 package admin
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/models/dto"
 )
 
-func (a *API) GetPendingBatches() ([]dto.Batch, error) {
+func (a *API) GetPendingBatches(ctx context.Context) ([]dto.Batch, error) {
+	err := a.verifyAuthKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	batches, err := a.storage.GetPendingBatches()
 	if err != nil {
 		return nil, err
