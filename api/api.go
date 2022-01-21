@@ -18,13 +18,14 @@ import (
 )
 
 type API struct {
-	cfg                 *config.APIConfig
-	storage             *st.Storage
-	client              *eth.Client
-	mockSignature       models.Signature
-	commanderMetrics    *metrics.CommanderMetrics
-	disableSignatures   bool
-	enableBatchCreation func(enable bool)
+	cfg                    *config.APIConfig
+	storage                *st.Storage
+	client                 *eth.Client
+	mockSignature          models.Signature
+	commanderMetrics       *metrics.CommanderMetrics
+	disableSignatures      bool
+	disableSendTransaction bool
+	enableBatchCreation    func(enable bool)
 }
 
 func NewServer(
@@ -59,12 +60,13 @@ func getAPIServer(
 	enableBatchCreation func(enable bool),
 ) (*rpc.Server, error) {
 	hubbleAPI := API{
-		cfg:                 cfg,
-		storage:             storage,
-		client:              client,
-		commanderMetrics:    commanderMetrics,
-		disableSignatures:   disableSignatures,
-		enableBatchCreation: enableBatchCreation,
+		cfg:                    cfg,
+		storage:                storage,
+		client:                 client,
+		commanderMetrics:       commanderMetrics,
+		disableSignatures:      disableSignatures,
+		disableSendTransaction: false,
+		enableBatchCreation:    enableBatchCreation,
 	}
 	if err := hubbleAPI.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")

@@ -13,15 +13,16 @@ import (
 )
 
 var (
-	ErrFeeTooLow          = fmt.Errorf("fee must be greater than 0")
-	ErrNonceTooLow        = fmt.Errorf("nonce too low")
-	ErrNotEnoughBalance   = fmt.Errorf("not enough balance")
-	ErrTransferToSelf     = fmt.Errorf("transfer to the same state id")
-	ErrInvalidAmount      = fmt.Errorf("amount must be positive")
-	ErrUnsupportedTxType  = fmt.Errorf("unsupported transaction type")
-	ErrNonexistentSender  = fmt.Errorf("sender state ID does not exist")
-	ErrSpokeDoesNotExist  = fmt.Errorf("spoke with given ID does not exist")
-	ErrPendingTransaction = fmt.Errorf("transaction already exists")
+	ErrFeeTooLow               = fmt.Errorf("fee must be greater than 0")
+	ErrNonceTooLow             = fmt.Errorf("nonce too low")
+	ErrNotEnoughBalance        = fmt.Errorf("not enough balance")
+	ErrTransferToSelf          = fmt.Errorf("transfer to the same state id")
+	ErrInvalidAmount           = fmt.Errorf("amount must be positive")
+	ErrUnsupportedTxType       = fmt.Errorf("unsupported transaction type")
+	ErrNonexistentSender       = fmt.Errorf("sender state ID does not exist")
+	ErrSpokeDoesNotExist       = fmt.Errorf("spoke with given ID does not exist")
+	ErrPendingTransaction      = fmt.Errorf("transaction already exists")
+	ErrSendTransactionDisabled = fmt.Errorf("send transaction method disabled")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -75,6 +76,10 @@ var (
 		10016,
 		"spoke with given ID does not exist",
 	)
+	APIErrTxSendingDisabled = NewAPIError(
+		10017,
+		"send transaction method disabled",
+	)
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
@@ -91,9 +96,14 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrSpokeDoesNotExist:                  APIErrSpokeDoesNotExist,
 	storage.ErrAlreadyMinedTransaction:    APIErrMinedTransaction,
 	ErrPendingTransaction:                 APIErrPendingTransaction,
+	ErrSendTransactionDisabled:            APIErrTxSendingDisabled,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
+	if a.disableSendTransaction {
+		return nil, ErrSendTransactionDisabled
+	}
+
 	transactionHash, err := a.unsafeSendTransaction(tx)
 	if err != nil {
 		return nil, sanitizeError(err, sendTransactionAPIErrors)
