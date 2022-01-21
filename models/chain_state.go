@@ -33,7 +33,7 @@ type ChainSpec struct {
 	GenesisAccounts                GenesisAccounts `yaml:"genesis_accounts"`
 }
 
-type GenesisAccounts []PopulatedGenesisAccount
+type GenesisAccounts []GenesisAccount
 
 func (s *ChainState) Equal(other *ChainState) bool {
 	if s == nil || other == nil {
@@ -113,7 +113,7 @@ func (s *ChainState) SetBytes(data []byte) error {
 	for i := 0; i < genesisAccountsCount; i++ {
 		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
 		end := start + populatedGenesisAccountByteSize
-		account := PopulatedGenesisAccount{}
+		account := GenesisAccount{}
 		err := account.SetBytes(data[start:end])
 		if err != nil {
 			return err

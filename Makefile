@@ -43,6 +43,12 @@ run-dev:
 
 start-dev: deploy run-dev
 
+export-state:
+	go run ./main export -type=state
+
+export-accounts:
+	go run ./main export -type=accounts
+
 lint:
 	golangci-lint run --build-tags hardhat,e2e --fix ./...
 
@@ -100,6 +106,8 @@ clean-docs:
 	run-prune
 	run-dev
 	start-dev
+	export-state
+	export-accounts
 	lint
 	test
 	test-hardhat

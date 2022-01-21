@@ -2,18 +2,11 @@ package models
 
 import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type Transfer struct {
 	TransactionBase
 	ToStateID uint32
-}
-
-type TransferWithBatchDetails struct {
-	Transfer
-	BatchHash *common.Hash
-	BatchTime *Timestamp
 }
 
 func (t *Transfer) Type() txtype.TransactionType {

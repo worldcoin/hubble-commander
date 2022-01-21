@@ -27,6 +27,7 @@
 #api:
 #  port: 8080
 #  enable_proof_methods: false
+#  authentication_key: secret_authentication_key # required authentication key for admin api
 #
 #metrics:
 #  port: 2112
