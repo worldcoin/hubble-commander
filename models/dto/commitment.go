@@ -41,7 +41,7 @@ type MMCommitment struct {
 	PostStateRoot     common.Hash
 	LeafHash          common.Hash
 	CombinedSignature models.Signature
-	Status            txstatus.TransactionStatus
+	Status            batchstatus.BatchStatus
 	BatchTime         models.Timestamp
 	WithdrawRoot      common.Hash
 	Meta              MassMigrationMeta
