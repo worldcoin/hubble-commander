@@ -12,7 +12,7 @@ var getCommitmentAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(20000, "commitment not found"),
 }
 
-func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+func (a *API) GetCommitment(id models.CommitmentID) (interface{}, error) {
 	commitment, err := a.unsafeGetCommitment(id)
 	if err != nil {
 		return nil, sanitizeError(err, getCommitmentAPIErrors)
@@ -21,7 +21,7 @@ func (a *API) GetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
 	return commitment, nil
 }
 
-func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, error) {
+func (a *API) unsafeGetCommitment(id models.CommitmentID) (interface{}, error) {
 	commitment, err := a.storage.GetCommitment(&id)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (*dto.Commitment, erro
 	return a.createCommitmentDTO(commitment, batch)
 }
 
-func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Batch) (*dto.Commitment, error) {
+func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Batch) (interface{}, error) {
 	transactions, err := a.getTransactionsForCommitment(commitment)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 	case batchtype.MassMigration:
 		return dto.NewMMCommitment(commitment.ToMMCommitment(), status, batch.SubmissionTime, transactions), nil
 	case batchtype.Deposit:
-		return dto.NewDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime, transactions), nil
+		return dto.NewDepositCommitment(commitment.ToDepositCommitment(), status, batch.SubmissionTime), nil
 	default:
 		panic("invalid commitment type")
 	}
@@ -116,7 +116,7 @@ func (a *API) createTxCommitmentDTO(
 	batch *models.Batch,
 	transactions interface{},
 	status *txstatus.TransactionStatus,
-) (*dto.Commitment, error) {
+) (interface{}, error) {
 	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
 	if err != nil {
 		return nil, err

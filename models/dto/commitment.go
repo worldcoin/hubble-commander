@@ -22,32 +22,42 @@ func NewCommitmentID(id *models.CommitmentID) *CommitmentID {
 	}
 }
 
-type Commitment struct {
+type TxCommitment struct {
 	ID                 CommitmentID
 	Type               batchtype.BatchType
 	PostStateRoot      common.Hash
 	LeafHash           common.Hash
-	TokenID            *models.Uint256   `json:",omitempty"`
-	FeeReceiverStateID *uint32           `json:",omitempty"`
-	CombinedSignature  *models.Signature `json:",omitempty"`
+	TokenID            models.Uint256
+	FeeReceiverStateID uint32
+	CombinedSignature  models.Signature
 	Status             txstatus.TransactionStatus
-	BatchTime          *models.Timestamp
-
-	massMigrationCommitmentDetails
-	depositCommitmentDetails
-
-	Transactions interface{} `json:",omitempty"`
+	BatchTime          models.Timestamp
+	Transactions       interface{}
 }
 
-type massMigrationCommitmentDetails struct {
-	WithdrawRoot *common.Hash       `json:",omitempty"`
-	Meta         *MassMigrationMeta `json:",omitempty"`
+type MMCommitment struct {
+	ID                CommitmentID
+	Type              batchtype.BatchType
+	PostStateRoot     common.Hash
+	LeafHash          common.Hash
+	CombinedSignature models.Signature
+	Status            txstatus.TransactionStatus
+	BatchTime         models.Timestamp
+	WithdrawRoot      common.Hash
+	Meta              MassMigrationMeta
+	Transactions      interface{}
 }
 
-type depositCommitmentDetails struct {
-	SubtreeID   *models.Uint256  `json:",omitempty"`
-	SubtreeRoot *common.Hash     `json:",omitempty"`
-	Deposits    []PendingDeposit `json:",omitempty"`
+type DepositCommitment struct {
+	ID            CommitmentID
+	Type          batchtype.BatchType
+	PostStateRoot common.Hash
+	LeafHash      common.Hash
+	Status        txstatus.TransactionStatus
+	BatchTime     models.Timestamp
+	SubtreeID     models.Uint256
+	SubtreeRoot   common.Hash
+	Deposits      []PendingDeposit
 }
 
 func NewTxCommitment(
@@ -56,17 +66,17 @@ func NewTxCommitment(
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
-) *Commitment {
-	return &Commitment{
+) *TxCommitment {
+	return &TxCommitment{
 		ID:                 *NewCommitmentID(&commitment.ID),
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
 		LeafHash:           commitment.LeafHash(),
-		TokenID:            &tokenID,
-		FeeReceiverStateID: &commitment.FeeReceiver,
-		CombinedSignature:  &commitment.CombinedSignature,
+		TokenID:            tokenID,
+		FeeReceiverStateID: commitment.FeeReceiver,
+		CombinedSignature:  commitment.CombinedSignature,
 		Status:             *status,
-		BatchTime:          batchTime,
+		BatchTime:          *batchTime,
 		Transactions:       transactions,
 	}
 }
@@ -76,25 +86,23 @@ func NewMMCommitment(
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
 	transactions interface{},
-) *Commitment {
-	return &Commitment{
+) *MMCommitment {
+	return &MMCommitment{
 		ID:                *NewCommitmentID(&commitment.ID),
 		Type:              commitment.Type,
 		PostStateRoot:     commitment.PostStateRoot,
 		LeafHash:          commitment.LeafHash(),
-		CombinedSignature: &commitment.CombinedSignature,
+		CombinedSignature: commitment.CombinedSignature,
 		Status:            *status,
-		BatchTime:         batchTime,
-		Transactions:      transactions,
-		massMigrationCommitmentDetails: massMigrationCommitmentDetails{
-			WithdrawRoot: &commitment.WithdrawRoot,
-			Meta: &MassMigrationMeta{
-				SpokeID:            commitment.Meta.SpokeID,
-				TokenID:            commitment.Meta.TokenID,
-				Amount:             commitment.Meta.Amount,
-				FeeReceiverStateID: commitment.Meta.FeeReceiver,
-			},
+		BatchTime:         *batchTime,
+		WithdrawRoot:      commitment.WithdrawRoot,
+		Meta: MassMigrationMeta{
+			SpokeID:            commitment.Meta.SpokeID,
+			TokenID:            commitment.Meta.TokenID,
+			Amount:             commitment.Meta.Amount,
+			FeeReceiverStateID: commitment.Meta.FeeReceiver,
 		},
+		Transactions: transactions,
 	}
 }
 
@@ -102,20 +110,16 @@ func NewDepositCommitment(
 	commitment *models.DepositCommitment,
 	status *txstatus.TransactionStatus,
 	batchTime *models.Timestamp,
-	transactions interface{},
-) *Commitment {
-	return &Commitment{
+) *DepositCommitment {
+	return &DepositCommitment{
 		ID:            *NewCommitmentID(&commitment.ID),
 		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
 		LeafHash:      commitment.LeafHash(),
 		Status:        *status,
-		BatchTime:     batchTime,
-		Transactions:  transactions,
-		depositCommitmentDetails: depositCommitmentDetails{
-			SubtreeID:   &commitment.SubtreeID,
-			SubtreeRoot: &commitment.SubtreeRoot,
-			Deposits:    MakePendingDeposits(commitment.Deposits),
-		},
+		BatchTime:     *batchTime,
+		SubtreeID:     commitment.SubtreeID,
+		SubtreeRoot:   commitment.SubtreeRoot,
+		Deposits:      MakePendingDeposits(commitment.Deposits),
 	}
 }
