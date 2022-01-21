@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPIEnableBatchCreation(t *testing.T) {
+func TestAPI_EnableBatchCreation(t *testing.T) {
 	var enabled bool
 	api := API{enableBatchCreation: func(enable bool) {
 		enabled = enable
