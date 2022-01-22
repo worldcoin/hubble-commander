@@ -1009,6 +1009,17 @@ Returns pending batches that haven't been mined yet, see below.
 ]
 ```
 
+### `admin_acceptTransactions(accept)`
+
+Enables and disables accepting transactions by commander.
+Pass true to start accepting transactions, pass false to stop accepting transactions.
+
+### `admin_enableBatchCreation(enable)`
+
+Enables and disables batch creation by commander.
+Pass true to enable batch creation, pass false to disable batch creation.
+
+
 # API usage
 
 ## Sending a transaction
