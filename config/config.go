@@ -55,7 +55,7 @@ func GetConfig() *Config {
 			Version:            "0.5.0-rc2",
 			Port:               getString("api.port", "8080"),
 			EnableProofMethods: getBool("api.enable_proof_methods", false),
-			AuthenticationKey:  getStringOrNil("api.enable_proof_methods"),
+			AuthenticationKey:  getStringOrNil("api.authentication_key"),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", "./db/data/hubble"),

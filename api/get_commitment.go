@@ -59,7 +59,7 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
 	case batchtype.Transfer:
-		return a.getTransfersForCommitment(commitment.(*models.TxCommitment).ID)
+		return a.getTransfersForCommitment(commitmentBase.ID)
 	case batchtype.Create2Transfer:
 		return a.getCreate2TransfersForCommitment(commitmentBase.ID)
 	case batchtype.MassMigration:
