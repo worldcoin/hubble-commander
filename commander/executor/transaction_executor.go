@@ -294,12 +294,7 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 ) error {
 	txs := result.AppliedTxs().ToMassMigrationArray()
 	hashes := make([]common.Hash, 0, txs.Len())
-	meta := &models.MassMigrationMeta{
-		SpokeID:     0,
-		TokenID:     models.MakeUint256(0),
-		Amount:      models.MakeUint256(0),
-		FeeReceiver: result.Commitment().ToMMCommitmentWithTxs().FeeReceiver,
-	}
+	mmCommitment := commitment.ToMMCommitmentWithTxs()
 
 	for i := range txs {
 		senderLeaf, err := e.storage.StateTree.Leaf(txs.At(i).GetFromStateID())
@@ -307,13 +302,13 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 			return err
 		}
 		if i == 0 {
-			meta.TokenID = senderLeaf.TokenID
-			meta.SpokeID = txs.At(0).ToMassMigration().SpokeID
+			mmCommitment.Meta.TokenID = senderLeaf.TokenID
+			mmCommitment.Meta.SpokeID = txs.At(0).ToMassMigration().SpokeID
 		}
 
 		hash, err := encoder.HashUserState(&models.UserState{
 			PubKeyID: senderLeaf.PubKeyID,
-			TokenID:  meta.TokenID,
+			TokenID:  mmCommitment.Meta.TokenID,
 			Balance:  txs.At(i).GetAmount(),
 			Nonce:    models.MakeUint256(0),
 		})
@@ -323,7 +318,7 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 		hashes = append(hashes, *hash)
 
 		txAmount := txs.At(i).GetAmount()
-		meta.Amount = *meta.Amount.Add(&txAmount)
+		mmCommitment.Meta.Amount = *mmCommitment.Meta.Amount.Add(&txAmount)
 	}
 
 	merkleTree, err := merkletree.NewMerkleTree(hashes)
@@ -331,8 +326,6 @@ func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
 		return err
 	}
 
-	mmCommitment := commitment.ToMMCommitmentWithTxs()
-	mmCommitment.Meta = meta
 	mmCommitment.WithdrawRoot = merkleTree.Root()
 	return nil
 }
@@ -355,7 +348,12 @@ func (e *MassMigrationExecutor) NewCommitment(
 				Type:          batchtype.MassMigration,
 				PostStateRoot: *stateRoot,
 			},
-			FeeReceiver:       feeReceiverStateID,
+			Meta: &models.MassMigrationMeta{
+				SpokeID:     0,
+				TokenID:     models.MakeUint256(0),
+				Amount:      models.MakeUint256(0),
+				FeeReceiver: feeReceiverStateID,
+			},
 			CombinedSignature: *combinedSignature,
 		},
 		Transactions: serializedTxs,

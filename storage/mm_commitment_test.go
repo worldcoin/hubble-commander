@@ -20,7 +20,6 @@ var (
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       uint32(1),
 		CombinedSignature: models.MakeRandomSignature(),
 		BodyHash:          utils.NewRandomHash(),
 		Meta: &models.MassMigrationMeta{

@@ -234,7 +234,6 @@ func send32MMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client) {
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
 			},
-			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     tx.SpokeID,
