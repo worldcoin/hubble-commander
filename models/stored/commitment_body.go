@@ -11,7 +11,7 @@ import (
 
 const (
 	txCommitmentBodyLength          = 101 // 4 + 64 + 33
-	mmCommitmentBodyLength          = 205 // 101 + 72 + 32
+	mmCommitmentBodyLength          = 201 // 64 + 33 + 72 + 32
 	depositCommitmentBodyBaseLength = 64  // 32 + 32
 )
 
@@ -67,16 +67,18 @@ func (c *TxCommitmentBody) BytesLen() int {
 }
 
 type MMCommitmentBody struct {
-	TxCommitmentBody
-	Meta         models.MassMigrationMeta
-	WithdrawRoot common.Hash
+	CombinedSignature models.Signature
+	BodyHash          *common.Hash
+	Meta              models.MassMigrationMeta
+	WithdrawRoot      common.Hash
 }
 
 func (c *MMCommitmentBody) Bytes() []byte {
 	b := make([]byte, c.BytesLen())
-	copy(b[0:101], c.TxCommitmentBody.Bytes())
-	copy(b[101:173], c.Meta.Bytes())
-	copy(b[173:205], c.WithdrawRoot.Bytes())
+	copy(b[0:64], c.CombinedSignature.Bytes())
+	copy(b[64:97], EncodeHashPointer(c.BodyHash))
+	copy(b[97:169], c.Meta.Bytes())
+	copy(b[169:201], c.WithdrawRoot.Bytes())
 	return b
 }
 
@@ -85,15 +87,16 @@ func (c *MMCommitmentBody) SetBytes(data []byte) error {
 		return models.ErrInvalidLength
 	}
 
-	err := c.TxCommitmentBody.SetBytes(data[0:101])
+	err := c.CombinedSignature.SetBytes(data[0:64])
 	if err != nil {
 		return err
 	}
-	err = c.Meta.SetBytes(data[101:173])
+	err = c.Meta.SetBytes(data[97:169])
 	if err != nil {
 		return err
 	}
-	c.WithdrawRoot.SetBytes(data[173:205])
+	c.BodyHash = decodeHashPointer(data[64:97])
+	c.WithdrawRoot.SetBytes(data[169:201])
 
 	return nil
 }
