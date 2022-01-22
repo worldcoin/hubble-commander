@@ -8,7 +8,7 @@ import (
 const DefaultBlocksToFinalise = uint32(7 * 24 * 60 * 4)
 
 func GetDeployerConfig() *DeployerConfig {
-	setupViper("deployer-config.yaml")
+	setupViper("deployer-config")
 
 	return &DeployerConfig{
 		Bootstrap: &DeployerBootstrapConfig{

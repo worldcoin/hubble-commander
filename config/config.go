@@ -25,7 +25,7 @@ const (
 )
 
 func GetConfig() *Config {
-	setupViper("commander-config.yaml")
+	setupViper("commander-config")
 
 	return &Config{
 		Log:     getLogConfig(),
@@ -67,7 +67,7 @@ func GetConfig() *Config {
 }
 
 func GetTestConfig() *Config {
-	setupViper("commander-config.yaml")
+	setupViper("commander-config")
 
 	return &Config{
 		Log: &LogConfig{
