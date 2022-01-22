@@ -827,13 +827,184 @@ Returns pending batches that haven't been mined yet, see below.
 ```json
 [
     {
-        "ID": "3",
-        "Hash": null,
+        "ID": "1",
         "Type": "TRANSFER",
-        "TransactionHash": "0x25160163b59d54e28549141441c22873b3a80044694beaf624795459b9a214f6",
-        "SubmissionBlock": 0,
-        "SubmissionTime": null,
-        "FinalisationBlock": null
+        "TransactionHash": "0x7c24f82171937322d49b382ec79d6fb40bc10086694d805a399b92c061b17e0d",
+        "Commitments": [
+            {
+                "Commitment": {
+                    "ID": {
+                        "BatchID": "1",
+                        "IndexInBatch": 0
+                    },
+                    "Type": "TRANSFER",
+                    "PostStateRoot": "0xae6b8d73ccfca01f6d893c59b9353b9a81bd7d0b4f6d602fc35da9fd0161ee64",
+                    "FeeReceiver": 0,
+                    "CombinedSignature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                    "BodyHash": null
+                },
+                "Transactions": [
+                    {
+                        "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
+                        "TxType": "TRANSFER",
+                        "FromStateID": 1,
+                        "Amount": "50",
+                        "Fee": "1",
+                        "Nonce": "0",
+                        "Signature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                        "ReceiveTime": 1642845254,
+                        "CommitmentID": {
+                            "BatchID": "1",
+                            "IndexInBatch": 0
+                        },
+                        "ErrorMessage": null,
+                        "ToStateID": 2
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "ID": "2",
+        "Type": "CREATE2TRANSFER",
+        "TransactionHash": "0x5326e17a37dcf9358c4a969cfda8fc34c598031c8dbe6effa56e9e15caff32d7",
+        "Commitments": [
+            {
+                "Commitment": {
+                    "ID": {
+                        "BatchID": "2",
+                        "IndexInBatch": 0
+                    },
+                    "Type": "CREATE2TRANSFER",
+                    "PostStateRoot": "0x5d9cdfe6e2516b669d841b0006dc664580abd436b0fa216692bd45c05d24a80e",
+                    "FeeReceiver": 0,
+                    "CombinedSignature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                    "BodyHash": null
+                },
+                "Transactions": [
+                    {
+                        "Hash": "0x3b98cb3f5c10647a80c753108ef14f44b4edebf096fe21fa49c7b578f4069ae0",
+                        "TxType": "CREATE2TRANSFER",
+                        "FromStateID": 2,
+                        "Amount": "50",
+                        "Fee": "1",
+                        "Nonce": "0",
+                        "Signature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                        "ReceiveTime": 1642845266,
+                        "CommitmentID": {
+                            "BatchID": "2",
+                            "IndexInBatch": 0
+                        },
+                        "ErrorMessage": null,
+                        "ToStateID": 6,
+                        "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "ID": "3",
+        "Type": "MASS_MIGRATION",
+        "TransactionHash": "0x26f1f6307fa8be04d5f1b56292af3fc0cda1cd4cd6d3cbed71ec9d52e2df24db",
+        "Commitments": [
+            {
+                "Commitment": {
+                    "ID": {
+                        "BatchID": "3",
+                        "IndexInBatch": 0
+                    },
+                    "Type": "MASS_MIGRATION",
+                    "PostStateRoot": "0x2212a3961a54c730d796a674ae10155a9d573de2418a0ccdd228ca92650178aa",
+                    "FeeReceiver": 0,
+                    "CombinedSignature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                    "BodyHash": null,
+                    "Meta": {
+                        "SpokeID": 1,
+                        "TokenID": "0",
+                        "Amount": "50",
+                        "FeeReceiver": 0
+                    },
+                    "WithdrawRoot": "0x8dbe126663cf1d1c53e6c6b52d0fbc180c928af61a5cb2b2744d5708234d51cb"
+                },
+                "Transactions": [
+                    {
+                        "Hash": "0x7a43485af7a557de8ea4e00b9e11c77d24cab35a8f7a3d8b87f3815e1b4ece31",
+                        "TxType": "MASS_MIGRATION",
+                        "FromStateID": 0,
+                        "Amount": "50",
+                        "Fee": "1",
+                        "Nonce": "0",
+                        "Signature": "0x2041452aa916e776ded08c4bd9cba2614e4632e6a2c4b18116ae7ce69ac0d71903a31b7fc04c2dce4601ec0a9d301e8f0de3a7cb0b7ed5683219e6403c58eaf9",
+                        "ReceiveTime": 1642845275,
+                        "CommitmentID": {
+                            "BatchID": "3",
+                            "IndexInBatch": 0
+                        },
+                        "ErrorMessage": null,
+                        "SpokeID": 1
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "ID": "4",
+        "Type": "DEPOSIT",
+        "TransactionHash": "0x6b862c990d0c3b7d1f8d87b303fc43a0ce1f926f7c04f75498f661696d5ecf98",
+        "Commitments": [
+            {
+                "Commitment": {
+                    "ID": {
+                        "BatchID": "4",
+                        "IndexInBatch": 0
+                    },
+                    "Type": "DEPOSIT",
+                    "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
+                    "SubtreeID": "1",
+                    "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
+                    "Deposits": [
+                        {
+                            "ID": {
+                                "SubtreeID": "1",
+                                "DepositIndex": "0"
+                            },
+                            "ToPubKeyID": 1,
+                            "TokenID": "0",
+                            "L2Amount": "10000000000"
+                        },
+                        {
+                            "ID": {
+                                "SubtreeID": "1",
+                                "DepositIndex": "1"
+                            },
+                            "ToPubKeyID": 1,
+                            "TokenID": "0",
+                            "L2Amount": "10000000000"
+                        },
+                        {
+                            "ID": {
+                                "SubtreeID": "1",
+                                "DepositIndex": "2"
+                            },
+                            "ToPubKeyID": 1,
+                            "TokenID": "0",
+                            "L2Amount": "10000000000"
+                        },
+                        {
+                            "ID": {
+                                "SubtreeID": "1",
+                                "DepositIndex": "3"
+                            },
+                            "ToPubKeyID": 1,
+                            "TokenID": "0",
+                            "L2Amount": "10000000000"
+                        }
+                    ]
+                },
+                "Transactions": null
+            }
+        ]
     }
 ]
 ```
