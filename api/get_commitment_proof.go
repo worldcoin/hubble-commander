@@ -87,7 +87,7 @@ func (a *API) unsafeGetCommitmentProof(commitmentID models.CommitmentID) (*dto.C
 
 	if commitment.GetCommitmentBase().Type == batchtype.MassMigration {
 		body.Signature = commitment.ToMMCommitment().CombinedSignature
-		body.FeeReceiver = commitment.ToMMCommitment().FeeReceiver
+		body.FeeReceiver = commitment.ToMMCommitment().Meta.FeeReceiver
 	} else {
 		body.Signature = commitment.ToTxCommitment().CombinedSignature
 		body.FeeReceiver = commitment.ToTxCommitment().FeeReceiver

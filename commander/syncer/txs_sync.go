@@ -68,7 +68,6 @@ func (c *TxsContext) addCommitment(batch *eth.DecodedTxBatch, encodedCommitment 
 				Type:          batch.Type,
 				PostStateRoot: decodedCommitment.StateRoot,
 			},
-			FeeReceiver:       decodedCommitment.FeeReceiver,
 			CombinedSignature: decodedCommitment.CombinedSignature,
 			BodyHash:          encodedCommitment.BodyHash(batch.AccountTreeRoot),
 			Meta:              encodedCommitment.(*encoder.DecodedMMCommitment).Meta,

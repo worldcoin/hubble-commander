@@ -156,7 +156,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 	witnessIndex int,
 	massMigrations []models.MassMigration,
 ) {
-	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(s.storage, s.commitments[commitmentIndex].FeeReceiver, massMigrations)
+	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(s.storage, s.commitments[commitmentIndex].Meta.FeeReceiver, massMigrations)
 	s.NoError(err)
 
 	expected := dto.MassMigrationCommitmentProof{
@@ -312,7 +312,6 @@ func makeMassMigrationCommitment(
 				Type:          batchtype.MassMigration,
 				PostStateRoot: stateRoot,
 			},
-			FeeReceiver:       feeReceiver,
 			CombinedSignature: models.MakeRandomSignature(),
 			Meta:              meta,
 			WithdrawRoot:      withdrawTree.Root(),
