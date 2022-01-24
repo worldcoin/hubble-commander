@@ -219,7 +219,6 @@ func (s *GetPendingBatchesTestSuite) addPendingMMBatch() *dto.PendingBatch {
 			Type:          batch.Type,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       0,
 		CombinedSignature: models.MakeRandomSignature(),
 		BodyHash:          nil,
 		Meta: &models.MassMigrationMeta{
