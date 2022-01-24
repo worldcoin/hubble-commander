@@ -233,7 +233,7 @@ func getClient(
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
-		return bootstrapFromRemoteState(blockchain, storage, cfg, commanderMetrics)
+		return bootstrapFromRemoteState(blockchain, dbChainState, storage, cfg, commanderMetrics)
 	}
 
 	return nil, errors.WithStack(errMissingBootstrapSource)
@@ -282,6 +282,7 @@ func bootstrapChainStateAndCommander(
 
 func bootstrapFromRemoteState(
 	blockchain chain.Connection,
+	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
@@ -295,7 +296,16 @@ func bootstrapFromRemoteState(
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
 
-	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup, commanderMetrics)
+	if dbChainState == nil {
+		return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup, commanderMetrics)
+	}
+
+	if !fetchedChainState.Equal(dbChainState) {
+		return nil, errors.WithStack(errInconsistentChainState)
+	}
+
+	log.Printf("Continuing from saved state on ChainID = %s", fetchedChainState.ChainID.String())
+	return createClientFromChainState(blockchain, fetchedChainState, cfg.Rollup, commanderMetrics)
 }
 
 func setGenesisStateAndCreateClient(
