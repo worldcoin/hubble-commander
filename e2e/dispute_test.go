@@ -39,6 +39,10 @@ func TestCommanderDispute(t *testing.T) {
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
+	if cfg.Ethereum.RPCURL == "simulator" {
+		// newEthClient attempts to connect to a geth node which does not exist
+		logrus.Panicf("sync test cannot be run on simulator")
+	}
 
 	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
@@ -430,6 +434,8 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		WithdrawManager:                info.WithdrawManager,
 		Rollup:                         info.Rollup,
 	}
+
+	// This ignores the client configuration
 
 	cfg := config.GetConfig()
 	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)

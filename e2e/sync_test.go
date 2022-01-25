@@ -22,7 +22,8 @@ func TestCommanderSync(t *testing.T) {
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
-	if cfg.Ethereum == nil {
+	if cfg.Ethereum.RPCURL == "simulator" {
+		// newEthClient attempts to connect to a geth node which does not exist
 		log.Panicf("sync test cannot be run on simulator")
 	}
 

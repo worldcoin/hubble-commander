@@ -16,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -27,6 +28,10 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 	cfg.Rollup.MinTxsPerCommitment = maxTxsPerCommitment
 	cfg.Rollup.MaxTxsPerCommitment = maxTxsPerCommitment
 	cfg.Rollup.MinCommitmentsPerBatch = 1
+	if cfg.Ethereum.RPCURL == "simulator" {
+		// newEthClient attempts to connect to a geth node which does not exist
+		log.Panicf("sync test cannot be run on simulator")
+	}
 
 	cmd, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
