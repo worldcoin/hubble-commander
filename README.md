@@ -236,7 +236,7 @@ docker run --rm -t -p 8545-8546:8545-8546 ethereum/client-go:stable \
     --dev --dev.period=1 --http --http.addr=0.0.0.0 --ws --ws.addr=0.0.0.0
 ```
 
-**Step 3.** Fund the Hubble account.
+**Step 3.** Fund the Hubble deployer/operator Ethereum account.
 
 ```
 docker run --rm -t ethereum/client-go:stable \
@@ -247,7 +247,6 @@ docker run --rm -t ethereum/client-go:stable \
         value: web3.toWei(1000, "ether") 
     })'
 ```
-
 
 **Step 4.** Deploy contracts on Ethereum node using `genesis.yaml` and generate `chain-spec.yaml`.
 

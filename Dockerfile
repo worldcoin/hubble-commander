@@ -43,6 +43,9 @@ ENV HUBBLE_BADGER_PATH=/badger
 ENV HUBBLE_LOG_FORMAT=json
 ENV HUBBLE_LOG_LEVEL=info
 
+# Hubble API
+EXPOSE 8080
+
 # Executable
 COPY --from=build-env --chown=0:10001 --chmod=010 /src/hubble .
 STOPSIGNAL SIGTERM
