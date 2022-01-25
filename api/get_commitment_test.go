@@ -70,7 +70,6 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
 		BodyHash:          utils.NewRandomHash(),
 		Meta: &models.MassMigrationMeta{

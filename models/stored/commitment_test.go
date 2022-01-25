@@ -46,7 +46,6 @@ func TestCommitment_Bytes_MMCommitment(t *testing.T) {
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       3,
 		CombinedSignature: models.Signature{1, 2, 3, 4, 5},
 		BodyHash:          utils.NewRandomHash(),
 		Meta: &models.MassMigrationMeta{
