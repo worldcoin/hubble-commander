@@ -12,6 +12,8 @@ type ContractBatch struct {
 	models.BatchMeta
 }
 
+// TODO Replace usages of GetBatch with GetContractBatch
+
 func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
 	batch, err := c.Rollup.GetBatch(nil, batchID.ToBig())
 	if err != nil {
