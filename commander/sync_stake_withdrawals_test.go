@@ -176,10 +176,7 @@ func (s *SyncStakeWithdrawalsTestSuite) stakeWithdrawalMinedAfterBlock(startBloc
 		}, it)
 		s.NoError(err)
 
-		for it.Next() {
-			return true
-		}
-		return false
+		return it.Next()
 	}
 }
 
