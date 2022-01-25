@@ -106,7 +106,7 @@ func GetTestConfig() *Config {
 			AuthenticationKey:  ref.String("secret_authentication_key"),
 		},
 		Badger: &BadgerConfig{
-			Path: "./db/data/hubble_test",
+			Path: "../db/data/hubble_test",
 		},
 		Ethereum: &EthereumConfig{
 			RPCURL:     "simulator",

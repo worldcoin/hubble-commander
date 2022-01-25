@@ -21,6 +21,7 @@ func GetDeployerConfig() *DeployerConfig {
 
 func getGenesisAccounts() []models.GenesisAccount {
 	filename := getString("bootstrap.genesis_path", "./genesis.yaml")
+	log.Info("Reading gensis config from ", filename)
 	return readGenesisAccounts(filename)
 }
 

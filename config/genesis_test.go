@@ -8,7 +8,7 @@ import (
 )
 
 func TestReadGenesisFile(t *testing.T) {
-	genesisPath := path.Join(".", "genesis.yaml")
+	genesisPath := path.Join("..", "genesis.yaml")
 	genesisAccounts, err := readGenesisFile(genesisPath)
 	require.NoError(t, err)
 	require.Greater(t, len(genesisAccounts), 0)
