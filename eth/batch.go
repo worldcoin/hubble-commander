@@ -28,16 +28,16 @@ type DecodedBatchBase struct {
 }
 
 func NewDecodedBatchBase(
-	batch *models.BatchWithMeta,
+	batch *ContractBatch,
 	transactionHash, accountRoot common.Hash,
 	submissionTime *models.Timestamp,
 ) *DecodedBatchBase {
 	return &DecodedBatchBase{
 		ID:                batch.ID,
-		Type:              batch.Type,
+		Type:              batch.BatchType,
 		TransactionHash:   transactionHash,
-		Hash:              *batch.Hash,
-		FinalisationBlock: *batch.FinalisationBlock,
+		Hash:              batch.Hash,
+		FinalisationBlock: batch.FinaliseOn,
 		AccountTreeRoot:   accountRoot,
 		SubmissionTime:    *submissionTime,
 		Committer:         batch.Committer,
