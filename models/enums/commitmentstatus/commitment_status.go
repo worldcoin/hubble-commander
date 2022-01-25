@@ -10,15 +10,15 @@ import (
 type CommitmentStatus uint
 
 const (
-	Pending   = CommitmentStatus(batchstatus.Pending)
-	InBatch   = CommitmentStatus(batchstatus.Submitted)
+	Pending   = CommitmentStatus(batchstatus.Pending) // Not in use + Will be replaced in the future in favor or `Submitted`
+	Mined     = CommitmentStatus(batchstatus.Mined)
 	Finalised = CommitmentStatus(batchstatus.Finalised) // nolint:misspell
 
 )
 
 var CommitmentStatuses = map[CommitmentStatus]string{
 	Pending:   "PENDING",
-	InBatch:   "IN_BATCH",
+	Mined:     "MINED",
 	Finalised: "FINALISED", // nolint:misspell
 }
 

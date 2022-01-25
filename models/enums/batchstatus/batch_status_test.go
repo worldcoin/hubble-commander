@@ -28,7 +28,7 @@ func TestBatchStatus_UnmarshalJSON_UnsupportedStatus(t *testing.T) {
 }
 
 func TestBatchStatus_MarshalJSON_SupportedStatus(t *testing.T) {
-	input := Submitted
+	input := Mined
 	expected := fmt.Sprintf(`%q`, BatchStatuses[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)

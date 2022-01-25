@@ -314,7 +314,7 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.TxCommitme
 		TokenID:            models.MakeUint256(1),
 		FeeReceiverStateID: s.txCommitment.FeeReceiver,
 		CombinedSignature:  s.txCommitment.CombinedSignature,
-		Status:             commitmentstatus.InBatch,
+		Status:             commitmentstatus.Mined,
 		BatchTime:          *s.batch.SubmissionTime,
 		Transactions:       transactions,
 	}
@@ -334,7 +334,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.MMCommitme
 		PostStateRoot:     s.mmCommitment.PostStateRoot,
 		LeafHash:          s.mmCommitment.LeafHash(),
 		CombinedSignature: s.mmCommitment.CombinedSignature,
-		Status:            commitmentstatus.InBatch,
+		Status:            commitmentstatus.Mined,
 		BatchTime:         *s.batch.SubmissionTime,
 		WithdrawRoot:      s.mmCommitment.WithdrawRoot,
 		Meta: dto.MassMigrationMeta{
@@ -360,7 +360,7 @@ func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.Depos
 		Type:          s.depositCommitment.Type,
 		PostStateRoot: s.depositCommitment.PostStateRoot,
 		LeafHash:      s.depositCommitment.LeafHash(),
-		Status:        commitmentstatus.InBatch,
+		Status:        commitmentstatus.Mined,
 		BatchTime:     *s.batch.SubmissionTime,
 		SubtreeID:     s.depositCommitment.SubtreeID,
 		SubtreeRoot:   s.depositCommitment.SubtreeRoot,

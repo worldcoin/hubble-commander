@@ -100,7 +100,7 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.Equal(s.batches[i].Type, result[i].Type)
 		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
 		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
-		s.Equal(batchstatus.Submitted, result[i].Status)
+		s.Equal(batchstatus.Mined, result[i].Status)
 		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
 		s.NotZero(result[i].SubmissionBlock)
 

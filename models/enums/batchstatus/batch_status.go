@@ -9,14 +9,14 @@ import (
 type BatchStatus uint
 
 const (
-	Pending BatchStatus = iota + 1000
-	Submitted
+	Pending BatchStatus = iota + 1000 // Not in use + Will be replaced in the future in favor or `Submitted`
+	Mined
 	Finalised // nolint:misspell
 )
 
 var BatchStatuses = map[BatchStatus]string{
 	Pending:   "PENDING",
-	Submitted: "SUBMITTED",
+	Mined:     "MINED",
 	Finalised: "FINALISED", // nolint:misspell
 }
 

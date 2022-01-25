@@ -129,7 +129,7 @@ func (a *API) createTxCommitmentDTO(
 
 func calculateCommitmentStatus(latestBlockNumber, finalisationBlock uint32) *commitmentstatus.CommitmentStatus {
 	if latestBlockNumber < finalisationBlock {
-		return commitmentstatus.InBatch.Ref()
+		return commitmentstatus.Mined.Ref()
 	}
 
 	return commitmentstatus.Finalised.Ref()

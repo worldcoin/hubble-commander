@@ -28,7 +28,7 @@ func TestCommitmentStatus_UnmarshalJSON_UnsupportedStatus(t *testing.T) {
 }
 
 func TestCommitmentStatus_MarshalJSON_SupportedStatus(t *testing.T) {
-	input := InBatch
+	input := Mined
 	expected := fmt.Sprintf(`%q`, CommitmentStatuses[input])
 	bytes, err := json.Marshal(input)
 	require.NoError(t, err)
