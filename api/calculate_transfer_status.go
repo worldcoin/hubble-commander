@@ -29,7 +29,7 @@ func CalculateTransactionStatus(
 	}
 
 	if latestBlockNumber < *batch.FinalisationBlock {
-		return txstatus.InBatch.Ref(), nil
+		return txstatus.Mined.Ref(), nil
 	}
 
 	return txstatus.Finalised.Ref(), nil

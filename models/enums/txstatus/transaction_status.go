@@ -11,14 +11,14 @@ type TransactionStatus uint
 
 const (
 	Pending                     = TransactionStatus(commitmentstatus.Pending)
-	InBatch                     = TransactionStatus(commitmentstatus.Mined)
+	Mined                       = TransactionStatus(commitmentstatus.Mined)
 	Finalised                   = TransactionStatus(commitmentstatus.Finalised) // nolint:misspell
 	Error     TransactionStatus = 5000
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
 	Pending:   commitmentstatus.CommitmentStatuses[commitmentstatus.Pending],
-	InBatch:   commitmentstatus.CommitmentStatuses[commitmentstatus.Mined],
+	Mined:     commitmentstatus.CommitmentStatuses[commitmentstatus.Mined],
 	Finalised: commitmentstatus.CommitmentStatuses[commitmentstatus.Finalised], // nolint:misspell
 	Error:     "ERROR",
 }
