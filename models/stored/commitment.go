@@ -26,13 +26,10 @@ func MakeCommitmentFromMMCommitment(c *models.MMCommitment) Commitment {
 	return Commitment{
 		CommitmentBase: c.CommitmentBase,
 		Body: &MMCommitmentBody{
-			TxCommitmentBody: TxCommitmentBody{
-				FeeReceiver:       c.FeeReceiver,
-				CombinedSignature: c.CombinedSignature,
-				BodyHash:          c.BodyHash,
-			},
-			Meta:         *c.Meta,
-			WithdrawRoot: c.WithdrawRoot,
+			CombinedSignature: c.CombinedSignature,
+			BodyHash:          c.BodyHash,
+			Meta:              *c.Meta,
+			WithdrawRoot:      c.WithdrawRoot,
 		},
 	}
 }
@@ -102,7 +99,6 @@ func (c *Commitment) ToMMCommitment() *models.MMCommitment {
 
 	return &models.MMCommitment{
 		CommitmentBase:    c.CommitmentBase,
-		FeeReceiver:       mmCommitmentBody.FeeReceiver,
 		CombinedSignature: mmCommitmentBody.CombinedSignature,
 		BodyHash:          mmCommitmentBody.BodyHash,
 		Meta:              &mmCommitmentBody.Meta,

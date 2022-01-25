@@ -60,10 +60,16 @@ func (c *Commander) newBlockLoop() error {
 				return err
 			}
 
+			err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
 			isProposer, err := c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
 			}
+
 			rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
 		}
 	}
@@ -193,6 +199,29 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 		return errors.WithStack(err)
 	}
 
+	err = c.syncStakeWithdrawals(startBlock, endBlock)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (c *Commander) withdrawRemainingStakes(currentBlock uint64) error {
+	stakes, err := c.storage.GetReadyStateWithdrawals(uint32(currentBlock))
+	if err != nil {
+		return err
+	}
+	for i := range stakes {
+		err = c.client.WithdrawStake(&stakes[i].BatchID)
+		if err != nil {
+			return err
+		}
+		err = c.storage.RemovePendingStakeWithdrawal(stakes[i].BatchID)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

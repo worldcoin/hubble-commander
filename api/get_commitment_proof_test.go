@@ -65,7 +65,6 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
 		Meta: &models.MassMigrationMeta{
 			SpokeID:     1,
@@ -211,7 +210,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.mmCommitment.CombinedSignature,
-			FeeReceiver: s.mmCommitment.FeeReceiver,
+			FeeReceiver: s.mmCommitment.Meta.FeeReceiver,
 			Transactions: []dto.MassMigrationForCommitment{
 				dto.MakeMassMigrationForCommitment(&massMigration),
 			},

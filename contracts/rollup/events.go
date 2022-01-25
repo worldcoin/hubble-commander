@@ -27,3 +27,14 @@ func (i *DepositsFinalisedIterator) SetData(contract *bind.BoundContract, event 
 	i.RollupDepositsFinalisedIterator.logs = logs
 	i.RollupDepositsFinalisedIterator.sub = sub
 }
+
+type StakeWithdrawIterator struct {
+	RollupStakeWithdrawIterator
+}
+
+func (i *StakeWithdrawIterator) SetData(contract *bind.BoundContract, event string, logs chan types.Log, sub ethereum.Subscription) {
+	i.RollupStakeWithdrawIterator.contract = contract
+	i.RollupStakeWithdrawIterator.event = event
+	i.RollupStakeWithdrawIterator.logs = logs
+	i.RollupStakeWithdrawIterator.sub = sub
+}

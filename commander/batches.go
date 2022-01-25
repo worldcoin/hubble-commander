@@ -66,8 +66,13 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return err
 	}
 
-	for i := range newRemoteBatches {
-		err = c.syncRemoteBatch(newRemoteBatches[i])
+	for _, remoteBatch := range newRemoteBatches {
+		err = c.syncRemoteBatch(remoteBatch)
+		if err != nil {
+			return err
+		}
+
+		err = c.syncPendingStakeWithdrawal(remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -76,7 +81,6 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		case <-c.workersContext.Done():
 			return ErrIncompleteBlockRangeSync
 		default:
-			continue
 		}
 	}
 
@@ -113,6 +117,20 @@ func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
 		return err
 	}
 	return syncCtx.Commit()
+}
+
+func (c *Commander) syncPendingStakeWithdrawal(remoteBatch eth.DecodedBatch) error {
+	batchBase := remoteBatch.GetBase()
+	if batchBase.Committer == c.blockchain.GetAccount().From {
+		err := c.storage.AddPendingStakeWithdrawal(&models.PendingStakeWithdrawal{
+			BatchID:           batchBase.ID,
+			FinalisationBlock: batchBase.FinalisationBlock,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Commander) replaceBatch(localBatch *models.Batch, remoteBatch eth.DecodedBatch) error {

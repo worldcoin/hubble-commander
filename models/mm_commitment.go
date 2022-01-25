@@ -7,7 +7,6 @@ import (
 
 type MMCommitment struct {
 	CommitmentBase
-	FeeReceiver       uint32
 	CombinedSignature Signature
 	BodyHash          *common.Hash
 	Meta              *MassMigrationMeta
@@ -48,7 +47,7 @@ type MMCommitmentWithTxs struct {
 }
 
 func (c *MMCommitmentWithTxs) CalcAndSetBodyHash(accountRoot common.Hash) {
-	c.SetBodyHash(calcBodyHash(c.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes()))
+	c.SetBodyHash(calcBodyHash(c.Meta.FeeReceiver, c.CombinedSignature, c.Transactions, accountRoot.Bytes()))
 }
 
 func (c *MMCommitmentWithTxs) ToCommitment() Commitment {
