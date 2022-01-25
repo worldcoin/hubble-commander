@@ -1,8 +1,6 @@
 package config
 
 import (
-	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -124,16 +122,6 @@ func setupViper(configName string) {
 	viper.AddConfigPath("/etc/hubble")
 	viper.AddConfigPath("$HOME/.hubble")
 	viper.AddConfigPath(".") // Current working dir
-
-	// Add the *parent* of folder containing the executable
-	// So when it's run from `some_dir/build/hubble` we will look in `some_dir`
-	// TODO: Remove
-	exe_path, err := os.Executable()
-	if err != nil {
-		log.Panic("Could not find exe location: %s", err)
-	}
-	viper.AddConfigPath(path.Join(path.Dir(exe_path), ".."))
-
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
