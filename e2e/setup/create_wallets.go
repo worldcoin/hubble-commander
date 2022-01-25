@@ -46,7 +46,7 @@ func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 type PrivateKeys []string
 
 func readKeys() (PrivateKeys, error) {
-	accountsPath := path.Join(".", "e2e", "setup", "accounts.yaml")
+	accountsPath := path.Join("..", "e2e", "setup", "accounts.yaml")
 	yamlFile, err := os.ReadFile(accountsPath)
 	if err != nil {
 		return nil, err

@@ -27,6 +27,7 @@ func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerC
 	commanderConfig.Bootstrap.Prune = true
 
 	if deployerConfig == nil {
+		os.Setenv("HUBBLE_BOOTSTRAP_GENESIS_PATH", "../genesis.yaml")
 		deployerConfig = config.GetDeployerConfig()
 	}
 
