@@ -60,12 +60,12 @@ func (c *Commander) newBlockLoop() error {
 				return err
 			}
 
-			isProposer, err := c.client.IsActiveProposer()
+			err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
-			err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
+			isProposer, err := c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
 			}
