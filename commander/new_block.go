@@ -207,17 +207,17 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) withdrawRemainingStakes(finalizationBlock uint64) error {
-	stakes, err := c.storage.GetReadyStateWithdrawals(uint32(finalizationBlock))
+func (c *Commander) withdrawRemainingStakes(currentBlock uint64) error {
+	stakes, err := c.storage.GetReadyStateWithdrawals(uint32(currentBlock))
 	if err != nil {
 		return err
 	}
-	for _, stake := range stakes {
-		err = c.client.WithdrawStake(&stake.BatchID)
+	for i := range stakes {
+		err = c.client.WithdrawStake(&stakes[i].BatchID)
 		if err != nil {
 			return err
 		}
-		err = c.storage.RemovePendingStakeWithdrawal(stake.BatchID)
+		err = c.storage.RemovePendingStakeWithdrawal(stakes[i].BatchID)
 		if err != nil {
 			return err
 		}
