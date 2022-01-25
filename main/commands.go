@@ -43,6 +43,8 @@ func handleExportCommand(args []string) {
 	switch *exportType {
 	case "state":
 		err = scripts.ExportStateLeaves(*exportFile)
+	case "accounts":
+		err = scripts.ExportAccounts(*exportFile)
 	default:
 		exitWithHelpMessage()
 	}

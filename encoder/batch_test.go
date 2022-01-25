@@ -58,7 +58,6 @@ func TestDecodeMMBatchCalldata(t *testing.T) {
 				Type:          batchtype.MassMigration,
 				PostStateRoot: utils.RandomHash(),
 			},
-			FeeReceiver:       uint32(1234),
 			CombinedSignature: models.MakeRandomSignature(),
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     1,

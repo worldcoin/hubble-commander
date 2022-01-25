@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -23,6 +24,7 @@ type GetBatchTestSuite struct {
 	testClient          *eth.TestClient
 	txCommitment        models.TxCommitment
 	mmCommitment        models.MMCommitment
+	depositCommitment   models.DepositCommitment
 	batch               models.Batch
 	batchNotFoundAPIErr *APIError
 }
@@ -62,7 +64,6 @@ func (s *GetBatchTestSuite) SetupTest() {
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
 		BodyHash:          utils.NewRandomHash(),
 		Meta: &models.MassMigrationMeta{
@@ -72,6 +73,30 @@ func (s *GetBatchTestSuite) SetupTest() {
 			FeeReceiver: 1,
 		},
 		WithdrawRoot: utils.RandomHash(),
+	}
+
+	s.depositCommitment = models.DepositCommitment{
+		CommitmentBase: models.CommitmentBase{
+			ID: models.CommitmentID{
+				BatchID:      s.batch.ID,
+				IndexInBatch: 0,
+			},
+			Type:          batchtype.Deposit,
+			PostStateRoot: utils.RandomHash(),
+		},
+		SubtreeID:   models.MakeUint256(1),
+		SubtreeRoot: utils.RandomHash(),
+		Deposits: []models.PendingDeposit{
+			{
+				ID: models.DepositID{
+					SubtreeID:    models.MakeUint256(1),
+					DepositIndex: models.MakeUint256(0),
+				},
+				ToPubKeyID: 1,
+				TokenID:    models.MakeUint256(1),
+				L2Amount:   models.MakeUint256(1000),
+			},
+		},
 	}
 
 	s.batchNotFoundAPIErr = &APIError{
@@ -97,14 +122,8 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_TxBatch() {
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.ID, result.ID)
-	s.Equal(s.batch.Hash, result.Hash)
-	s.Equal(s.batch.Type, result.Type)
-	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
-	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+	s.validateBatch(result)
+	s.validateTxCommitment(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_MassMigrationBatch() {
@@ -120,14 +139,25 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_MassMigrationBatch() {
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.ID, result.ID)
-	s.Equal(s.batch.Hash, result.Hash)
-	s.Equal(s.batch.Type, result.Type)
-	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
-	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+	s.validateBatch(result)
+	s.validateMMCommitment(result)
+}
+
+func (s *GetBatchTestSuite) TestGetBatchByHash_DepositBatch() {
+	s.addStateLeaf()
+
+	s.batch.Type = batchtype.Deposit
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	err = s.storage.AddCommitment(&s.depositCommitment)
+	s.NoError(err)
+
+	result, err := s.api.GetBatchByHash(*s.batch.Hash)
+	s.NoError(err)
+	s.NotNil(result)
+	s.validateBatch(result)
+	s.validateDepositCommitment(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
@@ -146,7 +176,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
 	s.Equal(genesisBatch.Hash, result.Hash)
 	s.Equal(genesisBatch.Type, result.Type)
 	s.Equal(*genesisBatch.FinalisationBlock, result.SubmissionBlock)
-	s.Len(result.Commitments, 0)
+	s.Nil(result.Commitments)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_NonexistentBatch() {
@@ -166,14 +196,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID_TxBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.ID, result.ID)
-	s.Equal(s.batch.Hash, result.Hash)
-	s.Equal(s.batch.Type, result.Type)
-	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
-	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+	s.validateBatch(result)
+	s.validateTxCommitment(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_MassMigrationBatch() {
@@ -189,14 +213,25 @@ func (s *GetBatchTestSuite) TestGetBatchByID_MassMigrationBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result.Commitments, 1)
-	s.Equal(s.batch.ID, result.ID)
-	s.Equal(s.batch.Hash, result.Hash)
-	s.Equal(s.batch.Type, result.Type)
-	s.Equal(s.batch.TransactionHash, result.TransactionHash)
-	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
-	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+	s.validateBatch(result)
+	s.validateMMCommitment(result)
+}
+
+func (s *GetBatchTestSuite) TestGetBatchByID_DepositBatch() {
+	s.addStateLeaf()
+
+	s.batch.Type = batchtype.Deposit
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	err = s.storage.AddCommitment(&s.depositCommitment)
+	s.NoError(err)
+
+	result, err := s.api.GetBatchByID(s.batch.ID)
+	s.NoError(err)
+	s.NotNil(result)
+	s.validateBatch(result)
+	s.validateDepositCommitment(result)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
@@ -215,7 +250,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 	s.Equal(genesisBatch.Hash, result.Hash)
 	s.Equal(genesisBatch.Type, result.Type)
 	s.Equal(*genesisBatch.FinalisationBlock, result.SubmissionBlock)
-	s.Len(result.Commitments, 0)
+	s.Nil(result.Commitments)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_NonexistentBatch() {
@@ -232,6 +267,81 @@ func (s *GetBatchTestSuite) addStateLeaf() {
 		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
+}
+
+func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitments) {
+	s.Equal(s.batch.ID, result.ID)
+	s.Equal(s.batch.Hash, result.Hash)
+	s.Equal(s.batch.Type, result.Type)
+	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
+	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
+	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+}
+
+func (s *GetBatchTestSuite) validateTxCommitment(result *dto.BatchWithRootAndCommitments) {
+	s.Len(result.Commitments, 1)
+
+	expectedCommitments := []dto.BatchTxCommitment{
+		{
+			ID: dto.CommitmentID{
+				BatchID:      s.txCommitment.ID.BatchID,
+				IndexInBatch: s.txCommitment.ID.IndexInBatch,
+			},
+			PostStateRoot:      s.txCommitment.PostStateRoot,
+			LeafHash:           s.txCommitment.LeafHash(),
+			TokenID:            models.MakeUint256(1),
+			FeeReceiverStateID: s.txCommitment.FeeReceiver,
+			CombinedSignature:  s.txCommitment.CombinedSignature,
+		},
+	}
+
+	s.Equal(expectedCommitments, result.Commitments)
+}
+
+func (s *GetBatchTestSuite) validateMMCommitment(result *dto.BatchWithRootAndCommitments) {
+	s.Len(result.Commitments, 1)
+
+	expectedCommitments := []dto.BatchMMCommitment{
+		{
+			ID: dto.CommitmentID{
+				BatchID:      s.mmCommitment.ID.BatchID,
+				IndexInBatch: s.mmCommitment.ID.IndexInBatch,
+			},
+			PostStateRoot:     s.mmCommitment.PostStateRoot,
+			LeafHash:          s.mmCommitment.LeafHash(),
+			CombinedSignature: s.mmCommitment.CombinedSignature,
+			WithdrawRoot:      s.mmCommitment.WithdrawRoot,
+			Meta: dto.MassMigrationMeta{
+				SpokeID:            s.mmCommitment.Meta.SpokeID,
+				TokenID:            s.mmCommitment.Meta.TokenID,
+				Amount:             s.mmCommitment.Meta.Amount,
+				FeeReceiverStateID: s.mmCommitment.Meta.FeeReceiver,
+			},
+		},
+	}
+
+	s.Equal(expectedCommitments, result.Commitments)
+}
+
+func (s *GetBatchTestSuite) validateDepositCommitment(result *dto.BatchWithRootAndCommitments) {
+	s.Len(result.Commitments, 1)
+
+	expectedCommitments := []dto.BatchDepositCommitment{
+		{
+			ID: dto.CommitmentID{
+				BatchID:      s.depositCommitment.ID.BatchID,
+				IndexInBatch: s.depositCommitment.ID.IndexInBatch,
+			},
+			PostStateRoot: s.depositCommitment.PostStateRoot,
+			LeafHash:      s.depositCommitment.LeafHash(),
+			SubtreeID:     s.depositCommitment.SubtreeID,
+			SubtreeRoot:   s.depositCommitment.SubtreeRoot,
+			Deposits:      dto.MakePendingDeposits(s.depositCommitment.Deposits),
+		},
+	}
+
+	s.Equal(expectedCommitments, result.Commitments)
 }
 
 func TestGetBatchTestSuite(t *testing.T) {

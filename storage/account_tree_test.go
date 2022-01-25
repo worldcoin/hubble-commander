@@ -345,6 +345,53 @@ func (s *AccountTreeTestSuite) TestNextBatchAccountPubKeyID_NoAccounts() {
 	s.EqualValues(AccountBatchOffset, *pubKeyID)
 }
 
+func (s *AccountTreeTestSuite) TestIterateLeaves_SingleAccount() {
+	err := s.storage.AccountTree.SetSingle(s.leaf)
+	s.NoError(err)
+
+	leaves := make([]models.AccountLeaf, 0, 1)
+	err = s.storage.AccountTree.IterateLeaves(func(accountLeaf *models.AccountLeaf) error {
+		leaves = append(leaves, *accountLeaf)
+		return nil
+	})
+	s.NoError(err)
+
+	s.Len(leaves, 1)
+	s.Equal(*s.leaf, leaves[0])
+}
+
+func (s *AccountTreeTestSuite) TestIterateLeaves_BatchAccounts() {
+	expectedLeaves := make([]models.AccountLeaf, AccountBatchSize)
+	for i := range expectedLeaves {
+		expectedLeaves[i] = models.AccountLeaf{
+			PubKeyID:  uint32(i + AccountBatchOffset),
+			PublicKey: models.PublicKey{1, 2, byte(i)},
+		}
+	}
+	err := s.storage.AccountTree.SetBatch(expectedLeaves)
+	s.NoError(err)
+
+	leaves := make([]models.AccountLeaf, 0, len(expectedLeaves))
+	err = s.storage.AccountTree.IterateLeaves(func(accountLeaf *models.AccountLeaf) error {
+		leaves = append(leaves, *accountLeaf)
+		return nil
+	})
+	s.NoError(err)
+
+	s.Len(leaves, len(expectedLeaves))
+	s.Equal(expectedLeaves, leaves)
+}
+
+func (s *AccountTreeTestSuite) TestIterateLeaves_NoLeaves() {
+	leaves := make([]models.StateLeaf, 0, 1)
+	err := s.storage.StateTree.IterateLeaves(func(stateLeaf *models.StateLeaf) error {
+		leaves = append(leaves, *stateLeaf)
+		return nil
+	})
+	s.NoError(err)
+	s.Len(leaves, 0)
+}
+
 func (s *AccountTreeTestSuite) randomPublicKey() models.PublicKey {
 	publicKey := models.PublicKey{}
 	err := publicKey.SetBytes(utils.RandomBytes(models.PublicKeyLength))

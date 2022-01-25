@@ -133,10 +133,22 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmen
 		IndexInBatch: 15,
 	}
 	_, err := s.api.GetMassMigrationCommitmentProof(commitmentID)
-	s.Equal(&APIError{
-		Code:    50004,
-		Message: "mass migration commitment inclusion proof could not be generated",
-	}, err)
+	s.Equal(APIErrCannotGenerateMMCommitmentProof, err)
+}
+
+func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_NotMassMigrationCommitment() {
+	err := s.storage.AddBatch(&models.Batch{
+		ID:   models.MakeUint256(2),
+		Type: batchtype.Transfer,
+	})
+	s.NoError(err)
+
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
+	_, err = s.api.GetMassMigrationCommitmentProof(commitmentID)
+	s.Equal(APIErrOnlyMassMigrationCommitmentsForProofing, err)
 }
 
 func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmentProofEndpoint(
@@ -144,7 +156,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) testGetMassMigrationCommitmen
 	witnessIndex int,
 	massMigrations []models.MassMigration,
 ) {
-	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(s.storage, s.commitments[commitmentIndex].FeeReceiver, massMigrations)
+	withdrawTree, meta, err := prepareWithdrawTreeAndMeta(s.storage, s.commitments[commitmentIndex].Meta.FeeReceiver, massMigrations)
 	s.NoError(err)
 
 	expected := dto.MassMigrationCommitmentProof{
@@ -300,7 +312,6 @@ func makeMassMigrationCommitment(
 				Type:          batchtype.MassMigration,
 				PostStateRoot: stateRoot,
 			},
-			FeeReceiver:       feeReceiver,
 			CombinedSignature: models.MakeRandomSignature(),
 			Meta:              meta,
 			WithdrawRoot:      withdrawTree.Root(),

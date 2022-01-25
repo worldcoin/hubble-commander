@@ -21,12 +21,11 @@ import (
 type GetCommitmentProofTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	api                           *API
-	storage                       *st.TestStorage
-	batch                         models.Batch
-	txCommitment                  models.TxCommitment
-	mmCommitment                  models.MMCommitment
-	commitmentProofNotFoundAPIErr *APIError
+	api          *API
+	storage      *st.TestStorage
+	batch        models.Batch
+	txCommitment models.TxCommitment
+	mmCommitment models.MMCommitment
 }
 
 func (s *GetCommitmentProofTestSuite) SetupSuite() {
@@ -66,7 +65,6 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 			Type:          batchtype.MassMigration,
 			PostStateRoot: utils.RandomHash(),
 		},
-		FeeReceiver:       1,
 		CombinedSignature: models.MakeRandomSignature(),
 		Meta: &models.MassMigrationMeta{
 			SpokeID:     1,
@@ -76,11 +74,6 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 		},
 		BodyHash:     utils.NewRandomHash(),
 		WithdrawRoot: utils.RandomHash(),
-	}
-
-	s.commitmentProofNotFoundAPIErr = &APIError{
-		Code:    50001,
-		Message: "commitment inclusion proof could not be generated",
 	}
 }
 
@@ -217,7 +210,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 		Body: &dto.CommitmentProofBody{
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.mmCommitment.CombinedSignature,
-			FeeReceiver: s.mmCommitment.FeeReceiver,
+			FeeReceiver: s.mmCommitment.Meta.FeeReceiver,
 			Transactions: []dto.MassMigrationForCommitment{
 				dto.MakeMassMigrationForCommitment(&massMigration),
 			},
@@ -227,6 +220,16 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 	commitmentProof, err := s.api.GetCommitmentProof(s.mmCommitment.ID)
 	s.NoError(err)
 	s.Equal(expectedCommitmentProof, commitmentProof)
+}
+
+func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_DepositType() {
+	s.batch.Type = batchtype.Deposit
+	err := s.storage.AddBatch(&s.batch)
+	s.NoError(err)
+
+	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
+	s.Equal(APIErrUnsupportedCommitmentTypeForProof, err)
+	s.Nil(commitmentProof)
 }
 
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
@@ -247,13 +250,13 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	s.NoError(err)
 
 	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
-	s.Equal(s.commitmentProofNotFoundAPIErr, err)
+	s.Equal(APIErrCannotGenerateCommitmentProof, err)
 	s.Nil(commitmentProof)
 }
 
 func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_NonexistentCommitment() {
 	commitmentProof, err := s.api.GetCommitmentProof(s.txCommitment.ID)
-	s.Equal(s.commitmentProofNotFoundAPIErr, err)
+	s.Equal(APIErrCannotGenerateCommitmentProof, err)
 	s.Nil(commitmentProof)
 }
 

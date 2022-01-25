@@ -287,7 +287,6 @@ func sendMMBatchWithInvalidSignature(t *testing.T, ethClient *eth.Client, batchI
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: postStateRoot,
 			},
-			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     tx.SpokeID,
@@ -379,7 +378,6 @@ func sendMMCommitment(t *testing.T, ethClient *eth.Client, encodedTxs []byte, wi
 			CommitmentBase: models.CommitmentBase{
 				PostStateRoot: utils.RandomHash(),
 			},
-			FeeReceiver:       0,
 			CombinedSignature: models.Signature{},
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     1,
