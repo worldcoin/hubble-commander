@@ -59,7 +59,6 @@ func TestWithdrawProcess(t *testing.T) {
 
 	token, tokenContract := getDeployedToken(t, ethClient)
 	approveToken(t, ethClient, token.Contract)
-	transactor.GasLimit = 1_000_000
 
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
 	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
@@ -104,6 +103,8 @@ func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
 
 	account, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	require.NoError(t, err)
+
+	account.GasLimit = 1_000_000
 
 	return account
 }
