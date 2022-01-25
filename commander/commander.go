@@ -60,7 +60,6 @@ type Commander struct {
 	stateMutex        sync.Mutex
 	rollupLoopRunning bool
 	invalidBatchID    *models.Uint256
-	txsTracker        *eth.TxsTracker
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -130,7 +129,7 @@ func (c *Commander) Start() (err error) {
 		return nil
 	})
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
-	c.startWorker("Tracking Txs", func() error { return c.trackingTxs() })
+	c.startWorker("Tracking Txs", func() error { return c.txsTracking() })
 
 	go c.handleWorkerError()
 

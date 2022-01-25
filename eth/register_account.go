@@ -43,6 +43,7 @@ func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Tr
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	a.registrationTxsTracker.CheckTransaction(tx)
+	a.txsHashesChan <- tx.Hash()
+
 	return tx, nil
 }

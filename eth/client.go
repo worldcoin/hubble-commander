@@ -17,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
@@ -54,6 +55,7 @@ type Client struct {
 	blocksToFinalise       *int64
 	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
+	TxsHashesChan          chan common.Hash
 
 	*AccountManager
 }
@@ -79,10 +81,13 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
+	txsHashesChan := make(chan common.Hash)
+
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+		TxsHashesChan:                    txsHashesChan,
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -113,6 +118,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
+		TxsHashesChan: txsHashesChan,
 	}, nil
 }
 
