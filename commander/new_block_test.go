@@ -148,7 +148,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
-	s.cmd.startWorker("", func() error {
+	s.cmd.startWorker("Test New Block Loop", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
 		return nil

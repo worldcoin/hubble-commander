@@ -53,10 +53,9 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
+	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 
 	s.setupCommander()
-
-	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 }
 
 func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
@@ -73,19 +72,27 @@ func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_WithdrawsStakesAfterBat
 	s.submitTransferBatchInTransaction(&s.transfer)
 	s.waitForLatestBlockSync()
 
-	s.Eventually(s.getStakeWithdrawSendingCondition(0), time.Second, time.Millisecond*50,
-		"timeout when waiting for StakeWithdrawEvent")
+	s.Eventually(
+		s.stakeWithdrawalMinedAfterBlock(0),
+		time.Second,
+		time.Millisecond*50,
+		"timeout when waiting for StakeWithdrawEvent",
+	)
 }
 
-func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesntSendStakeWithdrawalsTwiceAfterRunningCommanderFromScratch() {
+func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesNotSendStakeWithdrawalsTwiceAfterRunningCommanderFromScratch() {
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
 	s.submitTransferBatchInTransaction(&s.transfer)
 	s.waitForLatestBlockSync()
 
-	s.Eventually(s.getStakeWithdrawSendingCondition(0), time.Second, time.Millisecond*50,
-		"timeout when waiting for StakeWithdrawEvent")
+	s.Eventually(
+		s.stakeWithdrawalMinedAfterBlock(0),
+		time.Second,
+		time.Millisecond*50,
+		"timeout when waiting for StakeWithdrawEvent",
+	)
 
 	stopCommander(s.cmd)
 
@@ -98,8 +105,12 @@ func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesntSendStakeWithdraw
 	s.startBlockLoop()
 	s.waitForLatestBlockSync()
 
-	s.Never(s.getStakeWithdrawSendingCondition(*startBlock+1), time.Second, time.Millisecond*50,
-		"StakeWithdraw must not be sent after restarting the commander")
+	s.Never(
+		s.stakeWithdrawalMinedAfterBlock(*startBlock+1),
+		time.Second,
+		time.Millisecond*50,
+		"StakeWithdraw must not be sent after restarting the commander",
+	)
 }
 
 func (s *SyncStakeWithdrawalsTestSuite) submitTransferBatchInTransaction(tx *models.Transfer) {
@@ -134,7 +145,7 @@ func (s *SyncStakeWithdrawalsTestSuite) setAccountsAndChainState() {
 }
 
 func (s *SyncStakeWithdrawalsTestSuite) startBlockLoop() {
-	s.cmd.startWorker("", func() error {
+	s.cmd.startWorker("Test New Block Loop", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
 		return nil
@@ -152,7 +163,7 @@ func (s *SyncStakeWithdrawalsTestSuite) waitForLatestBlockSync() {
 	}, time.Hour, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
-func (s *SyncStakeWithdrawalsTestSuite) getStakeWithdrawSendingCondition(startBlock uint64) func() bool {
+func (s *SyncStakeWithdrawalsTestSuite) stakeWithdrawalMinedAfterBlock(startBlock uint64) func() bool {
 	return func() bool {
 		it := &rollupContract.StakeWithdrawIterator{}
 		latestBlock, err := s.client.GetLatestBlockNumber()
@@ -166,9 +177,7 @@ func (s *SyncStakeWithdrawalsTestSuite) getStakeWithdrawSendingCondition(startBl
 		s.NoError(err)
 
 		for it.Next() {
-			if it.Event.Committed == s.client.Blockchain.GetAccount().From {
-				return true
-			}
+			return true
 		}
 		return false
 	}
