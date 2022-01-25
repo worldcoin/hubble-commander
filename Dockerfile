@@ -35,9 +35,9 @@ ENV SSL_CERT_FILE="/ca-certificates.crt"
 COPY --from=build-env --chown=0:10001 --chmod=040 /src/empty-file /commander-config.yaml
 
 # Create badger data dir
-COPY --from=build-env --chown=10001:0 --chmod=700 /var/empty /badger
-VOLUME ["/badger"]
-ENV HUBBLE_BADGER_PATH=/badger
+COPY --from=build-env --chown=10001:0 --chmod=700 /var/empty /data
+VOLUME ["/data"]
+ENV HUBBLE_BADGER_PATH=/data
 
 # Configure logging
 ENV HUBBLE_LOG_FORMAT=json
