@@ -125,7 +125,7 @@ func setupViper(configName string) {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	err = viper.ReadInConfig()
+	err := viper.ReadInConfig()
 	if err != nil {
 		if strings.Contains(err.Error(), "Not Found in") {
 			log.Warn(err)
