@@ -64,7 +64,6 @@ func getMMCommitments(count int, batchID models.Uint256) []models.CommitmentWith
 					Amount:      models.MakeUint256(3),
 					FeeReceiver: 1,
 				},
-				FeeReceiver:       1,
 				CombinedSignature: models.MakeRandomSignature(),
 				WithdrawRoot:      utils.RandomHash(),
 			},

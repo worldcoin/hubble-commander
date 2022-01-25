@@ -30,7 +30,6 @@ func (s *GetMMBatchesTestSuite) SetupSuite() {
 				},
 				Type: batchtype.MassMigration,
 			},
-			FeeReceiver:       0,
 			CombinedSignature: *mockSignature(s.Assertions),
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     1,
