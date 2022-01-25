@@ -64,10 +64,10 @@ func (s *PendingStakeWithdrawalTestSuite) TestGetReadyStateWithdrawals_AddAndGet
 	}
 
 	expectedStake := stakes[1]
-	stStakes, err := s.storage.GetReadyStateWithdrawals(expectedStake.FinalisationBlock)
+	actualStakes, err := s.storage.GetReadyStateWithdrawals(expectedStake.FinalisationBlock)
 	s.NoError(err)
-	s.Len(stStakes, 1)
-	s.Equal(expectedStake, stStakes[0])
+	s.Len(actualStakes, 1)
+	s.Equal(expectedStake, actualStakes[0])
 }
 
 func (s *PendingStakeWithdrawalTestSuite) TestGetReadyStateWithdrawals_NonexistentStake() {
