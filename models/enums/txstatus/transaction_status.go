@@ -3,23 +3,23 @@ package txstatus
 import (
 	"encoding/json"
 
-	"github.com/Worldcoin/hubble-commander/models/enums/commitmentstatus"
+	cs "github.com/Worldcoin/hubble-commander/models/enums/commitmentstatus"
 	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type TransactionStatus uint
 
 const (
-	Pending                     = TransactionStatus(commitmentstatus.Pending)
-	Mined                       = TransactionStatus(commitmentstatus.Mined)
-	Finalised                   = TransactionStatus(commitmentstatus.Finalised) // nolint:misspell
+	Pending                     = TransactionStatus(cs.Pending)
+	Mined                       = TransactionStatus(cs.Mined)
+	Finalised                   = TransactionStatus(cs.Finalised) // nolint:misspell
 	Error     TransactionStatus = 5000
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
-	Pending:   commitmentstatus.CommitmentStatuses[commitmentstatus.Pending],
-	Mined:     commitmentstatus.CommitmentStatuses[commitmentstatus.Mined],
-	Finalised: commitmentstatus.CommitmentStatuses[commitmentstatus.Finalised], // nolint:misspell
+	Pending:   cs.CommitmentStatuses[cs.Pending],
+	Mined:     cs.CommitmentStatuses[cs.Mined],
+	Finalised: cs.CommitmentStatuses[cs.Finalised], // nolint:misspell
 	Error:     "ERROR",
 }
 

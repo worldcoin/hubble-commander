@@ -3,23 +3,23 @@ package commitmentstatus
 import (
 	"encoding/json"
 
-	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
+	bs "github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type CommitmentStatus uint
 
 const (
-	Pending   = CommitmentStatus(batchstatus.Pending) // Not in use + Will be replaced in the future in favor or `Submitted`
-	Mined     = CommitmentStatus(batchstatus.Mined)
-	Finalised = CommitmentStatus(batchstatus.Finalised) // nolint:misspell
+	Pending   = CommitmentStatus(bs.Pending) // Not in use + Will be replaced in the future in favor or `Submitted`
+	Mined     = CommitmentStatus(bs.Mined)
+	Finalised = CommitmentStatus(bs.Finalised) // nolint:misspell
 
 )
 
 var CommitmentStatuses = map[CommitmentStatus]string{
-	Pending:   "PENDING",
-	Mined:     "MINED",
-	Finalised: "FINALISED", // nolint:misspell
+	Pending:   bs.BatchStatuses[bs.Pending],
+	Mined:     bs.BatchStatuses[bs.Mined],
+	Finalised: bs.BatchStatuses[bs.Finalised], // nolint:misspell
 }
 
 func (s CommitmentStatus) Ref() *CommitmentStatus {
