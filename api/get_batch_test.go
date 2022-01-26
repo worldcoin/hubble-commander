@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -274,9 +275,10 @@ func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitment
 	s.Equal(s.batch.Hash, result.Hash)
 	s.Equal(s.batch.Type, result.Type)
 	s.Equal(s.batch.TransactionHash, result.TransactionHash)
+	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
+	s.Equal(batchstatus.Mined, result.Status)
 	s.Equal(*s.batch.FinalisationBlock-config.DefaultBlocksToFinalise, result.SubmissionBlock)
 	s.Equal(s.batch.FinalisationBlock, result.FinalisationBlock)
-	s.Equal(s.batch.SubmissionTime, result.SubmissionTime)
 }
 
 func (s *GetBatchTestSuite) validateTxCommitment(result *dto.BatchWithRootAndCommitments) {
