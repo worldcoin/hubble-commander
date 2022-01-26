@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/commitmentstatus"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -115,7 +115,7 @@ func (a *API) createTxCommitmentDTO(
 	commitment models.Commitment,
 	batch *models.Batch,
 	transactions interface{},
-	status *commitmentstatus.CommitmentStatus,
+	status *batchstatus.BatchStatus,
 ) (interface{}, error) {
 	stateLeaf, err := a.storage.StateTree.Leaf(commitment.ToTxCommitment().FeeReceiver)
 	if err != nil {
@@ -127,10 +127,10 @@ func (a *API) createTxCommitmentDTO(
 	return commitmentDTO, nil
 }
 
-func calculateCommitmentStatus(latestBlockNumber, finalisationBlock uint32) *commitmentstatus.CommitmentStatus {
+func calculateCommitmentStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
 	if latestBlockNumber < finalisationBlock {
-		return commitmentstatus.Mined.Ref()
+		return batchstatus.Mined.Ref()
 	}
 
-	return commitmentstatus.Finalised.Ref()
+	return batchstatus.Finalised.Ref()
 }
