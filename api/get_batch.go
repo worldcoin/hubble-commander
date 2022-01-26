@@ -63,7 +63,7 @@ func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWi
 		return a.createBatchWithCommitments(batch, submissionBlock, batchstatus.Finalised.Ref(), nil)
 	}
 
-	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), batch)
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
@@ -154,8 +154,12 @@ func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
 	return *batch.FinalisationBlock - uint32(*blocks), nil
 }
 
-func calculateBatchStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
-	if latestBlockNumber < finalisationBlock {
+func calculateBatchStatus(latestBlockNumber uint32, batch *models.Batch) *batchstatus.BatchStatus {
+	if batch.FinalisationBlock == nil {
+		return batchstatus.Submitted.Ref()
+	}
+
+	if latestBlockNumber < *batch.FinalisationBlock {
 		return batchstatus.Mined.Ref()
 	}
 
