@@ -17,13 +17,14 @@ import (
 )
 
 type API struct {
-	cfg                 *config.APIConfig
-	storage             *st.Storage
-	client              *eth.Client
-	mockSignature       models.Signature
-	commanderMetrics    *metrics.CommanderMetrics
-	disableSignatures   bool
-	enableBatchCreation func(enable bool)
+	cfg                     *config.APIConfig
+	storage                 *st.Storage
+	client                  *eth.Client
+	mockSignature           models.Signature
+	commanderMetrics        *metrics.CommanderMetrics
+	disableSignatures       bool
+	enableBatchCreation     func(enable bool)
+	isAcceptingTransactions bool
 }
 
 func NewServer(
@@ -58,12 +59,13 @@ func getAPIServer(
 	enableBatchCreation func(enable bool),
 ) (*rpc.Server, error) {
 	api := API{
-		cfg:                 cfg,
-		storage:             storage,
-		client:              client,
-		commanderMetrics:    commanderMetrics,
-		disableSignatures:   disableSignatures,
-		enableBatchCreation: enableBatchCreation,
+		cfg:                     cfg,
+		storage:                 storage,
+		client:                  client,
+		commanderMetrics:        commanderMetrics,
+		disableSignatures:       disableSignatures,
+		enableBatchCreation:     enableBatchCreation,
+		isAcceptingTransactions: true,
 	}
 	if err := api.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")
