@@ -104,6 +104,8 @@ func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
 	account, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	require.NoError(t, err)
 
+	account.GasLimit = 1_000_000
+
 	return account
 }
 

@@ -109,6 +109,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Contract.Bytes(), nil
 	case *models.RegisteredSpoke:
 		return nil, errors.WithStack(errPassedByPointer)
+	case models.PendingStakeWithdrawal:
+		return v.Bytes(), nil
+	case *models.PendingStakeWithdrawal:
+		return nil, errors.WithStack(errPassedByPointer)
 	case bh.KeyList:
 		return EncodeKeyList(&v)
 	default:
@@ -168,6 +172,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.RegisteredSpoke:
 		v.Contract.SetBytes(data)
 		return nil
+	case *models.PendingStakeWithdrawal:
+		return v.SetBytes(data)
 	case *bh.KeyList:
 		return DecodeKeyList(data, v)
 	default:

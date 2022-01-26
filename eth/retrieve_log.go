@@ -18,6 +18,7 @@ const (
 	DepositQueuedEvent          = "DepositQueued"
 	DepositSubTreeReadyEvent    = "DepositSubTreeReady"
 	DepositsFinalisedEvent      = "DepositsFinalised"
+	StakeWithdrawEvent          = "StakeWithdraw"
 )
 
 var eventTopics = map[string]common.Hash{
@@ -29,6 +30,7 @@ var eventTopics = map[string]common.Hash{
 	DepositQueuedEvent:          crypto.Keccak256Hash([]byte("DepositQueued(uint256,uint256,uint256,uint256,uint256)")),
 	DepositSubTreeReadyEvent:    crypto.Keccak256Hash([]byte("DepositSubTreeReady(uint256,bytes32)")),
 	DepositsFinalisedEvent:      crypto.Keccak256Hash([]byte("DepositsFinalised(uint256,bytes32,uint256)")),
+	StakeWithdrawEvent:          crypto.Keccak256Hash([]byte("StakeWithdraw(address,uint256)")),
 }
 
 var (
