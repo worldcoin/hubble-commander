@@ -41,7 +41,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 		return nil, err
 	}
 
-	status := calculateCommitmentStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
@@ -125,12 +125,4 @@ func (a *API) createTxCommitmentDTO(
 	commitmentDTO := dto.NewTxCommitment(commitment.ToTxCommitment(), stateLeaf.TokenID, status, batch.SubmissionTime, transactions)
 
 	return commitmentDTO, nil
-}
-
-func calculateCommitmentStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
-	if latestBlockNumber < finalisationBlock {
-		return batchstatus.Mined.Ref()
-	}
-
-	return batchstatus.Finalised.Ref()
 }
