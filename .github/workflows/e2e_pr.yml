@@ -35,7 +35,7 @@ jobs:
           HUBBLE_E2E=in-process go test -v -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
       - name: Cleanup
         # Cleanup this folder because it confuses codecov
-        run: rm -rf e2e/geth-data/geth
+        run: sudo rm -rf e2e/geth-data/geth
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v2.1.0
         with:
