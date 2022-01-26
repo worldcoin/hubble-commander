@@ -275,21 +275,35 @@ Body: `stored.TxCommitmentBody`
 
 ```go
 type TxCommitmentBody struct {
-    FeeReceiver       uint32
-    CombinedSignature models.Signature
-    BodyHash          *common.Hash
+FeeReceiver       uint32
+CombinedSignature models.Signature
+BodyHash          *common.Hash
+}
+```
+
+#### MassMigration Commitment
+
+Body: `stored.MMCommitmentBody`
+
+```go
+type MMCommitmentBody struct {
+CombinedSignature models.Signature
+BodyHash          *common.Hash
+Meta              models.MassMigrationMeta
+WithdrawRoot      common.Hash
 }
 ```
 
 #### Deposit Commitment
+
 - When Deposit batch is created data is moved from **Pending Deposit Subtree** to **Stored Commitment**
 
 Body: `stored.DepositCommitmentBody`
 
 ```go
 type DepositCommitmentBody struct {
-    SubtreeID   Uint256
-    SubtreeRoot common.Hash
+SubtreeID   Uint256
+SubtreeRoot common.Hash
     Deposits    []models.PendingDeposit
 }
 ```
