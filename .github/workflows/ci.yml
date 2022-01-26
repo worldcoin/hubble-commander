@@ -43,10 +43,10 @@ jobs:
         uses: codecov/codecov-action@v2.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
-          flags: test
+          files: ./coverage.out
+          flags: ${{ github.job }}
           fail_ci_if_error: true
           verbose: true
-
 
   test-on-hardhat:
     name: Run tests using hardhat
@@ -93,7 +93,8 @@ jobs:
         uses: codecov/codecov-action@v2.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
-          flags: test
+          files: ./coverage.out
+          flags: ${{ github.job }}
           fail_ci_if_error: true
           verbose: true
 
