@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type RPCConnection struct {
@@ -34,7 +35,9 @@ func NewRPCConnection(cfg *config.EthereumConfig) (*RPCConnection, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	log.Info("Using key ", account.From)
 
+	log.Info("Connecting to Ethereum node on ", cfg.RPCURL)
 	rpcClient, err := rpc.Dial(cfg.RPCURL)
 	if err != nil {
 		return nil, errors.WithStack(err)
