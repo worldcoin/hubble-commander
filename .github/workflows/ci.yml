@@ -1,6 +1,9 @@
 name: CI
 on: [ push ]
 
+env:
+  HUBBLE_BOOTSTRAP_GENESIS_PATH: ${{ env.GITHUB_WORKSPACE }}/genesis.yaml
+
 jobs:
   lint:
     name: Lint
