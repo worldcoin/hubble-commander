@@ -115,7 +115,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
-	s.Equal(txstatus.InBatch, *status)
+	s.Equal(txstatus.Mined, *status)
 }
 
 // nolint:misspell
