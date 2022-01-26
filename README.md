@@ -1,5 +1,7 @@
 # Hubble Commander
 
+![lines of code](https://img.shields.io/tokei/lines/github/worldcoin/hubble-commander)
+[![codecov](https://codecov.io/gh/worldcoin/hubble-commander/branch/main/graph/badge.svg?token=WBPZ9U4TTO)](https://codecov.io/gh/worldcoin/hubble-commander)
 [![CI](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/ci.yml)
 [![E2E Test](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml/badge.svg)](https://github.com/worldcoin/hubble-commander/actions/workflows/e2e.yml)
 
