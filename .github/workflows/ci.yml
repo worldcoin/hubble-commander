@@ -38,7 +38,15 @@ jobs:
       - name: Build
         run: make build
       - name: Test
-        run: make test
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./... 
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          flags: test
+          fail_ci_if_error: true
+          verbose: true
+
 
   test-on-hardhat:
     name: Run tests using hardhat
@@ -80,7 +88,14 @@ jobs:
         run: npm run keyless:deploy
         working-directory: hubble-contracts
       - name: Test
-        run: make test-hardhat
+        run:  go test -v -coverprofile=coverage.out -covermode=atomic -tags hardhat ./bls/hardhat
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          flags: test
+          fail_ci_if_error: true
+          verbose: true
 
   generate:
     name: Generate

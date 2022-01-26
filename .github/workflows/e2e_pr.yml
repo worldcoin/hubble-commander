@@ -32,7 +32,15 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make test-e2e-in-process
+          HUBBLE_E2E=in-process go test -v -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          flags: test
+          fail_ci_if_error: true
+          verbose: true
+
   e2e-benchmarks-1:
     name: Run E2E benchmarks (Transfers and C2Ts)
     runs-on: ubuntu-20.04
@@ -56,6 +64,7 @@ jobs:
         run: |
           make setup-geth > /dev/null &
           make bench-e2e-ci-part-1
+
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
     runs-on: ubuntu-20.04
@@ -79,6 +88,7 @@ jobs:
         run: |
           make setup-geth > /dev/null &
           make bench-e2e-ci-part-2
+
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
     runs-on: ubuntu-20.04
