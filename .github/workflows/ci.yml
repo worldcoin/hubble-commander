@@ -39,6 +39,9 @@ jobs:
         run: make build
       - name: Test
         run: go test -v -coverprofile=coverage.out -covermode=atomic ./... 
+      - name: Cleanup
+        # Cleanup this folder because it confuses codecov
+        run: rm -rf e2e/geth-data/geth
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v2.1.0
         with:
@@ -67,7 +70,7 @@ jobs:
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
+          restore-keys: | 
             ${{ runner.os }}-go-
       - name: Setup Node
         uses: actions/setup-node@v2
