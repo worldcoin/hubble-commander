@@ -26,12 +26,12 @@ type TxCommitment struct {
 	ID                 CommitmentID
 	Type               batchtype.BatchType
 	PostStateRoot      common.Hash
-	LeafHash           common.Hash
+	LeafHash           *common.Hash
 	TokenID            models.Uint256
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
 	Status             batchstatus.BatchStatus
-	BatchTime          models.Timestamp
+	BatchTime          *models.Timestamp
 	Transactions       interface{}
 }
 
@@ -39,10 +39,10 @@ type MMCommitment struct {
 	ID                CommitmentID
 	Type              batchtype.BatchType
 	PostStateRoot     common.Hash
-	LeafHash          common.Hash
+	LeafHash          *common.Hash
 	CombinedSignature models.Signature
 	Status            batchstatus.BatchStatus
-	BatchTime         models.Timestamp
+	BatchTime         *models.Timestamp
 	WithdrawRoot      common.Hash
 	Meta              MassMigrationMeta
 	Transactions      interface{}
@@ -52,9 +52,9 @@ type DepositCommitment struct {
 	ID            CommitmentID
 	Type          batchtype.BatchType
 	PostStateRoot common.Hash
-	LeafHash      common.Hash
+	LeafHash      *common.Hash
 	Status        batchstatus.BatchStatus
-	BatchTime     models.Timestamp
+	BatchTime     *models.Timestamp
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
 	Deposits      []PendingDeposit
@@ -71,12 +71,12 @@ func NewTxCommitment(
 		ID:                 *NewCommitmentID(&commitment.ID),
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           commitment.LeafHash(),
+		LeafHash:           leafHashOrNil(commitment, commitment.GetBodyHash()),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
 		Status:             *status,
-		BatchTime:          *batchTime,
+		BatchTime:          batchTime,
 		Transactions:       transactions,
 	}
 }
@@ -91,10 +91,10 @@ func NewMMCommitment(
 		ID:                *NewCommitmentID(&commitment.ID),
 		Type:              commitment.Type,
 		PostStateRoot:     commitment.PostStateRoot,
-		LeafHash:          commitment.LeafHash(),
+		LeafHash:          leafHashOrNil(commitment, commitment.GetBodyHash()),
 		CombinedSignature: commitment.CombinedSignature,
 		Status:            *status,
-		BatchTime:         *batchTime,
+		BatchTime:         batchTime,
 		WithdrawRoot:      commitment.WithdrawRoot,
 		Meta: MassMigrationMeta{
 			SpokeID:            commitment.Meta.SpokeID,
@@ -115,11 +115,20 @@ func NewDepositCommitment(
 		ID:            *NewCommitmentID(&commitment.ID),
 		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
-		LeafHash:      commitment.LeafHash(),
+		LeafHash:      leafHashOrNil(commitment, commitment.GetBodyHash()),
 		Status:        *status,
-		BatchTime:     *batchTime,
+		BatchTime:     batchTime,
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
 		Deposits:      MakePendingDeposits(commitment.Deposits),
 	}
+}
+
+func leafHashOrNil(commitment models.Commitment, bodyHash *common.Hash) *common.Hash {
+	if bodyHash == nil {
+		return nil
+	}
+
+	leafHash := commitment.LeafHash()
+	return &leafHash
 }
