@@ -275,9 +275,9 @@ Body: `stored.TxCommitmentBody`
 
 ```go
 type TxCommitmentBody struct {
-FeeReceiver       uint32
-CombinedSignature models.Signature
-BodyHash          *common.Hash
+    FeeReceiver       uint32
+    CombinedSignature models.Signature
+    BodyHash          *common.Hash
 }
 ```
 
@@ -287,10 +287,10 @@ Body: `stored.MMCommitmentBody`
 
 ```go
 type MMCommitmentBody struct {
-CombinedSignature models.Signature
-BodyHash          *common.Hash
-Meta              models.MassMigrationMeta
-WithdrawRoot      common.Hash
+    CombinedSignature models.Signature
+    BodyHash          *common.Hash
+    Meta              models.MassMigrationMeta
+    WithdrawRoot      common.Hash
 }
 ```
 
@@ -302,8 +302,8 @@ Body: `stored.DepositCommitmentBody`
 
 ```go
 type DepositCommitmentBody struct {
-SubtreeID   Uint256
-SubtreeRoot common.Hash
+    SubtreeID   Uint256
+    SubtreeRoot common.Hash
     Deposits    []models.PendingDeposit
 }
 ```
