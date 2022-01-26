@@ -269,7 +269,7 @@ type CommitmentID struct {
 }
 ```
 
-#### Transaction Commitment
+#### Transfer / Create2Transfer Commitment
 
 Body: `stored.TxCommitmentBody`
 
@@ -291,6 +291,13 @@ type MMCommitmentBody struct {
     BodyHash          *common.Hash
     Meta              models.MassMigrationMeta
     WithdrawRoot      common.Hash
+}
+
+type MassMigrationMeta struct {
+    SpokeID     uint32
+    TokenID     Uint256
+    Amount      Uint256
+    FeeReceiver uint32
 }
 ```
 
