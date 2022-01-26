@@ -38,7 +38,9 @@ jobs:
       - name: Build
         run: make build
       - name: Test
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./... 
+        env:
+          CI_FLAGS: -coverprofile=coverage.out -covermode=atomic
+        run: make test
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v2.1.0
         with:
@@ -88,7 +90,9 @@ jobs:
         run: npm run keyless:deploy
         working-directory: hubble-contracts
       - name: Test
-        run:  go test -v -coverprofile=coverage.out -covermode=atomic -tags hardhat ./bls/hardhat
+        env:
+          CI_FLAGS: -coverprofile=coverage.out -covermode=atomic
+        run: make test-hardhat
       - name: Submit to codecov.io
         uses: codecov/codecov-action@v2.1.0
         with:

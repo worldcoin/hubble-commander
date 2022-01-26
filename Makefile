@@ -53,13 +53,13 @@ lint:
 	golangci-lint run --build-tags hardhat,e2e --fix ./...
 
 test:
-	go test -v ./...
+	go test -v $(CI_FLAGS) ./...
 
 test-hardhat:
-	go test -v -tags hardhat ./bls/hardhat
+	go test -v -tags hardhat $(CI_FLAGS) ./bls/hardhat
 
 test-e2e-in-process: clean-testcache
-	HUBBLE_E2E=in-process go test -v -tags e2e ./e2e
+	HUBBLE_E2E=in-process go test -v -tags e2e $(CI_FLAGS) ./e2e
 
 test-e2e-locally: clean-testcache
 	HUBBLE_E2E=local go test -v -tags e2e -run=^$(TEST)$$ ./e2e
