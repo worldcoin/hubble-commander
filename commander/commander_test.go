@@ -22,9 +22,6 @@ type CommanderTestSuite struct {
 
 func (s *CommanderTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-
-	// Set the genesis used for testing
-	os.Setenv("HUBBLE_BOOTSTRAP_GENESIS_PATH", "../genesis.yaml")
 }
 
 func (s *CommanderTestSuite) SetupTest() {
