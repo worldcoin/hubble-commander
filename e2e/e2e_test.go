@@ -246,7 +246,7 @@ func waitForTxToBeIncludedInBatch(t *testing.T, client jsonrpc.RPCClient, txHash
 		var txReceipt dto.TransactionReceipt
 		err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
 		require.NoError(t, err)
-		return txReceipt.Status == txstatus.InBatch
+		return txReceipt.Status == txstatus.Mined
 	}, 30*time.Second, testutils.TryInterval)
 }
 
@@ -320,13 +320,13 @@ func testMaxBatchDelay(t *testing.T, client jsonrpc.RPCClient, senderWallet bls.
 	var txReceipt dto.TransactionReceipt
 	err := client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
 	require.NoError(t, err)
-	require.NotEqual(t, txReceipt.Status, txstatus.InBatch)
+	require.NotEqual(t, txReceipt.Status, txstatus.Mined)
 
 	log.Warn("txn is not yet in batch. waiting..")
 
 	require.Eventually(t, func() bool {
 		err = client.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txnHash})
 		require.NoError(t, err)
-		return txReceipt.Status == txstatus.InBatch
+		return txReceipt.Status == txstatus.Mined
 	}, 10*time.Second, testutils.TryInterval)
 }

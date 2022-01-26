@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
@@ -59,37 +60,41 @@ func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWi
 	}
 
 	if batch.Type == batchtype.Genesis {
-		return a.createBatchWithCommitments(batch, submissionBlock, nil)
+		return a.createBatchWithCommitments(batch, submissionBlock, batchstatus.Finalised.Ref(), nil)
 	}
+
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.createBatchWithCommitments(batch, submissionBlock, commitments)
+	return a.createBatchWithCommitments(batch, submissionBlock, status, commitments)
 }
 
 func (a *API) createBatchWithCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
+	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		return a.createBatchWithTxCommitments(batch, submissionBlock, commitments)
+		return a.createBatchWithTxCommitments(batch, submissionBlock, status, commitments)
 	case batchtype.MassMigration:
-		return a.createBatchWithMMCommitments(batch, submissionBlock, commitments)
+		return a.createBatchWithMMCommitments(batch, submissionBlock, status, commitments)
 	case batchtype.Deposit:
-		return a.createBatchWithDepositCommitments(batch, submissionBlock, commitments)
+		return a.createBatchWithDepositCommitments(batch, submissionBlock, status, commitments)
 	default:
-		return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, nil), nil
+		return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, nil), nil
 	}
 }
 
 func (a *API) createBatchWithTxCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
+	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.BatchTxCommitment, 0, len(commitments))
@@ -104,12 +109,13 @@ func (a *API) createBatchWithTxCommitments(
 			stateLeaf.TokenID,
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithMMCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
+	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.BatchMMCommitment, 0, len(commitments))
@@ -118,12 +124,13 @@ func (a *API) createBatchWithMMCommitments(
 			commitments[i].ToMMCommitment(),
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithDepositCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
+	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	batchCommitments := make([]dto.BatchDepositCommitment, 0, len(commitments))
@@ -132,7 +139,7 @@ func (a *API) createBatchWithDepositCommitments(
 			commitments[i].ToDepositCommitment(),
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, batchCommitments), nil
+	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
 }
 
 func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
@@ -145,4 +152,12 @@ func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
 		return 0, err
 	}
 	return *batch.FinalisationBlock - uint32(*blocks), nil
+}
+
+func calculateBatchStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
+	if latestBlockNumber < finalisationBlock {
+		return batchstatus.Mined.Ref()
+	}
+
+	return batchstatus.Finalised.Ref()
 }

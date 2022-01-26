@@ -2,6 +2,7 @@ package dto
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -13,6 +14,7 @@ type Batch struct {
 	TransactionHash   common.Hash
 	SubmissionBlock   uint32
 	SubmissionTime    *models.Timestamp
+	Status            batchstatus.BatchStatus
 	FinalisationBlock *uint32
 }
 
@@ -22,7 +24,7 @@ type BatchWithRootAndCommitments struct {
 	Commitments     interface{}
 }
 
-func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
+func MakeBatch(batch *models.Batch, submissionBlock uint32, status *batchstatus.BatchStatus) *Batch {
 	return &Batch{
 		ID:                batch.ID,
 		Hash:              batch.Hash,
@@ -30,6 +32,7 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 		TransactionHash:   batch.TransactionHash,
 		SubmissionBlock:   submissionBlock,
 		SubmissionTime:    batch.SubmissionTime,
+		Status:            *status,
 		FinalisationBlock: batch.FinalisationBlock,
 	}
 }
@@ -37,10 +40,11 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32) *Batch {
 func MakeBatchWithRootAndCommitments(
 	batch *models.Batch,
 	submissionBlock uint32,
+	status *batchstatus.BatchStatus,
 	commitments interface{},
 ) *BatchWithRootAndCommitments {
 	batchDTO := &BatchWithRootAndCommitments{
-		Batch:       *MakeBatch(batch, submissionBlock),
+		Batch:       *MakeBatch(batch, submissionBlock, status),
 		Commitments: commitments,
 	}
 

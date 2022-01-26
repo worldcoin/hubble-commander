@@ -3,22 +3,23 @@ package txstatus
 import (
 	"encoding/json"
 
+	bs "github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	enumerr "github.com/Worldcoin/hubble-commander/models/enums/errors"
 )
 
 type TransactionStatus uint
 
 const (
-	Pending TransactionStatus = iota + 1000
-	InBatch
-	Finalised                   // nolint:misspell
+	Pending                     = TransactionStatus(bs.Pending)
+	Mined                       = TransactionStatus(bs.Mined)
+	Finalised                   = TransactionStatus(bs.Finalised) // nolint:misspell
 	Error     TransactionStatus = 5000
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
-	Pending:   "PENDING",
-	InBatch:   "IN_BATCH",
-	Finalised: "FINALISED", // nolint:misspell
+	Pending:   bs.BatchStatuses[bs.Pending],
+	Mined:     bs.BatchStatuses[bs.Mined],
+	Finalised: bs.BatchStatuses[bs.Finalised], // nolint:misspell
 	Error:     "ERROR",
 }
 
