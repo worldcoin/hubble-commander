@@ -222,3 +222,58 @@ Run E2E benchmarks:
 ```shell
 make bench-e2e-in-process
 ```
+
+## Running locally
+
+**Step 1.** Build the Hubble commander container image:
+
+```
+docker build --tag hubble .
+```
+
+**Step 2.** Start a fresh Geth testnet instance (keep running in background).
+
+```
+docker run --rm -t -p 8545-8546:8545-8546 ethereum/client-go:stable \
+    --dev --dev.period=1 --http --http.addr=0.0.0.0 --ws --ws.addr=0.0.0.0
+```
+
+**Step 3.** Fund the Hubble deployer/operator Ethereum account.
+
+```
+docker run --rm -t ethereum/client-go:stable \
+    attach ws://docker.for.mac.localhost:8546 \
+    --exec 'eth.sendTransaction({ 
+        from:  eth.accounts[0],
+        to:    "0xCd2a3d9f938e13Cd947eC05ABC7fe734df8DD826", 
+        value: web3.toWei(1000, "ether") 
+    })'
+```
+
+**Step 4.** Deploy contracts on Ethereum node using `genesis.yaml` and generate `chain-spec.yaml`.
+
+```
+touch chain-spec.yaml
+docker run --rm -ti \
+    -e HUBBLE_LOG_LEVEL=debug -e HUBBLE_LOG_FORMAT=text \
+    -e HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546 \
+    -e HUBBLE_ETHEREUM_CHAIN_ID=1337 \
+    -e HUBBLE_ETHEREUM_PRIVATE_KEY=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
+    -v $(pwd)/genesis.yaml:/genesis.yaml:ro \
+    -v $(pwd)/chain-spec.yaml:/chain-spec.yaml:rw \
+    hubble deploy
+```
+
+**Step 5.** Run Hubble commander on Ethereum node with `chain-spec.yaml`
+
+```
+docker run --rm -ti -p 8080:8080 \
+    -e HUBBLE_LOG_LEVEL=debug -e HUBBLE_LOG_FORMAT=text \
+    -e HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546 \
+    -e HUBBLE_ETHEREUM_CHAIN_ID=1337 \
+    -e HUBBLE_ETHEREUM_PRIVATE_KEY=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
+    -e HUBBLE_API_AUTHENTICATION_KEY=89ca4560ec5925f271359196972d762d \
+    -e HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=/chain-spec.yaml \
+    -v $(pwd)/chain-spec.yaml:/chain-spec.yaml:ro \
+    hubble
+```
