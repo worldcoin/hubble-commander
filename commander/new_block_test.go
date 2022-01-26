@@ -50,7 +50,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, nil)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
@@ -148,7 +148,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_SyncsAccountsAndBatchesAndToken
 }
 
 func (s *NewBlockLoopTestSuite) startBlockLoop() {
-	s.cmd.startWorker("", func() error {
+	s.cmd.startWorker("Test New Block Loop", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
 		return nil
@@ -201,13 +201,16 @@ func (s *NewBlockLoopTestSuite) waitForLatestBlockSync() {
 }
 
 func (s *NewBlockLoopTestSuite) setAccountsAndChainState() {
-	err := s.storage.SetChainState(&models.ChainState{
+	setChainState(s.T(), s.storage)
+	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+}
+
+func setChainState(t *testing.T, storage *st.TestStorage) {
+	err := storage.SetChainState(&models.ChainState{
 		ChainID:     models.MakeUint256(1337),
 		SyncedBlock: 0,
 	})
-	s.NoError(err)
-
-	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+	require.NoError(t, err)
 }
 
 func (s *NewBlockLoopTestSuite) deployAndRegisterSingleToken() *models.RegisteredToken {

@@ -44,7 +44,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, nil)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
@@ -65,7 +65,9 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 	require.NoError(t, err)
 
 	client, err := eth.NewConfiguredTestClient(rollup.DeploymentConfig{
-		Params: rollup.Params{GenesisStateRoot: genesisRoot},
+		Params: rollup.Params{
+			GenesisStateRoot: genesisRoot,
+		},
 	}, eth.ClientConfig{})
 	require.NoError(t, err)
 

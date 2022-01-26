@@ -210,7 +210,7 @@ func (c *Client) getTxBatch(
 	}
 	accountRoot := common.BytesToHash(batchEvent.AccountRoot[:])
 
-	err = verifyBatchHash(*batch.Hash, accountRoot, commitments)
+	err = verifyBatchHash(batch.Hash, accountRoot, commitments)
 	if err != nil {
 		return nil, err
 	}
@@ -254,9 +254,9 @@ func (c *Client) getDepositBatch(
 	}, nil
 }
 
-func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*models.Batch, error) {
+func (c *Client) getBatchDetails(batchEvent *rollup.RollupNewBatch) (*ContractBatch, error) {
 	batchID := models.NewUint256FromBig(*batchEvent.BatchID)
-	batch, err := c.GetBatch(batchID)
+	batch, err := c.GetContractBatch(batchID)
 	if err != nil && err.Error() == MsgInvalidBatchID {
 		return nil, errBatchAlreadyRolledBack
 	}
