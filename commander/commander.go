@@ -150,7 +150,6 @@ func (c *Commander) Stop() error {
 	log.Warningln("Commander stopped.")
 
 	c.releaseStartAndWait()
-	c.resetCommander()
 	return nil
 }
 
@@ -200,10 +199,6 @@ func (c *Commander) stop() error {
 	c.stopWorkersContext()
 	c.workersWaitGroup.Wait()
 	return c.storage.Close()
-}
-
-func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg, c.blockchain)
 }
 
 func getClient(
