@@ -201,7 +201,7 @@ func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, config eth.ClientConfig) *eth.TestClient {
+func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf eth.ClientConfig) *eth.TestClient {
 	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
@@ -210,7 +210,7 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 		},
-	}, config)
+	}, conf)
 	require.NoError(t, err)
 
 	return client
