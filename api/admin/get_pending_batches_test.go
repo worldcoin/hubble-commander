@@ -40,7 +40,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 	s.api = &API{
-		cfg:     &config.APIConfig{AuthenticationKey: ref.String(authKeyValue)},
+		cfg:     &config.APIConfig{AuthenticationKey: authKeyValue},
 		storage: s.storage.Storage,
 		client:  s.client.Client,
 	}

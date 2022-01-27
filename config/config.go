@@ -4,7 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -55,7 +54,7 @@ func GetConfig() *Config {
 			Version:            "0.5.0-rc2",
 			Port:               getString("api.port", "8080"),
 			EnableProofMethods: getBool("api.enable_proof_methods", false),
-			AuthenticationKey:  getStringOrNil("api.authentication_key"),
+			AuthenticationKey:  getStringOrPanic("api.authentication_key"),
 		},
 		Badger: &BadgerConfig{
 			Path: getString("badger.path", "./db/data/hubble"),
@@ -103,7 +102,7 @@ func GetTestConfig() *Config {
 			Version:            "dev-0.5.0-rc2",
 			Port:               "8080",
 			EnableProofMethods: true,
-			AuthenticationKey:  ref.String("secret_authentication_key"),
+			AuthenticationKey:  "secret_authentication_key",
 		},
 		Badger: &BadgerConfig{
 			Path: "../db/data/hubble_test",

@@ -18,7 +18,7 @@ func (a *API) verifyAuthKey(ctx context.Context) error {
 		return errMissingAuthKey
 	}
 
-	if authKeyValue != *a.cfg.AuthenticationKey {
+	if authKeyValue != a.cfg.AuthenticationKey {
 		return errInvalidAuthKey
 	}
 
