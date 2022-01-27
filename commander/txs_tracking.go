@@ -27,23 +27,26 @@ func (c *Commander) txsTracking() error {
 }
 
 func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
-	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	var receipt *types.Receipt
+	var tx *types.Transaction
+	var isPending bool
+	var err error
 
 	for {
-		receipt, err = c.client.Blockchain.GetBackend().TransactionReceipt(context.Background(), txHash)
+		tx, isPending, err = c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		if receipt != nil {
+
+		if !isPending {
 			break
 		}
 		time.Sleep(time.Millisecond * 300)
 	}
 
+	receipt, err := c.client.Blockchain.GetBackend().TransactionReceipt(context.Background(), txHash)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	if receipt.Status == 1 {
 		return nil
 	}
