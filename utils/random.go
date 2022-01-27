@@ -1,12 +1,22 @@
 package utils
 
 import (
+	crand "crypto/rand"
 	"encoding/hex"
 	"math/big"
 	"math/rand"
 
 	"github.com/ethereum/go-ethereum/common"
 )
+
+func SafeRandomBytes(size uint64) ([]byte, error) {
+	bytes := make([]byte, size)
+	_, err := crand.Read(bytes)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
+}
 
 func RandomBytes(size uint64) []byte {
 	bytes := make([]byte, size)

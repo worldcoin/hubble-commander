@@ -237,15 +237,18 @@ func (t *TransactionExecutor) fillMissingAccounts(accounts PendingAccounts) (Pen
 	if missingAccounts == 0 {
 		return accounts, nil
 	}
-	publicKey := models.PublicKey{1, 2, 3}
 	for i := 0; i < st.AccountBatchSize-missingAccounts; i++ {
 		pubKeyID, err := accounts.NextPubKeyID(t.storage)
 		if err != nil {
 			return nil, err
 		}
+		randomKey, err := models.NewRandomPublicKey()
+		if err != nil {
+			return nil, err
+		}
 		accounts = append(accounts, models.AccountLeaf{
 			PubKeyID:  *pubKeyID,
-			PublicKey: publicKey,
+			PublicKey: *randomKey,
 		})
 	}
 	return accounts, nil

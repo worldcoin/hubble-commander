@@ -28,6 +28,16 @@ func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	return publicKey
 }
 
+func NewRandomPublicKey() (*PublicKey, error) {
+	var publicKey PublicKey
+	bytes, err := utils.SafeRandomBytes(PublicKeyLength)
+	if err != nil {
+		return nil, err
+	}
+	copy(publicKey[:], bytes)
+	return &publicKey, nil
+}
+
 // nolint:gocritic
 func (p PublicKey) Bytes() []byte {
 	return p[:]
