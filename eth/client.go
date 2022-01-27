@@ -81,7 +81,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
-	txsHashesChan := make(chan common.Hash)
+	txsHashesChan := make(chan common.Hash, 32)
 
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
