@@ -45,12 +45,13 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	lowGasLimit := uint64(25_000)
+	lowGasLimit := uint64(30_000)
 
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, &eth.ClientConfig{
-		TransferBatchSubmissionGasLimit: &lowGasLimit,
-		C2TBatchSubmissionGasLimit:      &lowGasLimit,
-		MMBatchSubmissionGasLimit:       &lowGasLimit,
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, eth.ClientConfig{
+		TransferBatchSubmissionGasLimit:  &lowGasLimit,
+		C2TBatchSubmissionGasLimit:       &lowGasLimit,
+		MMBatchSubmissionGasLimit:        &lowGasLimit,
+		BatchAccountRegistrationGasLimit: &lowGasLimit,
 	})
 
 	domain, err := s.client.GetDomain()
@@ -84,10 +85,7 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
-	s.Eventually(func() bool {
-		err := s.cmd.workersContext.Err()
-		return err == context.Canceled
-	}, time.Second, time.Millisecond*300)
+	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
@@ -97,10 +95,7 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction
 	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(1), 0, 50, &models.PublicKey{2, 3, 4})
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
 
-	s.Eventually(func() bool {
-		err := s.cmd.workersContext.Err()
-		return err == context.Canceled
-	}, time.Second, time.Millisecond*300)
+	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
@@ -119,18 +114,32 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() 
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     1,
 				TokenID:     models.MakeUint256(0),
-				Amount:      models.MakeUint256(400),
+				Amount:      models.MakeUint256(50),
 				FeeReceiver: 0,
 			},
 			WithdrawRoot: utils.RandomHash(),
 		},
-		Transactions: []uint8{0, 0, 0, 0, 32, 4, 0, 0},
 	}
 
 	_, err := s.client.Client.SubmitMassMigrationsBatch(models.NewUint256(1),
 		[]models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
+	s.waitForWorkersCancellation()
+}
+
+func (s *TxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
+	s.startWorkers()
+	s.waitForLatestBlockSync()
+
+	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
+	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
+	s.NoError(err)
+
+	s.waitForWorkersCancellation()
+}
+
+func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
 	s.Eventually(func() bool {
 		err := s.cmd.workersContext.Err()
 		return err == context.Canceled
@@ -192,10 +201,7 @@ func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, config *eth.ClientConfig) *eth.TestClient {
-	if config == nil {
-		config = &eth.ClientConfig{}
-	}
+func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, config eth.ClientConfig) *eth.TestClient {
 	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
@@ -204,7 +210,7 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 		},
-	}, *config)
+	}, config)
 	require.NoError(t, err)
 
 	return client
