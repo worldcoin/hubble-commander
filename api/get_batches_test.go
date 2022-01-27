@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -95,34 +96,47 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.Len(result, 5)
 
 	for i := range s.batches {
-		s.Equal(s.batches[i].ID, result[i].ID)
-		s.Equal(s.batches[i].Hash, result[i].Hash)
-		s.Equal(s.batches[i].Type, result[i].Type)
-		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
-		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
-		s.Equal(batchstatus.Mined, result[i].Status)
-		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
-		s.NotZero(result[i].SubmissionBlock)
+		typedResult := result[i].(*dto.Batch)
+		s.Equal(s.batches[i].ID, typedResult.ID)
+		s.Equal(s.batches[i].Hash, typedResult.Hash)
+		s.Equal(s.batches[i].Type, typedResult.Type)
+		s.Equal(s.batches[i].TransactionHash, typedResult.TransactionHash)
+		s.Equal(s.batches[i].SubmissionTime, typedResult.SubmissionTime)
+		s.Equal(batchstatus.Mined, typedResult.Status)
+		s.Equal(s.batches[i].FinalisationBlock, typedResult.FinalisationBlock)
+		s.NotZero(typedResult.SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, typedResult.SubmissionBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, typedResult.SubmissionBlock)
 		}
 	}
 }
 
-func (s *GetBatchesTestSuite) TestGetBatches_PendingBatch() {
-	pendingBatch := s.batches[0]
+func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
+	pendingBatch := s.batches[1]
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
+	pendingBatch.SubmissionTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
+
+	expectedBatch := &dto.Batch{
+		ID:                pendingBatch.ID,
+		Type:              batchtype.Transfer,
+		TransactionHash:   pendingBatch.TransactionHash,
+		SubmissionBlock:   nil,
+		SubmissionTime:    nil,
+		Status:            batchstatus.Submitted,
+		FinalisationBlock: nil,
+	}
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result, 0)
+	s.Len(result, 1)
+	s.Equal(expectedBatch, result[0])
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
