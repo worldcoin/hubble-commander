@@ -8,6 +8,9 @@ env:
   HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
   HUBBLE_ETHEREUM_CHAIN_ID: 1337
   HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+  HUBBLE_API_AUTHENTICATION_KEY: secret_authentication_key
+  HUBBLE_BOOTSTRAP_GENESIS_PATH: ${{ github.workspace }}/genesis.yaml
+  HUBBLE_E2E_ACCOUNTS_PATH: ${{ github.workspace }}/e2e/setup/accounts.yaml
 
 jobs:
   e2e-tests:
@@ -32,7 +35,19 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make test-e2e-in-process
+          HUBBLE_E2E=in-process go test -v -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
+      - name: Cleanup
+        # Cleanup this folder because it confuses codecov
+        run: sudo rm -rf e2e/geth-data/geth
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          files: ./coverage.out
+          flags: ${{ github.job }}
+          fail_ci_if_error: true
+          verbose: true
+
   e2e-benchmarks-1:
     name: Run E2E benchmarks (Transfers and C2Ts)
     runs-on: ubuntu-20.04
@@ -56,6 +71,7 @@ jobs:
         run: |
           make setup-geth > /dev/null &
           make bench-e2e-ci-part-1
+
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
     runs-on: ubuntu-20.04
@@ -79,6 +95,7 @@ jobs:
         run: |
           make setup-geth > /dev/null &
           make bench-e2e-ci-part-2
+
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
     runs-on: ubuntu-20.04

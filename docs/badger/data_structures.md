@@ -269,7 +269,7 @@ type CommitmentID struct {
 }
 ```
 
-#### Transaction Commitment
+#### Transfer / Create2Transfer Commitment
 
 Body: `stored.TxCommitmentBody`
 
@@ -281,7 +281,28 @@ type TxCommitmentBody struct {
 }
 ```
 
+#### MassMigration Commitment
+
+Body: `stored.MMCommitmentBody`
+
+```go
+type MMCommitmentBody struct {
+    CombinedSignature models.Signature
+    BodyHash          *common.Hash
+    Meta              models.MassMigrationMeta
+    WithdrawRoot      common.Hash
+}
+
+type MassMigrationMeta struct {
+    SpokeID     uint32
+    TokenID     Uint256
+    Amount      Uint256
+    FeeReceiver uint32
+}
+```
+
 #### Deposit Commitment
+
 - When Deposit batch is created data is moved from **Pending Deposit Subtree** to **Stored Commitment**
 
 Body: `stored.DepositCommitmentBody`

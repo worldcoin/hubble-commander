@@ -28,12 +28,9 @@ func CalculateTransactionStatus(
 		return txstatus.Pending.Ref(), nil
 	}
 
-	return calculateFinalisedStatus(latestBlockNumber, *batch.FinalisationBlock), nil
-}
-
-func calculateFinalisedStatus(latestBlockNumber, batchFinalisationBlock uint32) *txstatus.TransactionStatus {
-	if latestBlockNumber < batchFinalisationBlock {
-		return txstatus.InBatch.Ref()
+	if latestBlockNumber < *batch.FinalisationBlock {
+		return txstatus.Mined.Ref(), nil
 	}
-	return txstatus.Finalised.Ref()
+
+	return txstatus.Finalised.Ref(), nil
 }

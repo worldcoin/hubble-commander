@@ -1,354 +1,393 @@
 {
     "info": {
-        "_postman_id": "4780ccd2-244e-4293-ab93-0ab940c706e5",
+        "_postman_id": "9ae901a3-3c9f-4544-a261-67a834633166",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
         {
-            "name": "hubble_sendTransaction (Transfer)",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+            "name": "admin",
+            "item": [
+                {
+                    "name": "getPendingBatches",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Auth-Key",
+                                "value": "{{auth_key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"admin_getPendingBatches\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
-                },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
+                    },
+                    "response": []
                 }
-            },
-            "response": []
+            ]
         },
         {
-            "name": "hubble_sendTransaction (Create2Transfer)",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"CREATE2TRANSFER\",\n            \"FromStateID\": 2,\n            \"ToPublicKey\": \"0x0097F465FE827CE4DAD751988F6CE5EC747458075992180CA11B0776B9EA3A910C3EE4DCA4A03D06C3863778AFFE91CE38D502138356A35AE12695C565B24EA6151B83EABD41A6090B8AC3BB25E173C84C3B080A5545260B1327495920C342C02D51CAC4418228DB1A3D98AA12E6FD7B3267C703475F5999B2EC7A197AD7D8BC\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+            "name": "hubble",
+            "item": [
+                {
+                    "name": "sendTransaction (Transfer)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"TRANSFER\",\n            \"FromStateID\": 1,\n            \"ToStateID\": 2,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_sendTransaction (MassMigration)",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"MASS_MIGRATION\",\n            \"FromStateID\": 1,\n            \"SpokeID\": 1,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "sendTransaction (Create2Transfer)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"CREATE2TRANSFER\",\n            \"FromStateID\": 2,\n            \"ToPublicKey\": \"0x0097F465FE827CE4DAD751988F6CE5EC747458075992180CA11B0776B9EA3A910C3EE4DCA4A03D06C3863778AFFE91CE38D502138356A35AE12695C565B24EA6151B83EABD41A6090B8AC3BB25E173C84C3B080A5545260B1327495920C342C02D51CAC4418228DB1A3D98AA12E6FD7B3267C703475F5999B2EC7A197AD7D8BC\",\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getTransaction",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransaction\",\n    \"params\": [\n        \"0x6cbc0e7428308e2f0397e5f35d6f5eb8922cd67bdd2eda39d55bfd379c2f2f1a\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "sendTransaction (MassMigration)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_sendTransaction\",\n    \"params\": [\n        {\n            \"Type\": \"MASS_MIGRATION\",\n            \"FromStateID\": 1,\n            \"SpokeID\": 1,\n            \"Amount\": \"50\",\n            \"Nonce\": \"0\",\n            \"Fee\": \"1\",\n            \"Signature\": \"0xABCD0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"\n        }\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getBatchByHash",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByHash\",\n    \"params\": [\n        \"0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getTransaction",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getTransaction\",\n    \"params\": [\n        \"0x6cbc0e7428308e2f0397e5f35d6f5eb8922cd67bdd2eda39d55bfd379c2f2f1a\"\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getBatchByID",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByID\",\n    \"params\": [\n        \"1\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getBatchByHash",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByHash\",\n    \"params\": [\n        \"0x05dc2502909e415e5f6c6b3d71e94192c277274816f65cd4fba000fda4706372\"\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getBatches",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatches\",\n    \"params\": [\n        \"0\",\n        \"2\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getBatchByID",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatchByID\",\n    \"params\": [\n        \"1\"\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getUserStates",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserStates\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getBatches",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getBatches\",\n    \"params\": [\n        \"0\",\n        \"2\"\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getUserState",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserState\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getUserStates",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserStates\",\n    \"params\": [\n        \"0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc\"\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getVersion",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getVersion\",\n    \"params\": [],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getUserState",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getUserState\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getCommitment",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [\n        {\n            \"BatchID\": \"1\",\n            \"IndexInBatch\": 0\n        }\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getVersion",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getVersion\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getPublicKeyByPubKeyID",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByPubKeyID\",\n    \"params\": [1],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getCommitment",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getCommitment\",\n    \"params\": [\n        {\n            \"BatchID\": \"1\",\n            \"IndexInBatch\": 0\n        }\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getPublicKeyByStateID",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByStateID\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getPublicKeyByPubKeyID",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByPubKeyID\",\n    \"params\": [1],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getNetworkInfo",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getNetworkInfo\",\n    \"params\": [],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getPublicKeyByStateID",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getPublicKeyByStateID\",\n    \"params\": [\n        1\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
-                }
-            },
-            "response": []
-        },
-        {
-            "name": "hubble_getGenesisAccounts",
-            "request": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getGenesisAccounts\",\n    \"params\": [],\n    \"id\": 1\n}",
-                    "options": {
-                        "raw": {
-                            "language": "json"
+                {
+                    "name": "getNetworkInfo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getNetworkInfo\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
                         }
-                    }
+                    },
+                    "response": []
                 },
-                "url": {
-                    "raw": "{{commander}}",
-                    "host": [
-                        "{{commander}}"
-                    ]
+                {
+                    "name": "getGenesisAccounts",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getGenesisAccounts\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
+                        }
+                    },
+                    "response": []
                 }
-            },
-            "response": []
+            ]
         }
     ],
     "event": [
@@ -375,6 +414,10 @@
         {
             "key": "commander",
             "value": "localhost:8080"
+        },
+        {
+            "key": "auth_key",
+            "value": "secret_authentication_key"
         }
     ]
 }

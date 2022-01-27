@@ -85,12 +85,12 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			Mounts: []mount.Mount{
 				{
 					Type:   mount.TypeBind,
-					Source: path.Join(utils.GetProjectRoot(), "e2e-data"),
+					Source: path.Join(".", "e2e-data"),
 					Target: "/go/src/app/db/data/hubble",
 				},
 				{
 					Type:   mount.TypeBind,
-					Source: path.Join(utils.GetProjectRoot(), "e2e-chain-spec"),
+					Source: path.Join(".", "e2e-chain-spec"),
 					Target: "/go/src/app/chain-spec",
 				},
 			},
@@ -145,7 +145,7 @@ func deployContractsAndStoreChainSpec() error {
 		return err
 	}
 
-	chainSpecPath := path.Join(utils.GetProjectRoot(), "e2e-chain-spec", "chain-spec.yaml")
+	chainSpecPath := path.Join(".", "e2e-chain-spec", "chain-spec.yaml")
 	return utils.StoreChainSpec(chainSpecPath, *chainSpec)
 }
 
