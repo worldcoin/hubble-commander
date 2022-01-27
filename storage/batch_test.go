@@ -4,17 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/stored"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type BatchTestSuite struct {
@@ -366,68 +362,55 @@ func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
 	s.ErrorIs(err, NewNotFoundError("batch"))
 }
 
-func (s *BatchTestSuite) TestBatch_Hash_IndexWorks() {
-	hash1 := utils.NewRandomHash()
-	hash2 := utils.NewRandomHash()
-	s.addBatch(1, hash1)
-	s.addBatch(2, hash2)
-	s.addBatch(3, hash1)
-
-	indexValues := s.getHashIndexValues()
-	s.Len(indexValues, 3)
-	s.Len(indexValues[common.Hash{}], 0) // value set due to index initialization, see NewTransactionStorage
-	s.Len(indexValues[*hash1], 2)
-	s.Len(indexValues[*hash2], 1)
-}
-
-func (s *BatchTestSuite) TestBatch_Hash_ValuesWithThisFieldSetToNilAreNotIndexed() {
-	s.addBatch(1, nil)
-
-	indexValues := s.getHashIndexValues()
-	s.Len(indexValues, 1)
-	s.Len(indexValues[common.Hash{}], 0) // value set due to index initialization, see NewTransactionStorage
-}
-
-func (s *BatchTestSuite) TestBatch_Hash_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
-	s.addBatch(1, nil)
-
-	txs := make([]models.Batch, 0, 1)
-	err := s.storage.database.Badger.Find(
-		&txs,
-		bh.Where("Hash").Eq(utils.RandomHash()).Index("Hash"),
-	)
-	s.NoError(err)
-	s.Len(txs, 0)
-}
-
-func (s *BatchTestSuite) getHashIndexValues() map[common.Hash]bh.KeyList {
-	indexValues := make(map[common.Hash]bh.KeyList)
-
-	s.iterateIndex(stored.BatchName, "Hash", func(encodedKey []byte, keyList bh.KeyList) {
-		var batchHash common.Hash
-		err := db.Decode(encodedKey, &batchHash)
+func (s *BatchTestSuite) TestGetPendingBatches() {
+	batches := []models.Batch{
+		{
+			ID:              models.MakeUint256(1),
+			Type:            batchtype.Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            nil,
+		},
+		{
+			ID:              models.MakeUint256(2),
+			Type:            batchtype.Create2Transfer,
+			TransactionHash: utils.RandomHash(),
+			Hash:            utils.NewRandomHash(),
+		},
+		{
+			ID:              models.MakeUint256(3),
+			Type:            batchtype.MassMigration,
+			TransactionHash: utils.RandomHash(),
+			Hash:            nil,
+		},
+	}
+	for i := range batches {
+		err := s.storage.AddBatch(&batches[i])
 		s.NoError(err)
+	}
 
-		indexValues[batchHash] = keyList
-	})
-
-	return indexValues
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 2)
 }
 
-func (s *BatchTestSuite) addBatch(id uint64, hash *common.Hash) {
+func (s *BatchTestSuite) TestGetPendingBatches_OmitsBatchWithZeroHash() {
 	err := s.storage.AddBatch(&models.Batch{
-		ID:   models.MakeUint256(id),
-		Hash: hash,
+		ID:              models.MakeUint256(1),
+		Type:            batchtype.Transfer,
+		TransactionHash: utils.RandomHash(),
+		Hash:            &common.Hash{},
 	})
 	s.NoError(err)
+
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 0)
 }
 
-func (s *BatchTestSuite) iterateIndex(
-	typeName []byte,
-	indexName string,
-	handleIndex func(encodedKey []byte, keyList bh.KeyList),
-) {
-	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
+func (s *BatchTestSuite) TestGetPendingBatches_NoPendingBatches() {
+	pendingBatches, err := s.storage.GetPendingBatches()
+	s.NoError(err)
+	s.Len(pendingBatches, 0)
 }
 
 func TestBatchTestSuite(t *testing.T) {

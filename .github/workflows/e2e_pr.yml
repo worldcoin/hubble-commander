@@ -8,6 +8,7 @@ env:
   HUBBLE_ETHEREUM_RPC_URL: ws://localhost:8546
   HUBBLE_ETHEREUM_CHAIN_ID: 1337
   HUBBLE_ETHEREUM_PRIVATE_KEY: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+  HUBBLE_API_AUTHENTICATION_KEY: secret_authentication_key
   HUBBLE_BOOTSTRAP_GENESIS_PATH: ${{ github.workspace }}/genesis.yaml
   HUBBLE_E2E_ACCOUNTS_PATH: ${{ github.workspace }}/e2e/setup/accounts.yaml
 

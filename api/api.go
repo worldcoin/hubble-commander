@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Worldcoin/hubble-commander/api/admin"
 	"github.com/Worldcoin/hubble-commander/api/middleware"
 	"github.com/Worldcoin/hubble-commander/api/rpc"
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -54,19 +55,24 @@ func getAPIServer(
 	commanderMetrics *metrics.CommanderMetrics,
 	disableSignatures bool,
 ) (*rpc.Server, error) {
-	api := API{
+	hubbleAPI := API{
 		cfg:               cfg,
 		storage:           storage,
 		client:            client,
 		commanderMetrics:  commanderMetrics,
 		disableSignatures: disableSignatures,
 	}
-	if err := api.initSignature(); err != nil {
+	if err := hubbleAPI.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")
 	}
-	server := rpc.NewServer()
 
-	if err := server.RegisterName("hubble", &api); err != nil {
+	adminAPI := admin.NewAPI(cfg, storage, client)
+
+	server := rpc.NewServer()
+	if err := server.RegisterName("hubble", &hubbleAPI); err != nil {
+		return nil, err
+	}
+	if err := server.RegisterName("admin", adminAPI); err != nil {
 		return nil, err
 	}
 	return server, nil
