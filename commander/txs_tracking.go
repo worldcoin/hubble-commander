@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -46,5 +47,6 @@ func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
 	if receipt.Status == 1 {
 		return nil
 	}
-	return c.client.GetRevertMessage(tx, receipt)
+	err = c.client.GetRevertMessage(tx, receipt)
+	return fmt.Errorf("%w tx_hash=%s", err, txHash.String())
 }
