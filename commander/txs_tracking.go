@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -25,19 +26,21 @@ func (c *Commander) txsTracking() error {
 }
 
 func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
-	tx, isPending, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
+	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	var receipt *types.Receipt
 
-	for isPending {
-		time.Sleep(time.Second)
-		tx, isPending, err = c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
+	for {
+		receipt, err = c.client.Blockchain.GetBackend().TransactionReceipt(context.Background(), txHash)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-	}
-
-	receipt, err := c.client.Blockchain.GetBackend().TransactionReceipt(context.Background(), txHash)
-	if err != nil {
-		return errors.WithStack(err)
+		if receipt != nil {
+			break
+		}
+		time.Sleep(time.Millisecond * 300)
 	}
 
 	if receipt.Status == 1 {
