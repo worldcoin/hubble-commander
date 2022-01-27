@@ -15,6 +15,10 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 }
 
 func (c *Client) WithdrawStake(batchID *models.Uint256) error {
-	_, err := c.rollup().WithdrawStake(batchID.ToBig())
-	return err
+	tx, err := c.rollup().WithdrawStake(batchID.ToBig())
+	if err != nil {
+		return err
+	}
+	c.txsHashesChan <- tx.Hash()
+	return nil
 }
