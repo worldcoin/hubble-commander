@@ -52,7 +52,9 @@ func (d *Database) Iterator(prefix []byte, opts badger.IteratorOptions, filter I
 
 func newSeekPrefix(prefix []byte, opts badger.IteratorOptions) []byte {
 	if opts.Reverse {
-		return append(prefix, 0xFF) // Required to loop backwards
+		newPrefix := make([]byte, 0, len(prefix)+1)
+		newPrefix = append(newPrefix, prefix...)
+		return append(newPrefix, 0xFF) // Required to loop backwards
 	}
 	return prefix
 }
