@@ -114,14 +114,14 @@ func (c *Commander) Start() (err error) {
 	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
 
 	c.startWorker("API Server", func() error {
-		err = c.apiServer.ListenAndServe()
+		err := c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
 	c.startWorker("Metrics Server", func() error {
-		err = c.metricsServer.ListenAndServe()
+		err := c.metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
