@@ -10,7 +10,7 @@ import (
 type TransactionStatus uint
 
 const (
-	Pending   TransactionStatus = 999
+	Pending   TransactionStatus = 1000
 	Submitted                   = TransactionStatus(bs.Submitted)
 	Mined                       = TransactionStatus(bs.Mined)
 	Finalised                   = TransactionStatus(bs.Finalised) // nolint:misspell
