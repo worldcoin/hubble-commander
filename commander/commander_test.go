@@ -2,6 +2,7 @@ package commander
 
 import (
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -55,10 +56,14 @@ func (s *CommanderTestSuite) TestStartStop() {
 
 func (s *CommanderTestSuite) TestStartAndWait() {
 	var startAndWaitReturnTime *time.Time
+	var mutex sync.Mutex
 
 	go func() {
 		err := s.cmd.StartAndWait()
 		s.NoError(err)
+
+		mutex.Lock()
+		defer mutex.Unlock()
 		startAndWaitReturnTime = ref.Time(time.Now())
 	}()
 	s.Eventually(s.cmd.isActive, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
@@ -68,6 +73,8 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 	stopReturnTime := time.Now()
 
 	s.Eventually(func() bool {
+		mutex.Lock()
+		defer mutex.Unlock()
 		return startAndWaitReturnTime != nil
 	}, 1*time.Second, 100*time.Millisecond, "StartAndWait hasn't returned on time")
 

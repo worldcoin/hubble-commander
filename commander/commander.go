@@ -34,21 +34,6 @@ var (
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
-// nolint:structcheck
-type lifecycle struct {
-	active              uint32
-	releaseStartAndWait context.CancelFunc
-	manualStop          bool
-
-	workersContext     context.Context
-	stopWorkersContext context.CancelFunc
-	workersWaitGroup   sync.WaitGroup
-}
-
-func (l *lifecycle) isActive() bool {
-	return atomic.LoadUint32(&l.active) != 0
-}
-
 type Commander struct {
 	lifecycle
 
@@ -70,9 +55,7 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		cfg:        cfg,
 		blockchain: blockchain,
-		lifecycle: lifecycle{
-			releaseStartAndWait: func() {}, // noop
-		},
+		lifecycle:  lifecycle{},
 	}
 }
 
@@ -80,10 +63,8 @@ func (c *Commander) StartAndWait() error {
 	if err := c.Start(); err != nil {
 		return err
 	}
-	var stopContext context.Context
-	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
 
-	<-stopContext.Done()
+	<-c.getStartAndWaitChan()
 	return nil
 }
 
@@ -146,6 +127,8 @@ func (c *Commander) Stop() error {
 		return nil
 	}
 
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	c.manualStop = true
 
 	if err := c.stop(); err != nil {
@@ -154,7 +137,7 @@ func (c *Commander) Stop() error {
 
 	log.Warningln("Commander stopped.")
 
-	c.releaseStartAndWait()
+	c.unsafeCloseStartAndWaitChan()
 	return nil
 }
 
