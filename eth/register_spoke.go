@@ -2,7 +2,6 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,7 +13,7 @@ func (c *Client) RegisterSpokeAndWait(spokeContract common.Address) (*models.Uin
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := c.WaitToBeMined(tx)
 	if err != nil {
 		return nil, err
 	}

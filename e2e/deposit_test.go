@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -46,7 +45,7 @@ func makeDeposits(t *testing.T, client jsonrpc.RPCClient) {
 		require.NoError(t, err)
 		txs = append(txs, *tx)
 	}
-	_, err = chain.WaitForMultipleTxs(ethClient.Blockchain.GetBackend(), txs...)
+	_, err = ethClient.WaitForMultipleTxs(txs...)
 	require.NoError(t, err)
 }
 
@@ -57,7 +56,7 @@ func approveToken(t *testing.T, ethClient *eth.Client, tokenAddress common.Addre
 	tx, err := token.Approve(ethClient.Blockchain.GetAccount(), ethClient.ChainState.DepositManager, utils.ParseEther("100"))
 	require.NoError(t, err)
 
-	_, err = chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
+	_, err = ethClient.WaitToBeMined(tx)
 	require.NoError(t, err)
 }
 

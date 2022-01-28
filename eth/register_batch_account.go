@@ -26,7 +26,7 @@ func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicK
 		return nil, err
 	}
 
-	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), *a.mineTimeout, tx)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
@@ -32,7 +31,7 @@ func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
 		return errors.WithStack(err)
 	}
 
-	receipt, err := chain.WaitToBeMined(c.client.Blockchain.GetBackend(), tx)
+	receipt, err := c.client.WaitToBeMined(tx)
 	if err != nil {
 		return errors.WithStack(err)
 	}

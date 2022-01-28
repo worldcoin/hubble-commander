@@ -1,7 +1,6 @@
 package eth
 
 import (
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
@@ -10,7 +9,7 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 	if err != nil {
 		return err
 	}
-	_, err = chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	_, err = c.WaitToBeMined(tx)
 	return err
 }
 

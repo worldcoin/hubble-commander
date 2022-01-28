@@ -406,7 +406,7 @@ func submitMMBatch(
 }
 
 func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
-	_, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
+	_, err = ethClient.WaitToBeMined(transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))

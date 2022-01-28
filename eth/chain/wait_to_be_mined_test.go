@@ -18,6 +18,8 @@ import (
 
 const transactionReceiptMethod = "TransactionReceipt"
 
+var mineTimeout = 5 * time.Minute
+
 type WaitToBeMinedTestSuite struct {
 	*require.Assertions
 	suite.Suite
@@ -56,7 +58,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_CallsTransactionReceiptImmedi
 		Run(func(args mock.Arguments) { callTime = time.Now() })
 
 	now := time.Now()
-	_, err := WaitToBeMined(rp, s.tx)
+	_, err := WaitToBeMined(rp, mineTimeout, s.tx)
 	s.NoError(err)
 	s.WithinDuration(now, callTime, 20*time.Millisecond)
 }
@@ -86,7 +88,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_MakesTheSecondCallAfterInterv
 	expected := time.Now().Add(testPollInterval)
 
 	withPollInterval(testPollInterval, func() {
-		_, err := WaitToBeMined(rp, s.tx)
+		_, err := WaitToBeMined(rp, mineTimeout, s.tx)
 		s.NoError(err)
 	})
 
@@ -94,9 +96,9 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_MakesTheSecondCallAfterInterv
 }
 
 func withMineTimeout(timeout time.Duration, fn func()) {
-	initialMineTimeout := MineTimeout
-	MineTimeout = timeout
-	defer func() { MineTimeout = initialMineTimeout }()
+	initialMineTimeout := mineTimeout
+	mineTimeout = timeout
+	defer func() { mineTimeout = initialMineTimeout }()
 	fn()
 }
 
@@ -111,7 +113,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_EventuallyTimesOut() {
 	expected := time.Now().Add(testTimeout)
 
 	withMineTimeout(testTimeout, func() {
-		_, err := WaitToBeMined(rp, s.tx)
+		_, err := WaitToBeMined(rp, mineTimeout, s.tx)
 		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
 	})
 
@@ -128,7 +130,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitToBeMined_HandlesTransactionReceiptCall
 	callTime := time.Now()
 
 	withMineTimeout(500*time.Millisecond, func() {
-		_, err := WaitToBeMined(rp, s.tx)
+		_, err := WaitToBeMined(rp, mineTimeout, s.tx)
 		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
 	})
 
@@ -151,7 +153,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WaitsForAllTransactionsA
 	rp.On(transactionReceiptMethod, mock.Anything, txs[1].Hash()).
 		Return(&expectedReceipts[1], nil)
 
-	receipts, err := WaitForMultipleTxs(rp, txs...)
+	receipts, err := WaitForMultipleTxs(rp, mineTimeout, txs...)
 	s.NoError(err)
 	s.Equal(receipts, []types.Receipt{expectedReceipts[0], expectedReceipts[1]})
 }
@@ -161,7 +163,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_WorksForDuplicatedTransa
 	rp.On(transactionReceiptMethod, mock.Anything, mock.Anything).
 		Return(s.minedReceipt, nil)
 
-	receipts, err := WaitForMultipleTxs(rp, *s.tx, *s.tx)
+	receipts, err := WaitForMultipleTxs(rp, mineTimeout, *s.tx, *s.tx)
 	s.NoError(err)
 	s.Equal(receipts, []types.Receipt{*s.minedReceipt, *s.minedReceipt})
 }
@@ -187,7 +189,7 @@ func (s *WaitToBeMinedTestSuite) TestWaitForMultipleTxs_FinishesOnTimeout() {
 	expected := time.Now().Add(testTimeout)
 
 	withMineTimeout(testTimeout, func() {
-		receipts, err := WaitForMultipleTxs(rp, txs...)
+		receipts, err := WaitForMultipleTxs(rp, mineTimeout, txs...)
 		s.ErrorIs(err, ErrWaitToBeMinedTimedOut)
 		s.Nil(receipts)
 	})

@@ -2,6 +2,7 @@ package commander
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -31,7 +32,7 @@ func Deploy(cfg *config.DeployerConfig, blockchain chain.Connection) (chainSpec 
 		len(cfg.Bootstrap.GenesisAccounts),
 		cfg.Ethereum.ChainID,
 	)
-	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg.Bootstrap)
+	chainState, err := deployContractsAndSetupGenesisState(tempStorage.Storage, blockchain, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -47,14 +48,20 @@ func Deploy(cfg *config.DeployerConfig, blockchain chain.Connection) (chainSpec 
 func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
 	blockchain chain.Connection,
-	cfg *config.DeployerBootstrapConfig,
+	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain)
+	mineTimeout := time.Duration(cfg.Ethereum.ChainMineTimeout) * time.Second
+
+	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, mineTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(blockchain, chooserAddress)
+	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
+		blockchain,
+		chooserAddress,
+		mineTimeout,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +74,16 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(accountManager, cfg.GenesisAccounts)
+	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(
+		accountManager,
+		cfg.Bootstrap.GenesisAccounts,
+		mineTimeout,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	err = PopulateGenesisAccounts(storage, cfg.GenesisAccounts)
+	err = PopulateGenesisAccounts(storage, cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +96,14 @@ func deployContractsAndSetupGenesisState(
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot:   stateRoot,
-			BlocksToFinalise:   models.NewUint256(uint64(cfg.BlocksToFinalise)),
+			BlocksToFinalise:   models.NewUint256(uint64(cfg.Bootstrap.BlocksToFinalise)),
 			TotalGenesisAmount: totalGenesisAmount,
 		},
 		Dependencies: rollup.Dependencies{
 			AccountRegistry: accountRegistryAddress,
 			Chooser:         chooserAddress,
 		},
+		MineTimeout: time.Second * time.Duration(cfg.Ethereum.ChainMineTimeout),
 	})
 	if err != nil {
 		return nil, err
@@ -106,7 +118,7 @@ func deployContractsAndSetupGenesisState(
 		DepositManager:                 contracts.DepositManagerAddress,
 		WithdrawManager:                contracts.WithdrawManagerAddress,
 		Rollup:                         contracts.RollupAddress,
-		GenesisAccounts:                cfg.GenesisAccounts,
+		GenesisAccounts:                cfg.Bootstrap.GenesisAccounts,
 		SyncedBlock:                    getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -234,7 +235,7 @@ func getClient(
 		}
 
 		log.Printf("Continuing from saved state on ChainID = %s", dbChainState.ChainID.String())
-		return createClientFromChainState(blockchain, dbChainState, cfg.Rollup, commanderMetrics, txsHashesChan)
+		return createClientFromChainState(blockchain, dbChainState, cfg, commanderMetrics, txsHashesChan)
 	}
 
 	if cfg.Bootstrap.ChainSpecPath != nil {
@@ -260,14 +261,14 @@ func bootstrapFromChainState(
 		return nil, err
 	}
 	importedChainState := newChainStateFromChainSpec(chainSpec)
-	return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup, commanderMetrics, txsHashesChan)
+	return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg, commanderMetrics, txsHashesChan)
 }
 
 func bootstrapChainStateAndCommander(
 	blockchain chain.Connection,
 	storage *st.Storage,
 	importedChainState *models.ChainState,
-	cfg *config.RollupConfig,
+	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
 	txsHashesChan chan<- common.Hash,
 ) (*eth.Client, error) {
@@ -295,14 +296,14 @@ func bootstrapFromRemoteState(
 	if !fetchedChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
-	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup, commanderMetrics, txsHashesChan)
+	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg, commanderMetrics, txsHashesChan)
 }
 
 func setGenesisStateAndCreateClient(
 	blockchain chain.Connection,
 	storage *st.Storage,
 	chainState *models.ChainState,
-	cfg *config.RollupConfig,
+	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
 	txsHashesChan chan<- common.Hash,
 ) (*eth.Client, error) {
@@ -361,7 +362,7 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 func createClientFromChainState(
 	blockchain chain.Connection,
 	chainState *models.ChainState,
-	cfg *config.RollupConfig,
+	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
 	txsHashesChan chan<- common.Hash,
 ) (*eth.Client, error) {
@@ -406,13 +407,14 @@ func createClientFromChainState(
 		DepositManager:  depositManager,
 		TxsHashesChan:   txsHashesChan,
 		ClientConfig: eth.ClientConfig{
-			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.TransferBatchSubmissionGasLimit),
-			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.C2TBatchSubmissionGasLimit),
-			MMBatchSubmissionGasLimit:        ref.Uint64(cfg.MMBatchSubmissionGasLimit),
-			DepositBatchSubmissionGasLimit:   ref.Uint64(cfg.DepositBatchSubmissionGasLimit),
-			TransitionDisputeGasLimit:        ref.Uint64(cfg.TransitionDisputeGasLimit),
-			SignatureDisputeGasLimit:         ref.Uint64(cfg.SignatureDisputeGasLimit),
-			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.BatchAccountRegistrationGasLimit),
+			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.Rollup.TransferBatchSubmissionGasLimit),
+			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.Rollup.C2TBatchSubmissionGasLimit),
+			MMBatchSubmissionGasLimit:        ref.Uint64(cfg.Rollup.MMBatchSubmissionGasLimit),
+			DepositBatchSubmissionGasLimit:   ref.Uint64(cfg.Rollup.DepositBatchSubmissionGasLimit),
+			TransitionDisputeGasLimit:        ref.Uint64(cfg.Rollup.TransitionDisputeGasLimit),
+			SignatureDisputeGasLimit:         ref.Uint64(cfg.Rollup.SignatureDisputeGasLimit),
+			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.Rollup.BatchAccountRegistrationGasLimit),
+			TxMineTimeout:                    ref.Duration(time.Duration(cfg.Ethereum.ChainMineTimeout) * time.Second),
 		},
 	})
 	if err != nil {

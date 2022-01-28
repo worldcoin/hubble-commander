@@ -34,6 +34,7 @@ type NewClientParams struct {
 
 type ClientConfig struct {
 	TxTimeout                        *time.Duration
+	TxMineTimeout                    *time.Duration
 	StakeAmount                      *models.Uint256
 	TransferBatchSubmissionGasLimit  *uint64
 	C2TBatchSubmissionGasLimit       *uint64
@@ -87,6 +88,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+		MineTimeout:                      params.TxMineTimeout,
 		TxsHashesChan:                    params.TxsHashesChan,
 	})
 	if err != nil {
@@ -125,6 +127,9 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 func fillWithDefaults(c *ClientConfig) {
 	if c.TxTimeout == nil {
 		c.TxTimeout = ref.Duration(60 * time.Second)
+	}
+	if c.TxMineTimeout == nil {
+		c.TxMineTimeout = ref.Duration(time.Duration(config.DefaultEthereumChainMineTimeout) * time.Second)
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17) // default 0.1 ether

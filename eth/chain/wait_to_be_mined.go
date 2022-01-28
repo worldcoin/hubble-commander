@@ -14,12 +14,11 @@ import (
 
 var (
 	pollInterval             = 500 * time.Millisecond
-	MineTimeout              = 5 * time.Minute
 	ErrWaitToBeMinedTimedOut = fmt.Errorf("timeout on waiting for transaction to be mined")
 )
 
-func WaitToBeMined(r ReceiptProvider, tx *types.Transaction) (*types.Receipt, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), MineTimeout)
+func WaitToBeMined(r ReceiptProvider, timeout time.Duration, tx *types.Transaction) (*types.Receipt, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	r.Commit()
@@ -61,9 +60,9 @@ type orderedReceipt struct {
 	receipt *types.Receipt
 }
 
-func WaitForMultipleTxs(r ReceiptProvider, txs ...types.Transaction) ([]types.Receipt, error) {
+func WaitForMultipleTxs(r ReceiptProvider, timeout time.Duration, txs ...types.Transaction) ([]types.Receipt, error) {
 	orChan := make(chan orderedReceipt, len(txs))
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), MineTimeout)
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	r.Commit()

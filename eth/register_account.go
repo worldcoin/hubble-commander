@@ -14,7 +14,7 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
+	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), *a.mineTimeout, tx)
 	if err != nil {
 		return nil, err
 	}

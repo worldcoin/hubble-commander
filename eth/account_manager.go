@@ -2,6 +2,7 @@ package eth
 
 import (
 	"strings"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
@@ -15,6 +16,7 @@ type AccountManager struct {
 	Blockchain                       chain.Connection
 	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit *uint64
+	mineTimeout                      *time.Duration
 	txsHashesChan                    chan<- common.Hash
 }
 
@@ -33,6 +35,7 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 			Contract:        MakeContract(&accountRegistryAbi, accountRegistryContract),
 		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+		mineTimeout:                      params.MineTimeout,
 		txsHashesChan:                    params.TxsHashesChan,
 	}, nil
 }
@@ -41,5 +44,6 @@ type AccountManagerParams struct {
 	AccountRegistry                  *accountregistry.AccountRegistry
 	AccountRegistryAddress           common.Address
 	BatchAccountRegistrationGasLimit *uint64
+	MineTimeout                      *time.Duration
 	TxsHashesChan                    chan<- common.Hash
 }
