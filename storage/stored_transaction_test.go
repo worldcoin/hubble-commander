@@ -210,10 +210,11 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_CommitmentID_FindUsingI
 	})
 	s.NoError(err)
 
+	id := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	receipts := make([]stored.TxReceipt, 0, 1)
 	err = s.storage.database.Badger.Find(
 		&receipts,
-		bh.Where("CommitmentID").Eq(uint32(1)).Index("CommitmentID"),
+		bh.Where("CommitmentID").Le(id).Index("CommitmentID"),
 	)
 	s.NoError(err)
 	s.Len(receipts, 0)
@@ -251,7 +252,7 @@ func (s *StoredTransactionTestSuite) TestStoredTxReceipt_ToStateID_FindUsingInde
 	receipts := make([]stored.TxReceipt, 0, 1)
 	err = s.storage.database.Badger.Find(
 		&receipts,
-		bh.Where("ToStateID").Eq(uint32(1)).Index("ToStateID"),
+		bh.Where("ToStateID").Le(uint32(1)).Index("ToStateID"),
 	)
 	s.NoError(err)
 	s.Len(receipts, 0)
