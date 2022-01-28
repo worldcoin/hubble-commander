@@ -133,7 +133,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_TxBatch() {
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateTxCommitment(result, s.txCommitment)
 }
 
@@ -150,7 +150,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_MassMigrationBatch() {
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateMMCommitment(result, s.mmCommitment)
 }
 
@@ -167,7 +167,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_DepositBatch() {
 	result, err := s.api.GetBatchByHash(*s.batch.Hash)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateDepositCommitment(result)
 }
 
@@ -207,7 +207,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_TxBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateTxCommitment(result, s.txCommitment)
 }
 
@@ -224,7 +224,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_MassMigrationBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateMMCommitment(result, s.mmCommitment)
 }
 
@@ -241,7 +241,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_DepositBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateBatch(result)
+	s.validateBatch(result, s.batch.Type)
 	s.validateDepositCommitment(result)
 }
 
@@ -267,8 +267,8 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedTxBatch() {
 	s.addStateLeaf()
 
-	s.batch.Type = batchtype.Transfer
-	s.addSubmittedBatch(s.batch.Type)
+	batchType := batchtype.Transfer
+	s.addSubmittedBatch(batchType)
 
 	pendingCommitment := *s.txCommitment
 	pendingCommitment.BodyHash = nil
@@ -278,15 +278,15 @@ func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedTxBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateSubmittedBatch(result)
+	s.validateSubmittedBatch(result, batchType)
 	s.validateTxCommitment(result, &pendingCommitment)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedMMBatch() {
 	s.addStateLeaf()
 
-	s.batch.Type = batchtype.MassMigration
-	s.addSubmittedBatch(s.batch.Type)
+	batchType := batchtype.MassMigration
+	s.addSubmittedBatch(batchType)
 
 	pendingCommitment := *s.mmCommitment
 	pendingCommitment.BodyHash = nil
@@ -296,15 +296,15 @@ func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedMMBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateSubmittedBatch(result)
+	s.validateSubmittedBatch(result, batchType)
 	s.validateMMCommitment(result, &pendingCommitment)
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedDepositBatch() {
 	s.addStateLeaf()
 
-	s.batch.Type = batchtype.Deposit
-	s.addSubmittedBatch(s.batch.Type)
+	batchType := batchtype.Deposit
+	s.addSubmittedBatch(batchType)
 
 	err := s.storage.AddCommitment(s.depositCommitment)
 	s.NoError(err)
@@ -312,7 +312,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_SubmittedDepositBatch() {
 	result, err := s.api.GetBatchByID(s.batch.ID)
 	s.NoError(err)
 	s.NotNil(result)
-	s.validateSubmittedBatch(result)
+	s.validateSubmittedBatch(result, batchType)
 	s.validateDepositCommitment(result)
 }
 
@@ -342,12 +342,12 @@ func (s *GetBatchTestSuite) addSubmittedBatch(batchType batchtype.BatchType) {
 	s.NoError(err)
 }
 
-func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitments) {
+func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitments, batchType batchtype.BatchType) {
 	submissionBlock := *s.batch.FinalisationBlock - config.DefaultBlocksToFinalise
 	expectedBatch := dto.Batch{
 		ID:                s.batch.ID,
 		Hash:              s.batch.Hash,
-		Type:              s.batch.Type,
+		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
 		SubmissionBlock:   &submissionBlock,
 		SubmissionTime:    s.batch.SubmissionTime,
@@ -358,11 +358,11 @@ func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitment
 	s.Equal(expectedBatch, result.Batch)
 }
 
-func (s *GetBatchTestSuite) validateSubmittedBatch(result *dto.BatchWithRootAndCommitments) {
+func (s *GetBatchTestSuite) validateSubmittedBatch(result *dto.BatchWithRootAndCommitments, batchType batchtype.BatchType) {
 	expectedBatch := dto.Batch{
 		ID:                s.batch.ID,
 		Hash:              nil,
-		Type:              s.batch.Type,
+		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
 		SubmissionBlock:   nil,
 		SubmissionTime:    nil,
