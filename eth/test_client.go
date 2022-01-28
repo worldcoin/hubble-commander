@@ -13,6 +13,7 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
+	TxsHashesChan       chan common.Hash
 }
 
 var (
@@ -35,6 +36,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 	if err != nil {
 		return nil, err
 	}
+	txsHashesChan := make(chan common.Hash, 32)
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
@@ -54,6 +56,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
 		ClientConfig:    clientCfg,
+		TxsHashesChan:   txsHashesChan,
 	})
 	if err != nil {
 		return nil, err
@@ -63,5 +66,6 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
+		TxsHashesChan:       txsHashesChan,
 	}, nil
 }

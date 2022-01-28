@@ -62,6 +62,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsHashesChan = s.client.TxsHashesChan
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
@@ -69,6 +70,9 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.setAccountsAndChainState()
+
+	s.startWorkers()
+	s.waitForLatestBlockSync()
 }
 
 func (s *TxsTrackingTestSuite) TearDownTest() {
@@ -79,9 +83,6 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
-	s.startWorkers()
-	s.waitForLatestBlockSync()
-
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
@@ -89,9 +90,6 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
-	s.startWorkers()
-	s.waitForLatestBlockSync()
-
 	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(1), 0, 50, &models.PublicKey{2, 3, 4})
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
 
@@ -99,9 +97,6 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
-	s.startWorkers()
-	s.waitForLatestBlockSync()
-
 	commitment := models.MMCommitmentWithTxs{
 		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
@@ -129,9 +124,6 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() 
 }
 
 func (s *TxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
-	s.startWorkers()
-	s.waitForLatestBlockSync()
-
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
@@ -174,7 +166,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Tracking", func() error {
-		err := s.cmd.txsTracking()
+		err := s.cmd.txsTracking(s.cmd.txsHashesChan)
 		s.NoError(err)
 		return nil
 	})
@@ -211,6 +203,7 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 			GenesisStateRoot: genesisRoot,
 		},
 	}, conf)
+
 	require.NoError(t, err)
 
 	return client

@@ -15,7 +15,7 @@ type AccountManager struct {
 	Blockchain                       chain.Connection
 	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit *uint64
-	txsHashesChan                    chan common.Hash
+	txsHashesChan                    chan<- common.Hash
 }
 
 //goland:noinspection GoDeprecation
@@ -41,5 +41,5 @@ type AccountManagerParams struct {
 	AccountRegistry                  *accountregistry.AccountRegistry
 	AccountRegistryAddress           common.Address
 	BatchAccountRegistrationGasLimit *uint64
-	TxsHashesChan                    chan common.Hash
+	TxsHashesChan                    chan<- common.Hash
 }

@@ -10,12 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (c *Commander) txsTracking() error {
+func (c *Commander) txsTracking(txsHashChan <-chan common.Hash) error {
 	for {
 		select {
 		case <-c.workersContext.Done():
 			return nil
-		case txHash := <-c.client.TxsHashesChan:
+		case txHash := <-txsHashChan:
 			err := c.waitUntilTxMinedAndCheckForFail(txHash)
 			if err != nil {
 				panic(err)

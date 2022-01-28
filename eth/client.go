@@ -28,6 +28,7 @@ type NewClientParams struct {
 	TokenRegistry   *tokenregistry.TokenRegistry
 	SpokeRegistry   *spokeregistry.SpokeRegistry
 	DepositManager  *depositmanager.DepositManager
+	TxsHashesChan   chan<- common.Hash
 	ClientConfig
 }
 
@@ -55,7 +56,7 @@ type Client struct {
 	blocksToFinalise       *int64
 	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
-	TxsHashesChan          chan common.Hash
+	txsHashesChan          chan<- common.Hash
 
 	*AccountManager
 }
@@ -81,13 +82,12 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
-	txsHashesChan := make(chan common.Hash, 32)
 
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
-		TxsHashesChan:                    txsHashesChan,
+		TxsHashesChan:                    params.TxsHashesChan,
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -118,7 +118,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
-		TxsHashesChan: txsHashesChan,
+		txsHashesChan: params.TxsHashesChan,
 	}, nil
 }
 
