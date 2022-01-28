@@ -40,17 +40,17 @@ func (s *CommanderTestSuite) TearDownTest() {
 }
 
 func (s *CommanderTestSuite) TestStartStop() {
-	s.False(s.cmd.isRunning)
+	s.False(s.cmd.isRunning())
 
 	err := s.cmd.Start()
 	s.NoError(err)
 
-	s.True(s.cmd.isRunning)
+	s.True(s.cmd.isRunning())
 
 	err = s.cmd.Stop()
 	s.NoError(err)
 
-	s.False(s.cmd.isRunning)
+	s.False(s.cmd.isRunning())
 }
 
 func (s *CommanderTestSuite) TestStartAndWait() {
@@ -61,9 +61,7 @@ func (s *CommanderTestSuite) TestStartAndWait() {
 		s.NoError(err)
 		startAndWaitReturnTime = ref.Time(time.Now())
 	}()
-	s.Eventually(func() bool {
-		return s.cmd.isRunning
-	}, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
+	s.Eventually(s.cmd.isRunning, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
 
 	err := s.cmd.Stop()
 	s.NoError(err)

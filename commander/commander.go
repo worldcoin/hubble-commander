@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -35,13 +36,17 @@ var (
 
 // nolint:structcheck
 type lifecycle struct {
-	isRunning           bool
+	running             uint32
 	releaseStartAndWait context.CancelFunc
 	manualStop          bool
 
 	workersContext     context.Context
 	stopWorkersContext context.CancelFunc
 	workersWaitGroup   sync.WaitGroup
+}
+
+func (l *lifecycle) isRunning() bool {
+	return atomic.LoadUint32(&l.running) != 0
 }
 
 type Commander struct {
@@ -57,7 +62,7 @@ type Commander struct {
 	metricsServer *http.Server
 
 	stateMutex        sync.Mutex
-	rollupLoopRunning bool
+	rollupLoopRunning uint32
 	invalidBatchID    *models.Uint256
 }
 
@@ -83,7 +88,7 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Start() (err error) {
-	if c.isRunning {
+	if c.isRunning() {
 		return nil
 	}
 
@@ -132,12 +137,12 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-	c.isRunning = true
+	atomic.StoreUint32(&c.running, 1)
 	return nil
 }
 
 func (c *Commander) Stop() error {
-	if !c.isRunning {
+	if !c.isRunning() {
 		return nil
 	}
 
@@ -198,7 +203,12 @@ func (c *Commander) stop() error {
 	}
 	c.stopWorkersContext()
 	c.workersWaitGroup.Wait()
+	atomic.StoreUint32(&c.running, 0)
 	return c.storage.Close()
+}
+
+func (c *Commander) isRollupLoopRunning() bool {
+	return atomic.LoadUint32(&c.rollupLoopRunning) != 0
 }
 
 func getClient(

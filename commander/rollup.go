@@ -2,6 +2,7 @@ package commander
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -14,16 +15,17 @@ import (
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
-	if isProposer && !c.rollupLoopRunning {
+	rollupLoopRunning := c.isRollupLoopRunning()
+	if isProposer && !rollupLoopRunning {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		var ctx context.Context
 		ctx, cancel = context.WithCancel(c.workersContext)
 		c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
-		c.rollupLoopRunning = true
-	} else if !isProposer && c.rollupLoopRunning {
+		atomic.StoreUint32(&c.rollupLoopRunning, 1)
+	} else if !isProposer && rollupLoopRunning {
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
 		cancel()
-		c.rollupLoopRunning = false
+		atomic.StoreUint32(&c.rollupLoopRunning, 0)
 	}
 	return cancel
 }

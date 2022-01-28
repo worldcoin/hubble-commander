@@ -77,7 +77,7 @@ func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.startBlockLoop()
 
 	s.Eventually(func() bool {
-		return s.cmd.rollupLoopRunning
+		return s.cmd.isRollupLoopRunning()
 	}, 1*time.Second, 100*time.Millisecond)
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
@@ -282,7 +282,7 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 }
 
 func stopCommander(cmd *Commander) {
-	if !cmd.isRunning {
+	if !cmd.isRunning() {
 		return
 	}
 	cmd.stopWorkersContext()
