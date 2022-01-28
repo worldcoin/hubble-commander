@@ -6,6 +6,14 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
+// We need to "initialize" the indices on fields of pointer type to make them work with bh.Find operations.
+// The problem originates in `indexExists` function in BadgerHold (https://github.com/timshannon/badgerhold/blob/v4.0.1/index.go#L148).
+// Badger assumes that if there is a value for some data type, then there must exist at least one index entry.
+// If you don't index nil values the way we did for stored.TxReceipt.ToStateID it can be the case that there is some
+// stored.TxReceipt stored, but there is no index entry. To work around this we set an empty index entry.
+// See:
+// 	 * stored.TxReceipt Indexes() method
+//   * InitializeIndexTestSuite.TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil
 func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {
 	encodedZeroValue, err := db.Encode(zeroValue)
 	if err != nil {
@@ -13,8 +21,8 @@ func initializeIndex(database *Database, typeName []byte, indexName string, zero
 	}
 	zeroValueIndexKey := db.IndexKey(typeName, indexName, encodedZeroValue)
 
-	initialised, err := indexAlreadyInitialised(database, zeroValueIndexKey)
-	if initialised || err != nil {
+	initialized, err := indexAlreadyInitialised(database, zeroValueIndexKey)
+	if initialized || err != nil {
 		return err
 	}
 
