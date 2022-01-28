@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 )
 
+// nolint:structcheck
 type lifecycle struct {
 	active           uint32
 	startAndWaitChan chan struct{}
