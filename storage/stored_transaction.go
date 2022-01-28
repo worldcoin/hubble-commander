@@ -41,10 +41,6 @@ func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = initializeIndex(database, models.AccountLeafName, "PublicKey", models.ZeroPublicKey)
-	if err != nil {
-		return nil, err
-	}
 
 	return &TransactionStorage{
 		database: database,
