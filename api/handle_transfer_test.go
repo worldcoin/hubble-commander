@@ -260,6 +260,12 @@ func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer()
 	s.Equal(APIErrMinedTransaction, err)
 }
 
+func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() {
+	s.api.isAcceptingTransactions = false
+	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.Equal(APIErrTxSendingDisabled, err)
+}
+
 func TestSendTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendTransferTestSuite))
 }
