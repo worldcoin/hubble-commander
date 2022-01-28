@@ -43,9 +43,5 @@ func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Tr
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	if a.txsHashesChan != nil {
-		a.txsHashesChan <- tx.Hash()
-	}
-
 	return tx, nil
 }
