@@ -4,12 +4,15 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type AccountTreeTestSuite struct {
@@ -206,6 +209,70 @@ func (s *AccountTreeTestSuite) TestUnsafeSet_ReturnsWitness() {
 	node, err = s.storage.AccountTree.merkleTree.Get(models.MerklePath{Depth: 1, Path: 1})
 	s.NoError(err)
 	s.Equal(node.DataHash, witness[31])
+}
+
+func (s *AccountTreeTestSuite) TestAccountLeaf_PublicKey_IndexWorks() {
+	pk1 := models.PublicKey{1, 2, 3}
+	pk2 := models.PublicKey{4, 5, 6}
+	_, err := s.storage.AccountTree.unsafeSet(&models.AccountLeaf{
+		PubKeyID:  0,
+		PublicKey: pk1,
+	})
+	s.NoError(err)
+	_, err = s.storage.AccountTree.unsafeSet(&models.AccountLeaf{
+		PubKeyID:  1,
+		PublicKey: pk1,
+	})
+	s.NoError(err)
+	_, err = s.storage.AccountTree.unsafeSet(&models.AccountLeaf{
+		PubKeyID:  2,
+		PublicKey: pk2,
+	})
+	s.NoError(err)
+
+	indexValues := s.getPublicKeyIndexValues(models.AccountLeafName)
+	s.Len(indexValues, 3)
+	s.Len(indexValues[models.ZeroPublicKey], 0) // value set due to index initialization, see NewTransactionStorage // TODO move to NewAccountTree
+	s.Len(indexValues[pk1], 2)
+	s.Len(indexValues[pk2], 1)
+}
+
+func (s *AccountTreeTestSuite) TestAccountLeaf_PublicKey_FindUsingIndexWorksWhenThereAreOnlyAccountsWithZeroPublicKey() {
+	_, err := s.storage.AccountTree.unsafeSet(&models.AccountLeaf{
+		PubKeyID:  1,
+		PublicKey: models.ZeroPublicKey, // zero public key values are not indexed
+	})
+	s.NoError(err)
+
+	accounts := make([]models.AccountLeaf, 0, 1)
+	err = s.storage.database.Badger.Find(
+		&accounts,
+		bh.Where("PublicKey").Ge(models.ZeroPublicKey).Index("PublicKey"),
+	)
+	s.NoError(err)
+	s.Len(accounts, 0)
+}
+
+func (s *AccountTreeTestSuite) getPublicKeyIndexValues(typeName []byte) map[models.PublicKey]bh.KeyList {
+	indexValues := make(map[models.PublicKey]bh.KeyList)
+
+	s.iterateIndex(typeName, "PublicKey", func(encodedKey []byte, keyList bh.KeyList) {
+		var publicKey models.PublicKey
+		err := db.Decode(encodedKey, &publicKey)
+		s.NoError(err)
+
+		indexValues[publicKey] = keyList
+	})
+
+	return indexValues
+}
+
+func (s *AccountTreeTestSuite) iterateIndex(
+	typeName []byte,
+	indexName string,
+	handleIndex func(encodedKey []byte, keyList bh.KeyList),
+) {
+	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
 }
 
 func (s *AccountTreeTestSuite) TestSetBatch_AddsAccountLeaves() {
