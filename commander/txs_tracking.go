@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -27,26 +27,16 @@ func (c *Commander) txsTracking(txsHashChan <-chan common.Hash) error {
 }
 
 func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
-	var tx *types.Transaction
-	var isPending bool
-	var err error
-
-	for {
-		tx, isPending, err = c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		if !isPending {
-			break
-		}
-		time.Sleep(time.Millisecond * 300)
-	}
-
-	receipt, err := c.client.Blockchain.GetBackend().TransactionReceipt(context.Background(), txHash)
+	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	receipt, err := chain.WaitToBeMined(c.client.Blockchain.GetBackend(), tx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	if receipt.Status == 1 {
 		return nil
 	}
