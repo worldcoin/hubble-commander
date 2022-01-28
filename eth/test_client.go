@@ -23,10 +23,10 @@ var (
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
-	return NewConfiguredTestClient(rollup.DeploymentConfig{}, ClientConfig{})
+	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &ClientConfig{})
 }
 
-func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig) (*TestClient, error) {
+func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConfig) (*TestClient, error) {
 	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		TokenRegistry:   contracts.TokenRegistry,
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
-		ClientConfig:    clientCfg,
+		ClientConfig:    *clientCfg,
 		TxsHashesChan:   txsHashesChan,
 	})
 	if err != nil {

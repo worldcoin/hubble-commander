@@ -93,11 +93,11 @@ type txHelperContracts struct {
 }
 
 func DeployRollup(c chain.Connection) (*RollupContracts, error) {
-	return DeployConfiguredRollup(c, DeploymentConfig{})
+	return DeployConfiguredRollup(c, &DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&cfg.Params)
 
 	// Stage 1
@@ -312,7 +312,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	return &RollupContracts{
-		Config:                 cfg,
+		Config:                 *cfg,
 		Chooser:                proofOfBurn,
 		AccountRegistry:        accountRegistry,
 		AccountRegistryAddress: *cfg.AccountRegistry,

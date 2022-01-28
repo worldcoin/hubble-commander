@@ -93,7 +93,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(blockchain, rollup.DeploymentConfig{
+	contracts, err := rollup.DeployConfiguredRollup(blockchain, &rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot:   stateRoot,
 			BlocksToFinalise:   models.NewUint256(uint64(cfg.Bootstrap.BlocksToFinalise)),

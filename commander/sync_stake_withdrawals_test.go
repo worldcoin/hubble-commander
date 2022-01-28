@@ -184,12 +184,12 @@ func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
 
-	client, err := eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+	client, err := eth.NewConfiguredTestClient(&rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 			BlocksToFinalise: models.NewUint256(1),
 		},
-	}, eth.ClientConfig{})
+	}, &eth.ClientConfig{})
 	require.NoError(t, err)
 
 	return client

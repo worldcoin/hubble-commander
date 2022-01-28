@@ -47,7 +47,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.NoError(err)
 	lowGasLimit := uint64(30_000)
 
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, eth.ClientConfig{
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, &eth.ClientConfig{
 		TransferBatchSubmissionGasLimit:  &lowGasLimit,
 		C2TBatchSubmissionGasLimit:       &lowGasLimit,
 		MMBatchSubmissionGasLimit:        &lowGasLimit,
@@ -193,12 +193,12 @@ func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf eth.ClientConfig) *eth.TestClient {
+func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf *eth.ClientConfig) *eth.TestClient {
 	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
 
-	client, err := eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+	client, err := eth.NewConfiguredTestClient(&rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 		},
