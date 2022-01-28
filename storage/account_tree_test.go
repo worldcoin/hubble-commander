@@ -232,7 +232,7 @@ func (s *AccountTreeTestSuite) TestAccountLeaf_PublicKey_IndexWorks() {
 
 	indexValues := s.getPublicKeyIndexValues(models.AccountLeafName)
 	s.Len(indexValues, 3)
-	s.Len(indexValues[models.ZeroPublicKey], 0) // value set due to index initialization, see NewTransactionStorage // TODO move to NewAccountTree
+	s.Len(indexValues[models.ZeroPublicKey], 0) // value set due to index initialization, see NewAccountTree
 	s.Len(indexValues[pk1], 2)
 	s.Len(indexValues[pk2], 1)
 }
