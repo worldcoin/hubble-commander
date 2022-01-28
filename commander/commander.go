@@ -36,7 +36,7 @@ var (
 
 // nolint:structcheck
 type lifecycle struct {
-	running             uint32
+	active              uint32
 	releaseStartAndWait context.CancelFunc
 	manualStop          bool
 
@@ -45,8 +45,8 @@ type lifecycle struct {
 	workersWaitGroup   sync.WaitGroup
 }
 
-func (l *lifecycle) isRunning() bool {
-	return atomic.LoadUint32(&l.running) != 0
+func (l *lifecycle) isActive() bool {
+	return atomic.LoadUint32(&l.active) != 0
 }
 
 type Commander struct {
@@ -61,9 +61,9 @@ type Commander struct {
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	stateMutex        sync.Mutex
-	rollupLoopRunning uint32
-	invalidBatchID    *models.Uint256
+	stateMutex       sync.Mutex
+	rollupLoopActive uint32
+	invalidBatchID   *models.Uint256
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -88,7 +88,7 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Start() (err error) {
-	if c.isRunning() {
+	if c.isActive() {
 		return nil
 	}
 
@@ -137,12 +137,12 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-	atomic.StoreUint32(&c.running, 1)
+	atomic.StoreUint32(&c.active, 1)
 	return nil
 }
 
 func (c *Commander) Stop() error {
-	if !c.isRunning() {
+	if !c.isActive() {
 		return nil
 	}
 
@@ -203,12 +203,12 @@ func (c *Commander) stop() error {
 	}
 	c.stopWorkersContext()
 	c.workersWaitGroup.Wait()
-	atomic.StoreUint32(&c.running, 0)
+	atomic.StoreUint32(&c.active, 0)
 	return c.storage.Close()
 }
 
-func (c *Commander) isRollupLoopRunning() bool {
-	return atomic.LoadUint32(&c.rollupLoopRunning) != 0
+func (c *Commander) isRollupLoopActive() bool {
+	return atomic.LoadUint32(&c.rollupLoopActive) != 0
 }
 
 func getClient(

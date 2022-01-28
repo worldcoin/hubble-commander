@@ -15,17 +15,17 @@ import (
 )
 
 func (c *Commander) manageRollupLoop(cancel context.CancelFunc, isProposer bool) context.CancelFunc {
-	rollupLoopRunning := c.isRollupLoopRunning()
+	rollupLoopRunning := c.isRollupLoopActive()
 	if isProposer && !rollupLoopRunning {
 		log.Debugf("Commander is an active proposer, starting rollupLoop")
 		var ctx context.Context
 		ctx, cancel = context.WithCancel(c.workersContext)
 		c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
-		atomic.StoreUint32(&c.rollupLoopRunning, 1)
+		atomic.StoreUint32(&c.rollupLoopActive, 1)
 	} else if !isProposer && rollupLoopRunning {
 		log.Debugf("Commander is no longer an active proposer, stoppping rollupLoop")
 		cancel()
-		atomic.StoreUint32(&c.rollupLoopRunning, 0)
+		atomic.StoreUint32(&c.rollupLoopActive, 0)
 	}
 	return cancel
 }
