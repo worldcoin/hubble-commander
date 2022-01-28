@@ -31,7 +31,7 @@
 | `10014`    | `cannot update mined transaction`                                                                         |
 | `10015`    | `transaction already exists`                                                                              |
 | `10016`    | `spoke with given ID does not exist`                                                                      |
-| `10017`    | `send transaction method disabled`                                                                        |
+| `10017`    | `instance is not accepting transactions`                                                                  |
 | `20000`    | `commitment not found`                                                                                    |
 | `30000`    | `batch not found`                                                                                         |
 | `30001`    | `batches not found`                                                                                       |
