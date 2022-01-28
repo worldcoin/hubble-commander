@@ -78,10 +78,11 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.api = &API{
-		cfg:              &config.APIConfig{},
-		storage:          s.storage.Storage,
-		client:           eth.DomainOnlyTestClient,
-		commanderMetrics: metrics.NewCommanderMetrics(),
+		cfg:                     &config.APIConfig{},
+		storage:                 s.storage.Storage,
+		client:                  eth.DomainOnlyTestClient,
+		commanderMetrics:        metrics.NewCommanderMetrics(),
+		isAcceptingTransactions: true,
 	}
 
 	s.domain, err = s.api.client.GetDomain()

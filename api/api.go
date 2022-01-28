@@ -18,14 +18,13 @@ import (
 )
 
 type API struct {
-	cfg                    *config.APIConfig
-	storage                *st.Storage
-	client                 *eth.Client
-	mockSignature          models.Signature
-	commanderMetrics       *metrics.CommanderMetrics
-	disableSignatures      bool
-	disableSendTransaction bool
-	enableBatchCreation    func(enable bool)
+	cfg                     *config.APIConfig
+	storage                 *st.Storage
+	client                  *eth.Client
+	mockSignature           models.Signature
+	commanderMetrics        *metrics.CommanderMetrics
+	disableSignatures       bool
+	isAcceptingTransactions bool
 }
 
 func NewServer(
@@ -59,23 +58,22 @@ func getAPIServer(
 	disableSignatures bool,
 	enableBatchCreation func(enable bool),
 ) (*rpc.Server, error) {
-	hubbleAPI := API{
-		cfg:                    cfg,
-		storage:                storage,
-		client:                 client,
-		commanderMetrics:       commanderMetrics,
-		disableSignatures:      disableSignatures,
-		disableSendTransaction: false,
-		enableBatchCreation:    enableBatchCreation,
+	hubbleAPI := &API{
+		cfg:                     cfg,
+		storage:                 storage,
+		client:                  client,
+		commanderMetrics:        commanderMetrics,
+		disableSignatures:       disableSignatures,
+		isAcceptingTransactions: true,
 	}
 	if err := hubbleAPI.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")
 	}
 
-	adminAPI := admin.NewAPI(cfg, storage, client)
+	adminAPI := admin.NewAPI(cfg, storage, client, enableBatchCreation, hubbleAPI.enableTxsAcceptance)
 
 	server := rpc.NewServer()
-	if err := server.RegisterName("hubble", &hubbleAPI); err != nil {
+	if err := server.RegisterName("hubble", hubbleAPI); err != nil {
 		return nil, err
 	}
 	if err := server.RegisterName("admin", adminAPI); err != nil {
@@ -99,4 +97,8 @@ func (a *API) initSignature() error {
 	}
 	a.mockSignature = *signature.ModelsSignature()
 	return nil
+}
+
+func (a *API) enableTxsAcceptance(enable bool) {
+	a.isAcceptingTransactions = enable
 }

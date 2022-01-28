@@ -100,7 +100,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
-	if a.disableSendTransaction {
+	if !a.isAcceptingTransactions {
 		return nil, ErrSendTransactionDisabled
 	}
 

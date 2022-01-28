@@ -38,11 +38,12 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	s.NoError(err)
 
 	s.api = &API{
-		cfg:               &config.APIConfig{},
-		storage:           s.storage.Storage,
-		client:            eth.DomainOnlyTestClient,
-		commanderMetrics:  metrics.NewCommanderMetrics(),
-		disableSignatures: false,
+		cfg:                     &config.APIConfig{},
+		storage:                 s.storage.Storage,
+		client:                  eth.DomainOnlyTestClient,
+		commanderMetrics:        metrics.NewCommanderMetrics(),
+		disableSignatures:       false,
+		isAcceptingTransactions: true,
 	}
 
 	s.domain, err = s.api.client.GetDomain()
