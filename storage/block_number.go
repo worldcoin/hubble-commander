@@ -1,17 +1,19 @@
 package storage
 
-import "github.com/Worldcoin/hubble-commander/utils/ref"
+import (
+	"sync/atomic"
+)
 
 func (s *ChainStateStorage) SetLatestBlockNumber(blockNumber uint32) {
-	s.latestBlockNumber = blockNumber
+	atomic.StoreUint32(&s.latestBlockNumber, blockNumber)
 }
 
 func (s *ChainStateStorage) GetLatestBlockNumber() uint32 {
-	return s.latestBlockNumber
+	return atomic.LoadUint32(&s.latestBlockNumber)
 }
 
 func (s *ChainStateStorage) SetSyncedBlock(blockNumber uint64) error {
-	s.syncedBlock = &blockNumber
+	atomic.StoreUint64(&s.syncedBlock, blockNumber)
 	chainState, err := s.GetChainState()
 	if err != nil {
 		return err
@@ -21,15 +23,18 @@ func (s *ChainStateStorage) SetSyncedBlock(blockNumber uint64) error {
 }
 
 func (s *ChainStateStorage) GetSyncedBlock() (*uint64, error) {
-	if s.syncedBlock != nil {
-		return s.syncedBlock, nil
+	syncedBlock := atomic.LoadUint64(&s.syncedBlock)
+	if syncedBlock != 0 {
+		return &syncedBlock, nil
 	}
 	chainState, err := s.GetChainState()
 	if IsNotFoundError(err) {
-		return ref.Uint64(0), nil
+		return &syncedBlock, nil
 	}
 	if err != nil {
 		return nil, err
 	}
+
+	atomic.StoreUint64(&s.syncedBlock, chainState.SyncedBlock)
 	return &chainState.SyncedBlock, nil
 }

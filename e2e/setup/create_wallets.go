@@ -3,6 +3,7 @@ package setup
 import (
 	"encoding/hex"
 	"os"
+	"path"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"gopkg.in/yaml.v2"
@@ -45,7 +46,7 @@ func CreateWallets(domain bls.Domain) ([]bls.Wallet, error) {
 type PrivateKeys []string
 
 func readKeys() (PrivateKeys, error) {
-	accountsPath := os.Getenv("HUBBLE_E2E_ACCOUNTS_PATH")
+	accountsPath := getAccountsPath()
 	yamlFile, err := os.ReadFile(accountsPath)
 	if err != nil {
 		return nil, err
@@ -57,4 +58,12 @@ func readKeys() (PrivateKeys, error) {
 		return nil, err
 	}
 	return keys, nil
+}
+
+func getAccountsPath() string {
+	accountsPath := os.Getenv("HUBBLE_E2E_ACCOUNTS_PATH")
+	if accountsPath != "" {
+		return accountsPath
+	}
+	return path.Join("setup", "accounts.yaml")
 }
