@@ -195,7 +195,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 			},
 			Witness: []common.Hash{consts.ZeroHash},
 		},
-		BodyRoot: commitment.GetBodyHash(),
+		BodyRoot: *commitment.GetBodyHash(),
 	}
 
 	proof, err := s.proverCtx.PreviousCommitmentInclusionProof(&s.decodedBatch, -1)

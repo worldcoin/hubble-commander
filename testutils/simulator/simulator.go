@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -29,6 +30,7 @@ type Config struct {
 
 type Simulator struct {
 	Backend  *Backend
+	mutex    *sync.Mutex
 	Config   *Config
 	Account  *bind.TransactOpts
 	Accounts []*bind.TransactOpts
@@ -78,6 +80,7 @@ func NewConfiguredSimulator(cfg Config) (sim *Simulator, err error) {
 
 	sim = &Simulator{
 		Backend:  NewBackend(backends.NewSimulatedBackend(genesisAccounts, *cfg.BlockGasLimit)),
+		mutex:    &sync.Mutex{},
 		Config:   &cfg,
 		Account:  accounts[0],
 		Accounts: accounts,
@@ -108,7 +111,9 @@ func (sim *Simulator) StartAutomine() func() {
 			case <-quit:
 				return
 			case <-ticker.C:
+				sim.mutex.Lock()
 				sim.Backend.Commit()
+				sim.mutex.Unlock()
 			}
 		}
 	}()
@@ -128,7 +133,9 @@ func (sim *Simulator) StopAutomine() {
 
 func (sim *Simulator) Close() {
 	sim.StopAutomine()
+	sim.mutex.Lock()
 	_ = sim.Backend.Close() // ignore error, it is always nil
+	sim.mutex.Unlock()
 }
 
 func (sim *Simulator) GetAccount() *bind.TransactOpts {

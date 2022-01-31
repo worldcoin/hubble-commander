@@ -2,7 +2,6 @@ package stored
 
 import (
 	"encoding/binary"
-	"reflect"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -12,10 +11,6 @@ import (
 type ByteEncoder interface {
 	Bytes() []byte
 	SetBytes(data []byte) error
-}
-
-func getTypeName(dataType interface{}) []byte {
-	return []byte(reflect.TypeOf(dataType).Name())
 }
 
 func EncodeHashPointer(value *common.Hash) []byte {

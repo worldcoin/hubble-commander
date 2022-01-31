@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -33,17 +34,6 @@ var (
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
 )
 
-// nolint:structcheck
-type lifecycle struct {
-	isRunning           bool
-	releaseStartAndWait context.CancelFunc
-	manualStop          bool
-
-	workersContext     context.Context
-	stopWorkersContext context.CancelFunc
-	workersWaitGroup   sync.WaitGroup
-}
-
 type Commander struct {
 	lifecycle
 
@@ -56,18 +46,16 @@ type Commander struct {
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	stateMutex        sync.Mutex
-	rollupLoopRunning bool
-	invalidBatchID    *models.Uint256
+	stateMutex       sync.Mutex
+	rollupLoopActive uint32
+	invalidBatchID   *models.Uint256
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		cfg:        cfg,
 		blockchain: blockchain,
-		lifecycle: lifecycle{
-			releaseStartAndWait: func() {}, // noop
-		},
+		lifecycle:  lifecycle{},
 	}
 }
 
@@ -75,15 +63,15 @@ func (c *Commander) StartAndWait() error {
 	if err := c.Start(); err != nil {
 		return err
 	}
-	var stopContext context.Context
-	stopContext, c.releaseStartAndWait = context.WithCancel(context.Background())
 
-	<-stopContext.Done()
+	<-c.getStartAndWaitChan()
 	return nil
 }
 
 func (c *Commander) Start() (err error) {
-	if c.isRunning {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.isActive() {
 		return nil
 	}
 
@@ -114,14 +102,14 @@ func (c *Commander) Start() (err error) {
 	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
 
 	c.startWorker("API Server", func() error {
-		err = c.apiServer.ListenAndServe()
+		err := c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
 		return nil
 	})
 	c.startWorker("Metrics Server", func() error {
-		err = c.metricsServer.ListenAndServe()
+		err := c.metricsServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			return err
 		}
@@ -132,26 +120,23 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-	c.isRunning = true
+	atomic.StoreUint32(&c.active, 1)
 	return nil
 }
 
-func (c *Commander) Stop() error {
-	if !c.isRunning {
+func (c *Commander) Stop() (err error) {
+	if !c.isActive() {
 		return nil
 	}
 
-	c.manualStop = true
-
-	if err := c.stop(); err != nil {
-		return err
-	}
-
-	log.Warningln("Commander stopped.")
-
-	c.releaseStartAndWait()
-	c.resetCommander()
-	return nil
+	c.closeOnce.Do(func() {
+		if err = c.stop(); err != nil {
+			return
+		}
+		log.Warningln("Commander stopped.")
+		c.closeStartAndWaitChan()
+	})
+	return err
 }
 
 func (c *Commander) startWorker(name string, fn func() error) {
@@ -179,15 +164,14 @@ func (c *Commander) startWorker(name string, fn func() error) {
 
 func (c *Commander) handleWorkerError() {
 	<-c.workersContext.Done()
-	if c.manualStop {
-		return
-	}
-	log.Warning("Stopping commander gracefully...")
+	c.closeOnce.Do(func() {
+		log.Warning("Stopping commander gracefully...")
 
-	if err := c.stop(); err != nil {
-		log.Panicf("Failed to stop commander gracefully: %+v", err)
-	}
-	log.Panicln("Commander stopped by worker error")
+		if err := c.stop(); err != nil {
+			log.Panicf("Failed to stop commander gracefully: %+v", err)
+		}
+		log.Panicln("Commander stopped by worker error")
+	})
 }
 
 func (c *Commander) stop() error {
@@ -199,11 +183,12 @@ func (c *Commander) stop() error {
 	}
 	c.stopWorkersContext()
 	c.workersWaitGroup.Wait()
+	atomic.StoreUint32(&c.active, 0)
 	return c.storage.Close()
 }
 
-func (c *Commander) resetCommander() {
-	*c = *NewCommander(c.cfg, c.blockchain)
+func (c *Commander) isRollupLoopActive() bool {
+	return atomic.LoadUint32(&c.rollupLoopActive) != 0
 }
 
 func getClient(

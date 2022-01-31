@@ -21,12 +21,12 @@ func (c *DepositCommitment) SetBodyHash(_ *common.Hash) {
 	// NOOP
 }
 
-func (c *DepositCommitment) GetBodyHash() common.Hash {
-	return consts.ZeroHash
+func (c *DepositCommitment) GetBodyHash() *common.Hash {
+	return &consts.ZeroHash
 }
 
 func (c *DepositCommitment) LeafHash() common.Hash {
-	return utils.HashTwo(c.PostStateRoot, c.GetBodyHash())
+	return utils.HashTwo(c.PostStateRoot, *c.GetBodyHash())
 }
 
 func (c *DepositCommitment) ToTxCommitment() *TxCommitment {

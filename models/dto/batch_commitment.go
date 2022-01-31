@@ -8,7 +8,7 @@ import (
 type BatchTxCommitment struct {
 	ID                 CommitmentID
 	PostStateRoot      common.Hash
-	LeafHash           common.Hash
+	LeafHash           *common.Hash
 	TokenID            models.Uint256
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
@@ -17,7 +17,7 @@ type BatchTxCommitment struct {
 type BatchMMCommitment struct {
 	ID                CommitmentID
 	PostStateRoot     common.Hash
-	LeafHash          common.Hash
+	LeafHash          *common.Hash
 	CombinedSignature models.Signature
 	WithdrawRoot      common.Hash
 	Meta              MassMigrationMeta
@@ -26,7 +26,7 @@ type BatchMMCommitment struct {
 type BatchDepositCommitment struct {
 	ID            CommitmentID
 	PostStateRoot common.Hash
-	LeafHash      common.Hash
+	LeafHash      *common.Hash
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
 }
@@ -38,7 +38,7 @@ func MakeBatchTxCommitment(
 	return BatchTxCommitment{
 		ID:                 *NewCommitmentID(&commitment.ID),
 		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           commitment.LeafHash(),
+		LeafHash:           LeafHashOrNil(commitment),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
@@ -51,7 +51,7 @@ func MakeBatchMMCommitment(
 	return BatchMMCommitment{
 		ID:                *NewCommitmentID(&commitment.ID),
 		PostStateRoot:     commitment.PostStateRoot,
-		LeafHash:          commitment.LeafHash(),
+		LeafHash:          LeafHashOrNil(commitment),
 		CombinedSignature: commitment.CombinedSignature,
 		WithdrawRoot:      commitment.WithdrawRoot,
 		Meta: MassMigrationMeta{
@@ -69,7 +69,7 @@ func MakeBatchDepositCommitment(
 	return BatchDepositCommitment{
 		ID:            *NewCommitmentID(&commitment.ID),
 		PostStateRoot: commitment.PostStateRoot,
-		LeafHash:      commitment.LeafHash(),
+		LeafHash:      LeafHashOrNil(commitment),
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
 	}
