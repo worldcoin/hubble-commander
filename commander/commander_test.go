@@ -2,14 +2,11 @@ package commander
 
 import (
 	"os"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -52,33 +49,6 @@ func (s *CommanderTestSuite) TestStartStop() {
 	s.NoError(err)
 
 	s.False(s.cmd.isActive())
-}
-
-func (s *CommanderTestSuite) TestStartAndWait() {
-	var startAndWaitReturnTime *time.Time
-	var mutex sync.Mutex
-
-	go func() {
-		err := s.cmd.StartAndWait()
-		s.NoError(err)
-
-		mutex.Lock()
-		defer mutex.Unlock()
-		startAndWaitReturnTime = ref.Time(time.Now())
-	}()
-	s.Eventually(s.cmd.isActive, 15*time.Second, 100*time.Millisecond, "Commander hasn't started on time")
-
-	err := s.cmd.Stop()
-	s.NoError(err)
-	stopReturnTime := time.Now()
-
-	s.Eventually(func() bool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		return startAndWaitReturnTime != nil
-	}, 1*time.Second, 100*time.Millisecond, "StartAndWait hasn't returned on time")
-
-	s.Greater(startAndWaitReturnTime.UnixNano(), stopReturnTime.UnixNano(), "Stop should return before StartAndWait")
 }
 
 func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
