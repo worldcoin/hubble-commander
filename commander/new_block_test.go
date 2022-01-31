@@ -76,9 +76,7 @@ func (s *NewBlockLoopTestSuite) TearDownTest() {
 func (s *NewBlockLoopTestSuite) TestNewBlockLoop_StartsRollupLoop() {
 	s.startBlockLoop()
 
-	s.Eventually(func() bool {
-		return s.cmd.isRollupLoopActive()
-	}, 1*time.Second, 100*time.Millisecond)
+	s.Eventually(s.cmd.isRollupLoopActive, 1*time.Second, 100*time.Millisecond)
 
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
