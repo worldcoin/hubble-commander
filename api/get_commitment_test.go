@@ -12,6 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -175,7 +176,12 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
-	s.validateTxCommitment(commitment.(*dto.TxCommitment), expectedTransactions)
+	s.validateTxCommitment(
+		commitment.(*dto.TxCommitment),
+		expectedTransactions,
+		batchstatus.Mined,
+		s.batch.SubmissionTime,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
@@ -194,7 +200,12 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
-	s.validateTxCommitment(commitment.(*dto.TxCommitment), expectedTransactions)
+	s.validateTxCommitment(
+		commitment.(*dto.TxCommitment),
+		expectedTransactions,
+		batchstatus.Mined,
+		s.batch.SubmissionTime,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
@@ -213,7 +224,12 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
-	s.validateMMCommitment(commitment.(*dto.MMCommitment), expectedMassMigrations)
+	s.validateMMCommitment(
+		commitment.(*dto.MMCommitment),
+		expectedMassMigrations,
+		batchstatus.Mined,
+		s.batch.SubmissionTime,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_DepositType() {
@@ -227,7 +243,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_DepositType() {
 
 	commitment, err := s.api.GetCommitment(s.depositCommitment.ID)
 	s.NoError(err)
-	s.validateDepositCommitment(commitment.(*dto.DepositCommitment))
+	s.validateDepositCommitment(
+		commitment.(*dto.DepositCommitment),
+		batchstatus.Mined,
+		s.batch.SubmissionTime,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedTxCommitment() {
@@ -246,7 +266,12 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedTxCommitment() {
 
 	commitment, err := s.api.GetCommitment(pendingCommitment.ID)
 	s.NoError(err)
-	s.validateSubmittedTxCommitment(commitment.(*dto.TxCommitment), expectedTransactions)
+	s.validateTxCommitment(
+		commitment.(*dto.TxCommitment),
+		expectedTransactions,
+		batchstatus.Submitted,
+		nil,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedMMCommitment() {
@@ -265,7 +290,12 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedMMCommitment() {
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
-	s.validateSubmittedMMCommitment(commitment.(*dto.MMCommitment), expectedMassMigrations)
+	s.validateMMCommitment(
+		commitment.(*dto.MMCommitment),
+		expectedMassMigrations,
+		batchstatus.Submitted,
+		nil,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedDepositCommitment() {
@@ -277,7 +307,11 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedDepositCommitment() 
 
 	commitment, err := s.api.GetCommitment(s.depositCommitment.ID)
 	s.NoError(err)
-	s.validateSubmittedDepositCommitment(commitment.(*dto.DepositCommitment))
+	s.validateDepositCommitment(
+		commitment.(*dto.DepositCommitment),
+		batchstatus.Submitted,
+		nil,
+	)
 }
 
 func (s *GetCommitmentTestSuite) TestGetCommitment_NonexistentCommitment() {
@@ -306,10 +340,19 @@ func (s *GetCommitmentTestSuite) addSubmittedBatch(batchType batchtype.BatchType
 	s.NoError(err)
 }
 
-func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.TxCommitment, transactions interface{}) {
+func (s *GetCommitmentTestSuite) validateTxCommitment(
+	commitment *dto.TxCommitment,
+	transactions interface{},
+	batchStatus batchstatus.BatchStatus,
+	batchTime *models.Timestamp,
+) {
 	s.NotNil(commitment)
 
-	leafHash := s.txCommitment.LeafHash()
+	var leafHash *common.Hash
+	if batchStatus != batchstatus.Submitted {
+		leafHash = dto.LeafHashOrNil(s.txCommitment, s.txCommitment.BodyHash)
+	}
+
 	expectedCommitment := dto.TxCommitment{
 		ID: dto.CommitmentID{
 			BatchID:      s.txCommitment.ID.BatchID,
@@ -317,22 +360,31 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(commitment *dto.TxCommitme
 		},
 		Type:               s.txCommitment.Type,
 		PostStateRoot:      s.txCommitment.PostStateRoot,
-		LeafHash:           &leafHash,
+		LeafHash:           leafHash,
 		TokenID:            models.MakeUint256(1),
 		FeeReceiverStateID: s.txCommitment.FeeReceiver,
 		CombinedSignature:  s.txCommitment.CombinedSignature,
-		Status:             batchstatus.Mined,
-		BatchTime:          s.batch.SubmissionTime,
+		Status:             batchStatus,
+		BatchTime:          batchTime,
 		Transactions:       transactions,
 	}
 
 	s.Equal(expectedCommitment, *commitment)
 }
 
-func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.MMCommitment, transactions interface{}) {
+func (s *GetCommitmentTestSuite) validateMMCommitment(
+	commitment *dto.MMCommitment,
+	transactions interface{},
+	batchStatus batchstatus.BatchStatus,
+	batchTime *models.Timestamp,
+) {
 	s.NotNil(commitment)
 
-	leafHash := s.mmCommitment.LeafHash()
+	var leafHash *common.Hash
+	if batchStatus != batchstatus.Submitted {
+		leafHash = dto.LeafHashOrNil(s.mmCommitment, s.mmCommitment.BodyHash)
+	}
+
 	expectedCommitment := dto.MMCommitment{
 		ID: dto.CommitmentID{
 			BatchID:      s.mmCommitment.ID.BatchID,
@@ -340,10 +392,10 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.MMCommitme
 		},
 		Type:              s.mmCommitment.Type,
 		PostStateRoot:     s.mmCommitment.PostStateRoot,
-		LeafHash:          &leafHash,
+		LeafHash:          leafHash,
 		CombinedSignature: s.mmCommitment.CombinedSignature,
-		Status:            batchstatus.Mined,
-		BatchTime:         s.batch.SubmissionTime,
+		Status:            batchStatus,
+		BatchTime:         batchTime,
 		WithdrawRoot:      s.mmCommitment.WithdrawRoot,
 		Meta: dto.MassMigrationMeta{
 			SpokeID:            s.mmCommitment.Meta.SpokeID,
@@ -357,7 +409,11 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(commitment *dto.MMCommitme
 	s.Equal(expectedCommitment, *commitment)
 }
 
-func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.DepositCommitment) {
+func (s *GetCommitmentTestSuite) validateDepositCommitment(
+	commitment *dto.DepositCommitment,
+	batchStatus batchstatus.BatchStatus,
+	batchTime *models.Timestamp,
+) {
 	s.NotNil(commitment)
 
 	leafHash := s.depositCommitment.LeafHash()
@@ -369,79 +425,8 @@ func (s *GetCommitmentTestSuite) validateDepositCommitment(commitment *dto.Depos
 		Type:          s.depositCommitment.Type,
 		PostStateRoot: s.depositCommitment.PostStateRoot,
 		LeafHash:      &leafHash,
-		Status:        batchstatus.Mined,
-		BatchTime:     s.batch.SubmissionTime,
-		SubtreeID:     s.depositCommitment.SubtreeID,
-		SubtreeRoot:   s.depositCommitment.SubtreeRoot,
-		Deposits:      dto.MakePendingDeposits(s.depositCommitment.Deposits),
-	}
-
-	s.Equal(expectedCommitment, *commitment)
-}
-
-func (s *GetCommitmentTestSuite) validateSubmittedTxCommitment(commitment *dto.TxCommitment, transactions interface{}) {
-	s.NotNil(commitment)
-
-	expectedCommitment := dto.TxCommitment{
-		ID: dto.CommitmentID{
-			BatchID:      s.txCommitment.ID.BatchID,
-			IndexInBatch: s.txCommitment.ID.IndexInBatch,
-		},
-		Type:               s.txCommitment.Type,
-		PostStateRoot:      s.txCommitment.PostStateRoot,
-		LeafHash:           nil,
-		TokenID:            models.MakeUint256(1),
-		FeeReceiverStateID: s.txCommitment.FeeReceiver,
-		CombinedSignature:  s.txCommitment.CombinedSignature,
-		Status:             batchstatus.Submitted,
-		BatchTime:          nil,
-		Transactions:       transactions,
-	}
-
-	s.Equal(expectedCommitment, *commitment)
-}
-
-func (s *GetCommitmentTestSuite) validateSubmittedMMCommitment(commitment *dto.MMCommitment, transactions interface{}) {
-	s.NotNil(commitment)
-
-	expectedCommitment := dto.MMCommitment{
-		ID: dto.CommitmentID{
-			BatchID:      s.mmCommitment.ID.BatchID,
-			IndexInBatch: s.mmCommitment.ID.IndexInBatch,
-		},
-		Type:              s.mmCommitment.Type,
-		PostStateRoot:     s.mmCommitment.PostStateRoot,
-		LeafHash:          nil,
-		CombinedSignature: s.mmCommitment.CombinedSignature,
-		Status:            batchstatus.Submitted,
-		BatchTime:         nil,
-		WithdrawRoot:      s.mmCommitment.WithdrawRoot,
-		Meta: dto.MassMigrationMeta{
-			SpokeID:            s.mmCommitment.Meta.SpokeID,
-			TokenID:            s.mmCommitment.Meta.TokenID,
-			Amount:             s.mmCommitment.Meta.Amount,
-			FeeReceiverStateID: s.mmCommitment.Meta.FeeReceiver,
-		},
-		Transactions: transactions,
-	}
-
-	s.Equal(expectedCommitment, *commitment)
-}
-
-func (s *GetCommitmentTestSuite) validateSubmittedDepositCommitment(commitment *dto.DepositCommitment) {
-	s.NotNil(commitment)
-
-	leafHash := s.depositCommitment.LeafHash()
-	expectedCommitment := dto.DepositCommitment{
-		ID: dto.CommitmentID{
-			BatchID:      s.depositCommitment.ID.BatchID,
-			IndexInBatch: s.depositCommitment.ID.IndexInBatch,
-		},
-		Type:          s.depositCommitment.Type,
-		PostStateRoot: s.depositCommitment.PostStateRoot,
-		LeafHash:      &leafHash,
-		Status:        batchstatus.Submitted,
-		BatchTime:     nil,
+		Status:        batchStatus,
+		BatchTime:     batchTime,
 		SubtreeID:     s.depositCommitment.SubtreeID,
 		SubtreeRoot:   s.depositCommitment.SubtreeRoot,
 		Deposits:      dto.MakePendingDeposits(s.depositCommitment.Deposits),
