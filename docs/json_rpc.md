@@ -1011,7 +1011,9 @@ Returns pending batches that haven't been mined yet, see below.
 
 ### `admin_configure(configureParams)`
 
-Enables and disables accepting transaction and batch creation by commander.
+Can be used to enable/disable:
+ - Accepting new transactions by `hubble_sendTransaction`.
+ - Creating and submitting new transaction batches.
 
 # API usage
 
