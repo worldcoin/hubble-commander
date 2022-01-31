@@ -8,10 +8,11 @@ import (
 
 // nolint:structcheck
 type lifecycle struct {
-	active           uint32
+	mutex            sync.Mutex // protects Start method and startAndWaitChan
 	startAndWaitChan chan struct{}
-	mutex            sync.Mutex
-	manualStop       bool
+
+	active    uint32
+	closeOnce sync.Once
 
 	workersContext     context.Context
 	stopWorkersContext context.CancelFunc
@@ -35,7 +36,9 @@ func (l *lifecycle) unsafeGetStartAndWaitChan() chan struct{} {
 	return l.startAndWaitChan
 }
 
-func (l *lifecycle) unsafeCloseStartAndWaitChan() {
+func (l *lifecycle) closeStartAndWaitChan() {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	ch := l.unsafeGetStartAndWaitChan()
 	select {
 	case <-ch:

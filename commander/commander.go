@@ -69,6 +69,8 @@ func (c *Commander) StartAndWait() error {
 }
 
 func (c *Commander) Start() (err error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	if c.isActive() {
 		return nil
 	}
@@ -122,23 +124,19 @@ func (c *Commander) Start() (err error) {
 	return nil
 }
 
-func (c *Commander) Stop() error {
+func (c *Commander) Stop() (err error) {
 	if !c.isActive() {
 		return nil
 	}
 
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.manualStop = true
-
-	if err := c.stop(); err != nil {
-		return err
-	}
-
-	log.Warningln("Commander stopped.")
-
-	c.unsafeCloseStartAndWaitChan()
-	return nil
+	c.closeOnce.Do(func() {
+		if err = c.stop(); err != nil {
+			return
+		}
+		log.Warningln("Commander stopped.")
+		c.closeStartAndWaitChan()
+	})
+	return err
 }
 
 func (c *Commander) startWorker(name string, fn func() error) {
@@ -166,15 +164,14 @@ func (c *Commander) startWorker(name string, fn func() error) {
 
 func (c *Commander) handleWorkerError() {
 	<-c.workersContext.Done()
-	if c.manualStop {
-		return
-	}
-	log.Warning("Stopping commander gracefully...")
+	c.closeOnce.Do(func() {
+		log.Warning("Stopping commander gracefully...")
 
-	if err := c.stop(); err != nil {
-		log.Panicf("Failed to stop commander gracefully: %+v", err)
-	}
-	log.Panicln("Commander stopped by worker error")
+		if err := c.stop(); err != nil {
+			log.Panicf("Failed to stop commander gracefully: %+v", err)
+		}
+		log.Panicln("Commander stopped by worker error")
+	})
 }
 
 func (c *Commander) stop() error {
