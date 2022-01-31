@@ -48,10 +48,10 @@ type Commander struct {
 
 	batchCreationEnabled bool
 
-	stateMutex        sync.Mutex
-	rollupLoopActive  uint32
-	cancelRollupLoop  context.CancelFunc
-	invalidBatchID    *models.Uint256
+	stateMutex       sync.Mutex
+	rollupLoopActive uint32
+	cancelRollupLoop context.CancelFunc
+	invalidBatchID   *models.Uint256
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -59,7 +59,7 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 		cfg:                  cfg,
 		blockchain:           blockchain,
 		batchCreationEnabled: true,
-		lifecycle:  lifecycle{},
+		lifecycle:            lifecycle{},
 	}
 }
 
