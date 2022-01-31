@@ -13,6 +13,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -82,6 +83,6 @@ func waitForBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256
 			}
 		}
 		require.NoError(t, err)
-		return true
+		return batch.Status != batchstatus.Submitted
 	}, 30*time.Second, testutils.TryInterval)
 }

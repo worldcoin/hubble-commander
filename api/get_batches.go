@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/storage"
 )
 
@@ -27,18 +28,18 @@ func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 
 	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
-		if batches[i].Hash == nil {
-			continue
+		status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), &batches[i])
+
+		if *status == batchstatus.Submitted {
+			batchesWithSubmission = append(batchesWithSubmission, *dto.NewSubmittedBatch(&batches[i]))
+		} else {
+			submissionBlock, err := a.getSubmissionBlock(&batches[i])
+			if err != nil {
+				return nil, err
+			}
+
+			batchesWithSubmission = append(batchesWithSubmission, *dto.NewBatch(&batches[i], submissionBlock, status))
 		}
-
-		submissionBlock, err := a.getSubmissionBlock(&batches[i])
-		if err != nil {
-			return nil, err
-		}
-
-		status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batches[i].FinalisationBlock)
-
-		batchesWithSubmission = append(batchesWithSubmission, *dto.MakeBatch(&batches[i], submissionBlock, status))
 	}
 	return batchesWithSubmission, nil
 }
