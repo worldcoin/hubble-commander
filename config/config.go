@@ -17,6 +17,7 @@ const (
 	DefaultTransitionDisputeGasLimit        = uint64(4_100_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_600_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
+	DefaultWithdrawStakeGasLimit            = uint64(200_000)
 	DefaultMetricsPort                      = "2112"
 	DefaultMetricsEndpoint                  = "/metrics"
 	DefaultEthereumChainMineTimeout         = time.Minute * 5
@@ -47,6 +48,7 @@ func GetConfig() *Config {
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
+			WithdrawStakeGasLimit:            getUint64("rollup.withdraw_stake_gas_limit", DefaultWithdrawStakeGasLimit),
 			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 30*time.Minute),

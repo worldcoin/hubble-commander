@@ -63,6 +63,7 @@ type RollupConfig struct {
 	TransitionDisputeGasLimit        uint64
 	SignatureDisputeGasLimit         uint64
 	BatchAccountRegistrationGasLimit uint64
+	WithdrawStakeGasLimit            uint64
 	BatchLoopInterval                time.Duration
 	DisableSignatures                bool
 

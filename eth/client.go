@@ -43,6 +43,7 @@ type ClientConfig struct {
 	TransitionDisputeGasLimit        *uint64
 	SignatureDisputeGasLimit         *uint64
 	BatchAccountRegistrationGasLimit *uint64
+	WithdrawStakeGasLimit            *uint64
 }
 
 type Client struct {
@@ -154,5 +155,8 @@ func fillWithDefaults(c *ClientConfig) {
 	}
 	if c.BatchAccountRegistrationGasLimit == nil {
 		c.BatchAccountRegistrationGasLimit = ref.Uint64(config.DefaultBatchAccountRegistrationGasLimit)
+	}
+	if c.WithdrawStakeGasLimit == nil {
+		c.WithdrawStakeGasLimit = ref.Uint64(config.DefaultWithdrawStakeGasLimit)
 	}
 }
