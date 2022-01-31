@@ -129,7 +129,7 @@ func fillWithDefaults(c *ClientConfig) {
 		c.TxTimeout = ref.Duration(60 * time.Second)
 	}
 	if c.TxMineTimeout == nil {
-		c.TxMineTimeout = ref.Duration(time.Duration(config.DefaultEthereumChainMineTimeout) * time.Second)
+		c.TxMineTimeout = ref.Duration(config.DefaultEthereumChainMineTimeout)
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17) // default 0.1 ether

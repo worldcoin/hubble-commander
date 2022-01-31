@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -414,7 +413,7 @@ func createClientFromChainState(
 			TransitionDisputeGasLimit:        ref.Uint64(cfg.Rollup.TransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         ref.Uint64(cfg.Rollup.SignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.Rollup.BatchAccountRegistrationGasLimit),
-			TxMineTimeout:                    ref.Duration(time.Duration(cfg.Ethereum.ChainMineTimeout) * time.Second),
+			TxMineTimeout:                    ref.Duration(cfg.Ethereum.ChainMineTimeout),
 		},
 	})
 	if err != nil {

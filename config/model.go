@@ -87,5 +87,5 @@ type EthereumConfig struct {
 	RPCURL           string `json:"-"`
 	ChainID          uint64
 	PrivateKey       string `json:"-"`
-	ChainMineTimeout uint32
+	ChainMineTimeout time.Duration
 }

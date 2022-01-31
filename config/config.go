@@ -19,7 +19,7 @@ const (
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
 	DefaultMetricsPort                      = "2112"
 	DefaultMetricsEndpoint                  = "/metrics"
-	DefaultEthereumChainMineTimeout         = uint32(300)
+	DefaultEthereumChainMineTimeout         = time.Minute * 5
 )
 
 func GetConfig() *Config {
@@ -175,6 +175,6 @@ func getEthereumConfig() *EthereumConfig {
 		RPCURL:           *rpcURL,
 		ChainID:          getUint64OrPanic("ethereum.chain_id"),
 		PrivateKey:       getStringOrPanic("ethereum.private_key"),
-		ChainMineTimeout: getUint32("ethereum.chain_mine_timeout", DefaultEthereumChainMineTimeout),
+		ChainMineTimeout: getDuration("ethereum.chain_mine_timeout", DefaultEthereumChainMineTimeout),
 	}
 }

@@ -2,7 +2,6 @@ package commander
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -50,9 +49,7 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	mineTimeout := time.Duration(cfg.Ethereum.ChainMineTimeout) * time.Second
-
-	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, mineTimeout)
+	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, cfg.Ethereum.ChainMineTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +57,7 @@ func deployContractsAndSetupGenesisState(
 	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
 		blockchain,
 		chooserAddress,
-		mineTimeout,
+		cfg.Ethereum.ChainMineTimeout,
 	)
 	if err != nil {
 		return nil, err
@@ -77,7 +74,7 @@ func deployContractsAndSetupGenesisState(
 	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(
 		accountManager,
 		cfg.Bootstrap.GenesisAccounts,
-		mineTimeout,
+		cfg.Ethereum.ChainMineTimeout,
 	)
 	if err != nil {
 		return nil, err
@@ -103,7 +100,7 @@ func deployContractsAndSetupGenesisState(
 			AccountRegistry: accountRegistryAddress,
 			Chooser:         chooserAddress,
 		},
-		MineTimeout: time.Second * time.Duration(cfg.Ethereum.ChainMineTimeout),
+		MineTimeout: cfg.Ethereum.ChainMineTimeout,
 	})
 	if err != nil {
 		return nil, err
