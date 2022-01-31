@@ -90,6 +90,7 @@ Example result:
 ### `hubble_getTransaction(Hash)`
 
 Returns transaction object including its status:
+
 - `PENDING`
 - `SUBMITTED`
 - `MINED`
@@ -178,6 +179,7 @@ Example result (`MASS_MIGRATION`):
 ### `hubble_getUserState(stateId)`
 
 Example result:
+
 ```json
 {
     "StateID": 3,
@@ -216,6 +218,7 @@ Example result:
 ### `hubble_getPublicKeyByPubKeyID(pubKeyId)`
 
 Example result:
+
 ```json
 "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
 ```
@@ -493,29 +496,29 @@ Example result (`TRANSFER`) with `SUBMITTED` status:
 
 ```json
 {
-        "ID": "5",
-        "Hash": null,
-        "Type": "TRANSFER",
-        "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
-        "SubmissionBlock": null,
-        "SubmissionTime": null,
-        "Status": "SUBMITTED",
-        "FinalisationBlock": null,
-        "AccountTreeRoot": null,
-        "Commitments": [
-            {
-                "ID": {
-                    "BatchID": "4",
-                    "IndexInBatch": 0
-                },
-                "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
-                "LeafHash": null,
-                "TokenID": "0",
-                "FeeReceiverStateID": 0,
-                "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95"
-            }
-        ]
-    }
+    "ID": "5",
+    "Hash": null,
+    "Type": "TRANSFER",
+    "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
+    "SubmissionBlock": null,
+    "SubmissionTime": null,
+    "Status": "SUBMITTED",
+    "FinalisationBlock": null,
+    "AccountTreeRoot": null,
+    "Commitments": [
+        {
+            "ID": {
+                "BatchID": "4",
+                "IndexInBatch": 0
+            },
+            "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
+            "LeafHash": null,
+            "TokenID": "0",
+            "FeeReceiverStateID": 0,
+            "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95"
+        }
+    ]
+}
 ```
 
 ### `hubble_getCommitment(commitmentID: {BatchID: string, IndexInBatch: uint8})`
@@ -688,32 +691,32 @@ Example result (`TRANSFER`) with `SUBMITTED` status:
 
 ```json
 {
-        "ID": {
-            "BatchID": "5",
-            "IndexInBatch": 0
-        },
-        "Type": "TRANSFER",
-        "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
-        "LeafHash": null,
-        "TokenID": "0",
-        "FeeReceiverStateID": 0,
-        "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
-        "Status": "SUBMITTED",
-        "BatchTime": null,
-        "Transactions": [
-            {
-                "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
-                "FromStateID": 1,
-                "Amount": "50",
-                "Fee": "1",
-                "Nonce": "0",
-                "Signature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
-                // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
-                "ReceiveTime": 1643379987,
-                "ToStateID": 2
-            }
-        ]
-    }
+    "ID": {
+        "BatchID": "5",
+        "IndexInBatch": 0
+    },
+    "Type": "TRANSFER",
+    "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
+    "LeafHash": null,
+    "TokenID": "0",
+    "FeeReceiverStateID": 0,
+    "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
+    "Status": "SUBMITTED",
+    "BatchTime": null,
+    "Transactions": [
+        {
+            "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
+            "FromStateID": 1,
+            "Amount": "50",
+            "Fee": "1",
+            "Nonce": "0",
+            "Signature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            "ReceiveTime": 1643379987,
+            "ToStateID": 2
+        }
+    ]
+}
 ```
 
 ### `hubble_getUserStateProof(stateID)`
