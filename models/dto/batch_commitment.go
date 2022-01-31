@@ -29,7 +29,6 @@ type BatchDepositCommitment struct {
 	LeafHash      common.Hash
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
-	Deposits      []PendingDeposit
 }
 
 func MakeBatchTxCommitment(
@@ -73,6 +72,5 @@ func MakeBatchDepositCommitment(
 		LeafHash:      commitment.LeafHash(),
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
-		Deposits:      MakePendingDeposits(commitment.Deposits),
 	}
 }
