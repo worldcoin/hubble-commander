@@ -14,7 +14,7 @@ const (
 	Submitted = TransactionStatus(bs.Submitted)
 	Mined     = TransactionStatus(bs.Mined)
 	Finalised = TransactionStatus(bs.Finalised) // nolint:misspell
-	Error     = TransactionStatus(5000)
+	Error     = TransactionStatus(4)
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
