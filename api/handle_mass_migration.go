@@ -19,7 +19,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 	}
 
 	if vErr := a.validateMassMigration(massMigration); vErr != nil {
-		a.countRejectedTx(massMigration.TxType)
+		a.countRejectedTx(txtype.MassMigration)
 		return nil, vErr
 	}
 

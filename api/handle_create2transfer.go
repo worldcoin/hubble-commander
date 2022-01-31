@@ -19,7 +19,7 @@ func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*co
 	}
 
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
-		a.countRejectedTx(create2Transfer.TxType)
+		a.countRejectedTx(txtype.Create2Transfer)
 		return nil, vErr
 	}
 

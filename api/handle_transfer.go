@@ -19,7 +19,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 	}
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
-		a.countRejectedTx(transfer.TxType)
+		a.countRejectedTx(txtype.Transfer)
 		return nil, vErr
 	}
 
