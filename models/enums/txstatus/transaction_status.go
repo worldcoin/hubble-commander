@@ -10,14 +10,16 @@ import (
 type TransactionStatus uint
 
 const (
-	Pending                     = TransactionStatus(bs.Pending)
-	Mined                       = TransactionStatus(bs.Mined)
-	Finalised                   = TransactionStatus(bs.Finalised) // nolint:misspell
-	Error     TransactionStatus = 5000
+	Pending   = TransactionStatus(0)
+	Submitted = TransactionStatus(bs.Submitted)
+	Mined     = TransactionStatus(bs.Mined)
+	Finalised = TransactionStatus(bs.Finalised) // nolint:misspell
+	Error     = TransactionStatus(4)
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
-	Pending:   bs.BatchStatuses[bs.Pending],
+	Pending:   "PENDING",
+	Submitted: bs.BatchStatuses[bs.Submitted],
 	Mined:     bs.BatchStatuses[bs.Mined],
 	Finalised: bs.BatchStatuses[bs.Finalised], // nolint:misspell
 	Error:     "ERROR",

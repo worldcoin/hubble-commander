@@ -11,11 +11,11 @@ import (
 )
 
 func TestBatchStatus_UnmarshalJSON_SupportedStatus(t *testing.T) {
-	input := `"PENDING"`
+	input := `"SUBMITTED"`
 	var res BatchStatus
 	err := json.Unmarshal([]byte(input), &res)
 	require.NoError(t, err)
-	require.Equal(t, Pending, res)
+	require.Equal(t, Submitted, res)
 }
 
 func TestBatchStatus_UnmarshalJSON_UnsupportedStatus(t *testing.T) {

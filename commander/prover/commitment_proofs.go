@@ -58,7 +58,7 @@ func (c *Context) PreviousBatchCommitmentInclusionProof(
 		leafHashes,
 		uint32(previousCommitmentIndex),
 		commitments[previousCommitmentIndex].GetPostStateRoot(),
-		commitments[previousCommitmentIndex].GetBodyHash(),
+		*commitments[previousCommitmentIndex].GetBodyHash(),
 	)
 }
 

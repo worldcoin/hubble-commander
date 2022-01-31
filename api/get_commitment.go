@@ -27,7 +27,7 @@ func (a *API) unsafeGetCommitment(id models.CommitmentID) (interface{}, error) {
 		return nil, err
 	}
 
-	batch, err := a.storage.GetMinedBatch(commitment.GetCommitmentBase().ID.BatchID)
+	batch, err := a.storage.GetBatch(commitment.GetCommitmentBase().ID.BatchID)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 		return nil, err
 	}
 
-	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), batch)
 
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
