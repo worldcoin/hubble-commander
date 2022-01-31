@@ -431,7 +431,6 @@ func (s *GetBatchTestSuite) validateDepositCommitment(result *dto.BatchWithRootA
 			LeafHash:      dto.LeafHashOrNil(s.depositCommitment),
 			SubtreeID:     s.depositCommitment.SubtreeID,
 			SubtreeRoot:   s.depositCommitment.SubtreeRoot,
-			Deposits:      dto.MakePendingDeposits(s.depositCommitment.Deposits),
 		},
 	}
 

@@ -424,45 +424,7 @@ Example result (`DEPOSIT`):
             "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
             "LeafHash": "0x920330642c6cc8464fa50ef9ce46e0988b3f2013bc0d8a33fcfc00efec96f04d",
             "SubtreeID": "1",
-            "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
-            "Deposits": [
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "0"
-                    },
-                    "ToPubKeyID": 1,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "1"
-                    },
-                    "ToPubKeyID": 2,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "2"
-                    },
-                    "ToPubKeyID": 3,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "3"
-                    },
-                    "ToPubKeyID": 4,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                }
-            ]
+            "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19"
         }
     ]
 }
