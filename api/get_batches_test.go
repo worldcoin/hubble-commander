@@ -95,21 +95,20 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.NotNil(result)
 	s.Len(result, 5)
 
-	typedResult := result.([]dto.Batch)
 	for i := range s.batches {
-		s.Equal(s.batches[i].ID, typedResult[i].ID)
-		s.Equal(s.batches[i].Hash, typedResult[i].Hash)
-		s.Equal(s.batches[i].Type, typedResult[i].Type)
-		s.Equal(s.batches[i].TransactionHash, typedResult[i].TransactionHash)
-		s.Equal(s.batches[i].SubmissionTime, typedResult[i].SubmissionTime)
-		s.Equal(batchstatus.Mined, typedResult[i].Status)
-		s.Equal(s.batches[i].FinalisationBlock, typedResult[i].FinalisationBlock)
-		s.NotZero(typedResult[i].SubmissionBlock)
+		s.Equal(s.batches[i].ID, result[i].ID)
+		s.Equal(s.batches[i].Hash, result[i].Hash)
+		s.Equal(s.batches[i].Type, result[i].Type)
+		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
+		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
+		s.Equal(batchstatus.Mined, result[i].Status)
+		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
+		s.NotZero(result[i].SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, *typedResult[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *result[i].SubmissionBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *typedResult[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].SubmissionBlock)
 		}
 	}
 }
@@ -136,7 +135,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
-	s.Equal(expectedBatch, result.([]dto.Batch)[0])
+	s.Equal(expectedBatch, result[0])
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {
