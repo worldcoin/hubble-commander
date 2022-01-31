@@ -27,7 +27,16 @@ type AccountTree struct {
 	merkleTree *StoredMerkleTree
 }
 
-func NewAccountTree(database *Database) *AccountTree {
+func NewAccountTree(database *Database) (*AccountTree, error) {
+	err := initializeIndex(database, models.AccountLeafName, "PublicKey", models.ZeroPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return unsafeNewAccountTree(database), nil
+}
+
+func unsafeNewAccountTree(database *Database) *AccountTree {
 	return &AccountTree{
 		database:   database,
 		merkleTree: NewStoredMerkleTree("account", database, AccountTreeDepth),
@@ -35,7 +44,13 @@ func NewAccountTree(database *Database) *AccountTree {
 }
 
 func (s *AccountTree) copyWithNewDatabase(database *Database) *AccountTree {
-	return NewAccountTree(database)
+	return unsafeNewAccountTree(database)
+}
+
+func (s *AccountTree) executeInTransaction(opts TxOptions, fn func(accountTree *AccountTree) error) error {
+	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
+		return fn(s.copyWithNewDatabase(txDatabase))
+	})
 }
 
 func (s *AccountTree) Root() (*common.Hash, error) {
@@ -74,8 +89,8 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 		return errors.WithStack(NewInvalidPubKeyIDError(leaf.PubKeyID))
 	}
 
-	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		_, err := NewAccountTree(txDatabase).unsafeSet(leaf)
+	return s.executeInTransaction(TxOptions{}, func(accountTree *AccountTree) error {
+		_, err := accountTree.unsafeSet(leaf)
 		if err == bh.ErrKeyExists {
 			return errors.WithStack(NewAccountAlreadyExistsError(leaf))
 		}
@@ -92,9 +107,7 @@ func (s *AccountTree) SetBatch(leaves []models.AccountLeaf) error {
 }
 
 func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
-	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		accountTree := NewAccountTree(txDatabase)
-
+	return s.executeInTransaction(TxOptions{}, func(accountTree *AccountTree) error {
 		for i := range leaves {
 			if isValidBatchAccount(&leaves[i]) {
 				return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
