@@ -9,7 +9,7 @@ import (
 type BatchStatus uint
 
 const (
-	Submitted BatchStatus = iota + 1001
+	Submitted BatchStatus = iota + 1
 	Mined
 	Finalised // nolint:misspell
 )

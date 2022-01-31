@@ -10,11 +10,11 @@ import (
 type TransactionStatus uint
 
 const (
-	Pending   TransactionStatus = 1000
-	Submitted                   = TransactionStatus(bs.Submitted)
-	Mined                       = TransactionStatus(bs.Mined)
-	Finalised                   = TransactionStatus(bs.Finalised) // nolint:misspell
-	Error     TransactionStatus = 5000
+	Pending   = TransactionStatus(0)
+	Submitted = TransactionStatus(bs.Submitted)
+	Mined     = TransactionStatus(bs.Mined)
+	Finalised = TransactionStatus(bs.Finalised) // nolint:misspell
+	Error     = TransactionStatus(5000)
 )
 
 var TransactionStatuses = map[TransactionStatus]string{
