@@ -83,7 +83,7 @@ func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsA
 	for i := len(pendingAccounts); i < st.AccountBatchSize; i++ {
 		expectedAccounts = append(expectedAccounts, models.AccountLeaf{
 			PubKeyID:  uint32(st.AccountBatchOffset + i),
-			PublicKey: mockPublicKey,
+			PublicKey: models.ZeroPublicKey,
 		})
 	}
 
@@ -112,7 +112,7 @@ func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccoun
 	registeredAccounts := s.getRegisteredAccounts(0)
 	s.Equal(pendingAccounts[0], registeredAccounts[0])
 	for i := 1; i < len(pendingAccounts); i++ {
-		s.Equal(mockPublicKey, registeredAccounts[i].PublicKey)
+		s.Equal(models.ZeroPublicKey, registeredAccounts[i].PublicKey)
 	}
 }
 

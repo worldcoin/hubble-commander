@@ -97,7 +97,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 	status, err := CalculateTransactionStatus(s.storage.Storage, &s.transfer.TransactionBase, 0)
 	s.NoError(err)
 
-	s.Equal(txstatus.Pending, *status)
+	s.Equal(txstatus.Submitted, *status)
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InBatch() {

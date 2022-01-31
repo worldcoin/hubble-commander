@@ -68,7 +68,7 @@ func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
 	s.NoError(err)
 
 	s.Equal(blockNumber, *syncedBlock)
-	s.Equal(blockNumber, *s.storage.syncedBlock)
+	s.Equal(blockNumber, s.storage.syncedBlock)
 }
 
 func TestTestSuite(t *testing.T) {

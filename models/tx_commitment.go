@@ -24,8 +24,8 @@ func (c *TxCommitment) SetBodyHash(bodyHash *common.Hash) {
 	c.BodyHash = bodyHash
 }
 
-func (c *TxCommitment) GetBodyHash() common.Hash {
-	return *c.BodyHash
+func (c *TxCommitment) GetBodyHash() *common.Hash {
+	return c.BodyHash
 }
 
 func (c *TxCommitment) LeafHash() common.Hash {

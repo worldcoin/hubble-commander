@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -105,24 +106,36 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.NotZero(result[i].SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *result[i].SubmissionBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].SubmissionBlock)
 		}
 	}
 }
 
-func (s *GetBatchesTestSuite) TestGetBatches_PendingBatch() {
-	pendingBatch := s.batches[0]
+func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
+	pendingBatch := s.batches[1]
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
+	pendingBatch.SubmissionTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
+
+	expectedBatch := dto.Batch{
+		ID:                pendingBatch.ID,
+		Type:              batchtype.Transfer,
+		TransactionHash:   pendingBatch.TransactionHash,
+		SubmissionBlock:   nil,
+		SubmissionTime:    nil,
+		Status:            batchstatus.Submitted,
+		FinalisationBlock: nil,
+	}
 
 	result, err := s.api.GetBatches(models.NewUint256(0), models.NewUint256(1))
 	s.NoError(err)
 	s.NotNil(result)
-	s.Len(result, 0)
+	s.Len(result, 1)
+	s.Equal(expectedBatch, result[0])
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {

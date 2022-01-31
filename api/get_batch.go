@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -41,7 +42,7 @@ func (a *API) GetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments,
 }
 
 func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetMinedBatch(id)
+	batch, err := a.storage.GetBatch(id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +51,6 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 }
 
 func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWithRootAndCommitments, error) {
-	batch, err := a.storage.GetMinedBatch(batch.ID)
-	if err != nil {
-		return nil, err
-	}
 	submissionBlock, err := a.getSubmissionBlock(batch)
 	if err != nil {
 		return nil, err
@@ -63,7 +60,7 @@ func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWi
 		return a.createBatchWithCommitments(batch, submissionBlock, batchstatus.Finalised.Ref(), nil)
 	}
 
-	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), *batch.FinalisationBlock)
+	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), batch)
 
 	commitments, err := a.storage.GetCommitmentsByBatchID(batch.ID)
 	if err != nil {
@@ -75,7 +72,7 @@ func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWi
 
 func (a *API) createBatchWithCommitments(
 	batch *models.Batch,
-	submissionBlock uint32,
+	submissionBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -87,13 +84,13 @@ func (a *API) createBatchWithCommitments(
 	case batchtype.Deposit:
 		return a.createBatchWithDepositCommitments(batch, submissionBlock, status, commitments)
 	default:
-		return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, nil), nil
+		return dto.MakeBatchWithRootAndCommitments(dto.NewBatch(batch, submissionBlock, status), batch.AccountTreeRoot, nil), nil
 	}
 }
 
 func (a *API) createBatchWithTxCommitments(
 	batch *models.Batch,
-	submissionBlock uint32,
+	submissionBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -109,12 +106,12 @@ func (a *API) createBatchWithTxCommitments(
 			stateLeaf.TokenID,
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithMMCommitments(
 	batch *models.Batch,
-	submissionBlock uint32,
+	submissionBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -124,12 +121,12 @@ func (a *API) createBatchWithMMCommitments(
 			commitments[i].ToMMCommitment(),
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithDepositCommitments(
 	batch *models.Batch,
-	submissionBlock uint32,
+	submissionBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -139,25 +136,55 @@ func (a *API) createBatchWithDepositCommitments(
 			commitments[i].ToDepositCommitment(),
 		))
 	}
-	return dto.MakeBatchWithRootAndCommitments(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
 }
 
-func (a *API) getSubmissionBlock(batch *models.Batch) (uint32, error) {
+func (a *API) getSubmissionBlock(batch *models.Batch) (*uint32, error) {
 	if batch.ID.IsZero() {
-		return *batch.FinalisationBlock, nil
+		return batch.FinalisationBlock, nil
+	}
+
+	// Submitted batch
+	if batch.FinalisationBlock == nil {
+		return nil, nil
 	}
 
 	blocks, err := a.client.GetBlocksToFinalise()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return *batch.FinalisationBlock - uint32(*blocks), nil
+	return ref.Uint32(*batch.FinalisationBlock - uint32(*blocks)), nil
 }
 
-func calculateBatchStatus(latestBlockNumber, finalisationBlock uint32) *batchstatus.BatchStatus {
-	if latestBlockNumber < finalisationBlock {
+func calculateBatchStatus(latestBlockNumber uint32, batch *models.Batch) *batchstatus.BatchStatus {
+	if batch.FinalisationBlock == nil {
+		return batchstatus.Submitted.Ref()
+	}
+
+	if latestBlockNumber < *batch.FinalisationBlock {
 		return batchstatus.Mined.Ref()
 	}
 
 	return batchstatus.Finalised.Ref()
+}
+
+func createBatchWithRootAndCommitmentsDTO(
+	batch *models.Batch,
+	submissionBlock *uint32,
+	status *batchstatus.BatchStatus,
+	commitments interface{},
+) *dto.BatchWithRootAndCommitments {
+	if batch.FinalisationBlock == nil {
+		return dto.MakeBatchWithRootAndCommitments(
+			dto.NewSubmittedBatch(batch),
+			nil,
+			commitments,
+		)
+	}
+
+	return dto.MakeBatchWithRootAndCommitments(
+		dto.NewBatch(batch, submissionBlock, status),
+		batch.AccountTreeRoot,
+		commitments,
+	)
 }

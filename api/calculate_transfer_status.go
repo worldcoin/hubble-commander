@@ -25,7 +25,7 @@ func CalculateTransactionStatus(
 	}
 
 	if batch.FinalisationBlock == nil {
-		return txstatus.Pending.Ref(), nil
+		return txstatus.Submitted.Ref(), nil
 	}
 
 	if latestBlockNumber < *batch.FinalisationBlock {

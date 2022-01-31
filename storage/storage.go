@@ -55,6 +55,11 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	registeredSpokeStorage := NewRegisteredSpokeStorage(database)
 
+	accountTree, err := NewAccountTree(database)
+	if err != nil {
+		return nil, err
+	}
+
 	pendingStakeWithdrawalStorage := NewPendingStakeWithdrawalStorage(database)
 
 	return &Storage{
@@ -66,7 +71,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 		RegisteredTokenStorage:        registeredTokenStorage,
 		RegisteredSpokeStorage:        registeredSpokeStorage,
 		StateTree:                     NewStateTree(database),
-		AccountTree:                   NewAccountTree(database),
+		AccountTree:                   accountTree,
 		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
 		database:                      database,
 		feeReceiverStateIDs:           make(map[string]uint32),

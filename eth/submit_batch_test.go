@@ -93,41 +93,6 @@ func (s *SubmitBatchTestSuite) getMinFinalisationBlock() uint32 {
 	return uint32(*latestBlockNumber) + uint32(*blocksToFinalise)
 }
 
-func (s *SubmitBatchTestSuite) TestSubmitTransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
-	tx, err := s.client.SubmitTransfersBatch(models.NewUint256(1), []models.CommitmentWithTxs{&s.commitment})
-	s.NoError(err)
-	s.NotNil(tx)
-
-	batches, err := s.client.GetAllBatches()
-	s.NoError(err)
-	s.Len(batches, 0)
-
-	s.client.GetBackend().Commit()
-
-	batches, err = s.client.GetAllBatches()
-	s.NoError(err)
-	s.Len(batches, 1)
-}
-
-func (s *SubmitBatchTestSuite) TestSubmitCreate2TransfersBatch_SubmitsBatchWithoutWaitingForItToBeMined() {
-	commitment := s.commitment
-	commitment.Type = batchtype.Create2Transfer
-
-	tx, err := s.client.SubmitCreate2TransfersBatch(models.NewUint256(1), []models.CommitmentWithTxs{&s.commitment})
-	s.NoError(err)
-	s.NotNil(tx)
-
-	batches, err := s.client.GetAllBatches()
-	s.NoError(err)
-	s.Len(batches, 0)
-
-	s.client.GetBackend().Commit()
-
-	batches, err = s.client.GetAllBatches()
-	s.NoError(err)
-	s.Len(batches, 1)
-}
-
 func TestSubmitTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SubmitBatchTestSuite))
 }
