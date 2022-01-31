@@ -36,6 +36,7 @@ func (s *GetCommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
+// nolint:funlen
 func (s *GetCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
