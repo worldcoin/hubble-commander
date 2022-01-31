@@ -308,10 +308,7 @@ Example result:
 
 ### `hubble_getBatchByHash(hash)`
 
-Returns batch information and list of included commitments in batch. Commitment statuses:
-
-- `MINED`
-- `FINALISED`
+Returns mined or finalised batch information and list of included commitments in batch.
 
 Example result (`TRANSFER`):
 
@@ -508,7 +505,7 @@ Example result (`TRANSFER`) with `SUBMITTED` status:
     "Commitments": [
         {
             "ID": {
-                "BatchID": "4",
+                "BatchID": "5",
                 "IndexInBatch": 0
             },
             "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
