@@ -83,9 +83,6 @@ func waitForBatch(t *testing.T, client jsonrpc.RPCClient, batchID models.Uint256
 			}
 		}
 		require.NoError(t, err)
-		if batch.Status != batchstatus.Submitted {
-			return true
-		}
-		return false
+		return batch.Status != batchstatus.Submitted
 	}, 30*time.Second, testutils.TryInterval)
 }
