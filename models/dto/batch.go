@@ -24,7 +24,7 @@ type BatchWithRootAndCommitments struct {
 	Commitments     interface{}
 }
 
-func MakeSubmittedBatch(batch *models.Batch) *Batch {
+func NewSubmittedBatch(batch *models.Batch) *Batch {
 	return &Batch{
 		ID:              batch.ID,
 		Type:            batch.Type,
@@ -33,7 +33,7 @@ func MakeSubmittedBatch(batch *models.Batch) *Batch {
 	}
 }
 
-func MakeBatch(batch *models.Batch, submissionBlock *uint32, status *batchstatus.BatchStatus) *Batch {
+func NewBatch(batch *models.Batch, submissionBlock *uint32, status *batchstatus.BatchStatus) *Batch {
 	return &Batch{
 		ID:                batch.ID,
 		Hash:              batch.Hash,

@@ -11,7 +11,7 @@ var getBatchesAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(30001, "batches not found"),
 }
 
-func (a *API) GetBatches(from, to *models.Uint256) ([]interface{}, error) {
+func (a *API) GetBatches(from, to *models.Uint256) (interface{}, error) {
 	batches, err := a.unsafeGetBatches(from, to)
 	if err != nil {
 		return nil, sanitizeError(err, getBatchesAPIErrors)
@@ -20,25 +20,25 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]interface{}, error) {
 	return batches, nil
 }
 
-func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]interface{}, error) {
+func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 	batches, err := a.storage.GetBatchesInRange(from, to)
 	if err != nil {
-		return []interface{}{}, err
+		return []dto.Batch{}, err
 	}
 
-	batchesWithSubmission := make([]interface{}, 0, len(batches))
+	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
 		status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), &batches[i])
 
 		if *status == batchstatus.Submitted {
-			batchesWithSubmission = append(batchesWithSubmission, dto.MakeSubmittedBatch(&batches[i]))
+			batchesWithSubmission = append(batchesWithSubmission, *dto.NewSubmittedBatch(&batches[i]))
 		} else {
 			submissionBlock, err := a.getSubmissionBlock(&batches[i])
 			if err != nil {
 				return nil, err
 			}
 
-			batchesWithSubmission = append(batchesWithSubmission, dto.MakeBatch(&batches[i], submissionBlock, status))
+			batchesWithSubmission = append(batchesWithSubmission, *dto.NewBatch(&batches[i], submissionBlock, status))
 		}
 	}
 	return batchesWithSubmission, nil

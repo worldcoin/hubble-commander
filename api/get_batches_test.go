@@ -95,21 +95,21 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 	s.NotNil(result)
 	s.Len(result, 5)
 
+	typedResult := result.([]dto.Batch)
 	for i := range s.batches {
-		typedResult := result[i].(*dto.Batch)
-		s.Equal(s.batches[i].ID, typedResult.ID)
-		s.Equal(s.batches[i].Hash, typedResult.Hash)
-		s.Equal(s.batches[i].Type, typedResult.Type)
-		s.Equal(s.batches[i].TransactionHash, typedResult.TransactionHash)
-		s.Equal(s.batches[i].SubmissionTime, typedResult.SubmissionTime)
-		s.Equal(batchstatus.Mined, typedResult.Status)
-		s.Equal(s.batches[i].FinalisationBlock, typedResult.FinalisationBlock)
-		s.NotZero(typedResult.SubmissionBlock)
+		s.Equal(s.batches[i].ID, typedResult[i].ID)
+		s.Equal(s.batches[i].Hash, typedResult[i].Hash)
+		s.Equal(s.batches[i].Type, typedResult[i].Type)
+		s.Equal(s.batches[i].TransactionHash, typedResult[i].TransactionHash)
+		s.Equal(s.batches[i].SubmissionTime, typedResult[i].SubmissionTime)
+		s.Equal(batchstatus.Mined, typedResult[i].Status)
+		s.Equal(s.batches[i].FinalisationBlock, typedResult[i].FinalisationBlock)
+		s.NotZero(typedResult[i].SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, *typedResult.SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *typedResult[i].SubmissionBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *typedResult.SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *typedResult[i].SubmissionBlock)
 		}
 	}
 }
@@ -122,7 +122,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
-	expectedBatch := &dto.Batch{
+	expectedBatch := dto.Batch{
 		ID:                pendingBatch.ID,
 		Type:              batchtype.Transfer,
 		TransactionHash:   pendingBatch.TransactionHash,
@@ -136,7 +136,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 	s.NoError(err)
 	s.NotNil(result)
 	s.Len(result, 1)
-	s.Equal(expectedBatch, result[0])
+	s.Equal(expectedBatch, result.([]dto.Batch)[0])
 }
 
 func (s *GetBatchesTestSuite) TestGetBatchesByHash_NoBatches() {

@@ -84,7 +84,7 @@ func (a *API) createBatchWithCommitments(
 	case batchtype.Deposit:
 		return a.createBatchWithDepositCommitments(batch, submissionBlock, status, commitments)
 	default:
-		return dto.MakeBatchWithRootAndCommitments(dto.MakeBatch(batch, submissionBlock, status), batch.AccountTreeRoot, nil), nil
+		return dto.MakeBatchWithRootAndCommitments(dto.NewBatch(batch, submissionBlock, status), batch.AccountTreeRoot, nil), nil
 	}
 }
 
@@ -176,14 +176,14 @@ func createBatchWithRootAndCommitmentsDTO(
 ) *dto.BatchWithRootAndCommitments {
 	if batch.FinalisationBlock == nil {
 		return dto.MakeBatchWithRootAndCommitments(
-			dto.MakeSubmittedBatch(batch),
+			dto.NewSubmittedBatch(batch),
 			nil,
 			commitments,
 		)
 	}
 
 	return dto.MakeBatchWithRootAndCommitments(
-		dto.MakeBatch(batch, submissionBlock, status),
+		dto.NewBatch(batch, submissionBlock, status),
 		batch.AccountTreeRoot,
 		commitments,
 	)
