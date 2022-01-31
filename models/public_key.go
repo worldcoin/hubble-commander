@@ -11,11 +11,13 @@ import (
 
 const PublicKeyLength = 128
 
-var ErrInvalidPublicKeyLength = errors.New("invalid public key length")
+var (
+	ZeroPublicKey             = PublicKey{}
+	ErrInvalidPublicKeyLength = errors.New("invalid public key length")
+	publicKeyT                = reflect.TypeOf(PublicKey{})
+)
 
 type PublicKey [PublicKeyLength]byte
-
-var publicKeyT = reflect.TypeOf(PublicKey{})
 
 func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	publicKey := PublicKey{}

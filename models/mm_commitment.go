@@ -21,8 +21,8 @@ func (c *MMCommitment) SetBodyHash(bodyHash *common.Hash) {
 	c.BodyHash = bodyHash
 }
 
-func (c *MMCommitment) GetBodyHash() common.Hash {
-	return *c.BodyHash
+func (c *MMCommitment) GetBodyHash() *common.Hash {
+	return c.BodyHash
 }
 
 func (c *MMCommitment) LeafHash() common.Hash {

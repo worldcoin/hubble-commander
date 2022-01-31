@@ -12,10 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ErrNotEnoughTxs = NewRollupError("not enough transactions")
-	mockPublicKey   = models.PublicKey{1, 2, 3}
-)
+var ErrNotEnoughTxs = NewRollupError("not enough transactions")
 
 type FeeReceiver struct {
 	StateID uint32
@@ -224,7 +221,7 @@ func (c *TxsContext) fillMissingAccounts(accounts []models.AccountLeaf) ([]model
 		lastAccount := &accounts[len(accounts)-1]
 		accounts = append(accounts, models.AccountLeaf{
 			PubKeyID:  lastAccount.PubKeyID + 1,
-			PublicKey: mockPublicKey,
+			PublicKey: models.ZeroPublicKey,
 		})
 	}
 

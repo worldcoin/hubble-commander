@@ -12,7 +12,7 @@ type Batch struct {
 	Hash              *common.Hash
 	Type              batchtype.BatchType
 	TransactionHash   common.Hash
-	SubmissionBlock   uint32
+	SubmissionBlock   *uint32
 	SubmissionTime    *models.Timestamp
 	Status            batchstatus.BatchStatus
 	FinalisationBlock *uint32
@@ -24,7 +24,16 @@ type BatchWithRootAndCommitments struct {
 	Commitments     interface{}
 }
 
-func MakeBatch(batch *models.Batch, submissionBlock uint32, status *batchstatus.BatchStatus) *Batch {
+func NewSubmittedBatch(batch *models.Batch) *Batch {
+	return &Batch{
+		ID:              batch.ID,
+		Type:            batch.Type,
+		TransactionHash: batch.TransactionHash,
+		Status:          batchstatus.Submitted,
+	}
+}
+
+func NewBatch(batch *models.Batch, submissionBlock *uint32, status *batchstatus.BatchStatus) *Batch {
 	return &Batch{
 		ID:                batch.ID,
 		Hash:              batch.Hash,
@@ -38,19 +47,18 @@ func MakeBatch(batch *models.Batch, submissionBlock uint32, status *batchstatus.
 }
 
 func MakeBatchWithRootAndCommitments(
-	batch *models.Batch,
-	submissionBlock uint32,
-	status *batchstatus.BatchStatus,
+	batch *Batch,
+	accountRoot *common.Hash,
 	commitments interface{},
 ) *BatchWithRootAndCommitments {
 	batchDTO := &BatchWithRootAndCommitments{
-		Batch:       *MakeBatch(batch, submissionBlock, status),
+		Batch:       *batch,
 		Commitments: commitments,
 	}
 
 	// AccountRoot is always a zero hash for genesis and deposit batches, so we set it to nil
 	if batch.Type != batchtype.Genesis && batch.Type != batchtype.Deposit {
-		batchDTO.AccountTreeRoot = batch.AccountTreeRoot
+		batchDTO.AccountTreeRoot = accountRoot
 	}
 
 	return batchDTO

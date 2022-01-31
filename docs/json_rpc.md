@@ -92,7 +92,8 @@ Example result:
 Returns transaction object including its status:
 
 - `PENDING`
-- `IN_BATCH`
+- `SUBMITTED`
+- `MINED`
 - `FINALISED`
 - `ERROR`
 
@@ -232,7 +233,11 @@ Example result:
 
 ### `hubble_getBatches(from, to)`
 
-Returns an array of batches in given ID range.
+Returns an array of batches with is statuses in given ID range. Batch statuses:
+
+- `SUBMITTED`
+- `MINED`
+- `FINALISED`
 
 Example result:
 
@@ -287,13 +292,23 @@ Example result:
         "SubmissionTime": 1642589195,
         "Status": "MINED",
         "FinalisationBlock": 84347
+    },
+    {
+        "ID": "5",
+        "Hash": null,
+        "Type": "TRANSFER",
+        "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
+        "SubmissionBlock": null,
+        "SubmissionTime": null,
+        "Status": "SUBMITTED",
+        "FinalisationBlock": null
     }
 ]
 ```
 
 ### `hubble_getBatchByHash(hash)`
 
-Returns batch information and list of included commitments in batch.
+Returns mined or finalised batch information and list of included commitments in batch.
 
 Example result (`TRANSFER`):
 
@@ -409,45 +424,7 @@ Example result (`DEPOSIT`):
             "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
             "LeafHash": "0x920330642c6cc8464fa50ef9ce46e0988b3f2013bc0d8a33fcfc00efec96f04d",
             "SubtreeID": "1",
-            "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
-            "Deposits": [
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "0"
-                    },
-                    "ToPubKeyID": 1,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "1"
-                    },
-                    "ToPubKeyID": 2,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "2"
-                    },
-                    "ToPubKeyID": 3,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                },
-                {
-                    "ID": {
-                        "SubtreeID": "1",
-                        "DepositIndex": "3"
-                    },
-                    "ToPubKeyID": 4,
-                    "TokenID": "0",
-                    "L2Amount": "10000000000"
-                }
-            ]
+            "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19"
         }
     ]
 }
@@ -472,11 +449,44 @@ Example result (`GENESIS`):
 
 ### `hubble_getBatchByID(id)`
 
-Same as hubble_getBatchByHash(hash)
+Same as hubble_getBatchByHash(hash), however this endpoint can also return commitments with `SUBMITTED` status.
+
+Example result (`TRANSFER`) with `SUBMITTED` status:
+
+```json
+{
+    "ID": "5",
+    "Hash": null,
+    "Type": "TRANSFER",
+    "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
+    "SubmissionBlock": null,
+    "SubmissionTime": null,
+    "Status": "SUBMITTED",
+    "FinalisationBlock": null,
+    "AccountTreeRoot": null,
+    "Commitments": [
+        {
+            "ID": {
+                "BatchID": "5",
+                "IndexInBatch": 0
+            },
+            "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
+            "LeafHash": null,
+            "TokenID": "0",
+            "FeeReceiverStateID": 0,
+            "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95"
+        }
+    ]
+}
+```
 
 ### `hubble_getCommitment(commitmentID: {BatchID: string, IndexInBatch: uint8})`
 
-Returns commitment information and list of included transactions
+Returns commitment object including list of included transactions and commitment status. Commitment statuses:
+
+- `SUBMITTED`
+- `MINED`
+- `FINALISED`
 
 Example result (`TRANSFER`):
 
@@ -631,6 +641,38 @@ Example result (`DEPOSIT`):
             "ToPubKeyID": 4,
             "TokenID": "0",
             "L2Amount": "10000000000"
+        }
+    ]
+}
+```
+
+Example result (`TRANSFER`) with `SUBMITTED` status:
+
+```json
+{
+    "ID": {
+        "BatchID": "5",
+        "IndexInBatch": 0
+    },
+    "Type": "TRANSFER",
+    "PostStateRoot": "0x165d9644ba7aced9ed8cd69f2e06b6f5d619bb7e4ec9a0cffd2ff232f308cf4e",
+    "LeafHash": null,
+    "TokenID": "0",
+    "FeeReceiverStateID": 0,
+    "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
+    "Status": "SUBMITTED",
+    "BatchTime": null,
+    "Transactions": [
+        {
+            "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
+            "FromStateID": 1,
+            "Amount": "50",
+            "Fee": "1",
+            "Nonce": "0",
+            "Signature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
+            // timestamp at which the tx was received by the coordinator for inclusion in batch. Can be null, when the tx was synced from blockchain.
+            "ReceiveTime": 1643379987,
+            "ToStateID": 2
         }
     ]
 }

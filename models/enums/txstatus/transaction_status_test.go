@@ -36,7 +36,7 @@ func TestTransactionStatus_MarshalJSON_SupportedStatus(t *testing.T) {
 }
 
 func TestTransactionStatus_MarshalJSON_UnsupportedStatus(t *testing.T) {
-	input := TransactionStatus(0)
+	input := TransactionStatus(999_999_999)
 	bytes, err := json.Marshal(input)
 	require.Error(t, err)
 	require.Nil(t, bytes)
