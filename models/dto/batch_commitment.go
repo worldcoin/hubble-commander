@@ -39,7 +39,7 @@ func MakeBatchTxCommitment(
 	return BatchTxCommitment{
 		ID:                 *NewCommitmentID(&commitment.ID),
 		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:           LeafHashOrNil(commitment),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
@@ -52,7 +52,7 @@ func MakeBatchMMCommitment(
 	return BatchMMCommitment{
 		ID:                *NewCommitmentID(&commitment.ID),
 		PostStateRoot:     commitment.PostStateRoot,
-		LeafHash:          LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:          LeafHashOrNil(commitment),
 		CombinedSignature: commitment.CombinedSignature,
 		WithdrawRoot:      commitment.WithdrawRoot,
 		Meta: MassMigrationMeta{
@@ -70,7 +70,7 @@ func MakeBatchDepositCommitment(
 	return BatchDepositCommitment{
 		ID:            *NewCommitmentID(&commitment.ID),
 		PostStateRoot: commitment.PostStateRoot,
-		LeafHash:      LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:      LeafHashOrNil(commitment),
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
 		Deposits:      MakePendingDeposits(commitment.Deposits),

@@ -71,7 +71,7 @@ func NewTxCommitment(
 		ID:                 *NewCommitmentID(&commitment.ID),
 		Type:               commitment.Type,
 		PostStateRoot:      commitment.PostStateRoot,
-		LeafHash:           LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:           LeafHashOrNil(commitment),
 		TokenID:            tokenID,
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
@@ -91,7 +91,7 @@ func NewMMCommitment(
 		ID:                *NewCommitmentID(&commitment.ID),
 		Type:              commitment.Type,
 		PostStateRoot:     commitment.PostStateRoot,
-		LeafHash:          LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:          LeafHashOrNil(commitment),
 		CombinedSignature: commitment.CombinedSignature,
 		Status:            *status,
 		BatchTime:         batchTime,
@@ -115,7 +115,7 @@ func NewDepositCommitment(
 		ID:            *NewCommitmentID(&commitment.ID),
 		Type:          commitment.Type,
 		PostStateRoot: commitment.PostStateRoot,
-		LeafHash:      LeafHashOrNil(commitment, commitment.GetBodyHash()),
+		LeafHash:      LeafHashOrNil(commitment),
 		Status:        *status,
 		BatchTime:     batchTime,
 		SubtreeID:     commitment.SubtreeID,
@@ -124,8 +124,8 @@ func NewDepositCommitment(
 	}
 }
 
-func LeafHashOrNil(commitment models.Commitment, bodyHash *common.Hash) *common.Hash {
-	if bodyHash == nil {
+func LeafHashOrNil(commitment models.Commitment) *common.Hash {
+	if commitment.GetBodyHash() == nil {
 		return nil
 	}
 

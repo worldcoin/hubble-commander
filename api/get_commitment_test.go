@@ -351,7 +351,7 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(
 
 	var leafHash *common.Hash
 	if batchStatus != batchstatus.Submitted {
-		leafHash = dto.LeafHashOrNil(s.txCommitment, s.txCommitment.BodyHash)
+		leafHash = dto.LeafHashOrNil(s.txCommitment)
 	}
 
 	expectedCommitment := dto.TxCommitment{
@@ -383,7 +383,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(
 
 	var leafHash *common.Hash
 	if batchStatus != batchstatus.Submitted {
-		leafHash = dto.LeafHashOrNil(s.mmCommitment, s.mmCommitment.BodyHash)
+		leafHash = dto.LeafHashOrNil(s.mmCommitment)
 	}
 
 	expectedCommitment := dto.MMCommitment{
