@@ -8,8 +8,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,9 +26,9 @@ type GetCommitmentTestSuite struct {
 	txCommitment             *models.TxCommitment
 	mmCommitment             *models.MMCommitment
 	depositCommitment        *models.DepositCommitment
-	transfer                 *models.Transfer
-	create2transfer          *models.Create2Transfer
-	massMigration            *models.MassMigration
+	transfer                 models.Transfer
+	create2transfer          models.Create2Transfer
+	massMigration            models.MassMigration
 	commitmentNotFoundAPIErr *APIError
 }
 
@@ -36,7 +36,6 @@ func (s *GetCommitmentTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-// nolint:funlen
 func (s *GetCommitmentTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
@@ -110,46 +109,14 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		},
 	}
 
-	s.transfer = &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Transfer,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			Signature:    models.MakeRandomSignature(),
-			CommitmentID: &s.txCommitment.ID,
-		},
-		ToStateID: 2,
-	}
+	s.transfer = testutils.MakeTransfer(1, 2, 0, 100)
+	s.transfer.CommitmentID = &s.txCommitment.ID
 
-	s.create2transfer = &models.Create2Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Create2Transfer,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.txCommitment.ID,
-		},
-		ToStateID:   ref.Uint32(2),
-		ToPublicKey: models.PublicKey{2, 3, 4},
-	}
+	s.create2transfer = testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 100, &models.PublicKey{1, 2, 3})
+	s.create2transfer.CommitmentID = &s.txCommitment.ID
 
-	s.massMigration = &models.MassMigration{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.MassMigration,
-			FromStateID:  1,
-			Amount:       models.MakeUint256(50),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(0),
-			CommitmentID: &s.mmCommitment.ID,
-		},
-		SpokeID: 2,
-	}
+	s.massMigration = testutils.MakeMassMigration(1, 2, 0, 100)
+	s.massMigration.CommitmentID = &s.mmCommitment.ID
 
 	s.commitmentNotFoundAPIErr = &APIError{
 		Code:    20000,
@@ -170,10 +137,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	err = s.storage.AddCommitment(s.txCommitment)
 	s.NoError(err)
 
-	err = s.storage.AddTransaction(s.transfer)
+	err = s.storage.AddTransaction(&s.transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(s.transfer)}
+	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(&s.transfer)}
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
@@ -194,10 +161,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	err = s.storage.AddCommitment(s.txCommitment)
 	s.NoError(err)
 
-	err = s.storage.AddTransaction(s.create2transfer)
+	err = s.storage.AddTransaction(&s.create2transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.Create2TransferForCommitment{dto.MakeCreate2TransferForCommitment(s.create2transfer)}
+	expectedTransactions := []dto.Create2TransferForCommitment{dto.MakeCreate2TransferForCommitment(&s.create2transfer)}
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
@@ -218,10 +185,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	err = s.storage.AddCommitment(s.mmCommitment)
 	s.NoError(err)
 
-	err = s.storage.AddTransaction(s.massMigration)
+	err = s.storage.AddTransaction(&s.massMigration)
 	s.NoError(err)
 
-	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(s.massMigration)}
+	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(&s.massMigration)}
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
@@ -260,10 +227,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedTxCommitment() {
 	err := s.storage.AddCommitment(&pendingCommitment)
 	s.NoError(err)
 
-	err = s.storage.AddTransaction(s.transfer)
+	err = s.storage.AddTransaction(&s.transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(s.transfer)}
+	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(&s.transfer)}
 
 	commitment, err := s.api.GetCommitment(pendingCommitment.ID)
 	s.NoError(err)
@@ -284,10 +251,10 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedMMCommitment() {
 	err := s.storage.AddCommitment(&pendingCommitment)
 	s.NoError(err)
 
-	err = s.storage.AddTransaction(s.massMigration)
+	err = s.storage.AddTransaction(&s.massMigration)
 	s.NoError(err)
 
-	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(s.massMigration)}
+	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(&s.massMigration)}
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
