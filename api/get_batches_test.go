@@ -107,9 +107,9 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.NotZero(typedResult.SubmissionBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, typedResult.SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *typedResult.SubmissionBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, typedResult.SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *typedResult.SubmissionBlock)
 		}
 	}
 }
