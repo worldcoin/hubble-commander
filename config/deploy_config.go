@@ -1,17 +1,14 @@
 package config
 
 import (
-	"path"
-
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 const DefaultBlocksToFinalise = uint32(7 * 24 * 60 * 4)
 
 func GetDeployerConfig() *DeployerConfig {
-	setupViper(getDeployerConfigPath())
+	setupViper("deployer-config")
 
 	return &DeployerConfig{
 		Bootstrap: &DeployerBootstrapConfig{
@@ -22,12 +19,9 @@ func GetDeployerConfig() *DeployerConfig {
 	}
 }
 
-func getDeployerConfigPath() string {
-	return path.Join(utils.GetProjectRoot(), "deployer-config.yaml")
-}
-
 func getGenesisAccounts() []models.GenesisAccount {
-	filename := getString("bootstrap.genesis_path", getGenesisPath())
+	filename := getString("bootstrap.genesis_path", "./genesis.yaml")
+	log.Printf("Reading genesis config from %s", filename)
 	return readGenesisAccounts(filename)
 }
 
@@ -37,8 +31,4 @@ func readGenesisAccounts(filename string) []models.GenesisAccount {
 		log.Panicf("error reading genesis file: %s", err.Error())
 	}
 	return genesisAccounts
-}
-
-func getGenesisPath() string {
-	return path.Join(utils.GetProjectRoot(), "genesis.yaml")
 }

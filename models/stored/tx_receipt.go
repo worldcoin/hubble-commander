@@ -13,7 +13,7 @@ import (
 const txReceiptBytesLength = 72
 
 var (
-	TxReceiptName                = getTypeName(TxReceipt{})
+	TxReceiptName                = models.GetTypeName(TxReceipt{})
 	TxReceiptPrefix              = models.GetBadgerHoldPrefix(TxReceipt{})
 	errInvalidTxReceiptIndexType = fmt.Errorf("invalid stored.TxReceipt index type")
 )

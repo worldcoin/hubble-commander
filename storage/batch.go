@@ -15,12 +15,6 @@ type BatchStorage struct {
 }
 
 func NewBatchStorage(database *Database) (*BatchStorage, error) {
-	// see NewTransactionStorage for reasoning
-	err := initializeIndex(database, stored.BatchName, "Hash", common.Hash{})
-	if err != nil {
-		return nil, err
-	}
-
 	return &BatchStorage{
 		database: database,
 	}, nil
@@ -82,6 +76,24 @@ func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, err
 	}
 
 	return storedBatch.ToModelsBatch(), nil
+}
+
+func (s *BatchStorage) GetPendingBatches() ([]models.Batch, error) {
+	var nilHash *common.Hash
+	storedBatches := make([]stored.Batch, 0)
+	err := s.database.Badger.Find(
+		&storedBatches,
+		bh.Where("Hash").Eq(nilHash).Index("Hash"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	batches := make([]models.Batch, 0, len(storedBatches))
+	for i := range storedBatches {
+		batches = append(batches, *storedBatches[i].ToModelsBatch())
+	}
+	return batches, nil
 }
 
 func (s *BatchStorage) GetLatestSubmittedBatch() (*models.Batch, error) {

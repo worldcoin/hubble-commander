@@ -27,7 +27,6 @@ import (
 )
 
 var (
-	errInconsistentChainState    = NewCannotBootstrapError("database chain state and file chain state are not the same")
 	errMissingBootstrapSource    = NewCannotBootstrapError("no chain spec file or bootstrap url specified")
 	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
 	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
@@ -226,10 +225,13 @@ func getClient(
 		if !dbChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 			return nil, errors.WithStack(errInconsistentDBChainID)
 		}
+
+		log.Printf("Continuing from saved state on ChainID = %s", dbChainState.ChainID.String())
+		return createClientFromChainState(blockchain, dbChainState, cfg.Rollup, commanderMetrics)
 	}
 
 	if cfg.Bootstrap.ChainSpecPath != nil {
-		return bootstrapFromChainState(blockchain, dbChainState, storage, cfg, commanderMetrics)
+		return bootstrapFromChainState(blockchain, storage, cfg, commanderMetrics)
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
@@ -241,7 +243,6 @@ func getClient(
 
 func bootstrapFromChainState(
 	blockchain chain.Connection,
-	dbChainState *models.ChainState,
 	storage *st.Storage,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
@@ -251,17 +252,7 @@ func bootstrapFromChainState(
 		return nil, err
 	}
 	importedChainState := newChainStateFromChainSpec(chainSpec)
-
-	if dbChainState == nil {
-		return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup, commanderMetrics)
-	}
-
-	if !importedChainState.Equal(dbChainState) {
-		return nil, errors.WithStack(errInconsistentChainState)
-	}
-
-	log.Printf("Continuing from saved state on ChainID = %s", importedChainState.ChainID.String())
-	return createClientFromChainState(blockchain, importedChainState, cfg.Rollup, commanderMetrics)
+	return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg.Rollup, commanderMetrics)
 }
 
 func bootstrapChainStateAndCommander(
@@ -294,7 +285,6 @@ func bootstrapFromRemoteState(
 	if !fetchedChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
-
 	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg.Rollup, commanderMetrics)
 }
 
