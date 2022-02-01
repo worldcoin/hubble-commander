@@ -87,8 +87,8 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
-		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
-		MineTimeout:                      params.TxMineTimeout,
+		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
+		MineTimeout:                      *params.TxMineTimeout,
 		TxsHashesChan:                    params.TxsHashesChan,
 	})
 	if err != nil {

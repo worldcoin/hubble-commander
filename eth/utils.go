@@ -31,5 +31,5 @@ func (c *Client) WaitForMultipleTxs(txs ...types.Transaction) ([]types.Receipt, 
 }
 
 func (a *AccountManager) WaitToBeMined(tx *types.Transaction) (*types.Receipt, error) {
-	return chain.WaitToBeMined(a.Blockchain.GetBackend(), *a.mineTimeout, tx)
+	return chain.WaitToBeMined(a.Blockchain.GetBackend(), a.mineTimeout, tx)
 }

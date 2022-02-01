@@ -15,8 +15,8 @@ import (
 type AccountManager struct {
 	Blockchain                       chain.Connection
 	AccountRegistry                  *AccountRegistry
-	batchAccountRegistrationGasLimit *uint64
-	mineTimeout                      *time.Duration
+	batchAccountRegistrationGasLimit uint64
+	mineTimeout                      time.Duration
 	txsHashesChan                    chan<- common.Hash
 }
 
@@ -43,7 +43,7 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 type AccountManagerParams struct {
 	AccountRegistry                  *accountregistry.AccountRegistry
 	AccountRegistryAddress           common.Address
-	BatchAccountRegistrationGasLimit *uint64
-	MineTimeout                      *time.Duration
+	BatchAccountRegistrationGasLimit uint64
+	MineTimeout                      time.Duration
 	TxsHashesChan                    chan<- common.Hash
 }

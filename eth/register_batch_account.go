@@ -44,7 +44,7 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 	}
 
 	tx, err := a.accountRegistry().
-		WithGasLimit(*a.batchAccountRegistrationGasLimit).
+		WithGasLimit(a.batchAccountRegistrationGasLimit).
 		RegisterBatch(pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
