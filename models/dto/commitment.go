@@ -57,7 +57,7 @@ type DepositCommitment struct {
 	BatchTime     *models.Timestamp
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
-	Deposits      []PendingDeposit
+	Deposits      []Deposit
 }
 
 func NewTxCommitment(
@@ -120,7 +120,7 @@ func NewDepositCommitment(
 		BatchTime:     batchTime,
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
-		Deposits:      MakePendingDeposits(commitment.Deposits),
+		Deposits:      MakeDeposits(commitment.Deposits),
 	}
 }
 
