@@ -36,6 +36,35 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "configure",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Auth-Key",
+                                "value": "{{auth_key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"admin_configure\",\n    \"params\": [\n        {\n            \"CreateBatches\": true,\n            \"AcceptTransactions\": true\n        }\n    ],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
+                        }
+                    },
+                    "response": []
                 }
             ]
         },

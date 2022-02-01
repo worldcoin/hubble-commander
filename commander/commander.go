@@ -47,8 +47,11 @@ type Commander struct {
 	apiServer     *http.Server
 	metricsServer *http.Server
 
+	batchCreationEnabled bool
+
 	stateMutex       sync.Mutex
 	rollupLoopActive uint32
+	cancelRollupLoop context.CancelFunc
 	invalidBatchID   *models.Uint256
 
 	txsHashesChan chan common.Hash
@@ -56,9 +59,10 @@ type Commander struct {
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:        cfg,
-		blockchain: blockchain,
-		lifecycle:  lifecycle{},
+		cfg:                  cfg,
+		blockchain:           blockchain,
+		batchCreationEnabled: true,
+		lifecycle:            lifecycle{},
 	}
 }
 
@@ -99,7 +103,7 @@ func (c *Commander) Start() (err error) {
 
 	c.metricsServer = c.metrics.NewServer(c.cfg.Metrics)
 
-	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics)
+	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics, c.EnableBatchCreation)
 	if err != nil {
 		return err
 	}
@@ -143,6 +147,13 @@ func (c *Commander) Stop() (err error) {
 		c.closeStartAndWaitChan()
 	})
 	return err
+}
+
+func (c *Commander) EnableBatchCreation(enable bool) {
+	c.batchCreationEnabled = enable
+	if !enable {
+		c.stopRollupLoop()
+	}
 }
 
 func (c *Commander) startWorker(name string, fn func() error) {

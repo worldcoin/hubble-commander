@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	stdErrors "errors"
 	"math/big"
 
@@ -33,7 +32,6 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
-	var rollupCancel context.CancelFunc
 	for {
 		select {
 		case <-c.workersContext.Done():
@@ -70,7 +68,7 @@ func (c *Commander) newBlockLoop() error {
 				return errors.WithStack(err)
 			}
 
-			rollupCancel = c.manageRollupLoop(rollupCancel, isProposer)
+			c.manageRollupLoop(isProposer)
 		}
 	}
 }

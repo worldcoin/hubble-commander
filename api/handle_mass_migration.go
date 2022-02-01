@@ -14,12 +14,12 @@ import (
 func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.Hash, error) {
 	massMigration, err := sanitizeMassMigration(massMigrationDTO)
 	if err != nil {
-		a.countRejectedTx(massMigration.TxType)
+		a.countRejectedTx(txtype.MassMigration)
 		return nil, err
 	}
 
 	if vErr := a.validateMassMigration(massMigration); vErr != nil {
-		a.countRejectedTx(massMigration.TxType)
+		a.countRejectedTx(txtype.MassMigration)
 		return nil, vErr
 	}
 
