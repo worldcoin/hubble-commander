@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 )
@@ -13,10 +12,6 @@ type lifecycle struct {
 
 	active    uint32
 	closeOnce sync.Once
-
-	workersContext     context.Context
-	stopWorkersContext context.CancelFunc
-	workersWaitGroup   sync.WaitGroup
 }
 
 func (l *lifecycle) isActive() bool {

@@ -37,6 +37,7 @@ var (
 
 type Commander struct {
 	lifecycle
+	workers
 	rollupControls
 
 	cfg        *config.Config
@@ -59,6 +60,7 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 		cfg:            cfg,
 		blockchain:     blockchain,
 		lifecycle:      lifecycle{},
+		workers:        workers{},
 		rollupControls: makeRollupControls(),
 	}
 }
