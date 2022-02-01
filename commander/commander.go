@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
-	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -128,7 +127,7 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-	atomic.StoreUint32(&c.active, 1)
+	c.setActive(true)
 	return nil
 }
 
@@ -175,7 +174,7 @@ func (c *Commander) stop() error {
 	}
 	c.stopWorkersContext()
 	c.workersWaitGroup.Wait()
-	atomic.StoreUint32(&c.active, 0)
+	c.setActive(false)
 	return c.storage.Close()
 }
 

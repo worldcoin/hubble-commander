@@ -18,6 +18,14 @@ func (l *lifecycle) isActive() bool {
 	return atomic.LoadUint32(&l.active) != 0
 }
 
+func (l *lifecycle) setActive(active bool) {
+	activeFlag := uint32(0)
+	if active {
+		activeFlag = 1
+	}
+	atomic.StoreUint32(&l.active, activeFlag)
+}
+
 func (l *lifecycle) getStartAndWaitChan() <-chan struct{} {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
