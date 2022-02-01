@@ -2,10 +2,11 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
-	tx, err := c.rollup().WithdrawStake(batchID.ToBig())
+	tx, err := c.WithdrawStake(batchID)
 	if err != nil {
 		return err
 	}
@@ -13,13 +14,13 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 	return err
 }
 
-func (c *Client) WithdrawStake(batchID *models.Uint256) error {
+func (c *Client) WithdrawStake(batchID *models.Uint256) (*types.Transaction, error) {
 	tx, err := c.rollup().
 		WithGasLimit(*c.config.StakeWithdrawalGasLimit).
 		WithdrawStake(batchID.ToBig())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	c.txsHashesChan <- tx.Hash()
-	return nil
+	return tx, nil
 }
