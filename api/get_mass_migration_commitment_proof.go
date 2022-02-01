@@ -64,7 +64,7 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 	}
 
 	// TODO remove when new primary key for transactions with transaction index is implement
-	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
+	txQueue := executor.NewTxQueue(unsortedMassMigrations)
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
 	serializedMassMigrations, err := encoder.SerializeMassMigrations(massMigrations)

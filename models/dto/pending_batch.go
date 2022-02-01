@@ -15,5 +15,5 @@ type PendingBatch struct {
 
 type PendingCommitment struct {
 	models.Commitment
-	Transactions interface{}
+	Transactions models.GenericTransactionArray
 }

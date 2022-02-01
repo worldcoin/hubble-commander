@@ -33,7 +33,7 @@ func (s *TransactionStorage) GetPendingMassMigrations() (txs models.MassMigratio
 	return genericTxs.ToMassMigrationArray(), nil
 }
 
-func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.CommitmentID) ([]models.MassMigration, error) {
+func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.CommitmentID) (models.MassMigrationArray, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
 	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")

@@ -34,7 +34,7 @@ func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, er
 	return genericTxs.ToTransferArray(), nil
 }
 
-func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
+func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) (models.TransferArray, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
 	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
