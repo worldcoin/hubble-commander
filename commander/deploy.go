@@ -49,7 +49,7 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, cfg.Ethereum.ChainMineTimeout)
+	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, cfg.Ethereum.MineTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func deployContractsAndSetupGenesisState(
 	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
 		blockchain,
 		chooserAddress,
-		cfg.Ethereum.ChainMineTimeout,
+		cfg.Ethereum.MineTimeout,
 	)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func deployContractsAndSetupGenesisState(
 	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(
 		accountManager,
 		cfg.Bootstrap.GenesisAccounts,
-		cfg.Ethereum.ChainMineTimeout,
+		cfg.Ethereum.MineTimeout,
 	)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func deployContractsAndSetupGenesisState(
 			AccountRegistry: accountRegistryAddress,
 			Chooser:         chooserAddress,
 		},
-		MineTimeout: cfg.Ethereum.ChainMineTimeout,
+		MineTimeout: cfg.Ethereum.MineTimeout,
 	})
 	if err != nil {
 		return nil, err

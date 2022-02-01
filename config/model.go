@@ -85,8 +85,8 @@ type BadgerConfig struct {
 }
 
 type EthereumConfig struct {
-	RPCURL           string `json:"-"`
-	ChainID          uint64
-	PrivateKey       string `json:"-"`
-	ChainMineTimeout time.Duration
+	RPCURL      string `json:"-"`
+	ChainID     uint64
+	PrivateKey  string `json:"-"`
+	MineTimeout time.Duration
 }

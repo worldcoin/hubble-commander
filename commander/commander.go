@@ -398,7 +398,7 @@ func createClientFromChainState(
 			TransitionDisputeGasLimit:        ref.Uint64(cfg.Rollup.TransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         ref.Uint64(cfg.Rollup.SignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: ref.Uint64(cfg.Rollup.BatchAccountRegistrationGasLimit),
-			TxMineTimeout:                    ref.Duration(cfg.Ethereum.ChainMineTimeout),
+			TxMineTimeout:                    ref.Duration(cfg.Ethereum.MineTimeout),
 		},
 	})
 	if err != nil {
