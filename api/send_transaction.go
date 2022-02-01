@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	ErrFeeTooLow          = fmt.Errorf("fee must be greater than 0")
-	ErrNonceTooLow        = fmt.Errorf("nonce too low")
-	ErrNotEnoughBalance   = fmt.Errorf("not enough balance")
-	ErrTransferToSelf     = fmt.Errorf("transfer to the same state id")
-	ErrInvalidAmount      = fmt.Errorf("amount must be positive")
-	ErrUnsupportedTxType  = fmt.Errorf("unsupported transaction type")
-	ErrNonexistentSender  = fmt.Errorf("sender state ID does not exist")
-	ErrSpokeDoesNotExist  = fmt.Errorf("spoke with given ID does not exist")
-	ErrPendingTransaction = fmt.Errorf("transaction already exists")
-	ErrTxSendingDisabled  = fmt.Errorf("instance is not accepting transactions")
+	ErrFeeTooLow            = fmt.Errorf("fee must be greater than 0")
+	ErrNonceTooLow          = fmt.Errorf("nonce too low")
+	ErrNotEnoughBalance     = fmt.Errorf("not enough balance")
+	ErrTransferToSelf       = fmt.Errorf("transfer to the same state id")
+	ErrInvalidAmount        = fmt.Errorf("amount must be positive")
+	ErrUnsupportedTxType    = fmt.Errorf("unsupported transaction type")
+	ErrNonexistentSender    = fmt.Errorf("sender state ID does not exist")
+	ErrSpokeDoesNotExist    = fmt.Errorf("spoke with given ID does not exist")
+	ErrPendingTransaction   = fmt.Errorf("transaction already exists")
+	ErrSendTxMethodDisabled = fmt.Errorf("instance is not accepting transactions")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -76,7 +76,7 @@ var (
 		10016,
 		"spoke with given ID does not exist",
 	)
-	APIErrTxSendingDisabled = NewAPIError(
+	APIErrSendTxMethodDisabled = NewAPIError(
 		10017,
 		"instance is not accepting transactions",
 	)
@@ -96,12 +96,12 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrSpokeDoesNotExist:                  APIErrSpokeDoesNotExist,
 	storage.ErrAlreadyMinedTransaction:    APIErrMinedTransaction,
 	ErrPendingTransaction:                 APIErrPendingTransaction,
-	ErrTxSendingDisabled:                  APIErrTxSendingDisabled,
+	ErrSendTxMethodDisabled:               APIErrSendTxMethodDisabled,
 }
 
 func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	if !a.isAcceptingTransactions {
-		return nil, sanitizeError(ErrTxSendingDisabled, sendTransactionAPIErrors)
+		return nil, sanitizeError(ErrSendTxMethodDisabled, sendTransactionAPIErrors)
 	}
 
 	transactionHash, err := a.unsafeSendTransaction(tx)
