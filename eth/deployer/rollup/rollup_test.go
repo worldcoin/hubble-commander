@@ -49,7 +49,7 @@ func (s *RollupDeployerTestSuite) TestDeployConfiguredRollup_TransfersGenesisFun
 			TotalGenesisAmount: models.NewUint256(5e9),
 		},
 	}
-	rollupContracts, err := DeployConfiguredRollup(s.sim, deploymentCfg)
+	rollupContracts, err := DeployConfiguredRollup(s.sim, &deploymentCfg)
 	s.NoError(err)
 
 	customToken, err := customtoken.NewTestCustomToken(rollupContracts.ExampleTokenAddress, s.sim.Backend)

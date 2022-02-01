@@ -63,6 +63,7 @@ type RollupConfig struct {
 	TransitionDisputeGasLimit        uint64
 	SignatureDisputeGasLimit         uint64
 	BatchAccountRegistrationGasLimit uint64
+	StakeWithdrawalGasLimit          uint64
 	BatchLoopInterval                time.Duration
 	DisableSignatures                bool
 
@@ -84,7 +85,8 @@ type BadgerConfig struct {
 }
 
 type EthereumConfig struct {
-	RPCURL     string `json:"-"`
-	ChainID    uint64
-	PrivateKey string `json:"-"`
+	RPCURL      string `json:"-"`
+	ChainID     uint64
+	PrivateKey  string `json:"-"`
+	MineTimeout time.Duration
 }

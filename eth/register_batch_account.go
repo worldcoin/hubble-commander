@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -26,7 +25,7 @@ func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicK
 		return nil, err
 	}
 
-	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
+	receipt, err := a.WaitToBeMined(tx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +44,12 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 	}
 
 	tx, err := a.accountRegistry().
-		WithGasLimit(*a.batchAccountRegistrationGasLimit).
+		WithGasLimit(a.batchAccountRegistrationGasLimit).
 		RegisterBatch(pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	a.txsHashesChan <- tx.Hash()
 
 	return tx, nil
 }

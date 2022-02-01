@@ -6,3 +6,4 @@
 #  rpc_url: ws://localhost:8546
 #  chain_id: 1337
 #  private_key: ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+#  mine_timeout: 5m

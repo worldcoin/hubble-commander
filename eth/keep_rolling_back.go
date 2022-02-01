@@ -3,7 +3,6 @@ package eth
 import (
 	"strings"
 
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
@@ -25,7 +24,7 @@ func (c *Client) KeepRollingBack() error {
 }
 
 func (c *Client) waitForKeepRollingBack(tx *types.Transaction) error {
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := c.WaitToBeMined(tx)
 	if err != nil {
 		return err
 	}

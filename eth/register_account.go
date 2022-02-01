@@ -2,7 +2,6 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,7 +13,7 @@ func (a *AccountManager) RegisterAccountAndWait(publicKey *models.PublicKey) (*u
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := chain.WaitToBeMined(a.Blockchain.GetBackend(), tx)
+	receipt, err := a.WaitToBeMined(tx)
 	if err != nil {
 		return nil, err
 	}

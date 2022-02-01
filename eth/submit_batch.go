@@ -3,37 +3,55 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return c.rollup().
+	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
 		SubmitTransfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	c.txsHashesChan <- tx.Hash()
+
+	return tx, nil
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return c.rollup().
+	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
 		SubmitCreate2Transfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	c.txsHashesChan <- tx.Hash()
+
+	return tx, nil
 }
 
 func (c *Client) SubmitMassMigrationsBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
-	return c.rollup().
+	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.MMBatchSubmissionGasLimit).
 		SubmitMassMigration(encoder.CommitmentsToSubmitMMBatchFields(batchID, commitments))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	c.txsHashesChan <- tx.Hash()
+
+	return tx, nil
 }
 
 func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {
@@ -65,7 +83,7 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 		return
 	}
 
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := c.WaitToBeMined(tx)
 	if err != nil {
 		return nil, err
 	}

@@ -211,7 +211,7 @@ func (c *Commander) withdrawRemainingStakes(currentBlock uint64) error {
 		return err
 	}
 	for i := range stakes {
-		err = c.client.WithdrawStake(&stakes[i].BatchID)
+		_, err = c.client.WithdrawStake(&stakes[i].BatchID)
 		if err != nil {
 			return err
 		}
