@@ -39,8 +39,8 @@ type Commander struct {
 
 	cfg        *config.Config
 	blockchain chain.Connection
+	metrics    *metrics.CommanderMetrics
 
-	metrics       *metrics.CommanderMetrics
 	storage       *st.Storage
 	client        *eth.Client
 	apiServer     *http.Server
@@ -54,11 +54,12 @@ type Commander struct {
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:            cfg,
-		blockchain:     blockchain,
 		lifecycle:      lifecycle{},
 		workers:        makeWorkers(),
 		rollupControls: makeRollupControls(),
+		cfg:            cfg,
+		blockchain:     blockchain,
+		metrics:        metrics.NewCommanderMetrics(),
 	}
 }
 
@@ -82,8 +83,6 @@ func (c *Commander) Start() (err error) {
 	if err != nil {
 		return err
 	}
-
-	c.metrics = metrics.NewCommanderMetrics()
 
 	c.txsHashesChan = make(chan common.Hash, 32)
 
