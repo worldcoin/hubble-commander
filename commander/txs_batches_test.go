@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -52,7 +51,6 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)

@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -58,7 +57,7 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 		cfg:            cfg,
 		blockchain:     blockchain,
 		lifecycle:      lifecycle{},
-		workers:        workers{},
+		workers:        makeWorkers(),
 		rollupControls: makeRollupControls(),
 	}
 }
@@ -104,8 +103,6 @@ func (c *Commander) Start() (err error) {
 	if err != nil {
 		return err
 	}
-
-	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
 
 	c.startWorker("API Server", func() error {
 		err := c.apiServer.ListenAndServe()

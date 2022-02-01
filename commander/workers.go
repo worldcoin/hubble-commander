@@ -14,6 +14,14 @@ type workers struct {
 	workersWaitGroup   sync.WaitGroup
 }
 
+func makeWorkers() workers {
+	ctx, ctxCancel := context.WithCancel(context.Background())
+	return workers{
+		workersContext:     ctx,
+		stopWorkersContext: ctxCancel,
+	}
+}
+
 func (w *workers) startWorker(name string, fn func() error) {
 	w.workersWaitGroup.Add(1)
 	go func() {

@@ -64,7 +64,6 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.cmd.storage = s.storage.Storage
 	s.cmd.txsHashesChan = s.client.TxsHashesChan
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)

@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -53,7 +52,6 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
