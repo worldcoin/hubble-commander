@@ -201,10 +201,6 @@ func (c *Commander) stop() error {
 	return c.storage.Close()
 }
 
-func (c *Commander) isRollupLoopActive() bool {
-	return atomic.LoadUint32(&c.rollupLoopActive) != 0
-}
-
 func getClient(
 	blockchain chain.Connection,
 	storage *st.Storage,
