@@ -33,7 +33,6 @@ type NewClientParams struct {
 }
 
 type ClientConfig struct {
-	TxTimeout                        *time.Duration
 	TxMineTimeout                    *time.Duration
 	StakeAmount                      *models.Uint256
 	TransferBatchSubmissionGasLimit  *uint64
@@ -126,9 +125,6 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 }
 
 func fillWithDefaults(c *ClientConfig) {
-	if c.TxTimeout == nil {
-		c.TxTimeout = ref.Duration(60 * time.Second)
-	}
 	if c.TxMineTimeout == nil {
 		c.TxMineTimeout = ref.Duration(config.DefaultEthereumMineTimeout)
 	}
