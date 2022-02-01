@@ -5,6 +5,7 @@ import (
 	"sync/atomic"
 )
 
+// nolint:structcheck
 type rollupControls struct {
 	batchCreationEnabled bool
 
