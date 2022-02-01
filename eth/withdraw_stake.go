@@ -15,7 +15,7 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 
 func (c *Client) WithdrawStake(batchID *models.Uint256) error {
 	tx, err := c.rollup().
-		WithGasLimit(*c.config.WithdrawStakeGasLimit).
+		WithGasLimit(*c.config.StakeWithdrawalGasLimit).
 		WithdrawStake(batchID.ToBig())
 	if err != nil {
 		return err
