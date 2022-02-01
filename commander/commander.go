@@ -3,7 +3,6 @@ package commander
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -153,29 +152,6 @@ func (c *Commander) EnableBatchCreation(enable bool) {
 	if !enable {
 		c.stopRollupLoop()
 	}
-}
-
-func (c *Commander) startWorker(name string, fn func() error) {
-	c.workersWaitGroup.Add(1)
-	go func() {
-		var err error
-		defer func() {
-			if recoverErr := recover(); recoverErr != nil {
-				var ok bool
-				err, ok = recoverErr.(error)
-				if !ok {
-					err = fmt.Errorf("%+v", recoverErr)
-				}
-			}
-			if err != nil {
-				log.Errorf("%s worker failed with: %+v", name, err)
-				c.stopWorkersContext()
-			}
-			c.workersWaitGroup.Done()
-		}()
-
-		err = fn()
-	}()
 }
 
 func (c *Commander) handleWorkerError() {
