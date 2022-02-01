@@ -39,7 +39,7 @@ func (l *lifecycle) unsafeGetStartAndWaitChan() chan struct{} {
 	return l.startAndWaitChan
 }
 
-func (l *lifecycle) closeStartAndWaitChan() {
+func (l *lifecycle) releaseStartAndWait() {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	ch := l.unsafeGetStartAndWaitChan()

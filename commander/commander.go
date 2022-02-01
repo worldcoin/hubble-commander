@@ -141,7 +141,7 @@ func (c *Commander) Stop() (err error) {
 			return
 		}
 		log.Warningln("Commander stopped.")
-		c.closeStartAndWaitChan()
+		c.releaseStartAndWait()
 	})
 	return err
 }
