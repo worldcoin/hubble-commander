@@ -37,6 +37,7 @@ var (
 
 type Commander struct {
 	lifecycle
+	rollupControls
 
 	cfg        *config.Config
 	blockchain chain.Connection
@@ -47,22 +48,18 @@ type Commander struct {
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	batchCreationEnabled bool
-
-	stateMutex       sync.Mutex
-	rollupLoopActive uint32
-	cancelRollupLoop context.CancelFunc
-	invalidBatchID   *models.Uint256
+	stateMutex     sync.Mutex
+	invalidBatchID *models.Uint256
 
 	txsHashesChan chan common.Hash
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:                  cfg,
-		blockchain:           blockchain,
-		batchCreationEnabled: true,
-		lifecycle:            lifecycle{},
+		cfg:            cfg,
+		blockchain:     blockchain,
+		lifecycle:      lifecycle{},
+		rollupControls: makeRollupControls(),
 	}
 }
 
