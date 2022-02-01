@@ -13,6 +13,7 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
+	TxsHashesChan       chan common.Hash
 }
 
 var (
@@ -22,10 +23,10 @@ var (
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
-	return NewConfiguredTestClient(rollup.DeploymentConfig{}, ClientConfig{})
+	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &ClientConfig{})
 }
 
-func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig) (*TestClient, error) {
+func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConfig) (*TestClient, error) {
 	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
@@ -35,6 +36,7 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 	if err != nil {
 		return nil, err
 	}
+	txsHashesChan := make(chan common.Hash, 32)
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
@@ -53,7 +55,8 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		TokenRegistry:   contracts.TokenRegistry,
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
-		ClientConfig:    clientCfg,
+		ClientConfig:    *clientCfg,
+		TxsHashesChan:   txsHashesChan,
 	})
 	if err != nil {
 		return nil, err
@@ -63,5 +66,6 @@ func NewConfiguredTestClient(cfg rollup.DeploymentConfig, clientCfg ClientConfig
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
+		TxsHashesChan:       txsHashesChan,
 	}, nil
 }

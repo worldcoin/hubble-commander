@@ -2,6 +2,7 @@ package commander
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
@@ -47,6 +48,7 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccou
 func RegisterGenesisAccountsAndCalculateTotalAmount(
 	accountMgr *eth.AccountManager,
 	accounts []models.GenesisAccount,
+	mineTimeout time.Duration,
 ) (*models.Uint256, error) {
 	log.Println("Registering genesis accounts")
 
@@ -64,7 +66,7 @@ func RegisterGenesisAccountsAndCalculateTotalAmount(
 		txs = append(txs, *tx)
 	}
 
-	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), txs...)
+	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), mineTimeout, txs...)
 	if err != nil {
 		return nil, err
 	}

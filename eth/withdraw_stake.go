@@ -1,20 +1,26 @@
 package eth
 
 import (
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
-	tx, err := c.rollup().WithdrawStake(batchID.ToBig())
+	tx, err := c.WithdrawStake(batchID)
 	if err != nil {
 		return err
 	}
-	_, err = chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	_, err = c.WaitToBeMined(tx)
 	return err
 }
 
-func (c *Client) WithdrawStake(batchID *models.Uint256) error {
-	_, err := c.rollup().WithdrawStake(batchID.ToBig())
-	return err
+func (c *Client) WithdrawStake(batchID *models.Uint256) (*types.Transaction, error) {
+	tx, err := c.rollup().
+		WithGasLimit(*c.config.StakeWithdrawalGasLimit).
+		WithdrawStake(batchID.ToBig())
+	if err != nil {
+		return nil, err
+	}
+	c.txsHashesChan <- tx.Hash()
+	return tx, nil
 }

@@ -406,7 +406,7 @@ func submitMMBatch(
 }
 
 func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *types.Transaction, batchID uint64) {
-	_, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), transaction)
+	_, err := ethClient.WaitToBeMined(transaction)
 	require.NoError(t, err)
 
 	_, err = ethClient.GetBatch(models.NewUint256(batchID))
@@ -457,6 +457,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		Rollup:          rollupContract,
+		TxsHashesChan:   make(chan common.Hash, 32),
 	})
 	require.NoError(t, err)
 	return ethClient

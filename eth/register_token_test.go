@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -53,7 +52,7 @@ func (s *RegisterTokenTestSuite) deployToken() common.Address {
 		"NEW",
 	)
 	s.NoError(err)
-	_, err = chain.WaitToBeMined(s.client.Backend, tokenTx)
+	_, err = s.client.WaitToBeMined(tokenTx)
 	s.NoError(err)
 
 	return tokenAddress

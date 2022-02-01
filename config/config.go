@@ -17,8 +17,10 @@ const (
 	DefaultTransitionDisputeGasLimit        = uint64(4_100_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_600_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
+	DefaultStakeWithdrawalGasLimit          = uint64(200_000)
 	DefaultMetricsPort                      = "2112"
 	DefaultMetricsEndpoint                  = "/metrics"
+	DefaultEthereumMineTimeout              = 5 * time.Minute
 )
 
 func GetConfig() *Config {
@@ -46,6 +48,7 @@ func GetConfig() *Config {
 			TransitionDisputeGasLimit:        getUint64("rollup.transition_dispute_gas_limit", DefaultTransitionDisputeGasLimit),
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
+			StakeWithdrawalGasLimit:          getUint64("rollup.stake_withdrawal_gas_limit", DefaultStakeWithdrawalGasLimit),
 			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 30*time.Minute),
@@ -94,6 +97,7 @@ func GetTestConfig() *Config {
 			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
 			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
 			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
+			StakeWithdrawalGasLimit:          DefaultStakeWithdrawalGasLimit,
 			BatchLoopInterval:                500 * time.Millisecond,
 			DisableSignatures:                true,
 			MaxTxnDelay:                      30 * time.Minute,
@@ -108,9 +112,10 @@ func GetTestConfig() *Config {
 			Path: "../db/data/hubble_test",
 		},
 		Ethereum: &EthereumConfig{
-			RPCURL:     "simulator",
-			ChainID:    SimulatorChainID,
-			PrivateKey: "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82",
+			RPCURL:      "simulator",
+			ChainID:     SimulatorChainID,
+			PrivateKey:  "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82",
+			MineTimeout: DefaultEthereumMineTimeout,
 		},
 	}
 }
@@ -170,8 +175,9 @@ func getEthereumConfig() *EthereumConfig {
 		}
 	}
 	return &EthereumConfig{
-		RPCURL:     *rpcURL,
-		ChainID:    getUint64OrPanic("ethereum.chain_id"),
-		PrivateKey: getStringOrPanic("ethereum.private_key"),
+		RPCURL:      *rpcURL,
+		ChainID:     getUint64OrPanic("ethereum.chain_id"),
+		PrivateKey:  getStringOrPanic("ethereum.private_key"),
+		MineTimeout: getDuration("ethereum.mine_timeout", DefaultEthereumMineTimeout),
 	}
 }
