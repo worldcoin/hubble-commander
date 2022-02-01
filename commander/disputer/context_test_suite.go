@@ -55,9 +55,9 @@ func (s *testSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchTyp
 	root, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	s.client, err = eth.NewConfiguredTestClient(rollup.DeploymentConfig{
+	s.client, err = eth.NewConfiguredTestClient(&rollup.DeploymentConfig{
 		Params: rollup.Params{GenesisStateRoot: root},
-	}, eth.ClientConfig{})
+	}, &eth.ClientConfig{})
 	s.NoError(err)
 
 	s.addGenesisBatch(root)

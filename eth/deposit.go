@@ -2,7 +2,6 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -19,7 +18,7 @@ func (c *Client) QueueDepositAndWait(
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
-	receipt, err := chain.WaitToBeMined(c.Blockchain.GetBackend(), tx)
+	receipt, err := c.WaitToBeMined(tx)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}

@@ -2,6 +2,7 @@ package rollup
 
 import (
 	"strings"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -40,6 +41,7 @@ const (
 type DeploymentConfig struct {
 	Params
 	Dependencies
+	MineTimeout time.Duration
 }
 
 type Params struct {
@@ -91,15 +93,17 @@ type txHelperContracts struct {
 }
 
 func DeployRollup(c chain.Connection) (*RollupContracts, error) {
-	return DeployConfiguredRollup(c, DeploymentConfig{})
+	return DeployConfiguredRollup(c, &DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&cfg.Params)
 
+	waitForMultipleTxs := chain.CreateWaitForMultipleTxsHelper(c.GetBackend(), cfg.MineTimeout)
+
 	// Stage 1
-	err := deployMissing(&cfg.Dependencies, c)
+	err := deployMissing(&cfg.Dependencies, c, cfg.MineTimeout)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -123,7 +127,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *tokenRegistryTx, *spokeRegistryTx, *costEstimatorDeployTx)
+	_, err = waitForMultipleTxs(*tokenRegistryTx, *spokeRegistryTx, *costEstimatorDeployTx)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +150,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *costEstimatorInitTx, *vaultTx)
+	_, err = waitForMultipleTxs(*costEstimatorInitTx, *vaultTx)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +176,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, err
 	}
 
-	_, err = chain.WaitForMultipleTxs(
-		c.GetBackend(),
+	_, err = waitForMultipleTxs(
 		*depositManagerTx,
 		*txHelpers.TransferTx,
 		*txHelpers.MassMigrationTx,
@@ -206,7 +209,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitToBeMined(c.GetBackend(), tx)
+	_, err = chain.WaitToBeMined(c.GetBackend(), cfg.MineTimeout, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +257,12 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), *depositManagerInitTx, *vaultInitTx, *withdrawManagerTx, *exampleTokenTx)
+	_, err = waitForMultipleTxs(
+		*depositManagerInitTx,
+		*vaultInitTx,
+		*withdrawManagerTx,
+		*exampleTokenTx,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +294,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 		stageSevenTxs = append(stageSevenTxs, *transferGenesisFundsTx)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), stageSevenTxs...)
+	_, err = waitForMultipleTxs(stageSevenTxs...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +310,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg DeploymentConfig) (*RollupCo
 	}
 
 	return &RollupContracts{
-		Config:                 cfg,
+		Config:                 *cfg,
 		Chooser:                proofOfBurn,
 		AccountRegistry:        accountRegistry,
 		AccountRegistryAddress: *cfg.AccountRegistry,
@@ -378,16 +386,16 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c chain.Connection) error {
+func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout time.Duration) error {
 	if dependencies.Chooser == nil {
-		proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(c)
+		proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(c, mineTimeout)
 		if err != nil {
 			return err
 		}
 		dependencies.Chooser = proofOfBurnAddress
 	}
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout)
 		if err != nil {
 			return err
 		}

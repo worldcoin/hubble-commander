@@ -78,10 +78,11 @@ func (s *SendTransferTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.api = &API{
-		cfg:              &config.APIConfig{},
-		storage:          s.storage.Storage,
-		client:           eth.DomainOnlyTestClient,
-		commanderMetrics: metrics.NewCommanderMetrics(),
+		cfg:                     &config.APIConfig{},
+		storage:                 s.storage.Storage,
+		client:                  eth.DomainOnlyTestClient,
+		commanderMetrics:        metrics.NewCommanderMetrics(),
+		isAcceptingTransactions: true,
 	}
 
 	s.domain, err = s.api.client.GetDomain()
@@ -257,6 +258,12 @@ func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer()
 
 	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrMinedTransaction, err)
+}
+
+func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() {
+	s.api.isAcceptingTransactions = false
+	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.Equal(APIErrSendTxMethodDisabled, err)
 }
 
 func TestSendTransferTestSuite(t *testing.T) {

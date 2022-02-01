@@ -162,7 +162,7 @@ func makeFullDepositBatch(
 			require.NoError(t, err)
 			txs = append(txs, *tx)
 		}
-		_, err := chain.WaitForMultipleTxs(ethClient.Blockchain.GetBackend(), txs...)
+		_, err := ethClient.WaitForMultipleTxs(txs...)
 		require.NoError(t, err)
 
 		waitForBatch(t, client, models.MakeUint256(1))
@@ -299,7 +299,7 @@ func testProcessWithdrawCommitment(
 		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, commitmentID.BatchID.ToBig(), typedProof)
 		require.NoError(t, err)
 
-		receipt, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
+		receipt, err := ethClient.WaitToBeMined(tx)
 		require.NoError(t, err)
 		require.NotZero(t, receipt.Status)
 	})
@@ -374,7 +374,7 @@ func testClaimTokens(
 		)
 		require.NoError(t, err)
 
-		receipt, err := chain.WaitToBeMined(ethClient.Blockchain.GetBackend(), tx)
+		receipt, err := ethClient.WaitToBeMined(tx)
 		require.NoError(t, err)
 		require.NotZero(t, receipt.Status)
 	})

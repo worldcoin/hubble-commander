@@ -17,6 +17,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
@@ -27,11 +28,12 @@ type NewClientParams struct {
 	TokenRegistry   *tokenregistry.TokenRegistry
 	SpokeRegistry   *spokeregistry.SpokeRegistry
 	DepositManager  *depositmanager.DepositManager
+	TxsHashesChan   chan<- common.Hash
 	ClientConfig
 }
 
 type ClientConfig struct {
-	TxTimeout                        *time.Duration
+	TxMineTimeout                    *time.Duration
 	StakeAmount                      *models.Uint256
 	TransferBatchSubmissionGasLimit  *uint64
 	C2TBatchSubmissionGasLimit       *uint64
@@ -40,6 +42,7 @@ type ClientConfig struct {
 	TransitionDisputeGasLimit        *uint64
 	SignatureDisputeGasLimit         *uint64
 	BatchAccountRegistrationGasLimit *uint64
+	StakeWithdrawalGasLimit          *uint64
 }
 
 type Client struct {
@@ -54,6 +57,7 @@ type Client struct {
 	blocksToFinalise       *int64
 	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
+	txsHashesChan          chan<- common.Hash
 
 	*AccountManager
 }
@@ -79,10 +83,13 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		return nil, errors.WithStack(err)
 	}
 	backend := blockchain.GetBackend()
+
 	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
 		AccountRegistry:                  params.AccountRegistry,
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
-		BatchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
+		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
+		MineTimeout:                      *params.TxMineTimeout,
+		TxsHashesChan:                    params.TxsHashesChan,
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -113,12 +120,13 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
+		txsHashesChan: params.TxsHashesChan,
 	}, nil
 }
 
 func fillWithDefaults(c *ClientConfig) {
-	if c.TxTimeout == nil {
-		c.TxTimeout = ref.Duration(60 * time.Second)
+	if c.TxMineTimeout == nil {
+		c.TxMineTimeout = ref.Duration(config.DefaultEthereumMineTimeout)
 	}
 	if c.StakeAmount == nil {
 		c.StakeAmount = models.NewUint256(1e17) // default 0.1 ether
@@ -143,5 +151,8 @@ func fillWithDefaults(c *ClientConfig) {
 	}
 	if c.BatchAccountRegistrationGasLimit == nil {
 		c.BatchAccountRegistrationGasLimit = ref.Uint64(config.DefaultBatchAccountRegistrationGasLimit)
+	}
+	if c.StakeWithdrawalGasLimit == nil {
+		c.StakeWithdrawalGasLimit = ref.Uint64(config.DefaultStakeWithdrawalGasLimit)
 	}
 }

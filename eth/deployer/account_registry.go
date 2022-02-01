@@ -1,6 +1,8 @@
 package deployer
 
 import (
+	"time"
+
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/ethereum/go-ethereum/common"
@@ -8,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DeployAccountRegistry(c chain.Connection, chooser *common.Address) (
+func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTimeout time.Duration) (
 	*common.Address, *uint64, *accountregistry.AccountRegistry, error,
 ) {
 	log.Println("Deploying AccountRegistry")
@@ -17,7 +19,7 @@ func DeployAccountRegistry(c chain.Connection, chooser *common.Address) (
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	txReceipt, err := chain.WaitToBeMined(c.GetBackend(), tx)
+	txReceipt, err := chain.WaitToBeMined(c.GetBackend(), mineTimeout, tx)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
