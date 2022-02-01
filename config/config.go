@@ -97,6 +97,7 @@ func GetTestConfig() *Config {
 			TransitionDisputeGasLimit:        DefaultTransitionDisputeGasLimit,
 			SignatureDisputeGasLimit:         DefaultSignatureDisputeGasLimit,
 			BatchAccountRegistrationGasLimit: DefaultBatchAccountRegistrationGasLimit,
+			StakeWithdrawalGasLimit:          DefaultStakeWithdrawalGasLimit,
 			BatchLoopInterval:                500 * time.Millisecond,
 			DisableSignatures:                true,
 			MaxTxnDelay:                      30 * time.Minute,
