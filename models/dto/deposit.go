@@ -7,15 +7,15 @@ type DepositID struct {
 	DepositIndex models.Uint256
 }
 
-type PendingDeposit struct {
+type Deposit struct {
 	ID         DepositID
 	ToPubKeyID uint32
 	TokenID    models.Uint256
 	L2Amount   models.Uint256
 }
 
-func MakePendingDeposit(pendingDeposit *models.PendingDeposit) PendingDeposit {
-	return PendingDeposit{
+func MakeDeposit(pendingDeposit *models.PendingDeposit) Deposit {
+	return Deposit{
 		ID: DepositID{
 			SubtreeID:    pendingDeposit.ID.SubtreeID,
 			DepositIndex: pendingDeposit.ID.DepositIndex,
@@ -26,11 +26,11 @@ func MakePendingDeposit(pendingDeposit *models.PendingDeposit) PendingDeposit {
 	}
 }
 
-func MakePendingDeposits(deposits []models.PendingDeposit) []PendingDeposit {
-	dtoDeposits := make([]PendingDeposit, 0, len(deposits))
+func MakeDeposits(deposits []models.PendingDeposit) []Deposit {
+	dtoDeposits := make([]Deposit, 0, len(deposits))
 
 	for i := range deposits {
-		dtoDeposits = append(dtoDeposits, MakePendingDeposit(&deposits[i]))
+		dtoDeposits = append(dtoDeposits, MakeDeposit(&deposits[i]))
 	}
 
 	return dtoDeposits
