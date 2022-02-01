@@ -22,7 +22,7 @@ var (
 	ErrNonexistentSender    = fmt.Errorf("sender state ID does not exist")
 	ErrSpokeDoesNotExist    = fmt.Errorf("spoke with given ID does not exist")
 	ErrPendingTransaction   = fmt.Errorf("transaction already exists")
-	ErrSendTxMethodDisabled = fmt.Errorf("instance is not accepting transactions")
+	ErrSendTxMethodDisabled = fmt.Errorf("commander instance is not accepting transactions")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -78,7 +78,7 @@ var (
 	)
 	APIErrSendTxMethodDisabled = NewAPIError(
 		10017,
-		"instance is not accepting transactions",
+		"commander instance is not accepting transactions",
 	)
 )
 
