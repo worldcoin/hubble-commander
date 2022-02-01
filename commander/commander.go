@@ -22,7 +22,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
@@ -54,7 +54,7 @@ type Commander struct {
 	cancelRollupLoop context.CancelFunc
 	invalidBatchID   *models.Uint256
 
-	txsHashesChan chan common.Hash
+	txsChan chan *types.Transaction
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -89,9 +89,9 @@ func (c *Commander) Start() (err error) {
 
 	c.metrics = metrics.NewCommanderMetrics()
 
-	c.txsHashesChan = make(chan common.Hash, 32)
+	c.txsChan = make(chan *types.Transaction, 32)
 
-	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, c.txsHashesChan)
+	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, c.txsChan)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Txs", func() error { return c.txsTracking(c.txsHashesChan) })
+	c.startWorker("Tracking Txs", func() error { return c.txsTracking(c.txsChan) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()
@@ -213,7 +213,7 @@ func getClient(
 	storage *st.Storage,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	if cfg.Ethereum == nil {
 		return nil, errors.Errorf("Ethereum config missing")
@@ -230,15 +230,15 @@ func getClient(
 		}
 
 		log.Printf("Continuing from saved state on ChainID = %s", dbChainState.ChainID.String())
-		return createClientFromChainState(blockchain, dbChainState, cfg, commanderMetrics, txsHashesChan)
+		return createClientFromChainState(blockchain, dbChainState, cfg, commanderMetrics, txsChan)
 	}
 
 	if cfg.Bootstrap.ChainSpecPath != nil {
-		return bootstrapFromChainState(blockchain, storage, cfg, commanderMetrics, txsHashesChan)
+		return bootstrapFromChainState(blockchain, storage, cfg, commanderMetrics, txsChan)
 	}
 	if cfg.Bootstrap.BootstrapNodeURL != nil {
 		log.Printf("Bootstrapping genesis state from node %s", *cfg.Bootstrap.BootstrapNodeURL)
-		return bootstrapFromRemoteState(blockchain, storage, cfg, commanderMetrics, txsHashesChan)
+		return bootstrapFromRemoteState(blockchain, storage, cfg, commanderMetrics, txsChan)
 	}
 
 	return nil, errors.WithStack(errMissingBootstrapSource)
@@ -249,14 +249,14 @@ func bootstrapFromChainState(
 	storage *st.Storage,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	chainSpec, err := ReadChainSpecFile(*cfg.Bootstrap.ChainSpecPath)
 	if err != nil {
 		return nil, err
 	}
 	importedChainState := newChainStateFromChainSpec(chainSpec)
-	return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg, commanderMetrics, txsHashesChan)
+	return bootstrapChainStateAndCommander(blockchain, storage, importedChainState, cfg, commanderMetrics, txsChan)
 }
 
 func bootstrapChainStateAndCommander(
@@ -265,7 +265,7 @@ func bootstrapChainStateAndCommander(
 	importedChainState *models.ChainState,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	chainID := blockchain.GetChainID()
 	if chainID != importedChainState.ChainID {
@@ -273,7 +273,7 @@ func bootstrapChainStateAndCommander(
 	}
 
 	log.Printf("Bootstrapping genesis state from chain spec file")
-	return setGenesisStateAndCreateClient(blockchain, storage, importedChainState, cfg, commanderMetrics, txsHashesChan)
+	return setGenesisStateAndCreateClient(blockchain, storage, importedChainState, cfg, commanderMetrics, txsChan)
 }
 
 func bootstrapFromRemoteState(
@@ -281,7 +281,7 @@ func bootstrapFromRemoteState(
 	storage *st.Storage,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	fetchedChainState, err := fetchChainStateFromRemoteNode(*cfg.Bootstrap.BootstrapNodeURL)
 	if err != nil {
@@ -291,7 +291,7 @@ func bootstrapFromRemoteState(
 	if !fetchedChainState.ChainID.EqN(cfg.Ethereum.ChainID) {
 		return nil, errors.WithStack(errInconsistentRemoteChainID)
 	}
-	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg, commanderMetrics, txsHashesChan)
+	return setGenesisStateAndCreateClient(blockchain, storage, fetchedChainState, cfg, commanderMetrics, txsChan)
 }
 
 func setGenesisStateAndCreateClient(
@@ -300,7 +300,7 @@ func setGenesisStateAndCreateClient(
 	chainState *models.ChainState,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	err := PopulateGenesisAccounts(storage, chainState.GenesisAccounts)
 	if err != nil {
@@ -312,7 +312,7 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
-	client, err := createClientFromChainState(blockchain, chainState, cfg, commanderMetrics, txsHashesChan)
+	client, err := createClientFromChainState(blockchain, chainState, cfg, commanderMetrics, txsChan)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func createClientFromChainState(
 	chainState *models.ChainState,
 	cfg *config.Config,
 	commanderMetrics *metrics.CommanderMetrics,
-	txsHashesChan chan<- common.Hash,
+	txsChan chan<- *types.Transaction,
 ) (*eth.Client, error) {
 	err := logChainState(chainState)
 	if err != nil {
@@ -400,7 +400,7 @@ func createClientFromChainState(
 		TokenRegistry:   tokenRegistry,
 		SpokeRegistry:   spokeRegistry,
 		DepositManager:  depositManager,
-		TxsHashesChan:   txsHashesChan,
+		TxsChan:         txsChan,
 		ClientConfig: eth.ClientConfig{
 			TransferBatchSubmissionGasLimit:  ref.Uint64(cfg.Rollup.TransferBatchSubmissionGasLimit),
 			C2TBatchSubmissionGasLimit:       ref.Uint64(cfg.Rollup.C2TBatchSubmissionGasLimit),

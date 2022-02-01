@@ -1,21 +1,20 @@
 package commander
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
-func (c *Commander) txsTracking(txsHashChan <-chan common.Hash) error {
+func (c *Commander) txsTracking(txsChan <-chan *types.Transaction) error {
 	for {
 		select {
 		case <-c.workersContext.Done():
 			return nil
-		case txHash := <-txsHashChan:
-			err := c.waitUntilTxMinedAndCheckForFail(txHash)
+		case tx := <-txsChan:
+			err := c.waitUntilTxMinedAndCheckForFail(tx)
 			if err != nil {
 				panic(err)
 			}
@@ -25,12 +24,7 @@ func (c *Commander) txsTracking(txsHashChan <-chan common.Hash) error {
 	}
 }
 
-func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
-	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), txHash)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
+func (c *Commander) waitUntilTxMinedAndCheckForFail(tx *types.Transaction) error {
 	receipt, err := c.client.WaitToBeMined(tx)
 	if err != nil {
 		return errors.WithStack(err)
@@ -40,5 +34,5 @@ func (c *Commander) waitUntilTxMinedAndCheckForFail(txHash common.Hash) error {
 		return nil
 	}
 	err = c.client.GetRevertMessage(tx, receipt)
-	return fmt.Errorf("%w tx_hash=%s", err, txHash.String())
+	return fmt.Errorf("%w tx_hash=%s", err, tx.Hash().String())
 }

@@ -62,7 +62,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsHashesChan = s.client.TxsHashesChan
+	s.cmd.txsChan = s.client.TxsChan
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
@@ -166,7 +166,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Tracking", func() error {
-		err := s.cmd.txsTracking(s.cmd.txsHashesChan)
+		err := s.cmd.txsTracking(s.cmd.txsChan)
 		s.NoError(err)
 		return nil
 	})

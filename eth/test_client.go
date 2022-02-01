@@ -7,13 +7,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
-	TxsHashesChan       chan common.Hash
+	TxsChan             chan *types.Transaction
 }
 
 var (
@@ -36,7 +37,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 	if err != nil {
 		return nil, err
 	}
-	txsHashesChan := make(chan common.Hash, 32)
+	txsChan := make(chan *types.Transaction, 32)
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
@@ -56,7 +57,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
 		ClientConfig:    *clientCfg,
-		TxsHashesChan:   txsHashesChan,
+		TxsChan:         txsChan,
 	})
 	if err != nil {
 		return nil, err
@@ -66,6 +67,6 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		TxsHashesChan:       txsHashesChan,
+		TxsChan:             txsChan,
 	}, nil
 }

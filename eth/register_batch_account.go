@@ -49,7 +49,7 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	a.txsHashesChan <- tx.Hash()
+	a.txsChan <- tx
 
 	return tx, nil
 }
