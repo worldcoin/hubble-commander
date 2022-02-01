@@ -41,7 +41,7 @@ func exportLeaves(filePath string, exportDataFunc exportFunc) (err error) {
 		return err
 	}
 
-	log.Infof("exported %d state leaves", leavesCount)
+	log.Infof("exported %d leaves", leavesCount)
 	return nil
 }
 
