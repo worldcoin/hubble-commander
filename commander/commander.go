@@ -172,8 +172,7 @@ func (c *Commander) stop() error {
 	if err := c.metricsServer.Close(); err != nil {
 		return err
 	}
-	c.stopWorkersContext()
-	c.workersWaitGroup.Wait()
+	c.stopWorkersAndWait()
 	c.setActive(false)
 	return c.storage.Close()
 }

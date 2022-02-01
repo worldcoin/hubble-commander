@@ -282,8 +282,7 @@ func stopCommander(cmd *Commander) {
 	if !cmd.isActive() {
 		return
 	}
-	cmd.stopWorkersContext()
-	cmd.workersWaitGroup.Wait()
+	cmd.stopWorkersAndWait()
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {

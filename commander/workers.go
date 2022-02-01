@@ -14,8 +14,8 @@ type workers struct {
 	workersWaitGroup   sync.WaitGroup
 }
 
-func (c *workers) startWorker(name string, fn func() error) {
-	c.workersWaitGroup.Add(1)
+func (w *workers) startWorker(name string, fn func() error) {
+	w.workersWaitGroup.Add(1)
 	go func() {
 		var err error
 		defer func() {
@@ -28,11 +28,16 @@ func (c *workers) startWorker(name string, fn func() error) {
 			}
 			if err != nil {
 				log.Errorf("%s worker failed with: %+v", name, err)
-				c.stopWorkersContext()
+				w.stopWorkersContext()
 			}
-			c.workersWaitGroup.Done()
+			w.workersWaitGroup.Done()
 		}()
 
 		err = fn()
 	}()
+}
+
+func (w *workers) stopWorkersAndWait() {
+	w.stopWorkersContext()
+	w.workersWaitGroup.Wait()
 }
