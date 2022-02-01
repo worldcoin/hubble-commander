@@ -91,3 +91,9 @@ func WaitForMultipleTxs(r ReceiptProvider, timeout time.Duration, txs ...types.T
 	}
 	return result, nil
 }
+
+func CreateWaitForMultipleTxsHelper(r ReceiptProvider, timeout time.Duration) func(txs ...types.Transaction) ([]types.Receipt, error) {
+	return func(txs ...types.Transaction) ([]types.Receipt, error) {
+		return WaitForMultipleTxs(r, timeout, txs...)
+	}
+}

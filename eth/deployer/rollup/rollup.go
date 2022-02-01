@@ -100,6 +100,8 @@ func DeployRollup(c chain.Connection) (*RollupContracts, error) {
 func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&cfg.Params)
 
+	waitForMultipleTxs := chain.CreateWaitForMultipleTxsHelper(c.GetBackend(), cfg.MineTimeout)
+
 	// Stage 1
 	err := deployMissing(&cfg.Dependencies, c, cfg.MineTimeout)
 	if err != nil {
@@ -125,7 +127,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), cfg.MineTimeout, *tokenRegistryTx, *spokeRegistryTx, *costEstimatorDeployTx)
+	_, err = waitForMultipleTxs(*tokenRegistryTx, *spokeRegistryTx, *costEstimatorDeployTx)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +150,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), cfg.MineTimeout, *costEstimatorInitTx, *vaultTx)
+	_, err = waitForMultipleTxs(*costEstimatorInitTx, *vaultTx)
 	if err != nil {
 		return nil, err
 	}
@@ -174,9 +176,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, err
 	}
 
-	_, err = chain.WaitForMultipleTxs(
-		c.GetBackend(),
-		cfg.MineTimeout,
+	_, err = waitForMultipleTxs(
 		*depositManagerTx,
 		*txHelpers.TransferTx,
 		*txHelpers.MassMigrationTx,
@@ -257,9 +257,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 
-	_, err = chain.WaitForMultipleTxs(
-		c.GetBackend(),
-		cfg.MineTimeout,
+	_, err = waitForMultipleTxs(
 		*depositManagerInitTx,
 		*vaultInitTx,
 		*withdrawManagerTx,
@@ -296,7 +294,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		stageSevenTxs = append(stageSevenTxs, *transferGenesisFundsTx)
 	}
 
-	_, err = chain.WaitForMultipleTxs(c.GetBackend(), cfg.MineTimeout, stageSevenTxs...)
+	_, err = waitForMultipleTxs(stageSevenTxs...)
 	if err != nil {
 		return nil, err
 	}
