@@ -145,14 +145,14 @@ func (s *InitializeIndexTestSuite) iterateIndex(
 func (s *InitializeIndexTestSuite) addStoredBatchedTx(commitmentID *models.CommitmentID) {
 	transfer := &models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:        utils.RandomHash(),
-			TxType:      txtype.Transfer,
-			FromStateID: 11,
-			Amount:      models.MakeUint256(10),
-			Fee:         models.MakeUint256(111),
-			Nonce:       models.MakeUint256(1),
-			Signature:   models.Signature{1, 2, 3, 4, 5},
-			ReceiveTime: models.NewTimestamp(time.Unix(10, 0).UTC()),
+			Hash:         utils.RandomHash(),
+			TxType:       txtype.Transfer,
+			FromStateID:  11,
+			Amount:       models.MakeUint256(10),
+			Fee:          models.MakeUint256(111),
+			Nonce:        models.MakeUint256(1),
+			Signature:    models.Signature{1, 2, 3, 4, 5},
+			ReceiveTime:  models.NewTimestamp(time.Unix(10, 0).UTC()),
 			CommitmentID: commitmentID,
 		},
 		ToStateID: 0,
