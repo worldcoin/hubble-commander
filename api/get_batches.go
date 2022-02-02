@@ -33,12 +33,12 @@ func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 		if *status == batchstatus.Submitted {
 			batchesWithSubmission = append(batchesWithSubmission, *dto.NewSubmittedBatch(&batches[i]))
 		} else {
-			submissionBlock, err := a.getSubmissionBlock(&batches[i])
+			minedBlock, err := a.getMinedBlock(&batches[i])
 			if err != nil {
 				return nil, err
 			}
 
-			batchesWithSubmission = append(batchesWithSubmission, *dto.NewBatch(&batches[i], submissionBlock, status))
+			batchesWithSubmission = append(batchesWithSubmission, *dto.NewBatch(&batches[i], minedBlock, status))
 		}
 	}
 	return batchesWithSubmission, nil
