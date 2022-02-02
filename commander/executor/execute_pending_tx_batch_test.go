@@ -121,6 +121,15 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatc
 	s.Equal(s.pendingBatch.Commitments[0].Transactions, txs)
 }
 
+func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_MismatchedAppliedTxs() {
+	tx := testutils.MakeTransfer(1, 2, 1, 100)
+	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
+	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
+
+	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
+	s.ErrorIs(err, errMismatchedAppliedTxs)
+}
+
 func TestExecutePendingTxBatchTestSuite(t *testing.T) {
 	suite.Run(t, new(ExecutePendingTxBatchTestSuite))
 }

@@ -1,10 +1,15 @@
 package executor
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/pkg/errors"
 )
+
+var errMismatchedAppliedTxs = fmt.Errorf("mismatched applied txs from pending batch")
 
 func (c *TxsContext) ExecutePendingBatch(batch *dto.PendingBatch) error {
 	err := c.storage.AddBatch(&models.Batch{
@@ -17,25 +22,27 @@ func (c *TxsContext) ExecutePendingBatch(batch *dto.PendingBatch) error {
 	}
 
 	for i := range batch.Commitments {
-		err = c.storage.AddCommitment(batch.Commitments[i].Commitment)
+		pendingCommitment := batch.Commitments[i]
+		err = c.storage.AddCommitment(pendingCommitment.Commitment)
 		if err != nil {
 			return err
 		}
 
-		err = c.storage.BatchAddTransaction(batch.Commitments[i].Transactions)
+		err = c.storage.BatchAddTransaction(pendingCommitment.Transactions)
 		if err != nil {
 			return err
 		}
 
-		var feeReceiver *FeeReceiver
-		feeReceiver, err = c.getFeeReceiver(batch.Commitments[i].Commitment)
+		feeReceiver, err := c.getFeeReceiver(pendingCommitment.Commitment)
 		if err != nil {
 			return err
 		}
-		//TODO-mig: at least check invalid and skipped txs
-		_, err = c.ExecuteTxs(batch.Commitments[i].Transactions, feeReceiver)
+		executeTxsResult, err := c.ExecuteTxs(pendingCommitment.Transactions, feeReceiver)
 		if err != nil {
 			return err
+		}
+		if executeTxsResult.AppliedTxs().Len() != pendingCommitment.Transactions.Len() {
+			return errors.WithStack(errMismatchedAppliedTxs)
 		}
 	}
 	return nil
