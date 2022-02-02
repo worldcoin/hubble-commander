@@ -1,42 +1,56 @@
 package main
 
 import (
-	"fmt"
 	"os"
-)
 
-const (
-	start  = "start"
-	deploy = "deploy"
-	export = "export"
+	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		exitWithHelpMessage()
+	app := &cli.App{
+		Name:  "hubble-commander",
+		Usage: "Commander for Hubble optimistic rollup",
+		Commands: cli.Commands{
+			{
+				Name:   "start",
+				Usage:  "start the commander",
+				Action: startCommander,
+			},
+			{
+				Name:  "deploy",
+				Usage: "deploy contracts and save chain spec",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "file",
+						Usage: "target file to save the chain spec to",
+						Value: "chain-spec.yaml",
+					},
+				},
+				Action: deployContracts,
+			},
+			{
+				Name:  "export",
+				Usage: "export data to file in json format",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "type",
+						Usage:    "type of data to export",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:  "file",
+						Usage: "target file to save exported data to",
+						Value: "exported-data.json",
+					},
+				},
+				Action: exportData,
+			},
+		},
 	}
 
-	switch os.Args[1] {
-	case start:
-		handleStartCommand()
-	case deploy:
-		handleDeployCommand(os.Args[2:])
-	case export:
-		handleExportCommand(os.Args[2:])
-	default:
-		exitWithHelpMessage()
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
-}
-
-func exitWithHelpMessage() {
-	fmt.Printf(`
-Available subcomands:
-start - starts the commander
-deploy - deploys contracts and saves chain spec		
-`)
-	deployFlagSet.Usage()
-
-	fmt.Println("export - exports data to file in json format")
-	exportFlagSet.Usage()
-	os.Exit(1)
 }

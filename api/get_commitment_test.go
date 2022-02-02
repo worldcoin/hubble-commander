@@ -397,7 +397,7 @@ func (s *GetCommitmentTestSuite) validateDepositCommitment(
 		BatchTime:     batchTime,
 		SubtreeID:     s.depositCommitment.SubtreeID,
 		SubtreeRoot:   s.depositCommitment.SubtreeRoot,
-		Deposits:      dto.MakePendingDeposits(s.depositCommitment.Deposits),
+		Deposits:      dto.MakeDeposits(s.depositCommitment.Deposits),
 	}
 
 	s.Equal(expectedCommitment, *commitment)

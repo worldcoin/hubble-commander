@@ -8,9 +8,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
-func startCommander() error {
+func startCommander(_ *cli.Context) error {
 	cfg := config.GetCommanderConfigAndSetupLogger()
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
