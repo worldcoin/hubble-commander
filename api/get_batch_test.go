@@ -350,7 +350,7 @@ func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitment
 		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
 		MinedBlock:        &minedBlock,
-		SubmissionTime:    s.batch.SubmissionTime,
+		MinedTime:         s.batch.SubmissionTime,
 		Status:            batchstatus.Mined,
 		FinalisationBlock: s.batch.FinalisationBlock,
 	}
@@ -365,7 +365,7 @@ func (s *GetBatchTestSuite) validateSubmittedBatch(result *dto.BatchWithRootAndC
 		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
 		MinedBlock:        nil,
-		SubmissionTime:    nil,
+		MinedTime:         nil,
 		Status:            batchstatus.Submitted,
 		FinalisationBlock: nil,
 	}

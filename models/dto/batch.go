@@ -13,7 +13,7 @@ type Batch struct {
 	Type              batchtype.BatchType
 	TransactionHash   common.Hash
 	MinedBlock        *uint32
-	SubmissionTime    *models.Timestamp
+	MinedTime         *models.Timestamp
 	Status            batchstatus.BatchStatus
 	FinalisationBlock *uint32
 }
@@ -40,7 +40,7 @@ func NewBatch(batch *models.Batch, minedBlock *uint32, status *batchstatus.Batch
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,
 		MinedBlock:        minedBlock,
-		SubmissionTime:    batch.SubmissionTime,
+		MinedTime:         batch.SubmissionTime,
 		Status:            *status,
 		FinalisationBlock: batch.FinalisationBlock,
 	}
