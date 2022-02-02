@@ -13,8 +13,15 @@ func main() {
 		Usage: "Commander for Hubble optimistic rollup",
 		Commands: cli.Commands{
 			{
-				Name:   "start",
-				Usage:  "start the commander",
+				Name:  "start",
+				Usage: "start the commander",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "migrate",
+						Usage: "migrate another commander instance off-chain data",
+						Value: false,
+					},
+				},
 				Action: startCommander,
 			},
 			{
