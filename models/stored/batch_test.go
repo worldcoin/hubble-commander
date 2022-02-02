@@ -21,7 +21,7 @@ func TestBatch_Bytes(t *testing.T) {
 		FinalisationBlock: ref.Uint32(25),
 		AccountTreeRoot:   &common.Hash{4, 5, 6},
 		PrevStateRoot:     &common.Hash{7, 8, 9},
-		SubmissionTime:    models.NewTimestamp(time.Unix(10, 11).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(10, 11).UTC()),
 	}
 
 	bytes := batch.Bytes()

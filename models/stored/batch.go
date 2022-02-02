@@ -18,7 +18,7 @@ type Batch struct {
 	FinalisationBlock *uint32
 	AccountTreeRoot   *common.Hash
 	PrevStateRoot     *common.Hash
-	SubmissionTime    *models.Timestamp
+	MinedTime         *models.Timestamp
 }
 
 func NewBatchFromModelsBatch(b *models.Batch) *Batch {
@@ -30,7 +30,7 @@ func NewBatchFromModelsBatch(b *models.Batch) *Batch {
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
 		PrevStateRoot:     b.PrevStateRoot,
-		SubmissionTime:    b.MinedTime,
+		MinedTime:         b.MinedTime,
 	}
 }
 
@@ -43,7 +43,7 @@ func (b *Batch) ToModelsBatch() *models.Batch {
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
 		PrevStateRoot:     b.PrevStateRoot,
-		MinedTime:         b.SubmissionTime,
+		MinedTime:         b.MinedTime,
 	}
 }
 
@@ -56,7 +56,7 @@ func (b *Batch) Bytes() []byte {
 	copy(encoded[98:103], EncodeUint32Pointer(b.FinalisationBlock))
 	copy(encoded[103:136], EncodeHashPointer(b.AccountTreeRoot))
 	copy(encoded[136:169], EncodeHashPointer(b.PrevStateRoot))
-	copy(encoded[169:185], encodeTimestampPointer(b.SubmissionTime))
+	copy(encoded[169:185], encodeTimestampPointer(b.MinedTime))
 
 	return encoded
 }
@@ -77,6 +77,6 @@ func (b *Batch) SetBytes(data []byte) error {
 	b.FinalisationBlock = decodeUint32Pointer(data[98:103])
 	b.AccountTreeRoot = decodeHashPointer(data[103:136])
 	b.PrevStateRoot = decodeHashPointer(data[136:169])
-	b.SubmissionTime = timestamp
+	b.MinedTime = timestamp
 	return nil
 }
