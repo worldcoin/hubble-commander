@@ -22,31 +22,7 @@ func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 		MaxTxsPerCommitment: 6,
 	})
 
-	senderState := models.UserState{
-		PubKeyID: 1,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(420),
-		Nonce:    models.MakeUint256(0),
-	}
-	receiverState := models.UserState{
-		PubKeyID: 2,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(0),
-		Nonce:    models.MakeUint256(0),
-	}
-	feeReceiverState := models.UserState{
-		PubKeyID: 3,
-		TokenID:  models.MakeUint256(1),
-		Balance:  models.MakeUint256(1000),
-		Nonce:    models.MakeUint256(0),
-	}
-
-	_, err := s.storage.StateTree.Set(1, &senderState)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(2, &receiverState)
-	s.NoError(err)
-	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
-	s.NoError(err)
+	setInitialUserStates(s.Assertions, s.storage.Storage)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
