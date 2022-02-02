@@ -26,20 +26,20 @@ func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 		return []dto.Batch{}, err
 	}
 
-	batchesWithSubmission := make([]dto.Batch, 0, len(batches))
+	dtoBatches := make([]dto.Batch, 0, len(batches))
 	for i := range batches {
 		status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), &batches[i])
 
 		if *status == batchstatus.Submitted {
-			batchesWithSubmission = append(batchesWithSubmission, *dto.NewSubmittedBatch(&batches[i]))
+			dtoBatches = append(dtoBatches, *dto.NewSubmittedBatch(&batches[i]))
 		} else {
 			minedBlock, err := a.getMinedBlock(&batches[i])
 			if err != nil {
 				return nil, err
 			}
 
-			batchesWithSubmission = append(batchesWithSubmission, *dto.NewBatch(&batches[i], minedBlock, status))
+			dtoBatches = append(dtoBatches, *dto.NewBatch(&batches[i], minedBlock, status))
 		}
 	}
-	return batchesWithSubmission, nil
+	return dtoBatches, nil
 }
