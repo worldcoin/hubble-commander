@@ -103,12 +103,12 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
 		s.Equal(batchstatus.Mined, result[i].Status)
 		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
-		s.NotZero(result[i].SubmissionBlock)
+		s.NotZero(result[i].MinedBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, *result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *result[i].MinedBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].MinedBlock)
 		}
 	}
 }
@@ -125,7 +125,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 		ID:                pendingBatch.ID,
 		Type:              batchtype.Transfer,
 		TransactionHash:   pendingBatch.TransactionHash,
-		SubmissionBlock:   nil,
+		MinedBlock:        nil,
 		SubmissionTime:    nil,
 		Status:            batchstatus.Submitted,
 		FinalisationBlock: nil,
