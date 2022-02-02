@@ -58,7 +58,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 
 	setStateLeaves(s.T(), s.storage.Storage)
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain, false)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.txsHashesChan = s.client.TxsHashesChan

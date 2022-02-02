@@ -29,7 +29,7 @@ func (s *CommanderTestSuite) SetupTest() {
 	blockchain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
 	s.prepareContracts(cfg, blockchain)
-	s.cmd = NewCommander(cfg, blockchain)
+	s.cmd = NewCommander(cfg, blockchain, false)
 }
 
 func (s *CommanderTestSuite) TearDownTest() {

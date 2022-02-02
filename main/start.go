@@ -18,7 +18,7 @@ func startCommander(_ *cli.Context) error {
 		return err
 	}
 
-	cmd := commander.NewCommander(cfg, blockchain)
+	cmd := commander.NewCommander(cfg, blockchain, false)
 	setupCloseHandler(cmd)
 
 	return cmd.StartAndWait()

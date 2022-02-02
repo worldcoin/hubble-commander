@@ -44,7 +44,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain, false)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 

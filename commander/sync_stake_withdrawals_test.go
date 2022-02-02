@@ -195,7 +195,7 @@ func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st
 
 func (s *SyncStakeWithdrawalsTestSuite) setupCommander() {
 	setStateLeaves(s.T(), s.storage.Storage)
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain, false)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 

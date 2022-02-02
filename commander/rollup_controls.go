@@ -8,14 +8,16 @@ import (
 // nolint:structcheck
 type rollupControls struct {
 	batchCreationEnabled bool
+	migrate              bool
 
 	rollupLoopActive uint32
 	cancelRollupLoop context.CancelFunc
 }
 
-func makeRollupControls() rollupControls {
+func makeRollupControls(migrate bool) rollupControls {
 	return rollupControls{
 		batchCreationEnabled: true,
+		migrate:              migrate,
 	}
 }
 

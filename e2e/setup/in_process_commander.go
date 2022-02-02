@@ -40,7 +40,7 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 		return nil, err
 	}
 
-	cmd := commander.NewCommander(commanderConfig, blockchain)
+	cmd := commander.NewCommander(commanderConfig, blockchain, false)
 	endpoint := fmt.Sprintf("http://localhost:%s", commanderConfig.API.Port)
 	client := jsonrpc.NewClient(endpoint)
 
@@ -105,7 +105,7 @@ func (e *InProcessCommander) Restart() error {
 		return err
 	}
 	e.cfg.Bootstrap.Prune = false
-	e.commander = commander.NewCommander(e.cfg, e.blockchain)
+	e.commander = commander.NewCommander(e.cfg, e.blockchain, false)
 	return e.Start()
 }
 
