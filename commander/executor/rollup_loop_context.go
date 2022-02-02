@@ -7,12 +7,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
 type RollupLoopContext interface {
 	CreateAndSubmitBatch() (*models.Batch, *int, error)
+	ExecutePendingBatch(batch *dto.PendingBatch) error
 	Rollback(cause *error)
 	Commit() error
 	GetErrorsToStore() []models.TxError

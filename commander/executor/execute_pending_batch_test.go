@@ -1,12 +1,9 @@
-package commander
+package executor
 
 import (
-	"context"
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -17,42 +14,31 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MigrateTestSuite struct {
+type ExecutePendingBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd          *Commander
-	client       *eth.TestClient
 	storage      *st.TestStorage
-	cfg          *config.Config
-	wallets      []bls.Wallet
+	cfg          *config.RollupConfig
+	txsCtx       *TxsContext
 	pendingBatch dto.PendingBatch
 }
 
-func (s *MigrateTestSuite) SetupSuite() {
+func (s *ExecutePendingBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-	s.cfg = config.GetTestConfig()
-	s.cfg.Rollup.MinTxsPerCommitment = 1
 }
 
-func (s *MigrateTestSuite) SetupTest() {
+func (s *ExecutePendingBatchTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
+	s.cfg = &config.RollupConfig{
+		MaxTxsPerCommitment: 1,
+	}
 
-	s.client = newClientWithGenesisState(s.T(), s.storage)
+	setInitialUserStates(s.Assertions, s.storage.Storage)
 
-	s.cmd = NewCommander(s.cfg, nil)
-	s.cmd.client = s.client.Client
-	s.cmd.storage = s.storage.Storage
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
-
-	err = s.cmd.addGenesisBatch()
-	s.NoError(err)
-
-	domain, err := s.client.GetDomain()
-	s.NoError(err)
-	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
+	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	s.pendingBatch = dto.PendingBatch{
 		ID:              models.MakeUint256(1),
@@ -69,7 +55,7 @@ func (s *MigrateTestSuite) SetupTest() {
 						Type:          batchtype.Transfer,
 						PostStateRoot: utils.RandomHash(),
 					},
-					FeeReceiver:       0,
+					FeeReceiver:       3,
 					CombinedSignature: models.MakeRandomSignature(),
 					BodyHash:          nil,
 				},
@@ -79,15 +65,13 @@ func (s *MigrateTestSuite) SetupTest() {
 	}
 }
 
-func (s *MigrateTestSuite) TearDownTest() {
-	stopCommander(s.cmd)
-	s.client.Close()
+func (s *ExecutePendingBatchTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *MigrateTestSuite) TestSyncPendingBatch_UpdatesUserBalances() {
-	tx := testutils.MakeTransfer(0, 1, 0, 100)
+func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalances() {
+	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
 
@@ -96,24 +80,25 @@ func (s *MigrateTestSuite) TestSyncPendingBatch_UpdatesUserBalances() {
 	prevReceiverLeaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
 
-	err = s.cmd.syncPendingBatch(&s.pendingBatch)
+	err = s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
 	s.NoError(err)
 
 	senderLeaf, err := s.storage.StateTree.Leaf(tx.FromStateID)
 	s.NoError(err)
-	s.Equal(*prevSenderLeaf.Balance.Sub(&tx.Amount), senderLeaf.Balance)
+	expectedSenderBalance := prevSenderLeaf.Balance.Sub(&tx.Amount).Sub(&tx.Fee)
+	s.Equal(*expectedSenderBalance, senderLeaf.Balance)
 
 	receiverLeaf, err := s.storage.StateTree.Leaf(tx.ToStateID)
 	s.NoError(err)
 	s.Equal(*prevReceiverLeaf.Balance.Add(&tx.Amount), receiverLeaf.Balance)
 }
 
-func (s *MigrateTestSuite) TestSyncPendingBatch_AddsPendingBatch() {
-	tx := testutils.MakeTransfer(0, 1, 0, 100)
+func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch() {
+	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
 
-	err := s.cmd.syncPendingBatch(&s.pendingBatch)
+	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
 	s.NoError(err)
 
 	expectedBatch := models.Batch{
@@ -137,6 +122,6 @@ func (s *MigrateTestSuite) TestSyncPendingBatch_AddsPendingBatch() {
 	s.Equal(s.pendingBatch.Commitments[0].Transactions, txs)
 }
 
-func TestMigrateTestSuite(t *testing.T) {
-	suite.Run(t, new(MigrateTestSuite))
+func TestExecutePendingBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(ExecutePendingBatchTestSuite))
 }
