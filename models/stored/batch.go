@@ -30,7 +30,7 @@ func NewBatchFromModelsBatch(b *models.Batch) *Batch {
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
 		PrevStateRoot:     b.PrevStateRoot,
-		SubmissionTime:    b.SubmissionTime,
+		SubmissionTime:    b.MinedTime,
 	}
 }
 
@@ -43,7 +43,7 @@ func (b *Batch) ToModelsBatch() *models.Batch {
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
 		PrevStateRoot:     b.PrevStateRoot,
-		SubmissionTime:    b.SubmissionTime,
+		MinedTime:         b.SubmissionTime,
 	}
 }
 

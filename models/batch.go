@@ -13,5 +13,5 @@ type Batch struct {
 	FinalisationBlock *uint32
 	AccountTreeRoot   *common.Hash
 	PrevStateRoot     *common.Hash
-	SubmissionTime    *Timestamp
+	MinedTime         *Timestamp
 }

@@ -49,7 +49,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
 		AccountTreeRoot:   utils.NewRandomHash(),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
 	s.txCommitment = &models.TxCommitment{
@@ -337,7 +337,7 @@ func (s *GetBatchTestSuite) addSubmittedBatch(batchType batchtype.BatchType) {
 	pendingBatch.Type = batchType
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
-	pendingBatch.SubmissionTime = nil
+	pendingBatch.MinedTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 }
@@ -350,7 +350,7 @@ func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitment
 		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
 		MinedBlock:        &minedBlock,
-		MinedTime:         s.batch.SubmissionTime,
+		MinedTime:         s.batch.MinedTime,
 		Status:            batchstatus.Mined,
 		FinalisationBlock: s.batch.FinalisationBlock,
 	}

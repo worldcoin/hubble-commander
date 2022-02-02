@@ -40,7 +40,7 @@ func NewBatch(batch *models.Batch, minedBlock *uint32, status *batchstatus.Batch
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,
 		MinedBlock:        minedBlock,
-		MinedTime:         batch.SubmissionTime,
+		MinedTime:         batch.MinedTime,
 		Status:            *status,
 		FinalisationBlock: batch.FinalisationBlock,
 	}

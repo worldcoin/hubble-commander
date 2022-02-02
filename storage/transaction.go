@@ -66,7 +66,7 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 	}
 
 	result.BatchHash = batch.Hash
-	result.BatchTime = batch.SubmissionTime
+	result.BatchTime = batch.MinedTime
 
 	return result, nil
 }

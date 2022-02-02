@@ -48,7 +48,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
 	s.txCommitment = &models.TxCommitment{
@@ -148,7 +148,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 		commitment.(*dto.TxCommitment),
 		expectedTransactions,
 		batchstatus.Mined,
-		s.batch.SubmissionTime,
+		s.batch.MinedTime,
 	)
 }
 
@@ -172,7 +172,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 		commitment.(*dto.TxCommitment),
 		expectedTransactions,
 		batchstatus.Mined,
-		s.batch.SubmissionTime,
+		s.batch.MinedTime,
 	)
 }
 
@@ -196,7 +196,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 		commitment.(*dto.MMCommitment),
 		expectedMassMigrations,
 		batchstatus.Mined,
-		s.batch.SubmissionTime,
+		s.batch.MinedTime,
 	)
 }
 
@@ -214,7 +214,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_DepositType() {
 	s.validateDepositCommitment(
 		commitment.(*dto.DepositCommitment),
 		batchstatus.Mined,
-		s.batch.SubmissionTime,
+		s.batch.MinedTime,
 	)
 }
 
@@ -303,7 +303,7 @@ func (s *GetCommitmentTestSuite) addSubmittedBatch(batchType batchtype.BatchType
 	pendingBatch.Type = batchType
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
-	pendingBatch.SubmissionTime = nil
+	pendingBatch.MinedTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 }

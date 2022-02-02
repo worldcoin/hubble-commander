@@ -33,7 +33,7 @@ func (s *TransactionTestSuite) SetupTest() {
 		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
-		SubmissionTime:  &models.Timestamp{Time: time.Unix(140, 0).UTC()},
+		MinedTime:       &models.Timestamp{Time: time.Unix(140, 0).UTC()},
 	}
 
 	err = s.storage.AddBatch(s.batch)
@@ -69,7 +69,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
 	expected := models.TransactionWithBatchDetails{
 		Transaction: transferInBatch.Copy(),
 		BatchHash:   s.batch.Hash,
-		BatchTime:   s.batch.SubmissionTime,
+		BatchTime:   s.batch.MinedTime,
 	}
 	res, err := s.storage.GetTransactionWithBatchDetails(transferInBatch.Hash)
 	s.NoError(err)
@@ -87,7 +87,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfe
 	expected := models.TransactionWithBatchDetails{
 		Transaction: create2TransferInBatch.Copy(),
 		BatchHash:   s.batch.Hash,
-		BatchTime:   s.batch.SubmissionTime,
+		BatchTime:   s.batch.MinedTime,
 	}
 	res, err := s.storage.GetTransactionWithBatchDetails(create2TransferInBatch.Hash)
 	s.NoError(err)
@@ -105,7 +105,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 	expected := models.TransactionWithBatchDetails{
 		Transaction: massMigrationInBatch.Copy(),
 		BatchHash:   s.batch.Hash,
-		BatchTime:   s.batch.SubmissionTime,
+		BatchTime:   s.batch.MinedTime,
 	}
 	res, err := s.storage.GetTransactionWithBatchDetails(massMigrationInBatch.Hash)
 	s.NoError(err)
