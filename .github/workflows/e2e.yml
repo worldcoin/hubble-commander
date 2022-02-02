@@ -35,7 +35,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          make test-e2e-in-process
+          HUBBLE_E2E=in-process go test -v -tags e2e ./e2e
   e2e-benchmarks-1:
     name: Run E2E benchmarks (Transfers and C2Ts)
     runs-on: ubuntu-20.04
@@ -58,7 +58,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-ci-part-1
+          HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
     runs-on: ubuntu-20.04
@@ -81,7 +81,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-ci-part-2
+          HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
     runs-on: ubuntu-20.04
@@ -104,7 +104,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          make bench-e2e-ci-part-3
+          HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 
   build-image:
     name: Build Docker image
