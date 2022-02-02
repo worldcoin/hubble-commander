@@ -120,7 +120,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
 
 	updatedTx := transfer
 	updatedTx.SetReceiveTime()
-	err = s.storage.UpdateTransaction(&updatedTx)
+	err = s.storage.ReplaceFailedTransaction(&updatedTx)
 	s.NoError(err)
 
 	res, err := s.storage.GetTransfer(transfer.Hash)
@@ -138,7 +138,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
 
 	updatedTx := create2Transfer
 	updatedTx.SetReceiveTime()
-	err = s.storage.UpdateTransaction(&updatedTx)
+	err = s.storage.ReplaceFailedTransaction(&updatedTx)
 	s.ErrorIs(err, ErrAlreadyMinedTransaction)
 }
 
@@ -148,7 +148,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
 
 	updatedTx := massMigration
 	updatedTx.SetReceiveTime()
-	err = s.storage.UpdateTransaction(&updatedTx)
+	err = s.storage.ReplaceFailedTransaction(&updatedTx)
 	s.ErrorIs(err, NewNotFoundError("txReceipt"))
 }
 

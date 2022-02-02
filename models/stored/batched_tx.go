@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	BatchedTxName                = getTypeName(BatchedTx{})
+	BatchedTxName                = models.GetTypeName(BatchedTx{})
 	errInvalidBatchedTxIndexType = fmt.Errorf("invalid stored.BatchedTx index type")
 )
 

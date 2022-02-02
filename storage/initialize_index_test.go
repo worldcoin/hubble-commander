@@ -2,13 +2,14 @@ package storage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -35,83 +36,19 @@ func (s *InitializeIndexTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_CommitmentID_IndexWorks() {
+func (s *InitializeIndexTestSuite) TestStoredBatchedTx_CommitmentID_IndexWorks() {
 	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
-	s.addStoredTxReceipt(nil, &id1)
-	s.addStoredTxReceipt(nil, &id2)
-	s.addStoredTxReceipt(nil, &id1)
+	s.addStoredBatchedTx(&id1)
+	s.addStoredBatchedTx(&id2)
+	s.addStoredBatchedTx(&id1)
 
 	indexValues := s.getCommitmentIDIndexValues()
 	s.Len(indexValues, 3)
 	s.Len(indexValues[zeroID], 0) // value set due to index initialization, see NewTransactionStorage
 	s.Len(indexValues[id1], 2)
 	s.Len(indexValues[id2], 1)
-}
-
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_CommitmentID_ValuesWithThisFieldSetToNilAreNotIndexed() {
-	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
-	s.addStoredTxReceipt(nil, nil)
-
-	indexValues := s.getCommitmentIDIndexValues()
-	s.Len(indexValues, 1)
-	s.Len(indexValues[zeroID], 0) // value set due to index initialization, see NewTransactionStorage
-}
-
-// This test checks an edge case that we introduced by indexing CommitmentID field which can be nil.
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_CommitmentID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
-	err := s.storage.addStoredTxReceipt(&stored.TxReceipt{
-		Hash:         utils.RandomHash(),
-		CommitmentID: nil, // nil values are not indexed
-	})
-	s.NoError(err)
-
-	id := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
-	receipts := make([]stored.TxReceipt, 0, 1)
-	err = s.storage.database.Badger.Find(
-		&receipts,
-		bh.Where("CommitmentID").Le(id).Index("CommitmentID"),
-	)
-	s.NoError(err)
-	s.Len(receipts, 0)
-}
-
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_ToStateID_IndexWorks() {
-	s.addStoredTxReceipt(ref.Uint32(1), nil)
-	s.addStoredTxReceipt(ref.Uint32(2), nil)
-	s.addStoredTxReceipt(ref.Uint32(1), nil)
-
-	indexValues := s.getToStateIDIndexValues(stored.TxReceiptName)
-	s.Len(indexValues, 3)
-	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
-	s.Len(indexValues[1], 2)
-	s.Len(indexValues[2], 1)
-}
-
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_ToStateID_ValuesWithThisFieldSetToNilAreNotIndexed() {
-	s.addStoredTxReceipt(nil, nil)
-
-	indexValues := s.getToStateIDIndexValues(stored.TxReceiptName)
-	s.Len(indexValues, 1)
-	s.Len(indexValues[0], 0) // value set due to index initialization, see NewTransactionStorage
-}
-
-// This test checks an edge case that we introduced by indexing ToStateID field which can be nil.
-func (s *InitializeIndexTestSuite) TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil() {
-	err := s.storage.addStoredTxReceipt(&stored.TxReceipt{
-		Hash:      utils.RandomHash(),
-		ToStateID: nil, // nil values are not indexed
-	})
-	s.NoError(err)
-
-	receipts := make([]stored.TxReceipt, 0, 1)
-	err = s.storage.database.Badger.Find(
-		&receipts,
-		bh.Where("ToStateID").Le(uint32(1)).Index("ToStateID"),
-	)
-	s.NoError(err)
-	s.Len(receipts, 0)
 }
 
 func (s *InitializeIndexTestSuite) TestAccountLeaf_PublicKey_IndexWorks() {
@@ -172,26 +109,12 @@ func (s *InitializeIndexTestSuite) TestAccountLeaf_PublicKey_FindUsingIndexWorks
 func (s *InitializeIndexTestSuite) getCommitmentIDIndexValues() map[models.CommitmentID]bh.KeyList {
 	indexValues := make(map[models.CommitmentID]bh.KeyList)
 
-	s.iterateIndex(stored.TxReceiptName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
+	s.iterateIndex(stored.BatchedTxName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
 		var commitmentID models.CommitmentID
 		err := db.Decode(encodedKey, &commitmentID)
 		s.NoError(err)
 
 		indexValues[commitmentID] = keyList
-	})
-
-	return indexValues
-}
-
-func (s *InitializeIndexTestSuite) getToStateIDIndexValues(typeName []byte) map[uint32]bh.KeyList {
-	indexValues := make(map[uint32]bh.KeyList)
-
-	s.iterateIndex(typeName, "ToStateID", func(encodedKey []byte, keyList bh.KeyList) {
-		var toStateID uint32
-		err := db.Decode(encodedKey, &toStateID)
-		s.NoError(err)
-
-		indexValues[toStateID] = keyList
 	})
 
 	return indexValues
@@ -219,13 +142,25 @@ func (s *InitializeIndexTestSuite) iterateIndex(
 	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
 }
 
-func (s *InitializeIndexTestSuite) addStoredTxReceipt(toStateID *uint32, commitmentID *models.CommitmentID) {
-	receipt := &stored.TxReceipt{
-		Hash:         utils.RandomHash(),
-		ToStateID:    toStateID,
-		CommitmentID: commitmentID,
+func (s *InitializeIndexTestSuite) addStoredBatchedTx(commitmentID *models.CommitmentID) {
+	transfer := &models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 11,
+			Amount:      models.MakeUint256(10),
+			Fee:         models.MakeUint256(111),
+			Nonce:       models.MakeUint256(1),
+			Signature:   models.Signature{1, 2, 3, 4, 5},
+			ReceiveTime: models.NewTimestamp(time.Unix(10, 0).UTC()),
+			CommitmentID: commitmentID,
+		},
+		ToStateID: 0,
 	}
-	err := s.storage.addStoredTxReceipt(receipt)
+
+	batchedTx := stored.NewBatchedTx(transfer)
+
+	err := s.storage.database.Badger.Insert(batchedTx.Hash, *batchedTx)
 	s.NoError(err)
 }
 
