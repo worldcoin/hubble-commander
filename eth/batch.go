@@ -23,14 +23,14 @@ type DecodedBatchBase struct {
 	Hash              common.Hash
 	FinalisationBlock uint32
 	AccountTreeRoot   common.Hash
-	SubmissionTime    models.Timestamp
+	MinedTime         models.Timestamp
 	Committer         common.Address
 }
 
 func NewDecodedBatchBase(
 	batch *ContractBatch,
 	transactionHash, accountRoot common.Hash,
-	submissionTime *models.Timestamp,
+	minedTime *models.Timestamp,
 ) *DecodedBatchBase {
 	return &DecodedBatchBase{
 		ID:                batch.ID,
@@ -39,7 +39,7 @@ func NewDecodedBatchBase(
 		Hash:              batch.Hash,
 		FinalisationBlock: batch.FinaliseOn,
 		AccountTreeRoot:   accountRoot,
-		SubmissionTime:    *submissionTime,
+		MinedTime:         *minedTime,
 		Committer:         batch.Committer,
 	}
 }
@@ -52,7 +52,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 		Hash:              &b.Hash,
 		FinalisationBlock: &b.FinalisationBlock,
 		AccountTreeRoot:   &b.AccountTreeRoot,
-		MinedTime:         &b.SubmissionTime,
+		MinedTime:         &b.MinedTime,
 		PrevStateRoot:     &prevStateRoot,
 	}
 }
