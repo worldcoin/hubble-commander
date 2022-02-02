@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ExecutePendingBatchTestSuite struct {
+type ExecutePendingTxBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage      *st.TestStorage
@@ -23,11 +23,11 @@ type ExecutePendingBatchTestSuite struct {
 	pendingBatch dto.PendingBatch
 }
 
-func (s *ExecutePendingBatchTestSuite) SetupSuite() {
+func (s *ExecutePendingTxBatchTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *ExecutePendingBatchTestSuite) SetupTest() {
+func (s *ExecutePendingTxBatchTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -59,18 +59,17 @@ func (s *ExecutePendingBatchTestSuite) SetupTest() {
 					CombinedSignature: models.MakeRandomSignature(),
 					BodyHash:          nil,
 				},
-				Transactions: models.TransferArray{},
 			},
 		},
 	}
 }
 
-func (s *ExecutePendingBatchTestSuite) TearDownTest() {
+func (s *ExecutePendingTxBatchTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalances() {
+func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalances() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
@@ -93,7 +92,7 @@ func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalanc
 	s.Equal(*prevReceiverLeaf.Balance.Add(&tx.Amount), receiverLeaf.Balance)
 }
 
-func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch() {
+func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
@@ -122,6 +121,6 @@ func (s *ExecutePendingBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch(
 	s.Equal(s.pendingBatch.Commitments[0].Transactions, txs)
 }
 
-func TestExecutePendingBatchTestSuite(t *testing.T) {
-	suite.Run(t, new(ExecutePendingBatchTestSuite))
+func TestExecutePendingTxBatchTestSuite(t *testing.T) {
+	suite.Run(t, new(ExecutePendingTxBatchTestSuite))
 }
