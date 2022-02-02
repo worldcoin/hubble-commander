@@ -275,11 +275,11 @@ docker run --rm -ti -p 8080:8080 \
 To profile batch creation run this command:
 
 ```shell
-HUBBLE_E2E=in-process go test -cpuprofile creation.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
+go test -cpuprofile creation.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
 ```
 
 To profile batch syncing run this command:
 
 ```shell
-HUBBLE_E2E=in-process go test -cpuprofile sync.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
+go test -cpuprofile sync.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 ```

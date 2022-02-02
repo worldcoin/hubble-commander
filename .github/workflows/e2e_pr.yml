@@ -35,7 +35,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          HUBBLE_E2E=in-process go test -v -race -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
+          go test -v -race -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
       - name: Cleanup
         # Cleanup this folder because it confuses codecov
         run: sudo rm -rf e2e/geth-data/geth
@@ -70,7 +70,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          HUBBLE_E2E=in-process go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
+          go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
 
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
@@ -94,7 +94,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
+          go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
 
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
@@ -118,4 +118,4 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          HUBBLE_E2E=in-process go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
+          go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
