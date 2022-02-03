@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 )
@@ -13,14 +12,18 @@ type lifecycle struct {
 
 	active    uint32
 	closeOnce sync.Once
-
-	workersContext     context.Context
-	stopWorkersContext context.CancelFunc
-	workersWaitGroup   sync.WaitGroup
 }
 
 func (l *lifecycle) isActive() bool {
 	return atomic.LoadUint32(&l.active) != 0
+}
+
+func (l *lifecycle) setActive(active bool) {
+	activeFlag := uint32(0)
+	if active {
+		activeFlag = 1
+	}
+	atomic.StoreUint32(&l.active, activeFlag)
 }
 
 func (l *lifecycle) getStartAndWaitChan() <-chan struct{} {
@@ -36,7 +39,7 @@ func (l *lifecycle) unsafeGetStartAndWaitChan() chan struct{} {
 	return l.startAndWaitChan
 }
 
-func (l *lifecycle) closeStartAndWaitChan() {
+func (l *lifecycle) releaseStartAndWait() {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	ch := l.unsafeGetStartAndWaitChan()
