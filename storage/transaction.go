@@ -29,8 +29,6 @@ func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransacti
 
 		_, err := txStorage.getBatchedTxByHash(txBase.Hash)
 		if err == nil {
-			// TODO: kept in place for backwards compat, but this behavior
-			//       should be changed
 			return errors.WithStack(ErrAlreadyMinedTransaction)
 		}
 		if !errors.Is(err, bh.ErrNotFound) {
