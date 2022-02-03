@@ -19,11 +19,14 @@ func (c *Commander) migrate() error {
 	}
 
 	hubbleClient := client.NewHubble(*c.cfg.Bootstrap.BootstrapNodeURL, c.cfg.API.AuthenticationKey)
+	return c.migrateWithClient(hubbleClient)
+}
 
+func (c *Commander) migrateWithClient(hubble client.Hubble) error {
 	//TODO: fetch pending txs
 	//TODO: fetch failed txs
 
-	err := c.fetchPendingBatches(hubbleClient)
+	err := c.syncPendingBatches(hubble)
 	if err != nil {
 		return err
 	}
@@ -32,7 +35,7 @@ func (c *Commander) migrate() error {
 	return nil
 }
 
-func (c *Commander) fetchPendingBatches(hubble client.Hubble) error {
+func (c *Commander) syncPendingBatches(hubble client.Hubble) error {
 	pendingBatches, err := hubble.GetPendingBatches()
 	if err != nil {
 		return err
