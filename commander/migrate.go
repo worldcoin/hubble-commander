@@ -16,7 +16,7 @@ const authKeyHeader = "Auth-Key"
 
 func (c *Commander) migrate() error {
 	if c.cfg.Bootstrap.BootstrapNodeURL == nil {
-		return fmt.Errorf("missing bootstram node url for migration mode")
+		return fmt.Errorf("bootstrap node is required for migration mode")
 	}
 
 	client := jsonrpc.NewClientWithOpts(*c.cfg.Bootstrap.BootstrapNodeURL, &jsonrpc.RPCClientOpts{
@@ -33,6 +33,7 @@ func (c *Commander) migrate() error {
 		return err
 	}
 
+	c.setMigrate(false)
 	return nil
 }
 

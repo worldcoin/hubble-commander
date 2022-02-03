@@ -63,6 +63,14 @@ func (c *Commander) newBlockLoop() error {
 				return errors.WithStack(err)
 			}
 
+			if c.isMigrating() {
+				err = c.migrate()
+				if err != nil {
+					return err
+				}
+				continue
+			}
+
 			isProposer, err := c.client.IsActiveProposer()
 			if err != nil {
 				return errors.WithStack(err)
