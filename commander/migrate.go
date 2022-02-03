@@ -7,12 +7,10 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
-
-//TODO-mig: move to const
-const authKeyHeader = "Auth-Key"
 
 func (c *Commander) migrate() error {
 	if c.cfg.Bootstrap.BootstrapNodeURL == nil {
@@ -21,7 +19,7 @@ func (c *Commander) migrate() error {
 
 	client := jsonrpc.NewClientWithOpts(*c.cfg.Bootstrap.BootstrapNodeURL, &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
-			authKeyHeader: c.cfg.API.AuthenticationKey,
+			consts.AuthKeyHeader: c.cfg.API.AuthenticationKey,
 		},
 	})
 
