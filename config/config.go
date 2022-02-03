@@ -2,11 +2,10 @@ package config
 
 import (
 	"path"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -129,7 +128,7 @@ func setupViper(configName string) {
 	viper.AddConfigPath("/etc/hubble")
 	viper.AddConfigPath("$HOME/.hubble")
 	viper.AddConfigPath(".") // Current working dir
-	viper.AddConfigPath(getProjectRoot())
+	viper.AddConfigPath(utils.GetProjectRoot())
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -142,12 +141,6 @@ func setupViper(configName string) {
 			log.Panicf("failed to read in config: %s", err)
 		}
 	}
-}
-
-func getProjectRoot() string {
-	_, file, _, _ := runtime.Caller(1) // nolint:dogsled
-	fileDir := filepath.Dir(file)
-	return path.Join(fileDir, "..")
 }
 
 func getLogConfig() *LogConfig {
