@@ -312,7 +312,7 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(
 	commitment *dto.TxCommitment,
 	transactions interface{},
 	batchStatus batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 ) {
 	s.NotNil(commitment)
 
@@ -333,7 +333,7 @@ func (s *GetCommitmentTestSuite) validateTxCommitment(
 		FeeReceiverStateID: s.txCommitment.FeeReceiver,
 		CombinedSignature:  s.txCommitment.CombinedSignature,
 		Status:             batchStatus,
-		BatchTime:          batchTime,
+		MinedTime:          minedTime,
 		Transactions:       transactions,
 	}
 
@@ -344,7 +344,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(
 	commitment *dto.MMCommitment,
 	transactions interface{},
 	batchStatus batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 ) {
 	s.NotNil(commitment)
 
@@ -363,7 +363,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(
 		LeafHash:          leafHash,
 		CombinedSignature: s.mmCommitment.CombinedSignature,
 		Status:            batchStatus,
-		BatchTime:         batchTime,
+		MinedTime:         minedTime,
 		WithdrawRoot:      s.mmCommitment.WithdrawRoot,
 		Meta: dto.MassMigrationMeta{
 			SpokeID:            s.mmCommitment.Meta.SpokeID,
@@ -380,7 +380,7 @@ func (s *GetCommitmentTestSuite) validateMMCommitment(
 func (s *GetCommitmentTestSuite) validateDepositCommitment(
 	commitment *dto.DepositCommitment,
 	batchStatus batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 ) {
 	s.NotNil(commitment)
 
@@ -394,7 +394,7 @@ func (s *GetCommitmentTestSuite) validateDepositCommitment(
 		PostStateRoot: s.depositCommitment.PostStateRoot,
 		LeafHash:      &leafHash,
 		Status:        batchStatus,
-		BatchTime:     batchTime,
+		MinedTime:     minedTime,
 		SubtreeID:     s.depositCommitment.SubtreeID,
 		SubtreeRoot:   s.depositCommitment.SubtreeRoot,
 		Deposits:      dto.MakeDeposits(s.depositCommitment.Deposits),
