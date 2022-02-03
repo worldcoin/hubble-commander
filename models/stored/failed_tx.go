@@ -45,8 +45,9 @@ func (t *FailedTx) Bytes() []byte {
 }
 
 func (t *FailedTx) SetBytes(data []byte) error {
-	if len(data) < sizePendingTx {
-		// TODO: What is the correct size to check for?
+	if len(data) < sizePendingTxNoBody {
+		// This prevents obvious errors but it is still possible for this []byte
+		// to be too short: it might not include a BatchedTx.PendingTx.Body
 		return models.ErrInvalidLength
 	}
 
@@ -55,10 +56,8 @@ func (t *FailedTx) SetBytes(data []byte) error {
 		return err
 	}
 
-	// TODO: this code relies on there being a 1-to-1 mapping between internal
-	//       states and serializations. This makes the code a little brittle!
-	//       Better would be for `SetBytes` to return the remaining slice.
-	//       ( it assumes len(x) == len(serialize(deserialize(x)) )
+	// This relies on PendingTx.BytesLen() correctly reporting exactly how many bytes
+	// were read in the call to SetBytes()
 	_, rest := takeSlice(data, t.PendingTx.BytesLen())
 	t.ErrorMessage = decodeStringPointer(rest)
 

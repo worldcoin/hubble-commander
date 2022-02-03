@@ -199,6 +199,7 @@ func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error 
 	return nil
 }
 
+// If you change this you might also need to change models.stored.sizeCommitment
 // nolint: gocritic
 func decodeCommitmentIDPointer(data []byte, value *interface{}, dst *models.CommitmentID) error {
 	if len(data) == 33 {

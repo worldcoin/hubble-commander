@@ -72,8 +72,6 @@ func (t *PendingTx) ToMassMigration() *models.MassMigration {
 	return t.ToGenericTransaction().ToMassMigration()
 }
 
-// TODO: A buncha unit tests, asserting this looks exactly like the output
-//       of stored.tx.Bytes()
 func (t *PendingTx) Bytes() []byte {
 	var buf bytes.Buffer
 
@@ -97,7 +95,6 @@ func (t *PendingTx) Bytes() []byte {
 	return buf.Bytes()
 }
 
-// TODO: move into some kind of utils file?
 func takeSlice(data []byte, count int) (slice, rest []byte) {
 	return data[:count], data[count:]
 }
@@ -105,13 +102,11 @@ func takeSlice(data []byte, count int) (slice, rest []byte) {
 // Careful: If there is a failure this will leave behind a partially-
 //          populated PendinTx. If this gives you an error throw away the
 //          PendingTx!
-// TODO: Turn this into a constructor which returns (Option<PendingTx>, Option<err>)
 func (t *PendingTx) SetBytes(data []byte) error {
-	if len(data) < sizePendingTx {
+	if len(data) < sizePendingTxNoBody {
 		return models.ErrInvalidLength
 	}
 
-	// TODO: Do the rest of these return errors we ought to check for?
 	slice, rest := takeSlice(data, sizeHash)
 	t.Hash.SetBytes(slice)
 
@@ -152,7 +147,7 @@ func (t *PendingTx) SetBytes(data []byte) error {
 	t.Body = body
 
 	// Note that if we are given too many bytes then they are silently ignored.
-	// BatchedTx.SetBytes depends on this behavior.
+	// BatchedTx.SetBytes and FailedTx.SetBytes depend on this behavior.
 
 	return nil
 }
@@ -171,5 +166,5 @@ func expectedBodyBytesLen(txType txtype.TransactionType) int {
 }
 
 func (t *PendingTx) BytesLen() int {
-	return sizePendingTx + t.Body.BytesLen()
+	return sizePendingTxNoBody + t.Body.BytesLen()
 }
