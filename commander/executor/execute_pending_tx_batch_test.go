@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -20,7 +19,7 @@ type ExecutePendingTxBatchTestSuite struct {
 	storage      *st.TestStorage
 	cfg          *config.RollupConfig
 	txsCtx       *TxsContext
-	pendingBatch dto.PendingBatch
+	pendingBatch models.PendingBatch
 }
 
 func (s *ExecutePendingTxBatchTestSuite) SetupSuite() {
@@ -40,11 +39,11 @@ func (s *ExecutePendingTxBatchTestSuite) SetupTest() {
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
 	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
 
-	s.pendingBatch = dto.PendingBatch{
+	s.pendingBatch = models.PendingBatch{
 		ID:              models.MakeUint256(1),
 		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
-		Commitments: []dto.PendingCommitment{
+		Commitments: []models.PendingCommitment{
 			{
 				Commitment: &models.TxCommitment{
 					CommitmentBase: models.CommitmentBase{

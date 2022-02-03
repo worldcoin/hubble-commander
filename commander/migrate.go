@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/client"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/pkg/errors"
 )
@@ -46,7 +47,7 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) error {
 	})
 
 	for i := range pendingBatches {
-		err = c.syncPendingBatch(&pendingBatches[i])
+		err = c.syncPendingBatch(dtoToModelsBatch(&pendingBatches[i]))
 		if err != nil {
 			return err
 		}
@@ -55,7 +56,7 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) error {
 	return nil
 }
 
-func (c *Commander) syncPendingBatch(batch *dto.PendingBatch) (err error) {
+func (c *Commander) syncPendingBatch(batch *models.PendingBatch) (err error) {
 	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, context.Background(), batch.Type)
 	defer ctx.Rollback(&err)
 
@@ -65,4 +66,19 @@ func (c *Commander) syncPendingBatch(batch *dto.PendingBatch) (err error) {
 	}
 
 	return ctx.Commit()
+}
+
+func dtoToModelsBatch(dtoBatch *dto.PendingBatch) *models.PendingBatch {
+	batch := models.PendingBatch{
+		ID:              dtoBatch.ID,
+		Type:            dtoBatch.Type,
+		TransactionHash: dtoBatch.TransactionHash,
+		Commitments:     make([]models.PendingCommitment, 0, len(dtoBatch.Commitments)),
+	}
+
+	for i := range dtoBatch.Commitments {
+		batch.Commitments = append(batch.Commitments, models.PendingCommitment(dtoBatch.Commitments[i]))
+	}
+
+	return &batch
 }

@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/pkg/errors"
 )
 
 var errMismatchedAppliedTxs = fmt.Errorf("mismatched applied txs from pending batch")
 
-func (c *TxsContext) ExecutePendingBatch(batch *dto.PendingBatch) error {
+func (c *TxsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 	err := c.storage.AddBatch(&models.Batch{
 		ID:              batch.ID,
 		Type:            batch.Type,
@@ -68,7 +67,7 @@ func (c *TxsContext) getFeeReceiver(commitment models.Commitment) (*FeeReceiver,
 	}, nil
 }
 
-func (c *DepositsContext) ExecutePendingBatch(batch *dto.PendingBatch) error {
+func (c *DepositsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 	err := c.storage.AddBatch(&models.Batch{
 		ID:              batch.ID,
 		Type:            batch.Type,

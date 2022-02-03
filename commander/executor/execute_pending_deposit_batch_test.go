@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -21,7 +20,7 @@ type ExecutePendingDepositBatchTestSuite struct {
 	client         *eth.TestClient
 	depositsCtx    *DepositsContext
 	depositSubtree models.PendingDepositSubtree
-	pendingBatch   dto.PendingBatch
+	pendingBatch   models.PendingBatch
 }
 
 func (s *ExecutePendingDepositBatchTestSuite) SetupSuite() {
@@ -45,11 +44,11 @@ func (s *ExecutePendingDepositBatchTestSuite) SetupTest() {
 	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
 	s.depositsCtx = NewTestDepositsContext(executionCtx)
 
-	s.pendingBatch = dto.PendingBatch{
+	s.pendingBatch = models.PendingBatch{
 		ID:              models.MakeUint256(1),
 		Type:            batchtype.Deposit,
 		TransactionHash: utils.RandomHash(),
-		Commitments: []dto.PendingCommitment{
+		Commitments: []models.PendingCommitment{
 			{
 				Commitment: &models.DepositCommitment{
 					CommitmentBase: models.CommitmentBase{
