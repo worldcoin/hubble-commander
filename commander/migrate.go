@@ -5,28 +5,25 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/Worldcoin/hubble-commander/client"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/pkg/errors"
-	"github.com/ybbus/jsonrpc/v2"
 )
+
+var errMissingBootstrapNodeURL = fmt.Errorf("bootstrap node URL is required for migration mode")
 
 func (c *Commander) migrate() error {
 	if c.cfg.Bootstrap.BootstrapNodeURL == nil {
-		return fmt.Errorf("bootstrap node is required for migration mode")
+		return errors.WithStack(errMissingBootstrapNodeURL)
 	}
 
-	client := jsonrpc.NewClientWithOpts(*c.cfg.Bootstrap.BootstrapNodeURL, &jsonrpc.RPCClientOpts{
-		CustomHeaders: map[string]string{
-			consts.AuthKeyHeader: c.cfg.API.AuthenticationKey,
-		},
-	})
+	hubbleClient := client.NewHubble(*c.cfg.Bootstrap.BootstrapNodeURL, c.cfg.API.AuthenticationKey)
 
-	//TODO-mig: fetch pending txs
-	//TODO-mig: fetch failed txs
+	//TODO: fetch pending txs
+	//TODO: fetch failed txs
 
-	err := c.fetchPendingBatches(client)
+	err := c.fetchPendingBatches(hubbleClient)
 	if err != nil {
 		return err
 	}
@@ -35,11 +32,10 @@ func (c *Commander) migrate() error {
 	return nil
 }
 
-func (c *Commander) fetchPendingBatches(client jsonrpc.RPCClient) error {
-	var pendingBatches []dto.PendingBatch
-	err := client.CallFor(&pendingBatches, "admin_getPendingBatches")
+func (c *Commander) fetchPendingBatches(hubble client.Hubble) error {
+	pendingBatches, err := hubble.GetPendingBatches()
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	sort.Slice(pendingBatches, func(i, j int) bool {
