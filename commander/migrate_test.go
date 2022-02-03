@@ -61,18 +61,18 @@ func (s *MigrateTestSuite) TestMigrate_MissingBootstrapNodeURL() {
 	s.ErrorIs(err, errMissingBootstrapNodeURL)
 }
 
-func (s *MigrateTestSuite) TestMigrate_SetsMigrateToFalse() {
+func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).
 		Return([]dto.PendingBatch{}, nil)
 
-	err := s.cmd.migrateWithClient(hubble)
+	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
 
 	s.False(s.cmd.isMigrating())
 }
 
-func (s *MigrateTestSuite) TestMigrate_SyncsBatches() {
+func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	batches := []dto.PendingBatch{
 		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 		makePendingBatch(1, models.TransferArray{testutils.MakeTransfer(0, 1, 0, 100)}),
@@ -81,7 +81,7 @@ func (s *MigrateTestSuite) TestMigrate_SyncsBatches() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(batches, nil)
 
-	err := s.cmd.migrateWithClient(hubble)
+	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
 
 	leaf, err := s.storage.StateTree.Leaf(1)

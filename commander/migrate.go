@@ -19,10 +19,10 @@ func (c *Commander) migrate() error {
 	}
 
 	hubbleClient := client.NewHubble(*c.cfg.Bootstrap.BootstrapNodeURL, c.cfg.API.AuthenticationKey)
-	return c.migrateWithClient(hubbleClient)
+	return c.migrateCommanderData(hubbleClient)
 }
 
-func (c *Commander) migrateWithClient(hubble client.Hubble) error {
+func (c *Commander) migrateCommanderData(hubble client.Hubble) error {
 	//TODO: fetch pending txs
 	//TODO: fetch failed txs
 
