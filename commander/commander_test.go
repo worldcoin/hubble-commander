@@ -62,7 +62,7 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 }
 
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain chain.Connection) {
-	deployerCfg := config.GetDeployerConfig()
+	deployerCfg := config.GetDeployerTestConfig()
 	yamlChainSpec, err := Deploy(deployerCfg, blockchain)
 	s.NoError(err)
 
