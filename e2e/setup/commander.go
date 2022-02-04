@@ -31,8 +31,6 @@ func NewConfiguredCommanderFromEnv(commanderConfig *config.Config, deployerConfi
 		})
 	case "local":
 		return ConnectToLocalCommander(), nil
-	case "in-process":
-		return DeployAndCreateInProcessCommander(commanderConfig, deployerConfig)
 	default:
 		return DeployAndCreateInProcessCommander(commanderConfig, deployerConfig)
 	}
