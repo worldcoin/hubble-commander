@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -171,6 +172,54 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(models.MakeUint256(2))
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(hashes)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Transfers() {
+	err := s.storage.AddTransaction(&transfer)
+	s.NoError(err)
+
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Len(txs, 1)
+	s.Equal(transfer, *txs.At(0).ToTransfer())
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoTransfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Create2Transfers() {
+	err := s.storage.AddTransaction(&create2Transfer)
+	s.NoError(err)
+
+	txs, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
+	s.NoError(err)
+	s.Len(txs, 1)
+	s.Equal(create2Transfer, *txs.At(0).ToCreate2Transfer())
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoCreate2Transfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_MassMigrations() {
+	err := s.storage.AddTransaction(&massMigration)
+	s.NoError(err)
+
+	txs, err := s.storage.GetPendingTransactions(txtype.MassMigration)
+	s.NoError(err)
+	s.Len(txs, 1)
+	s.Equal(massMigration, *txs.At(0).ToMassMigration())
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations() {
+	txs, err := s.storage.GetPendingTransactions(txtype.MassMigration)
+	s.NoError(err)
+	s.Len(txs, 0)
 }
 
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
