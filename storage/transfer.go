@@ -1,11 +1,9 @@
 package storage
 
 import (
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
-	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -15,94 +13,46 @@ func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
 	return s.BatchAddTransaction(models.MakeTransferArray(txs...))
 }
 
+// called by a large amount of tests, and nothing else
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
-	tx, txReceipt, err := s.getStoredTxWithReceipt(hash)
+	tx, err := s.getTransactionByHash(hash)
 	if err != nil {
 		return nil, err
 	}
-	if tx.TxType != txtype.Transfer {
+	if tx.Type() != txtype.Transfer {
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
-	return tx.ToTransfer(txReceipt), nil
+	transfer := tx.ToTransfer()
+	return transfer, nil
 }
 
 func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, err error) {
-	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		txs, err = txStorage.unsafeGetPendingTransfers()
-		return err
-	})
+	genericTxs, err := s.GetPendingTransactions(txtype.Transfer)
 	if err != nil {
 		return nil, err
 	}
-	return txs, nil
-}
-
-func (s *TransactionStorage) unsafeGetPendingTransfers() ([]models.Transfer, error) {
-	txs := make([]models.Transfer, 0, 32)
-	var storedTx stored.Tx
-	err := s.database.Badger.Iterator(stored.TxPrefix, db.KeyIteratorOpts,
-		func(item *bdg.Item) (bool, error) {
-			skip, err := s.getStoredTxFromItem(item, &storedTx)
-			if err != nil || skip {
-				return false, err
-			}
-			if storedTx.TxType == txtype.Transfer {
-				txs = append(txs, *storedTx.ToTransfer(nil))
-			}
-			return false, nil
-		})
-	if err != nil && err != db.ErrIteratorFinished {
-		return nil, err
-	}
-
-	return txs, nil
+	return genericTxs.ToTransferArray(), nil
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
-	transfers := make([]models.Transfer, 0, 1)
+	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
-	err := s.iterateTxsByCommitmentID(id, func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt) {
-		if storedTx.TxType == txtype.Transfer {
-			transfers = append(transfers, *storedTx.ToTransfer(storedTxReceipt))
-		}
-	})
+	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+	// We're not using `.And("TxType").Eq(txtype.Transfer)` here because of inefficiency in BH implementation
+
+	err := s.database.Badger.Find(&batchedTxs, query)
 	if err != nil {
 		return nil, err
 	}
 
-	return transfers, nil
-}
-
-func (s *TransactionStorage) iterateTxsByCommitmentID(
-	id models.CommitmentID,
-	handleTx func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt),
-) error {
-	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		return txStorage.unsafeIterateTxsByCommitmentID(id, handleTx)
-	})
-}
-
-func (s *TransactionStorage) unsafeIterateTxsByCommitmentID(
-	id models.CommitmentID,
-	handleTx func(storedTx *stored.Tx, storedTxReceipt *stored.TxReceipt),
-) error {
-	receipts := make([]stored.TxReceipt, 0, 1)
-	err := s.database.Badger.Find(
-		&receipts,
-		bh.Where("CommitmentID").Eq(id).Index("CommitmentID"),
-	)
-	if err != nil {
-		return err
-	}
-
-	for i := range receipts {
-		storedTx, storedTxReceipt, err := s.getStoredTxWithReceipt(receipts[i].Hash)
-		if err != nil {
-			return err
+	txs := make([]models.Transfer, 0, len(batchedTxs))
+	for i := range batchedTxs {
+		if batchedTxs[i].TxType == txtype.Transfer {
+			txs = append(txs, *batchedTxs[i].ToTransfer())
 		}
-		handleTx(storedTx, storedTxReceipt)
 	}
-	return nil
+
+	return txs, nil
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {

@@ -8,7 +8,7 @@ import (
 const InitialGenesisBalance = 1_000_000_000
 
 func CreateUnregisteredWalletsForBenchmark(txCount int64, domain bls.Domain) ([]bls.Wallet, error) {
-	cfg := config.GetDeployerConfig()
+	cfg := config.GetDeployerTestConfig()
 	accounts := cfg.Bootstrap.GenesisAccounts
 
 	numberOfNeededWallets := int(txCount) * len(accounts)

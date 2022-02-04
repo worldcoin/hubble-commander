@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -126,6 +127,7 @@ func setupViper(configName string) {
 	viper.AddConfigPath("/etc/hubble")
 	viper.AddConfigPath("$HOME/.hubble")
 	viper.AddConfigPath(".") // Current working dir
+	viper.AddConfigPath(utils.GetProjectRoot())
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("HUBBLE")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
