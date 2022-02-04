@@ -380,6 +380,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	tempTxsCtx := NewTxsContext(
 		s.txsCtx.storage,
 		s.txsCtx.client,
+		s.txsCtx.txsSender,
 		s.cfg,
 		metrics.NewCommanderMetrics(),
 		context.Background(),

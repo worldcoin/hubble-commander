@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -54,7 +55,7 @@ type Commander struct {
 	cancelRollupLoop context.CancelFunc
 	invalidBatchID   *models.Uint256
 
-	txsChan chan *types.Transaction
+	txsTracker *tracker.TxsTracker
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -89,12 +90,14 @@ func (c *Commander) Start() (err error) {
 
 	c.metrics = metrics.NewCommanderMetrics()
 
-	c.txsChan = make(chan *types.Transaction, 32)
+	txsChan := make(chan *types.Transaction, 32)
 
-	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, c.txsChan)
+	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, txsChan)
 	if err != nil {
 		return err
 	}
+
+	c.txsTracker = tracker.NewTxTracker(c.client, txsChan)
 
 	err = c.addGenesisBatch()
 	if err != nil {
@@ -124,7 +127,7 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Txs", func() error { return c.txsTracking(c.txsChan) })
+	c.startWorker("Tracking Txs", func() error { return c.txsTracker.StartTracking(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()

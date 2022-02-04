@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -24,11 +25,12 @@ import (
 type TxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd     *Commander
-	storage *st.TestStorage
-	client  *eth.TestClient
-	cfg     *config.Config
-	wallets []bls.Wallet
+	cmd        *Commander
+	storage    *st.TestStorage
+	client     *eth.TestClient
+	cfg        *config.Config
+	wallets    []bls.Wallet
+	txsTracker *tracker.TxsTracker
 }
 
 func (s *TxsTrackingTestSuite) SetupSuite() {
@@ -62,7 +64,9 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsChan = s.client.TxsChan
+
+	s.txsTracker = tracker.NewTxTracker(s.client.Client, s.client.TxsChan)
+
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
@@ -166,7 +170,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Tracking", func() error {
-		err := s.cmd.txsTracking(s.cmd.txsChan)
+		err := s.cmd.txsTracker.StartTracking(s.cmd.workersContext)
 		s.NoError(err)
 		return nil
 	})

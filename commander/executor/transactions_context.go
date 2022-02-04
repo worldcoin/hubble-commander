@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -27,12 +28,13 @@ type TxsContext struct {
 func NewTxsContext(
 	storage *st.Storage,
 	client *eth.Client,
+	txsSender *tracker.TxsSender,
 	cfg *config.RollupConfig,
 	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
 	batchType batchtype.BatchType,
 ) *TxsContext {
-	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
+	executionCtx := NewExecutionContext(storage, client, txsSender, cfg, commanderMetrics, ctx)
 	return newTxsContext(executionCtx, batchType)
 }
 

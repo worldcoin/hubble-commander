@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -16,6 +17,7 @@ type ExecutionContext struct {
 	storage          *st.Storage
 	tx               *db.TxController
 	client           *eth.Client
+	txsSender        *tracker.TxsSender
 	ctx              context.Context
 	commanderMetrics *metrics.CommanderMetrics
 	Applier          *applier.Applier
@@ -25,6 +27,7 @@ type ExecutionContext struct {
 func NewExecutionContext(
 	storage *st.Storage,
 	client *eth.Client,
+	txsSender *tracker.TxsSender,
 	cfg *config.RollupConfig,
 	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
@@ -35,6 +38,7 @@ func NewExecutionContext(
 		cfg:              cfg,
 		storage:          txStorage,
 		tx:               tx,
+		txsSender:        txsSender,
 		client:           client,
 		ctx:              ctx,
 		commanderMetrics: commanderMetrics,

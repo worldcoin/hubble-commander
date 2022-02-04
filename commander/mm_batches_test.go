@@ -162,6 +162,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	txsCtx := executor.NewTxsContext(
 		storage,
 		s.client.Client,
+		s.cmd.txsTracker.TxsSender,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
 		context.Background(),

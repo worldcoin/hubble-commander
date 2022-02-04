@@ -2,8 +2,8 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -33,11 +33,11 @@ type TransactionExecutor interface {
 func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
 	switch txType {
 	case txtype.Transfer:
-		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
+		return NewTransferExecutor(executionCtx.storage, executionCtx.txsSender)
 	case txtype.Create2Transfer:
-		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
+		return NewC2TExecutor(executionCtx.storage, executionCtx.txsSender)
 	case txtype.MassMigration:
-		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
+		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.txsSender)
 	}
 	return nil
 }
@@ -45,14 +45,14 @@ func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Transa
 // TransferExecutor implements TransactionExecutor
 type TransferExecutor struct {
 	storage *st.Storage
-	client  *eth.Client
+	sender  *tracker.TxsSender
 	applier *applier.Applier
 }
 
-func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecutor {
+func NewTransferExecutor(storage *st.Storage, txsSender *tracker.TxsSender) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
-		client:  client,
+		sender:  txsSender,
 		applier: applier.NewApplier(storage),
 	}
 }
@@ -98,7 +98,7 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 }
 
 func (e *TransferExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return e.client.SubmitTransfersBatch(batchID, commitments)
+	return e.sender.SubmitTransfersBatchRequest(batchID, commitments)
 }
 
 func (e *TransferExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
@@ -133,15 +133,15 @@ func (e *TransferExecutor) NewCommitment(
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
-	client  *eth.Client
 	applier *applier.Applier
+	sender  *tracker.TxsSender
 }
 
-func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
+func NewC2TExecutor(storage *st.Storage, sender *tracker.TxsSender) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
-		client:  client,
 		applier: applier.NewApplier(storage),
+		sender:  sender,
 	}
 }
 
@@ -194,7 +194,7 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 }
 
 func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return e.client.SubmitCreate2TransfersBatch(batchID, commitments)
+	return e.sender.SubmitCreate2TransfersBatchRequest(batchID, commitments)
 }
 
 func (e *C2TExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
@@ -229,15 +229,15 @@ func (e *C2TExecutor) NewCommitment(
 // MassMigrationExecutor implements TransactionExecutor
 type MassMigrationExecutor struct {
 	storage *st.Storage
-	client  *eth.Client
 	applier *applier.Applier
+	sender  *tracker.TxsSender
 }
 
-func NewMassMigrationExecutor(storage *st.Storage, client *eth.Client) *MassMigrationExecutor {
+func NewMassMigrationExecutor(storage *st.Storage, sender *tracker.TxsSender) *MassMigrationExecutor {
 	return &MassMigrationExecutor{
 		storage: storage,
-		client:  client,
 		applier: applier.NewApplier(storage),
+		sender:  sender,
 	}
 }
 
@@ -285,7 +285,7 @@ func (e *MassMigrationExecutor) SubmitBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
-	return e.client.SubmitMassMigrationsBatch(batchID, commitments)
+	return e.sender.SubmitMassMigrationsBatchRequest(batchID, commitments)
 }
 
 func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(
