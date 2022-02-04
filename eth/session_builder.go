@@ -23,11 +23,6 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 	return b
 }
 
-func (b *rollupSessionBuilder) NoSend() *rollupSessionBuilder {
-	b.TransactOpts.NoSend = true
-	return b
-}
-
 func (c *Client) rollup() *rollupSessionBuilder {
 	return &rollupSessionBuilder{rollup.RollupSession{
 		Contract:     c.Rollup.Rollup,
@@ -56,11 +51,6 @@ func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRe
 	return b
 }
 
-func (b *accountRegistrySessionBuilder) NoSend() *accountRegistrySessionBuilder {
-	b.TransactOpts.NoSend = true
-	return b
-}
-
 type depositManagerSessionBuilder struct {
 	depositmanager.DepositManagerSession
 }
@@ -79,11 +69,6 @@ func (b *depositManagerSessionBuilder) WithValue(value *models.Uint256) *deposit
 
 func (b *depositManagerSessionBuilder) WithGasLimit(gasLimit uint64) *depositManagerSessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
-	return b
-}
-
-func (b *depositManagerSessionBuilder) NoSend() *depositManagerSessionBuilder {
-	b.TransactOpts.NoSend = true
 	return b
 }
 
@@ -108,11 +93,6 @@ func (b *tokenRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *tokenRegist
 	return b
 }
 
-func (b *tokenRegistrySessionBuilder) NoSend() *tokenRegistrySessionBuilder {
-	b.TransactOpts.NoSend = true
-	return b
-}
-
 type spokeRegistrySessionBuilder struct {
 	spokeregistry.SpokeRegistrySession
 }
@@ -131,10 +111,5 @@ func (b *spokeRegistrySessionBuilder) WithValue(value *models.Uint256) *spokeReg
 
 func (b *spokeRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *spokeRegistrySessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
-	return b
-}
-
-func (b *spokeRegistrySessionBuilder) NoSend() *spokeRegistrySessionBuilder {
-	b.TransactOpts.NoSend = true
 	return b
 }
