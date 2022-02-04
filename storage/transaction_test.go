@@ -112,7 +112,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 	s.Equal(expected, *res)
 }
 
-func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
+func (s *TransactionTestSuite) TestReplaceFailedTransaction_UpdatesTx() {
 	failedTx := transfer
 	failedTx.ErrorMessage = ref.String("some message")
 	err := s.storage.AddTransaction(&failedTx)
@@ -128,7 +128,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_UpdatesTx() {
 	s.Equal(updatedTx, *res)
 }
 
-func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
+func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdateMinedTx() {
 	tx := create2Transfer
 	tx.CommitmentID = &models.CommitmentID{
 		BatchID: models.MakeUint256(1),
@@ -142,7 +142,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdateMinedTx() {
 	s.ErrorIs(err, ErrAlreadyMinedTransaction)
 }
 
-func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
+func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePendingTx() {
 	err := s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
