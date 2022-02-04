@@ -360,6 +360,29 @@
                     "response": []
                 },
                 {
+                    "name": "getStatus",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"hubble_getStatus\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
                     "name": "getCommitment",
                     "request": {
                         "method": "POST",
