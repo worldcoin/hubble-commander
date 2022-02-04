@@ -15,9 +15,9 @@ func DecodeHash(data []byte, hash *common.Hash) error {
 	return nil
 }
 
-func EncodeUint32(number uint32) []byte {
+func EncodeUint32(value uint32) []byte {
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b[0:4], number)
+	binary.BigEndian.PutUint32(b, value)
 	return b
 }
 
@@ -29,7 +29,7 @@ func DecodeUint32(data []byte, number *uint32) error {
 
 func EncodeUint64(value uint64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b[0:8], value)
+	binary.BigEndian.PutUint64(b, value)
 	return b
 }
 

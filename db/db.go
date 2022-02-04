@@ -50,6 +50,10 @@ func (d *Database) duringTransaction() bool {
 	return d.txn != nil
 }
 
+func (d *Database) duringReadOnlyTransaction() bool {
+	return d.duringTransaction() && !d.updateTransaction
+}
+
 func (d *Database) duringUpdateTransaction() bool {
 	return d.duringTransaction() && d.updateTransaction
 }
@@ -62,10 +66,20 @@ func (d *Database) View(fn func(txn *badger.Txn) error) error {
 }
 
 func (d *Database) RawUpdate(fn func(txn *badger.Txn) error) error {
+	if d.duringReadOnlyTransaction() {
+		panic("RawUpdate called during ReadOnly transaction")
+	}
 	if d.duringUpdateTransaction() {
 		return fn(d.txn)
 	}
 	return d.store.Badger().Update(fn)
+}
+
+func (d *Database) Count(result interface{}, query *bh.Query) (uint64, error) {
+	if d.duringTransaction() {
+		return d.store.TxCount(d.txn, result, query)
+	}
+	return d.store.Count(result, query)
 }
 
 func (d *Database) Find(result interface{}, query *bh.Query) error {
@@ -90,6 +104,9 @@ func (d *Database) Get(key, result interface{}) error {
 }
 
 func (d *Database) Insert(key, data interface{}) error {
+	if d.duringReadOnlyTransaction() {
+		panic("Insert called during ReadOnly transaction")
+	}
 	if d.duringUpdateTransaction() {
 		return d.store.TxInsert(d.txn, key, data)
 	}
@@ -97,6 +114,9 @@ func (d *Database) Insert(key, data interface{}) error {
 }
 
 func (d *Database) Upsert(key, data interface{}) error {
+	if d.duringReadOnlyTransaction() {
+		panic("Upsert called during ReadOnly transaction")
+	}
 	if d.duringUpdateTransaction() {
 		return d.store.TxUpsert(d.txn, key, data)
 	}
@@ -104,6 +124,9 @@ func (d *Database) Upsert(key, data interface{}) error {
 }
 
 func (d *Database) Update(key, data interface{}) error {
+	if d.duringReadOnlyTransaction() {
+		panic("Update called during ReadOnly transaction")
+	}
 	if d.duringUpdateTransaction() {
 		return d.store.TxUpdate(d.txn, key, data)
 	}
@@ -111,6 +134,9 @@ func (d *Database) Update(key, data interface{}) error {
 }
 
 func (d *Database) Delete(key, dataType interface{}) error {
+	if d.duringReadOnlyTransaction() {
+		panic("Delete called during ReadOnly transaction")
+	}
 	if d.duringUpdateTransaction() {
 		return d.store.TxDelete(d.txn, key, dataType)
 	}

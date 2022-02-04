@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -132,26 +131,6 @@ func (s *TransferTestSuite) TestGetTransfer_NonexistentTransfer() {
 	res, err := s.storage.GetTransfer(hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
-}
-
-func (s *TransferTestSuite) TestGetPendingTransfers() {
-	transfers := make([]models.Transfer, 4)
-	for i := range transfers {
-		transfers[i] = transfer
-		transfers[i].Hash = utils.RandomHash()
-	}
-	transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
-	transfers[3].ErrorMessage = ref.String("A very boring error message")
-
-	err := s.storage.BatchAddTransfer(transfers)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingTransfers()
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, transfers[0])
-	s.Contains(res, transfers[1])
 }
 
 func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
