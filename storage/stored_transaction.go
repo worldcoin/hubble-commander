@@ -116,7 +116,7 @@ func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
 			return err
 		}
 
-		failedTx := stored.NewFailedTxFromError(&pendingTx, &txError.ErrorMessage)
+		failedTx := stored.NewFailedTxFromError(&pendingTx, txError.ErrorMessage)
 		return txStorage.database.Badger.Insert(txError.TxHash, *failedTx)
 	})
 }

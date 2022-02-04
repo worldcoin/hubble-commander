@@ -47,23 +47,6 @@ func decodeUint32Pointer(data []byte) *uint32 {
 	return ref.Uint32(binary.BigEndian.Uint32(data[1:]))
 }
 
-func encodeStringPointer(value *string) []byte {
-	if value == nil {
-		return []byte{0}
-	}
-	b := make([]byte, len(*value)+1)
-	b[0] = 1
-	copy(b[1:], *value)
-	return b
-}
-
-func decodeStringPointer(data []byte) *string {
-	if data[0] == 0 {
-		return nil
-	}
-	return ref.String(string(data[1:]))
-}
-
 func encodeTimestampPointer(timestamp *models.Timestamp) []byte {
 	b := make([]byte, 16)
 	if timestamp == nil {

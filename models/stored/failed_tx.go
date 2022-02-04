@@ -9,17 +9,22 @@ import (
 type FailedTx struct {
 	PendingTx
 
-	ErrorMessage *string
+	ErrorMessage string
 }
 
 func NewFailedTx(tx models.GenericTransaction) *FailedTx {
+	errorMessage := tx.GetBase().ErrorMessage
+	if errorMessage == nil {
+		panic("missing ErrorMessage in param passed to NewFailedTx")
+	}
+
 	return &FailedTx{
 		PendingTx:    *NewPendingTx(tx),
-		ErrorMessage: tx.GetBase().ErrorMessage,
+		ErrorMessage: *errorMessage,
 	}
 }
 
-func NewFailedTxFromError(pendingTx *PendingTx, errorMessage *string) *FailedTx {
+func NewFailedTxFromError(pendingTx *PendingTx, errorMessage string) *FailedTx {
 	return &FailedTx{
 		PendingTx:    *pendingTx,
 		ErrorMessage: errorMessage,
@@ -28,7 +33,7 @@ func NewFailedTxFromError(pendingTx *PendingTx, errorMessage *string) *FailedTx 
 
 func (t *FailedTx) ToGenericTransaction() models.GenericTransaction {
 	txn := t.PendingTx.ToGenericTransaction()
-	txn.GetBase().ErrorMessage = t.ErrorMessage
+	txn.GetBase().ErrorMessage = &t.ErrorMessage
 	return txn
 }
 
@@ -39,7 +44,7 @@ func (t *FailedTx) Bytes() []byte {
 	buf.Grow(bytesLen)
 
 	buf.Write(t.PendingTx.Bytes())
-	buf.Write(encodeStringPointer(t.ErrorMessage))
+	buf.Write([]byte(t.ErrorMessage))
 
 	return buf.Bytes()
 }
@@ -59,17 +64,11 @@ func (t *FailedTx) SetBytes(data []byte) error {
 	// This relies on PendingTx.BytesLen() correctly reporting exactly how many bytes
 	// were read in the call to SetBytes()
 	_, rest := takeSlice(data, t.PendingTx.BytesLen())
-	t.ErrorMessage = decodeStringPointer(rest)
+	t.ErrorMessage = string(rest)
 
 	return nil
 }
 
 func (t *FailedTx) BytesLen() int {
-	length := t.PendingTx.BytesLen()
-
-	if t.ErrorMessage == nil {
-		return length
-	}
-
-	return length + len(*t.ErrorMessage)
+	return t.PendingTx.BytesLen() + len(t.ErrorMessage)
 }

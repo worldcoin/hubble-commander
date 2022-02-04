@@ -10,6 +10,6 @@ const (
 	sizeU256            = 32
 	sizeSignature       = 64
 	sizeTimestamp       = 16
-	sizePendingTxNoBody = (sizeHash + sizeTxType + sizeU32 + 3*sizeU256 + sizeSignature + sizeTimestamp)
+	sizePendingTxNoBody = sizeHash + sizeTxType + sizeU32 + 3*sizeU256 + sizeSignature + sizeTimestamp
 	sizeBatchedTxNoBody = sizePendingTxNoBody + sizeCommitment
 )

@@ -79,7 +79,7 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 	log.Warnf(
 		"Replacing failed transaction. Hash=%x ErrorMessage=%+q",
 		txHash,
-		*failedTx.ErrorMessage,
+		failedTx.ErrorMessage,
 	)
 
 	err = s.database.Badger.Insert(txHash, *stored.NewPendingTx(tx))
