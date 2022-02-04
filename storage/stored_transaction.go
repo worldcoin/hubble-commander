@@ -77,7 +77,7 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 }
 
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
-	return s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txHashes {
 			var pendingTx stored.PendingTx
 
@@ -104,7 +104,7 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 }
 
 func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
-	return s.executeInTransaction(TxOptions{ReadOnly: false}, func(txStorage *TransactionStorage) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		var pendingTx stored.PendingTx
 		err := txStorage.getAndDelete(txError.TxHash, &pendingTx)
 		if err != nil {
