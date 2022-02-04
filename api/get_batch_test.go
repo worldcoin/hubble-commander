@@ -49,7 +49,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
 		AccountTreeRoot:   utils.NewRandomHash(),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
 	s.txCommitment = &models.TxCommitment{
@@ -186,7 +186,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
 	s.NoError(err)
 	s.Equal(genesisBatch.Hash, result.Hash)
 	s.Equal(genesisBatch.Type, result.Type)
-	s.Equal(*genesisBatch.FinalisationBlock, *result.SubmissionBlock)
+	s.Equal(*genesisBatch.FinalisationBlock, *result.MinedBlock)
 	s.Nil(result.Commitments)
 }
 
@@ -260,7 +260,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 	s.NoError(err)
 	s.Equal(genesisBatch.Hash, result.Hash)
 	s.Equal(genesisBatch.Type, result.Type)
-	s.Equal(*genesisBatch.FinalisationBlock, *result.SubmissionBlock)
+	s.Equal(*genesisBatch.FinalisationBlock, *result.MinedBlock)
 	s.Nil(result.Commitments)
 }
 
@@ -337,20 +337,20 @@ func (s *GetBatchTestSuite) addSubmittedBatch(batchType batchtype.BatchType) {
 	pendingBatch.Type = batchType
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
-	pendingBatch.SubmissionTime = nil
+	pendingBatch.MinedTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 }
 
 func (s *GetBatchTestSuite) validateBatch(result *dto.BatchWithRootAndCommitments, batchType batchtype.BatchType) {
-	submissionBlock := *s.batch.FinalisationBlock - config.DefaultBlocksToFinalise
+	minedBlock := *s.batch.FinalisationBlock - config.DefaultBlocksToFinalise
 	expectedBatch := dto.Batch{
 		ID:                s.batch.ID,
 		Hash:              s.batch.Hash,
 		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
-		SubmissionBlock:   &submissionBlock,
-		SubmissionTime:    s.batch.SubmissionTime,
+		MinedBlock:        &minedBlock,
+		MinedTime:         s.batch.MinedTime,
 		Status:            batchstatus.Mined,
 		FinalisationBlock: s.batch.FinalisationBlock,
 	}
@@ -364,8 +364,8 @@ func (s *GetBatchTestSuite) validateSubmittedBatch(result *dto.BatchWithRootAndC
 		Hash:              nil,
 		Type:              batchType,
 		TransactionHash:   s.batch.TransactionHash,
-		SubmissionBlock:   nil,
-		SubmissionTime:    nil,
+		MinedBlock:        nil,
+		MinedTime:         nil,
 		Status:            batchstatus.Submitted,
 		FinalisationBlock: nil,
 	}

@@ -52,7 +52,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
-			SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+			MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 		},
 		{
 			ID:                models.MakeUint256(2),
@@ -60,7 +60,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(43000),
-			SubmissionTime:    models.NewTimestamp(time.Unix(150, 0).UTC()),
+			MinedTime:         models.NewTimestamp(time.Unix(150, 0).UTC()),
 		},
 		{
 			ID:                models.MakeUint256(3),
@@ -68,7 +68,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(44000),
-			SubmissionTime:    models.NewTimestamp(time.Unix(160, 0).UTC()),
+			MinedTime:         models.NewTimestamp(time.Unix(160, 0).UTC()),
 		},
 		{
 			ID:                models.MakeUint256(4),
@@ -76,7 +76,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(44000),
-			SubmissionTime:    models.NewTimestamp(time.Unix(160, 0).UTC()),
+			MinedTime:         models.NewTimestamp(time.Unix(160, 0).UTC()),
 		},
 	}
 }
@@ -100,15 +100,15 @@ func (s *GetBatchesTestSuite) TestGetBatches() {
 		s.Equal(s.batches[i].Hash, result[i].Hash)
 		s.Equal(s.batches[i].Type, result[i].Type)
 		s.Equal(s.batches[i].TransactionHash, result[i].TransactionHash)
-		s.Equal(s.batches[i].SubmissionTime, result[i].SubmissionTime)
+		s.Equal(s.batches[i].MinedTime, result[i].MinedTime)
 		s.Equal(batchstatus.Mined, result[i].Status)
 		s.Equal(s.batches[i].FinalisationBlock, result[i].FinalisationBlock)
-		s.NotZero(result[i].SubmissionBlock)
+		s.NotZero(result[i].MinedBlock)
 
 		if s.batches[i].Type == batchtype.Genesis {
-			s.Equal(*s.batches[i].FinalisationBlock, *result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock, *result[i].MinedBlock)
 		} else {
-			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].SubmissionBlock)
+			s.Equal(*s.batches[i].FinalisationBlock-config.DefaultBlocksToFinalise, *result[i].MinedBlock)
 		}
 	}
 }
@@ -117,7 +117,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 	pendingBatch := s.batches[1]
 	pendingBatch.Hash = nil
 	pendingBatch.FinalisationBlock = nil
-	pendingBatch.SubmissionTime = nil
+	pendingBatch.MinedTime = nil
 	err := s.storage.AddBatch(&pendingBatch)
 	s.NoError(err)
 
@@ -125,8 +125,8 @@ func (s *GetBatchesTestSuite) TestGetBatches_SubmittedBatch() {
 		ID:                pendingBatch.ID,
 		Type:              batchtype.Transfer,
 		TransactionHash:   pendingBatch.TransactionHash,
-		SubmissionBlock:   nil,
-		SubmissionTime:    nil,
+		MinedBlock:        nil,
+		MinedTime:         nil,
 		Status:            batchstatus.Submitted,
 		FinalisationBlock: nil,
 	}

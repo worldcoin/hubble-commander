@@ -37,7 +37,7 @@ type GenericTransactionArray interface {
 type TransactionWithBatchDetails struct {
 	Transaction interface{}
 	BatchHash   *common.Hash
-	BatchTime   *Timestamp
+	MinedTime   *Timestamp
 }
 
 func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {

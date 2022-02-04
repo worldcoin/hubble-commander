@@ -12,8 +12,8 @@ type Batch struct {
 	Hash              *common.Hash
 	Type              batchtype.BatchType
 	TransactionHash   common.Hash
-	SubmissionBlock   *uint32
-	SubmissionTime    *models.Timestamp
+	MinedBlock        *uint32
+	MinedTime         *models.Timestamp
 	Status            batchstatus.BatchStatus
 	FinalisationBlock *uint32
 }
@@ -33,14 +33,14 @@ func NewSubmittedBatch(batch *models.Batch) *Batch {
 	}
 }
 
-func NewBatch(batch *models.Batch, submissionBlock *uint32, status *batchstatus.BatchStatus) *Batch {
+func NewBatch(batch *models.Batch, minedBlock *uint32, status *batchstatus.BatchStatus) *Batch {
 	return &Batch{
 		ID:                batch.ID,
 		Hash:              batch.Hash,
 		Type:              batch.Type,
 		TransactionHash:   batch.TransactionHash,
-		SubmissionBlock:   submissionBlock,
-		SubmissionTime:    batch.SubmissionTime,
+		MinedBlock:        minedBlock,
+		MinedTime:         batch.MinedTime,
 		Status:            *status,
 		FinalisationBlock: batch.FinalisationBlock,
 	}

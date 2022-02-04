@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -10,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/result"
@@ -51,8 +49,6 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.metrics = metrics.NewCommanderMetrics()
-	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
