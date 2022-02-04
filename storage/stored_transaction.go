@@ -314,11 +314,11 @@ func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.Gene
 	return failedTx.ToGenericTransaction(), nil
 }
 
-func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
+func decodeKeyListHashes(prefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
 	var hash common.Hash
 	hashes := make([]common.Hash, 0, len(keyList))
 	for i := range keyList {
-		err := stored.DecodeHash(keyList[i][len(keyPrefix):], &hash)
+		err := stored.DecodeHash(keyValue(prefix, keyList[i]), &hash)
 		if err != nil {
 			return nil, err
 		}
