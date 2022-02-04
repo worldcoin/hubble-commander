@@ -47,13 +47,6 @@ func decodeUint32Pointer(data []byte) *uint32 {
 	return ref.Uint32(binary.BigEndian.Uint32(data[1:]))
 }
 
-// no decode method because binary.BigEndian.Uint32([]byte) is already a one-liner
-func encodeUint32(value uint32) []byte {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, value)
-	return b
-}
-
 func encodeStringPointer(value *string) []byte {
 	if value == nil {
 		return []byte{0}

@@ -80,7 +80,7 @@ func (t *PendingTx) Bytes() []byte {
 
 	buf.Write(t.Hash.Bytes())
 	buf.WriteByte(byte(t.TxType))
-	buf.Write(encodeUint32(t.FromStateID))
+	buf.Write(EncodeUint32(t.FromStateID))
 	buf.Write(t.Amount.Bytes())
 	buf.Write(t.Fee.Bytes())
 	buf.Write(t.Nonce.Bytes())
