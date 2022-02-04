@@ -118,7 +118,7 @@ Example result (`TRANSFER`):
     "ToStateID": 2,
     "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
     // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
-    "BatchTime": 1633692591,
+    "MinedTime": 1633692591,
     "Status": "FINALISED"
 }
 ```
@@ -145,7 +145,7 @@ Example result (`CREATE2TRANSFER`):
     "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc",
     "BatchHash": "0xeb590ba0ce14d821caebc56514fe867521da78b46b7b78ce4810a353e619f315",
     // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
-    "BatchTime": 1633692591,
+    "MinedTime": 1633692591,
     "Status": "FINALISED"
 }
 ```
@@ -171,7 +171,7 @@ Example result (`MASS_MIGRATION`):
     "SpokeID": 2,
     "BatchHash": "0x9fc863e718defd9506764f4f623f2b0a63fa51dc1a2f85ca314846aaf5cf422c",
     // timestamp at which the tx was included in a batch submitted on chain. Can be null, when the tx hasn't been included yet.
-    "BatchTime": 1633692591,
+    "MinedTime": 1633692591,
     "Status": "FINALISED"
 }
 ```
@@ -248,8 +248,8 @@ Example result:
         "Hash": "0x97222c9001ff4b2e8c328d15c02fc508259f2f9bec5af8b286a932813fe920d6",
         "Type": "GENESIS",
         "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "SubmissionBlock": 44009,
-        "SubmissionTime": null,
+        "MinedBlock": 44009,
+        "MinedTime": null,
         "Status": "FINALISED",
         "FinalisationBlock": 44009
     },
@@ -258,8 +258,8 @@ Example result:
         "Hash": "0xb286d51f69b2f2ff52d387663b449c78eb7f4e6aa86e81ac1efac5ef2020d505",
         "Type": "TRANSFER",
         "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
-        "SubmissionBlock": 46332,
-        "SubmissionTime": 1642591575,
+        "MinedBlock": 46332,
+        "MinedTime": 1642591575,
         "Status": "MINED",
         "FinalisationBlock": 86652
     },
@@ -268,8 +268,8 @@ Example result:
         "Hash": "0xedd8e1b9ef9e3279f80df1434bd3a0b46b073a95d9b8be5aa4a645b6ef0c7a25",
         "Type": "CREATE2TRANSFER",
         "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
-        "SubmissionBlock": 46412,
-        "SubmissionTime": 1642591655,
+        "MinedBlock": 46412,
+        "MinedTime": 1642591655,
         "Status": "MINED",
         "FinalisationBlock": 86732
     },
@@ -278,8 +278,8 @@ Example result:
         "Hash": "0x612d7e555b246b82a93ef412377631bc0edeb566a0d6fb57f23f14d705ce21e8",
         "Type": "MASS_MIGRATION",
         "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
-        "SubmissionBlock": 46398,
-        "SubmissionTime": 1642591641,
+        "MinedBlock": 46398,
+        "MinedTime": 1642591641,
         "Status": "MINED",
         "FinalisationBlock": 86718
     },
@@ -288,8 +288,8 @@ Example result:
         "Hash": "0xe3df23dfda31fc9498bdf990f05f65ca47a18a3c1247709bf9ae634a27970677",
         "Type": "DEPOSIT",
         "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
-        "SubmissionBlock": 44027,
-        "SubmissionTime": 1642589195,
+        "MinedBlock": 44027,
+        "MinedTime": 1642589195,
         "Status": "MINED",
         "FinalisationBlock": 84347
     },
@@ -298,8 +298,8 @@ Example result:
         "Hash": null,
         "Type": "TRANSFER",
         "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
-        "SubmissionBlock": null,
-        "SubmissionTime": null,
+        "MinedBlock": null,
+        "MinedTime": null,
         "Status": "SUBMITTED",
         "FinalisationBlock": null
     }
@@ -318,8 +318,8 @@ Example result (`TRANSFER`):
     "Hash": "0xb286d51f69b2f2ff52d387663b449c78eb7f4e6aa86e81ac1efac5ef2020d505",
     "Type": "TRANSFER",
     "TransactionHash": "0x40aec9dddb89b73e09727a15d2f0bb2dd59cc9ae76da86b5b079f5c870df1033",
-    "SubmissionBlock": 46332,
-    "SubmissionTime": 1642591575,
+    "MinedBlock": 46332,
+    "MinedTime": 1642591575,
     "Status": "MINED",
     "FinalisationBlock": 86652,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
@@ -347,8 +347,8 @@ Example result (`CREATE2TRANSFER`):
     "Hash": "0xedd8e1b9ef9e3279f80df1434bd3a0b46b073a95d9b8be5aa4a645b6ef0c7a25",
     "Type": "CREATE2TRANSFER",
     "TransactionHash": "0x9da0fcf69cbeec799f4a41a70431dc803c28ef32f80ec40b28b5f013e6749cfe",
-    "SubmissionBlock": 46412,
-    "SubmissionTime": 1642591655,
+    "MinedBlock": 46412,
+    "MinedTime": 1642591655,
     "Status": "MINED",
     "FinalisationBlock": 86732,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
@@ -376,8 +376,8 @@ Example result (`MASS_MIGRATION`):
     "Hash": "0x612d7e555b246b82a93ef412377631bc0edeb566a0d6fb57f23f14d705ce21e8",
     "Type": "MASS_MIGRATION",
     "TransactionHash": "0xd0b056121219000d69da10501470ea69163c35139abcf1b4f1774f7ca7b4a07b",
-    "SubmissionBlock": 46398,
-    "SubmissionTime": 1642591641,
+    "MinedBlock": 46398,
+    "MinedTime": 1642591641,
     "Status": "MINED",
     "FinalisationBlock": 86718,
     "AccountTreeRoot": "0xb261c40259ad5dbaf32efb2256225bbf03dcda8e84cffdfe67e68b958e3c7a95",
@@ -410,8 +410,8 @@ Example result (`DEPOSIT`):
     "Hash": "0xe3df23dfda31fc9498bdf990f05f65ca47a18a3c1247709bf9ae634a27970677",
     "Type": "DEPOSIT",
     "TransactionHash": "0xcd03405862fdc876bd6f1ccd2b6a843835324021e09ad8f86ebee2de67144cc9",
-    "SubmissionBlock": 44027,
-    "SubmissionTime": 1642589195,
+    "MinedBlock": 44027,
+    "MinedTime": 1642589195,
     "Status": "MINED",
     "FinalisationBlock": 84347,
     "AccountTreeRoot": null,
@@ -438,8 +438,8 @@ Example result (`GENESIS`):
     "Hash": "0x97222c9001ff4b2e8c328d15c02fc508259f2f9bec5af8b286a932813fe920d6",
     "Type": "GENESIS",
     "TransactionHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "SubmissionBlock": 44009,
-    "SubmissionTime": null,
+    "MinedBlock": 44009,
+    "MinedTime": null,
     "Status": "FINALISED",
     "FinalisationBlock": 44009,
     "AccountTreeRoot": null,
@@ -459,8 +459,8 @@ Example result (`TRANSFER`) with `SUBMITTED` status:
     "Hash": null,
     "Type": "TRANSFER",
     "TransactionHash": "0xa428c43175e6156c933c436455a675c1e521e3841d9d44c6482ee26f861e49c1",
-    "SubmissionBlock": null,
-    "SubmissionTime": null,
+    "MinedBlock": null,
+    "MinedTime": null,
     "Status": "SUBMITTED",
     "FinalisationBlock": null,
     "AccountTreeRoot": null,
@@ -503,7 +503,7 @@ Example result (`TRANSFER`):
     "FeeReceiverStateID": 0,
     "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
     "Status": "MINED",
-    "BatchTime": 1642591575,
+    "MinedTime": 1642591575,
     "Transactions": [
         {
             "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",
@@ -535,7 +535,7 @@ Example result (`CREATE2TRANSFER`):
     "FeeReceiverStateID": 0,
     "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
     "Status": "MINED",
-    "BatchTime": 1642591655,
+    "MinedTime": 1642591655,
     "Transactions": [
         {
             "Hash": "0x3b98cb3f5c10647a80c753108ef14f44b4edebf096fe21fa49c7b578f4069ae0",
@@ -566,7 +566,7 @@ Example result (`MASS_MIGRATION`):
     "LeafHash": "0x44f03af79586fd8ab74b442be1bb920e40eefd467f50d85cea6b29fc98ebd7a8",
     "CombinedSignature": "0x046961ddc008eb0a8e91a9a73a82ab3197741be327b210b7a443b7c763af47970548c262ed1c6039163f075071a36dbf93a7c230d25bfc869d88ded50dd15d36",
     "Status": "MINED",
-    "BatchTime": 1642591641,
+    "MinedTime": 1642591641,
     "WithdrawRoot": "0x7b76f0f62d3774ee059f48632072d284a0cd421abaf0415ad031efc5f3e22866",
     "Meta": {
         "SpokeID": 1,
@@ -602,7 +602,7 @@ Example result (`DEPOSIT`):
     "PostStateRoot": "0xec16268cef171bc3ca07c1144d1d8a83d8e09f3ba4f43d7bba83c87729ffc62f",
     "LeafHash": "0x920330642c6cc8464fa50ef9ce46e0988b3f2013bc0d8a33fcfc00efec96f04d",
     "Status": "MINED",
-    "BatchTime": 1642589195,
+    "MinedTime": 1642589195,
     "SubtreeID": "1",
     "SubtreeRoot": "0x819d6b845c2454d916cc180de8c9e29da8bbb89d17e6374d48d8e9f2de300f19",
     "Deposits": [
@@ -661,7 +661,7 @@ Example result (`TRANSFER`) with `SUBMITTED` status:
     "FeeReceiverStateID": 0,
     "CombinedSignature": "0x2a2bd763f5d61e5ab2c8a96cb9961b1d18c4856546c61a28d4d4a2368e31a4d503e33bc6c29cdbb025c33091f41d016e377e27fee634f7b799da476889166a95",
     "Status": "SUBMITTED",
-    "BatchTime": null,
+    "MinedTime": null,
     "Transactions": [
         {
             "Hash": "0x9b442316136f46247a399169aff5b9931060331f4b66971766a81b77765cfb36",

@@ -333,7 +333,7 @@ type Batch struct {
     FinalisationBlock *uint32
     AccountTreeRoot   *common.Hash
     PrevStateRoot     *common.Hash
-    SubmissionTime    *models.Timestamp
+    MinedTime         *models.Timestamp
 }
 ```
 

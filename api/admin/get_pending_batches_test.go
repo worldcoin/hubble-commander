@@ -58,7 +58,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
-			SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+			MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 		},
 		{
 			ID:              models.MakeUint256(2),

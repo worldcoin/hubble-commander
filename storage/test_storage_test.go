@@ -35,7 +35,7 @@ func (s *NewTestStorageTestSuite) SetupTest() {
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 		PrevStateRoot:     utils.NewRandomHash(),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 }
 
