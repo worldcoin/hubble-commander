@@ -6,14 +6,15 @@
 ## Notes and design rationale
 - Some indices are specified using badgerhold tags on struct fields.
   Others by implementing the `Indexes()` method of `bh.Storer` interface.
-- Badger does not support indices on fields of pointer types well.
-  By default, it would add IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
+- Watch out when using indices on fields of pointer types.
+  By default, badgerhold adds IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
 
-  `_bhIndex:TxReceipt:ToStateID:nil -> bh.KeyList{ txHash1, txHash2, ... }`  
+  `_bhIndex:Batch:Hash:nil -> bh.KeyList{ batchID1, batchID2, ... }`  
 
   Such index entry can quickly grow in size.
-  Thus, for structs that have indices on fields of pointer type we implement `Indexes()` method and specify our own `IndexFunc`.
+  For structs that have indices on fields of pointer type we can implement `Indexes()` method and specify our own `IndexFunc`.
   Returning `nil` from such `IndexFunc` for `nil` field values prevents creation of the `nil` index entry.
+  In case you go down this path, make sure to initialise the index using `initializeIndex` function (see `storage/initialize_index.go` for more info).
 - All transaction details were previously held in a single **Transaction** structure. 
   We had to split transaction details between **Stored Transaction** and **Stored Transaction Receipt** because of conflict 
   between API `hubble_sendTransaction` method and Rollup loop iterations. If we kept all data in the same structure the API method would be 
