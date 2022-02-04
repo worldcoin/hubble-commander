@@ -9,18 +9,42 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (
-	transaction *models.TransactionWithBatchDetails,
-	err error,
-) {
+func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (tx *models.TransactionWithBatchDetails, err error) {
 	err = s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
-		transaction, err = txStorage.unsafeGetTransactionWithBatchDetails(hash)
+		tx, err = txStorage.unsafeGetTransactionWithBatchDetails(hash)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	return transaction, nil
+	return tx, nil
+}
+
+func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
+	*models.TransactionWithBatchDetails,
+	error,
+) {
+	generic, err := s.getTransactionByHash(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &models.TransactionWithBatchDetails{Transaction: generic}
+
+	base := generic.GetBase()
+	if base.CommitmentID == nil {
+		return result, nil
+	}
+
+	batch, err := s.GetBatch(base.CommitmentID.BatchID)
+	if err != nil {
+		return nil, err
+	}
+
+	result.BatchHash = batch.Hash
+	result.MinedTime = batch.MinedTime
+
+	return result, nil
 }
 
 // returns error if the tranasaction is not a FailedTx
@@ -64,33 +88,6 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 	}
 
 	return nil
-}
-
-func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
-	*models.TransactionWithBatchDetails,
-	error,
-) {
-	generic, err := s.getTransactionByHash(hash)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &models.TransactionWithBatchDetails{Transaction: generic}
-
-	base := generic.GetBase()
-	if base.CommitmentID == nil {
-		return result, nil
-	}
-
-	batch, err := s.GetBatch(base.CommitmentID.BatchID)
-	if err != nil {
-		return nil, err
-	}
-
-	result.BatchHash = batch.Hash
-	result.MinedTime = batch.MinedTime
-
-	return result, nil
 }
 
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
