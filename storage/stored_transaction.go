@@ -101,10 +101,6 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 				pendingTx = failedTx.PendingTx
 			}
 
-			// TODO: this throws away the existing commitment / error
-			//       to prevent potentially useful information from being
-			//       destroyed we might want to log at least the error
-
 			err = txStorage.database.Badger.Insert(txHashes[i], pendingTx)
 			if err != nil {
 				return err
@@ -268,16 +264,6 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 		}
 		return nil
 	})
-}
-
-func (s *TransactionStorage) getFailedTxByHash(hash common.Hash) (*stored.FailedTx, error) {
-	var failedTx stored.FailedTx
-	err := s.database.Badger.Get(hash, &failedTx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &failedTx, nil
 }
 
 func (s *TransactionStorage) getBatchedTxByHash(hash common.Hash) (*stored.BatchedTx, error) {

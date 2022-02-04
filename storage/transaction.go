@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
@@ -35,7 +36,8 @@ func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransacti
 			return err
 		}
 
-		_, err = txStorage.getFailedTxByHash(txBase.Hash)
+		var failedTx stored.FailedTx
+		err = txStorage.getAndDelete(txBase.Hash, &failedTx)
 		if errors.Is(err, bh.ErrNotFound) {
 			// TODO: change the test which expects this
 			return NewNotFoundError("txReceipt")
@@ -44,12 +46,15 @@ func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransacti
 			return err
 		}
 
-		err = txStorage.MarkTransactionsAsPending([]common.Hash{txBase.Hash})
-		if err != nil {
-			return err
-		}
+		// It seems worthwhile to record previous errors somewhere and if we did
+		// not log then they would be lost forever
+		log.Warnf(
+			"Replacing failed transaction. Hash=%x ErrorMessage=%+q",
+			txBase.Hash,
+			*failedTx.ErrorMessage,
+		)
 
-		err = txStorage.database.Badger.Update(txBase.Hash, *stored.NewPendingTx(tx))
+		err = txStorage.database.Badger.Insert(txBase.Hash, *stored.NewPendingTx(tx))
 		if err != nil {
 			return err
 		}
