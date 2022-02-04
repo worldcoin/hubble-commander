@@ -117,15 +117,17 @@ func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
 }
 
 func (s *TransactionStorage) getAndDelete(key, result interface{}) error {
-	// TODO: wrap these errors so it's easier to debug them,
-	//       currently there's no way to know where the returned
-	//       error came from
 	err := s.database.Badger.Get(key, result)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to Get item: %w", err)
 	}
 
-	return s.database.Badger.Delete(key, result)
+	err = s.database.Badger.Delete(key, result)
+	if err != nil {
+		return fmt.Errorf("failed to Delete item: %w", err)
+	}
+
+	return nil
 }
 
 func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) error {
@@ -233,9 +235,6 @@ func (s *TransactionStorage) unsafeGetPendingTransactions(txType txtype.Transact
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: the tests never exercise the case where there are multiple pending txns
-	//       of different types
 
 	txs := make([]models.GenericTransaction, len(pendingTxs))
 	for i := range pendingTxs {

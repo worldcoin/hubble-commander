@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -127,43 +126,6 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction
 	res, err := s.storage.GetCreate2Transfer(hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
-}
-
-func (s *Create2TransferTestSuite) TestGetPendingCreate2Transfers() {
-	commitment := &models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			Type: batchtype.Transfer,
-		},
-	}
-	err := s.storage.AddCommitment(commitment)
-	s.NoError(err)
-
-	create2Transfer2 := create2Transfer
-	create2Transfer2.Hash = utils.RandomHash()
-	create2Transfer3 := create2Transfer
-	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.CommitmentID = &commitment.ID
-	create2Transfer4 := create2Transfer
-	create2Transfer4.Hash = utils.RandomHash()
-	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
-
-	create2transfers := []models.Create2Transfer{
-		create2Transfer,
-		create2Transfer2,
-		create2Transfer3,
-		create2Transfer4,
-	}
-
-	err = s.storage.BatchAddCreate2Transfer(create2transfers)
-	s.NoError(err)
-
-	// TODO: merge all these tests into one big test!
-	res, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, create2Transfer)
-	s.Contains(res, create2Transfer2)
 }
 
 func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {

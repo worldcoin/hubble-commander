@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -101,27 +100,6 @@ func (s *MassMigrationTestSuite) TestGetMassMigration_NonexistentMassMigration()
 	res, err := s.storage.GetMassMigration(hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
-}
-
-// TODO: should probably remove this test, we now have three copies of the same test
-func (s *MassMigrationTestSuite) TestGetPendingMassMigrations() {
-	massMigrations := make([]models.MassMigration, 4)
-	for i := range massMigrations {
-		massMigrations[i] = massMigration
-		massMigrations[i].Hash = utils.RandomHash()
-	}
-	massMigrations[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
-	massMigrations[3].ErrorMessage = ref.String("A very boring error message")
-
-	err := s.storage.BatchAddMassMigration(massMigrations)
-	s.NoError(err)
-
-	res, err := s.storage.GetPendingMassMigrations()
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, massMigrations[0])
-	s.Contains(res, massMigrations[1])
 }
 
 func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
