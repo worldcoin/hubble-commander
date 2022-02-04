@@ -149,7 +149,7 @@ func (s *TransactionTestSuite) TestUpdateTransaction_DoesNotUpdatePendingTx() {
 	updatedTx := massMigration
 	updatedTx.SetReceiveTime()
 	err = s.storage.ReplaceFailedTransaction(&updatedTx)
-	s.ErrorIs(err, NewNotFoundError("txReceipt"))
+	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
 func TestTransactionTestSuite(t *testing.T) {

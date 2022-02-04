@@ -39,8 +39,7 @@ func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransacti
 		var failedTx stored.FailedTx
 		err = txStorage.getAndDelete(txBase.Hash, &failedTx)
 		if errors.Is(err, bh.ErrNotFound) {
-			// TODO: change the test which expects this
-			return NewNotFoundError("txReceipt")
+			return NewNotFoundError("FailedTx")
 		}
 		if err != nil {
 			return err
