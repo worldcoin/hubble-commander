@@ -1051,11 +1051,34 @@ Returns pending batches that haven't been mined yet, see below.
 ]
 ```
 
+### `admin_getFailedTransactions()`
+
+Returns all failed transactions.
+
+```json
+[
+    {
+        "Hash": "0x25c3b159f42a82dc8277a662b90a079a61c569bff8784e8ebd51bfd610792901",
+        "TxType": "TRANSFER",
+        "FromStateID": 1,
+        "Amount": "50",
+        "Fee": "1",
+        "Nonce": "0",
+        "Signature": "0x191e0510f1657c01c22b65c3548806ba2bd19faa721c61516bf49cbb787e120a2b416731ac80dd38a561bba25aac89c6474a37bce42f3b213d135c920221d810",
+        "ReceiveTime": 1643977662,
+        "CommitmentID": null,
+        "ErrorMessage": "receiver state ID does not exist",
+        "ToStateID": 100
+    }
+]
+```
+
 ### `admin_configure(configureParams)`
 
 Can be used to enable/disable:
- - Accepting new transactions by `hubble_sendTransaction`.
- - Creating and submitting new transaction batches.
+
+- Accepting new transactions by `hubble_sendTransaction`.
+- Creating and submitting new transaction batches.
 
 # API usage
 
