@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -157,30 +158,34 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 	return nil
 }
 
-func (s *Storage) GetTransactionCount() (*int, error) {
-	count := 0
-	err := s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
-		latestBatch, err := txStorage.GetLatestSubmittedBatch()
-		if IsNotFoundError(err) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		bhcount, err := txStorage.database.Badger.Count(
-			&stored.BatchedTx{},
-			bh.Where("CommitmentID.BatchID").Le(latestBatch.ID),
-		)
-		if err == nil {
-			count = int(bhcount)
-		}
+func (s *Storage) GetTransactionCount() (count *int, err error) {
+	err = s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+		count, err = txStorage.unsafeGetTransactionCount()
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &count, nil
+	return count, nil
+}
+
+func (s *Storage) unsafeGetTransactionCount() (*int, error) {
+	latestBatch, err := s.GetLatestSubmittedBatch()
+	if IsNotFoundError(err) {
+		return ref.Int(0), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := s.database.Badger.Count(
+		&stored.BatchedTx{},
+		bh.Where("CommitmentID.BatchID").Le(latestBatch.ID),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ref.Int(int(count)), nil
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
