@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -31,19 +30,6 @@ func (s *InitializeIndexTestSuite) SetupTest() {
 func (s *InitializeIndexTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
-}
-
-func (s *InitializeIndexTestSuite) TestStoredBatchedTx_CommitmentID_IndexWorks() {
-	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
-	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
-	s.addStoredBatchedTx(&id1)
-	s.addStoredBatchedTx(&id2)
-	s.addStoredBatchedTx(&id1)
-
-	indexValues := s.getCommitmentIDIndexValues()
-	s.Len(indexValues, 2)
-	s.Len(indexValues[id1], 2)
-	s.Len(indexValues[id2], 1)
 }
 
 func (s *InitializeIndexTestSuite) TestAccountLeaf_PublicKey_IndexWorks() {
@@ -101,20 +87,6 @@ func (s *InitializeIndexTestSuite) TestAccountLeaf_PublicKey_FindUsingIndexWorks
 	s.Len(accounts, 0)
 }
 
-func (s *InitializeIndexTestSuite) getCommitmentIDIndexValues() map[models.CommitmentID]bh.KeyList {
-	indexValues := make(map[models.CommitmentID]bh.KeyList)
-
-	s.iterateIndex(stored.BatchedTxName, "CommitmentID", func(encodedKey []byte, keyList bh.KeyList) {
-		var commitmentID models.CommitmentID
-		err := db.Decode(encodedKey, &commitmentID)
-		s.NoError(err)
-
-		indexValues[commitmentID] = keyList
-	})
-
-	return indexValues
-}
-
 func (s *InitializeIndexTestSuite) getPublicKeyIndexValues(typeName []byte) map[models.PublicKey]bh.KeyList {
 	indexValues := make(map[models.PublicKey]bh.KeyList)
 
@@ -135,15 +107,6 @@ func (s *InitializeIndexTestSuite) iterateIndex(
 	handleIndex func(encodedKey []byte, keyList bh.KeyList),
 ) {
 	testutils.IterateIndex(s.Assertions, s.storage.database.Badger, typeName, indexName, handleIndex)
-}
-
-func (s *InitializeIndexTestSuite) addStoredBatchedTx(commitmentID *models.CommitmentID) {
-	tx := testutils.MakeTransfer(11, 0, 1, 10)
-	tx.CommitmentID = commitmentID
-
-	batchedTx := stored.NewBatchedTx(&tx)
-	err := s.storage.database.Badger.Insert(batchedTx.Hash, *batchedTx)
-	s.NoError(err)
 }
 
 func TestInitializeIndexTestSuite(t *testing.T) {
