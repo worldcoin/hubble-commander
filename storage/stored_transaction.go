@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
@@ -179,19 +180,39 @@ func (s *Storage) GetTransactionCount() (*int, error) {
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
-	var batchedTxs []stored.BatchedTx
-	err := s.database.Badger.Find(&batchedTxs, bh.Where("CommitmentID.BatchID").In(bh.Slice(batchIDs)...))
-	if err != nil {
-		return nil, err
-	}
+	// We have an index on CommitmentID. It turns out that BatchID is the first
+	// member of the BatchID struct so we effectively have an index on BatchID. We can
+	// take advantage of that index by manually iterating.
+	// the slow version is: Badger.Find(..., bh.Where("CommitmentID.BatchID").In(...))
 
-	for i := range batchedTxs {
-		hashes = append(hashes, batchedTxs[i].Hash)
+	batchedTxPrefix := models.GetBadgerHoldPrefix(stored.BatchedTx{})
+
+	var keyList bh.KeyList
+	batchPrefixes := batchIdsToBatchPrefixes(batchIDs)
+	seekPrefix := db.IndexKeyPrefix(stored.BatchedTxName, "CommitmentID")
+	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
+			err := item.Value(func(val []byte) error {
+				return db.Decode(val, &keyList)
+			})
+			if err != nil {
+				return false, err
+			}
+			txHashes, err := decodeKeyListHashes(batchedTxPrefix, keyList)
+			if err != nil {
+				return false, err
+			}
+			hashes = append(hashes, txHashes...)
+		}
+		return false, nil
+	})
+	if err != nil && err != db.ErrIteratorFinished {
+		return nil, err
 	}
 	if len(hashes) == 0 {
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
-	return hashes, err
+	return hashes, nil
 }
 
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (txs models.GenericTransactionArray, err error) {
@@ -296,4 +317,38 @@ func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.Gene
 		return nil, err
 	}
 	return failedTx.ToGenericTransaction(), nil
+}
+
+func decodeKeyListHashes(keyPrefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
+	var hash common.Hash
+	hashes := make([]common.Hash, 0, len(keyList))
+	for i := range keyList {
+		err := stored.DecodeHash(keyList[i][len(keyPrefix):], &hash)
+		if err != nil {
+			return nil, err
+		}
+		hashes = append(hashes, hash)
+	}
+	return hashes, nil
+}
+
+func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
+	batchPrefixes := make([][]byte, 0, len(batchIDs))
+	for i := range batchIDs {
+		batchPrefixes = append(batchPrefixes, batchIDs[i].Bytes())
+	}
+	return batchPrefixes
+}
+
+func keyValue(prefix, key []byte) []byte {
+	return key[len(prefix):]
+}
+
+func validForPrefixes(s []byte, prefixes [][]byte) bool {
+	for i := range prefixes {
+		if bytes.HasPrefix(s, prefixes[i]) {
+			return true
+		}
+	}
+	return false
 }
