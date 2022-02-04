@@ -217,18 +217,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	return hashes, nil
 }
 
-func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (txs models.GenericTransactionArray, err error) {
-	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *TransactionStorage) error {
-		txs, err = txStorage.unsafeGetPendingTransactions(txType)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return txs, nil
-}
-
-func (s *TransactionStorage) unsafeGetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
+func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
 	var pendingTxs []stored.PendingTx
 
 	err := s.database.Badger.Find(&pendingTxs, bh.Where("TxType").Eq(txType))
