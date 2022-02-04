@@ -192,11 +192,9 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	hashes := make([]common.Hash, 0, len(batchIDs)*32)
 
 	// We have an index on CommitmentID. It turns out that BatchID is the first
-	// member of the BatchID struct so we effectively have an index on BatchID. We can
-	// take advantage of that index by manually iterating.
-	// the slow version is: Badger.Find(..., bh.Where("CommitmentID.BatchID").In(...))
-
-	batchedTxPrefix := models.GetBadgerHoldPrefix(stored.BatchedTx{})
+	// member of the BatchID struct, so we effectively have an index on BatchID.
+	// We can take advantage of that index by manually iterating.
+	// The slow version is: Badger.Find(..., bh.Where("CommitmentID.BatchID").In(...))
 
 	var keyList bh.KeyList
 	batchPrefixes := batchIdsToBatchPrefixes(batchIDs)
@@ -209,7 +207,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 			if err != nil {
 				return false, err
 			}
-			txHashes, err := decodeKeyListHashes(batchedTxPrefix, keyList)
+			txHashes, err := decodeKeyListHashes(stored.BatchedTxPrefix, keyList)
 			if err != nil {
 				return false, err
 			}

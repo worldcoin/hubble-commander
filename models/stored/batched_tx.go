@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	BatchedTxName = models.GetTypeName(BatchedTx{})
+	BatchedTxName   = models.GetTypeName(BatchedTx{})
+	BatchedTxPrefix = models.GetBadgerHoldPrefix(BatchedTx{})
 )
 
 type BatchedTx struct {
