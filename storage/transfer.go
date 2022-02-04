@@ -35,18 +35,21 @@ func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, er
 }
 
 func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
-	var batchedTxs []stored.BatchedTx
+	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
-	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID").And("TxType").Eq(txtype.Transfer)
+	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+	// We're not using `.And("TxType").Eq(txtype.Transfer)` here because of inefficiency in BH implementation
 
 	err := s.database.Badger.Find(&batchedTxs, query)
 	if err != nil {
 		return nil, err
 	}
 
-	txs := make([]models.Transfer, len(batchedTxs))
+	txs := make([]models.Transfer, 0, len(batchedTxs))
 	for i := range batchedTxs {
-		txs[i] = *batchedTxs[i].ToTransfer()
+		if batchedTxs[i].TxType == txtype.Transfer {
+			txs = append(txs, *batchedTxs[i].ToTransfer())
+		}
 	}
 
 	return txs, nil

@@ -34,18 +34,21 @@ func (s *TransactionStorage) GetPendingMassMigrations() (txs models.MassMigratio
 }
 
 func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.CommitmentID) ([]models.MassMigration, error) {
-	var batchedTxs []stored.BatchedTx
+	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
-	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID").And("TxType").Eq(txtype.MassMigration)
+	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+	// We're not using `.And("TxType").Eq(txtype.MassMigration)` here because of inefficiency in BH implementation
 
 	err := s.database.Badger.Find(&batchedTxs, query)
 	if err != nil {
 		return nil, err
 	}
 
-	txs := make([]models.MassMigration, len(batchedTxs))
+	txs := make([]models.MassMigration, 0, len(batchedTxs))
 	for i := range batchedTxs {
-		txs[i] = *batchedTxs[i].ToMassMigration()
+		if batchedTxs[i].TxType == txtype.MassMigration {
+			txs = append(txs, *batchedTxs[i].ToMassMigration())
+		}
 	}
 
 	return txs, nil
