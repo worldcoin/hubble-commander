@@ -26,6 +26,11 @@ func (m *MockHubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	return args.Get(0).([]dto.PendingBatch), args.Error(1)
 }
 
+func (m *MockHubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
+	args := m.Called()
+	return args.Get(0).(models.GenericTransactionArray), args.Error(1)
+}
+
 type MigrateTestSuite struct {
 	*require.Assertions
 	suite.Suite
