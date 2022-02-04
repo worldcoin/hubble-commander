@@ -36,7 +36,7 @@ func Encode(value interface{}) ([]byte, error) {
 	case models.CommitmentID:
 		return v.Bytes(), nil
 	case *models.CommitmentID:
-		return stored.EncodeCommitmentIDPointer(v), nil
+		return v.Bytes(), nil
 	case models.PendingDeposit:
 		return v.Bytes(), nil
 	case *models.PendingDeposit:
@@ -134,7 +134,7 @@ func Decode(data []byte, value interface{}) error {
 	case *models.ChainState:
 		return v.SetBytes(data)
 	case *models.CommitmentID:
-		return decodeCommitmentIDPointer(data, &value, v)
+		return v.SetBytes(data)
 	case *models.PendingDeposit:
 		return v.SetBytes(data)
 	case *models.DepositID:
@@ -194,19 +194,6 @@ func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error 
 	}
 	if data[0] == 1 {
 		return stored.DecodeHash(data[1:], dst)
-	}
-	*value = nil
-	return nil
-}
-
-// If you change this you might also need to change models.stored.sizeCommitment
-// nolint: gocritic
-func decodeCommitmentIDPointer(data []byte, value *interface{}, dst *models.CommitmentID) error {
-	if len(data) == 33 {
-		return dst.SetBytes(data)
-	}
-	if data[0] == 1 {
-		return dst.SetBytes(data[1:])
 	}
 	*value = nil
 	return nil

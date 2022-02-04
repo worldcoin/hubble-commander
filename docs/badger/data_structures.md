@@ -180,7 +180,7 @@ Value: `stored.BatchedTx`
 ```go
 type BatchedTx struct {
 	PendingTx
-	CommitmentID *models.CommitmentID
+	CommitmentID models.CommitmentID
 }
 ```
 

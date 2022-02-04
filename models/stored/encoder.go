@@ -86,26 +86,3 @@ func decodeTimestampPointer(data []byte) (*models.Timestamp, error) {
 	}
 	return &timestamp, nil
 }
-
-func EncodeCommitmentIDPointer(id *models.CommitmentID) []byte {
-	b := make([]byte, models.CommitmentIDDataLength+1)
-	if id == nil {
-		return b
-	}
-	b[0] = 1
-	copy(b[1:], id.Bytes())
-	return b
-}
-
-func decodeCommitmentIDPointer(data []byte) (*models.CommitmentID, error) {
-	if data[0] == 0 {
-		return nil, nil
-	}
-
-	var commitmentID models.CommitmentID
-	err := commitmentID.SetBytes(data[1:])
-	if err != nil {
-		return nil, err
-	}
-	return &commitmentID, nil
-}
