@@ -134,7 +134,7 @@ There is a number of scripts defined in the Makefile:
 * `make export-state` - exports state leaves to a file
 * `make export-accounts` - exports accounts to a file
 * `make lint` - run linter
-* `make test` - run all tests unit tests
+* `make test` - run all unit tests (excluding tests with dependency on Hardhat node)
 * `make run-docs` - render and preview docs by serving it via HTTP
 * `make clean-docs` - delete the generated docs and any other build artifacts
 
