@@ -222,6 +222,33 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations
 	s.Len(txs, 0)
 }
 
+func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
+	failedTransfer := transfer
+	failedTransfer.ErrorMessage = ref.String("quacked transfer")
+	err := s.storage.AddTransaction(&failedTransfer)
+	s.NoError(err)
+
+	failedC2T := create2Transfer
+	failedC2T.ErrorMessage = ref.String("quacked create2transfer")
+	err = s.storage.AddTransaction(&failedC2T)
+	s.NoError(err)
+
+	failedMM := massMigration
+	failedMM.ErrorMessage = ref.String("quacked migration")
+	err = s.storage.AddTransaction(&failedMM)
+	s.NoError(err)
+
+	txs, err := s.storage.GetAllFailedTxs()
+	s.NoError(err)
+	s.Len(txs, 3)
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions() {
+	txs, err := s.storage.GetAllFailedTxs()
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
 		transfers[i].CommitmentID = &models.CommitmentID{
