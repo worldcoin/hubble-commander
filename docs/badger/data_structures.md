@@ -181,7 +181,6 @@ Value: `stored.BatchedTx`
 type BatchedTx struct {
 	PendingTx
 	CommitmentID *models.CommitmentID
-	ToStateID *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
 }
 ```
 
