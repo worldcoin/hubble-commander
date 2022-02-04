@@ -92,57 +92,61 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		badger := txStorage.database.Badger
-
-		base := tx.GetBase()
-		hash := base.Hash
-
-		if base.ErrorMessage != nil {
-			// This is a FailedTx
-
-			err := txStorage.checkNoTx(&hash, &stored.PendingTx{})
-			if err != nil {
-				return err
-			}
-
-			err = txStorage.checkNoTx(&hash, &stored.BatchedTx{})
-			if err != nil {
-				return err
-			}
-
-			failedTx := stored.NewFailedTx(tx)
-			return badger.Insert(hash, *failedTx)
-		} else if base.CommitmentID != nil {
-			// This is a BatchedTx
-
-			err := txStorage.checkNoTx(&hash, &stored.PendingTx{})
-			if err != nil {
-				return err
-			}
-
-			err = txStorage.checkNoTx(&hash, &stored.FailedTx{})
-			if err != nil {
-				return err
-			}
-
-			batchedTx := stored.NewBatchedTx(tx)
-			return badger.Insert(hash, *batchedTx)
-		} else {
-			// This is a PendingTx
-
-			err := txStorage.checkNoTx(&hash, &stored.FailedTx{})
-			if err != nil {
-				return err
-			}
-			err = txStorage.checkNoTx(&hash, &stored.BatchedTx{})
-			if err != nil {
-				return err
-			}
-
-			pendingTx := stored.NewPendingTx(tx)
-			return badger.Insert(pendingTx.Hash, *pendingTx)
-		}
+		return s.unsafeAddTransaction(tx)
 	})
+}
+
+func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) error {
+	badger := s.database.Badger
+
+	base := tx.GetBase()
+	hash := base.Hash
+
+	if base.ErrorMessage != nil {
+		// This is a FailedTx
+
+		err := s.checkNoTx(&hash, &stored.PendingTx{})
+		if err != nil {
+			return err
+		}
+
+		err = s.checkNoTx(&hash, &stored.BatchedTx{})
+		if err != nil {
+			return err
+		}
+
+		failedTx := stored.NewFailedTx(tx)
+		return badger.Insert(hash, *failedTx)
+	} else if base.CommitmentID != nil {
+		// This is a BatchedTx
+
+		err := s.checkNoTx(&hash, &stored.PendingTx{})
+		if err != nil {
+			return err
+		}
+
+		err = s.checkNoTx(&hash, &stored.FailedTx{})
+		if err != nil {
+			return err
+		}
+
+		batchedTx := stored.NewBatchedTx(tx)
+		return badger.Insert(hash, *batchedTx)
+	} else {
+		// This is a PendingTx
+
+		err := s.checkNoTx(&hash, &stored.FailedTx{})
+		if err != nil {
+			return err
+		}
+		err = s.checkNoTx(&hash, &stored.BatchedTx{})
+		if err != nil {
+			return err
+		}
+
+		pendingTx := stored.NewPendingTx(tx)
+		return badger.Insert(pendingTx.Hash, *pendingTx)
+	}
 }
 
 func (s *TransactionStorage) checkNoTx(hash *common.Hash, result interface{}) error {
