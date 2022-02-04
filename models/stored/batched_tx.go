@@ -21,7 +21,7 @@ func NewBatchedTx(tx models.GenericTransaction) *BatchedTx {
 
 	if base.CommitmentID == nil {
 		// this is a PendingTx or maybe a FailedTx
-		return nil
+		panic("missing CommitmentID in param passed to NewBatchedTx")
 	}
 
 	return &BatchedTx{
