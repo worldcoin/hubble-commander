@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
@@ -66,44 +65,4 @@ func TestEncodeTimestampPointer_NilValue(t *testing.T) {
 	decodedTimestamp, err := decodeTimestampPointer(bytes)
 	require.NoError(t, err)
 	require.Nil(t, decodedTimestamp)
-}
-
-func TestEncodeStringPointer(t *testing.T) {
-	bytes := encodeStringPointer(ref.String(testMessage))
-	require.EqualValues(t, 1, bytes[0])
-
-	decodedValue := decodeStringPointer(bytes)
-	require.Equal(t, testMessage, *decodedValue)
-}
-
-func TestEncodeStringPointer_NilValue(t *testing.T) {
-	var value *string
-	bytes := encodeStringPointer(value)
-	require.EqualValues(t, 0, bytes[0])
-
-	decodedValue := decodeStringPointer(bytes)
-	require.Nil(t, decodedValue)
-}
-
-func TestEncodeCommitmentIDPointer(t *testing.T) {
-	id := &models.CommitmentID{
-		BatchID:      models.MakeUint256(5),
-		IndexInBatch: 2,
-	}
-	bytes := EncodeCommitmentIDPointer(id)
-	require.EqualValues(t, 1, bytes[0])
-
-	decodedID, err := decodeCommitmentIDPointer(bytes)
-	require.NoError(t, err)
-	require.Equal(t, *id, *decodedID)
-}
-
-func TestEncodeCommitmentIDPointer_NilValue(t *testing.T) {
-	var id *models.CommitmentID
-	bytes := EncodeCommitmentIDPointer(id)
-	require.EqualValues(t, 0, bytes[0])
-
-	decodedID, err := decodeCommitmentIDPointer(bytes)
-	require.NoError(t, err)
-	require.Nil(t, decodedID)
 }
