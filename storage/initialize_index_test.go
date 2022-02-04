@@ -2,14 +2,11 @@ package storage
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -141,23 +138,10 @@ func (s *InitializeIndexTestSuite) iterateIndex(
 }
 
 func (s *InitializeIndexTestSuite) addStoredBatchedTx(commitmentID *models.CommitmentID) {
-	transfer := &models.Transfer{
-		TransactionBase: models.TransactionBase{
-			Hash:         utils.RandomHash(),
-			TxType:       txtype.Transfer,
-			FromStateID:  11,
-			Amount:       models.MakeUint256(10),
-			Fee:          models.MakeUint256(111),
-			Nonce:        models.MakeUint256(1),
-			Signature:    models.Signature{1, 2, 3, 4, 5},
-			ReceiveTime:  models.NewTimestamp(time.Unix(10, 0).UTC()),
-			CommitmentID: commitmentID,
-		},
-		ToStateID: 0,
-	}
+	tx := testutils.MakeTransfer(11, 0, 1, 10)
+	tx.CommitmentID = commitmentID
 
-	batchedTx := stored.NewBatchedTx(transfer)
-
+	batchedTx := stored.NewBatchedTx(&tx)
 	err := s.storage.database.Badger.Insert(batchedTx.Hash, *batchedTx)
 	s.NoError(err)
 }
