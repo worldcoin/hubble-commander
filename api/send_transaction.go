@@ -13,16 +13,17 @@ import (
 )
 
 var (
-	ErrFeeTooLow            = fmt.Errorf("fee must be greater than 0")
-	ErrNonceTooLow          = fmt.Errorf("nonce too low")
-	ErrNotEnoughBalance     = fmt.Errorf("not enough balance")
-	ErrTransferToSelf       = fmt.Errorf("transfer to the same state id")
-	ErrInvalidAmount        = fmt.Errorf("amount must be positive")
-	ErrUnsupportedTxType    = fmt.Errorf("unsupported transaction type")
-	ErrNonexistentSender    = fmt.Errorf("sender state ID does not exist")
-	ErrSpokeDoesNotExist    = fmt.Errorf("spoke with given ID does not exist")
-	ErrPendingTransaction   = fmt.Errorf("transaction already exists")
-	ErrSendTxMethodDisabled = fmt.Errorf("commander instance is not accepting transactions")
+	ErrFeeTooLow               = fmt.Errorf("fee must be greater than 0")
+	ErrNonceTooLow             = fmt.Errorf("nonce too low")
+	ErrNotEnoughBalance        = fmt.Errorf("not enough balance")
+	ErrTransferToSelf          = fmt.Errorf("transfer to the same state id")
+	ErrInvalidAmount           = fmt.Errorf("amount must be positive")
+	ErrUnsupportedTxType       = fmt.Errorf("unsupported transaction type")
+	ErrNonexistentSender       = fmt.Errorf("sender state ID does not exist")
+	ErrSpokeDoesNotExist       = fmt.Errorf("spoke with given ID does not exist")
+	ErrAlreadyMinedTransaction = fmt.Errorf("transaction already mined")
+	ErrPendingTransaction      = fmt.Errorf("transaction already exists")
+	ErrSendTxMethodDisabled    = fmt.Errorf("commander instance is not accepting transactions")
 
 	APIErrAnyMissingField = NewAPIError(
 		10002,
@@ -94,7 +95,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	NewNotDecimalEncodableError("amount"): APINotDecimalEncodableAmountError,
 	NewNotDecimalEncodableError("fee"):    APINotDecimalEncodableFeeError,
 	ErrSpokeDoesNotExist:                  APIErrSpokeDoesNotExist,
-	storage.ErrAlreadyMinedTransaction:    APIErrMinedTransaction,
+	ErrAlreadyMinedTransaction:            APIErrMinedTransaction,
 	ErrPendingTransaction:                 APIErrPendingTransaction,
 	ErrSendTxMethodDisabled:               APIErrSendTxMethodDisabled,
 }
@@ -190,6 +191,9 @@ func (a *API) updateDuplicatedTransaction(tx models.GenericTransaction) (*common
 	txHash := &tx.GetBase().Hash
 	logDuplicateTransaction(txHash)
 	err := a.storage.ReplaceFailedTransaction(tx)
+	if errors.Is(err, storage.ErrAlreadyMinedTransaction) {
+		return nil, errors.WithStack(ErrAlreadyMinedTransaction)
+	}
 	if storage.IsNotFoundError(err) {
 		return nil, errors.WithStack(ErrPendingTransaction)
 	}

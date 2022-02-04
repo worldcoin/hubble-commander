@@ -128,7 +128,7 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_UpdatesTx() {
 	s.Equal(updatedTx, *res)
 }
 
-func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdateMinedTx() {
+func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdateBatchedTx() {
 	tx := create2Transfer
 	tx.CommitmentID = &models.CommitmentID{
 		BatchID: models.MakeUint256(1),
