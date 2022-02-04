@@ -22,10 +22,10 @@ type TransactionStorage struct {
 
 type dbOperation func(txStorage *TransactionStorage) error
 
-func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
+func NewTransactionStorage(database *Database) *TransactionStorage {
 	return &TransactionStorage{
 		database: database,
-	}, nil
+	}
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {

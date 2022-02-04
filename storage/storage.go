@@ -42,10 +42,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	commitmentStorage := NewCommitmentStorage(database)
 
-	transactionStorage, err := NewTransactionStorage(database)
-	if err != nil {
-		return nil, err
-	}
+	transactionStorage := NewTransactionStorage(database)
 
 	depositStorage := NewDepositStorage(database)
 
