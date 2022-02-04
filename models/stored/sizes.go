@@ -1,7 +1,9 @@
 package stored
 
+import "github.com/Worldcoin/hubble-commander/models"
+
 const (
-	sizeCommitment      = 34 // See {Encode,decode}CommitmentIDPointer
+	sizeCommitment      = models.CommitmentIDDataLength
 	sizeHash            = 32
 	sizeTxType          = 1
 	sizeU32             = 4

@@ -21,14 +21,6 @@ type TransactionStorage struct {
 type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) (*TransactionStorage, error) {
-	err := initializeIndex(database, stored.BatchedTxName, "CommitmentID", models.CommitmentID{
-		BatchID:      models.MakeUint256(0),
-		IndexInBatch: 0,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	return &TransactionStorage{
 		database: database,
 	}, nil

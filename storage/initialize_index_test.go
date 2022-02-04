@@ -37,7 +37,6 @@ func (s *InitializeIndexTestSuite) TearDownTest() {
 }
 
 func (s *InitializeIndexTestSuite) TestStoredBatchedTx_CommitmentID_IndexWorks() {
-	zeroID := models.CommitmentID{BatchID: models.MakeUint256(0), IndexInBatch: 0}
 	id1 := models.CommitmentID{BatchID: models.MakeUint256(1), IndexInBatch: 0}
 	id2 := models.CommitmentID{BatchID: models.MakeUint256(2), IndexInBatch: 0}
 	s.addStoredBatchedTx(&id1)
@@ -45,8 +44,7 @@ func (s *InitializeIndexTestSuite) TestStoredBatchedTx_CommitmentID_IndexWorks()
 	s.addStoredBatchedTx(&id1)
 
 	indexValues := s.getCommitmentIDIndexValues()
-	s.Len(indexValues, 3)
-	s.Len(indexValues[zeroID], 0) // value set due to index initialization, see NewTransactionStorage
+	s.Len(indexValues, 2)
 	s.Len(indexValues[id1], 2)
 	s.Len(indexValues[id2], 1)
 }

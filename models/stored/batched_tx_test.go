@@ -26,7 +26,7 @@ func TestBatchedTx_GenericTransactionRoundTrip(t *testing.T) {
 				ToStateID: 2,
 			},
 		},
-		CommitmentID: &models.CommitmentID{
+		CommitmentID: models.CommitmentID{
 			BatchID:      models.MakeUint256(1),
 			IndexInBatch: 0,
 		},
