@@ -205,14 +205,25 @@ make start-geth-locally
 # OR
 make setup-geth
 ```
+
 Run E2E tests:
+
 ```shell
 go test -v -tags e2e ./e2e
 ```
 
 Run E2E benchmarks:
+
 ```shell
 go test -v -tags e2e ./e2e/bench -timeout 1200s
+```
+
+## Running HardHat tests
+
+Run unit tests that are dependent on HardHat:
+
+```shell
+go test -v -tags hardhat ./bls/hardhat
 ```
 
 ## Running locally
