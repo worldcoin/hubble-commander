@@ -47,7 +47,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
-		SubmissionTime:    models.NewTimestamp(time.Unix(140, 0).UTC()),
+		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
 
