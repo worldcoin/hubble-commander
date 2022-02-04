@@ -79,28 +79,32 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txHashes {
-			var pendingTx stored.PendingTx
-
-			var batchedTx stored.BatchedTx
-			err := txStorage.getAndDelete(txHashes[i], &batchedTx)
-			if err == nil {
-				pendingTx = batchedTx.PendingTx
-			} else {
-				var failedTx stored.FailedTx
-				err = txStorage.getAndDelete(txHashes[i], &failedTx)
-				if err != nil {
-					return err
-				}
-				pendingTx = failedTx.PendingTx
-			}
-
-			err = txStorage.database.Badger.Insert(txHashes[i], pendingTx)
+			err := txStorage.unsafeMarkTransactionAsPending(&txHashes[i])
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+func (s *TransactionStorage) unsafeMarkTransactionAsPending(txHash *common.Hash) error {
+	var pendingTx stored.PendingTx
+
+	var batchedTx stored.BatchedTx
+	err := s.getAndDelete(*txHash, &batchedTx)
+	if err == nil {
+		pendingTx = batchedTx.PendingTx
+	} else {
+		var failedTx stored.FailedTx
+		err = s.getAndDelete(*txHash, &failedTx)
+		if err != nil {
+			return err
+		}
+		pendingTx = failedTx.PendingTx
+	}
+
+	return s.database.Badger.Insert(*txHash, pendingTx)
 }
 
 func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
