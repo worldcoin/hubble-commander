@@ -1,6 +1,6 @@
 {
     "info": {
-        "_postman_id": "9ae901a3-3c9f-4544-a261-67a834633166",
+        "_postman_id": "0c348ace-dfae-4448-b78c-b7adb3415f46",
         "name": "Worldcoin",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
@@ -10,6 +10,35 @@
             "item": [
                 {
                     "name": "getPendingBatches",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Auth-Key",
+                                "value": "{{auth_key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"admin_getPendingBatches\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "getFailedTransactions",
                     "request": {
                         "method": "POST",
                         "header": [
