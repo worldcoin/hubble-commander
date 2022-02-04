@@ -80,11 +80,7 @@ func (t *PendingTx) Bytes() []byte {
 
 	buf.Write(t.Hash.Bytes())
 	buf.WriteByte(byte(t.TxType))
-
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, t.FromStateID)
-	buf.Write(b)
-
+	buf.Write(encodeUint32(t.FromStateID))
 	buf.Write(t.Amount.Bytes())
 	buf.Write(t.Fee.Bytes())
 	buf.Write(t.Nonce.Bytes())
