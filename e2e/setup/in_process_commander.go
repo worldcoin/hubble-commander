@@ -24,10 +24,11 @@ func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerC
 		commanderConfig = config.GetConfig()
 	}
 
+	commanderConfig.Badger.Path += "_e2e"
 	commanderConfig.Bootstrap.Prune = true
 
 	if deployerConfig == nil {
-		deployerConfig = config.GetDeployerConfig()
+		deployerConfig = config.GetDeployerTestConfig()
 	}
 
 	return CreateInProcessCommander(commanderConfig, deployerConfig)
