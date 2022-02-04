@@ -26,40 +26,44 @@ func (s *Storage) GetTransactionWithBatchDetails(hash common.Hash) (
 // returns error if the tranasaction is not a FailedTx
 func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		txBase := tx.GetBase()
-
-		_, err := txStorage.getBatchedTxByHash(txBase.Hash)
-		if err == nil {
-			return errors.WithStack(ErrAlreadyMinedTransaction)
-		}
-		if !errors.Is(err, bh.ErrNotFound) {
-			return err
-		}
-
-		var failedTx stored.FailedTx
-		err = txStorage.getAndDelete(txBase.Hash, &failedTx)
-		if errors.Is(err, bh.ErrNotFound) {
-			return NewNotFoundError("FailedTx")
-		}
-		if err != nil {
-			return err
-		}
-
-		// It seems worthwhile to record previous errors somewhere and if we did
-		// not log then they would be lost forever
-		log.Warnf(
-			"Replacing failed transaction. Hash=%x ErrorMessage=%+q",
-			txBase.Hash,
-			*failedTx.ErrorMessage,
-		)
-
-		err = txStorage.database.Badger.Insert(txBase.Hash, *stored.NewPendingTx(tx))
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return txStorage.unsafeReplaceFailedTransaction(tx)
 	})
+}
+
+func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTransaction) error {
+	txHash := tx.GetBase().Hash
+
+	_, err := s.getBatchedTxByHash(txHash)
+	if err == nil {
+		return errors.WithStack(ErrAlreadyMinedTransaction)
+	}
+	if !errors.Is(err, bh.ErrNotFound) {
+		return err
+	}
+
+	var failedTx stored.FailedTx
+	err = s.getAndDelete(txHash, &failedTx)
+	if errors.Is(err, bh.ErrNotFound) {
+		return NewNotFoundError("FailedTx")
+	}
+	if err != nil {
+		return err
+	}
+
+	// It seems worthwhile to record previous errors somewhere and if we did
+	// not log then they would be lost forever
+	log.Warnf(
+		"Replacing failed transaction. Hash=%x ErrorMessage=%+q",
+		txHash,
+		*failedTx.ErrorMessage,
+	)
+
+	err = s.database.Badger.Insert(txHash, *stored.NewPendingTx(tx))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
