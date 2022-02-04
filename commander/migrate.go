@@ -23,9 +23,12 @@ func (c *Commander) migrate() error {
 }
 
 func (c *Commander) migrateCommanderData(hubble client.Hubble) error {
-	//TODO: fetch pending txs
+	err := c.syncPendingTxs(hubble)
+	if err != nil {
+		return err
+	}
 
-	err := c.syncFailedTxs(hubble)
+	err = c.syncFailedTxs(hubble)
 	if err != nil {
 		return err
 	}
@@ -36,6 +39,18 @@ func (c *Commander) migrateCommanderData(hubble client.Hubble) error {
 	}
 
 	c.setMigrate(false)
+	return nil
+}
+
+func (c *Commander) syncPendingTxs(hubble client.Hubble) error {
+	txs, err := hubble.GetPendingTransactions()
+	if err != nil {
+		return err
+	}
+
+	if txs.Len() > 0 {
+		return c.storage.BatchAddTransaction(txs)
+	}
 	return nil
 }
 

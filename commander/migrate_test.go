@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -17,8 +18,9 @@ import (
 )
 
 const (
-	getPendingBatchesMethod     = "GetPendingBatches"
-	getFailedTransactionsMethod = "GetFailedTransactions"
+	getPendingBatchesMethod      = "GetPendingBatches"
+	getPendingTransactionsMethod = "GetPendingTransactions"
+	getFailedTransactionsMethod  = "GetFailedTransactions"
 )
 
 type MockHubble struct {
@@ -30,9 +32,9 @@ func (m *MockHubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	return args.Get(0).([]dto.PendingBatch), args.Error(1)
 }
 
-func (m *MockHubble) GetPendingTransactions() ([]models.GenericTransaction, error) {
+func (m *MockHubble) GetPendingTransactions() (models.GenericTransactionArray, error) {
 	args := m.Called()
-	return args.Get(0).([]models.GenericTransaction), args.Error(1)
+	return args.Get(0).(models.GenericTransactionArray), args.Error(1)
 }
 
 func (m *MockHubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
@@ -85,6 +87,8 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).
 		Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).
+		Return(models.TransferArray{}, nil)
 	hubble.On(getFailedTransactionsMethod).
 		Return(models.TransferArray{}, nil)
 
@@ -118,6 +122,7 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
 	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
@@ -125,6 +130,26 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	leaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.EqualValues(200, leaf.Balance.Uint64())
+}
+
+func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
+	expectedTxs := models.TransferArray{
+		testutils.MakeTransfer(0, 1, 0, 100),
+		testutils.MakeTransfer(0, 1, 1, 110),
+	}
+
+	hubble := new(MockHubble)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(expectedTxs, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
+
+	err := s.cmd.migrateCommanderData(hubble)
+	s.NoError(err)
+
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Contains(txs, expectedTxs[0])
+	s.Contains(txs, expectedTxs[1])
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
