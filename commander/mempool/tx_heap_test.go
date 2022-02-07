@@ -23,19 +23,22 @@ func (s *TxHeapTestSuite) TestPeek() {
 	s.EqualValues(20, heap.Peek().GetBase().Fee.Uint64())
 }
 
+func (s *TxHeapTestSuite) TestPush() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+	heap.Push(s.newTx(7))
+	s.Equal([]uint64{20, 10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(&heap))
+}
+
 func (s *TxHeapTestSuite) TestPop() {
 	heap := NewTxHeap(s.makeTestTxs()...)
-
-	orderedFees := s.popAll(&heap)
-	s.Equal([]uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
+	s.Equal([]uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(&heap))
 }
 
 func (s *TxHeapTestSuite) TestReplace() {
 	heap := NewTxHeap(s.makeTestTxs()...)
 	newTx := s.newTx(7)
 	s.EqualValues(20, heap.Replace(newTx).GetBase().Fee.Uint64())
-	orderedFees := s.popAll(&heap)
-	s.Equal([]uint64{10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
+	s.Equal([]uint64{10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(&heap))
 }
 
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {
