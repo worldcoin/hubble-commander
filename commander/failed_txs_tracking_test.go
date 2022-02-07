@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TxsTrackingTestSuite struct {
+type FailedTxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	tracker.TestSuiteWithTxsTracker
@@ -33,7 +33,7 @@ type TxsTrackingTestSuite struct {
 	wallets []bls.Wallet
 }
 
-func (s *TxsTrackingTestSuite) SetupSuite() {
+func (s *FailedTxsTrackingTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = config.GetTestConfig()
 	s.cfg.Rollup.MinCommitmentsPerBatch = 1
@@ -43,7 +43,7 @@ func (s *TxsTrackingTestSuite) SetupSuite() {
 	s.cfg.Rollup.DisableSignatures = true
 }
 
-func (s *TxsTrackingTestSuite) SetupTest() {
+func (s *FailedTxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
@@ -82,7 +82,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.waitForLatestBlockSync()
 }
 
-func (s *TxsTrackingTestSuite) TearDownTest() {
+func (s *FailedTxsTrackingTestSuite) TearDownTest() {
 	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
@@ -90,21 +90,27 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
+func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
 	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
-	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(1), 0, 50, &models.PublicKey{2, 3, 4})
+func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
+	transfer := testutils.MakeCreate2Transfer(
+		0,
+		ref.Uint32(1),
+		0,
+		50,
+		&models.PublicKey{2, 3, 4},
+	)
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
 
 	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
+func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
 	commitment := models.MMCommitmentWithTxs{
 		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
@@ -131,7 +137,7 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() 
 	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
+func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
@@ -139,14 +145,14 @@ func (s *TxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTra
 	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
+func (s *FailedTxsTrackingTestSuite) waitForWorkersCancellation() {
 	s.Eventually(func() bool {
 		err := s.cmd.workersContext.Err()
 		return err == context.Canceled
 	}, time.Second, time.Millisecond*300)
 }
 
-func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
+func (s *FailedTxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
 	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
@@ -163,7 +169,10 @@ func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransac
 	})
 }
 
-func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, handler func(*st.Storage, *executor.TxsContext)) {
+func (s *FailedTxsTrackingTestSuite) runInTransaction(
+	batchType batchtype.BatchType,
+	handler func(*st.Storage, *executor.TxsContext),
+) {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
@@ -172,7 +181,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 	handler(txStorage, txsCtx)
 }
 
-func (s *TxsTrackingTestSuite) startWorkers() {
+func (s *FailedTxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Tracking", func() error {
 		err := s.cmd.txsTracker.StartTracking(s.cmd.workersContext)
 		s.NoError(err)
@@ -185,7 +194,7 @@ func (s *TxsTrackingTestSuite) startWorkers() {
 	})
 }
 
-func (s *TxsTrackingTestSuite) waitForLatestBlockSync() {
+func (s *FailedTxsTrackingTestSuite) waitForLatestBlockSync() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -196,7 +205,7 @@ func (s *TxsTrackingTestSuite) waitForLatestBlockSync() {
 	}, time.Hour, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
-func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
+func (s *FailedTxsTrackingTestSuite) setAccountsAndChainState() {
 	setChainState(s.T(), s.storage)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
@@ -217,6 +226,6 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 	return client
 }
 
-func TestTxsTrackingTestSuite(t *testing.T) {
-	suite.Run(t, new(TxsTrackingTestSuite))
+func TestFailedTxsTrackingTestSuite(t *testing.T) {
+	suite.Run(t, new(FailedTxsTrackingTestSuite))
 }
