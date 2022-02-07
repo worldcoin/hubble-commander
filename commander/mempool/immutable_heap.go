@@ -16,6 +16,7 @@ func newImmutableHeap(elements []interface{}, less func(a, b interface{}) bool) 
 	}
 }
 
+// Peek retrieves the min item of the heap
 func (h *immutableHeap) Peek() interface{} {
 	return h.heap.get(0)
 }
@@ -29,6 +30,8 @@ func (h immutableHeap) Pop() (interface{}, *immutableHeap) {
 	return heap.Pop(&h.heap), &h
 }
 
+// Replace pops the heap, pushes an item then returns the popped value. This is more efficient than doing Pop then Push.
+// TODO only push in case heap is empty
 func (h immutableHeap) Replace(element interface{}) (interface{}, *immutableHeap) {
 	previous := h.heap.get(0)
 	h.heap.set(0, element)
