@@ -129,20 +129,12 @@ There is a number of scripts defined in the Makefile:
 * `make update-contracts` - update the `hubble-contracts` git submodule
 * `make deploy` - deploys the smart contracts and generates `chain-spec.yaml` file required for running the commander
 * `make run` - run the compiled binary with `start` flag
-* `make run-prune` - clean database and run the compiled binary with `start` flag
 * `make run-dev` - run-prune without transaction signature validation
 * `make start-dev` - deploy and run-dev
 * `make export-state` - exports state leaves to a file
 * `make export-accounts` - exports accounts to a file
 * `make lint` - run linter
-* `make test` - run all tests unit tests
-* `make test-hardhat` - run all tests that depend on Hardhat node
-* `make test-e2e-in-process` - start commander and run all E2E tests in the same process 
-* `make test-e2e-locally` - run an E2E test on a local commander instance (set `TEST` env var to the name of the test)
-* `make bench-e2e-in-process` - start commander and run all E2E benchmarks in the same process 
-* `make bench-e2e-locally` - run an E2E benchmark on a local commander instance (set `TEST` env var to the name of the test)
-* `make bench-creation-profile` - start commander and run E2E batch creation benchmark in the same process with CPU profiling
-* `make bench-sync-profile` - start commander and run E2E butch sync benchmark in the same process with CPU profiling
+* `make test` - run all unit tests (excluding tests with dependency on Hardhat node)
 * `make run-docs` - render and preview docs by serving it via HTTP
 * `make clean-docs` - delete the generated docs and any other build artifacts
 
@@ -213,14 +205,25 @@ make start-geth-locally
 # OR
 make setup-geth
 ```
+
 Run E2E tests:
+
 ```shell
-make test-e2e-in-process
+go test -v -tags e2e ./e2e
 ```
 
 Run E2E benchmarks:
+
 ```shell
-make bench-e2e-in-process
+go test -v -tags e2e ./e2e/bench -timeout 1200s
+```
+
+## Running HardHat tests
+
+Run unit tests that are dependent on HardHat:
+
+```shell
+go test -v -tags hardhat ./bls/hardhat
 ```
 
 ## Running locally
@@ -276,4 +279,18 @@ docker run --rm -ti -p 8080:8080 \
     -e HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=/chain-spec.yaml \
     -v $(pwd)/chain-spec.yaml:/chain-spec.yaml:ro \
     hubble
+```
+
+## Profiling
+
+To profile batch creation run this command:
+
+```shell
+go test -cpuprofile creation.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
+```
+
+To profile batch syncing run this command:
+
+```shell
+go test -cpuprofile sync.prof -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 ```

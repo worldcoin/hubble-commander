@@ -35,7 +35,7 @@ func TestWithdrawProcess(t *testing.T) {
 	commanderConfig.Rollup.MinCommitmentsPerBatch = 1
 	commanderConfig.API.EnableProofMethods = true
 
-	deployerConfig := config.GetDeployerConfig()
+	deployerConfig := config.GetDeployerTestConfig()
 	deployerConfig.Bootstrap.BlocksToFinalise = 1
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(commanderConfig, deployerConfig)

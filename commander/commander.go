@@ -1,12 +1,9 @@
 package commander
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
-	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander/tracker"
@@ -38,32 +35,32 @@ var (
 
 type Commander struct {
 	lifecycle
+	workers
+	rollupControls
 
 	cfg        *config.Config
 	blockchain chain.Connection
+	metrics    *metrics.CommanderMetrics
 
-	metrics       *metrics.CommanderMetrics
 	storage       *st.Storage
 	client        *eth.Client
 	apiServer     *http.Server
 	metricsServer *http.Server
 
-	batchCreationEnabled bool
-
-	stateMutex       sync.Mutex
-	rollupLoopActive uint32
-	cancelRollupLoop context.CancelFunc
-	invalidBatchID   *models.Uint256
+	stateMutex     sync.Mutex
+	invalidBatchID *models.Uint256
 
 	txsTracker *tracker.TxsTracker
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
-		cfg:                  cfg,
-		blockchain:           blockchain,
-		batchCreationEnabled: true,
-		lifecycle:            lifecycle{},
+		lifecycle:      lifecycle{},
+		workers:        makeWorkers(),
+		rollupControls: makeRollupControls(),
+		cfg:            cfg,
+		blockchain:     blockchain,
+		metrics:        metrics.NewCommanderMetrics(),
 	}
 }
 
@@ -88,8 +85,6 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.metrics = metrics.NewCommanderMetrics()
-
 	txsChan := make(chan *types.Transaction, 32)
 
 	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, txsChan)
@@ -111,8 +106,6 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.workersContext, c.stopWorkersContext = context.WithCancel(context.Background())
-
 	c.startWorker("API Server", func() error {
 		err := c.apiServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
@@ -133,7 +126,7 @@ func (c *Commander) Start() (err error) {
 	go c.handleWorkerError()
 
 	log.Printf("Commander started and listening on port %s", c.cfg.API.Port)
-	atomic.StoreUint32(&c.active, 1)
+	c.setActive(true)
 	return nil
 }
 
@@ -147,7 +140,7 @@ func (c *Commander) Stop() (err error) {
 			return
 		}
 		log.Warningln("Commander stopped.")
-		c.closeStartAndWaitChan()
+		c.releaseStartAndWait()
 	})
 	return err
 }
@@ -157,29 +150,6 @@ func (c *Commander) EnableBatchCreation(enable bool) {
 	if !enable {
 		c.stopRollupLoop()
 	}
-}
-
-func (c *Commander) startWorker(name string, fn func() error) {
-	c.workersWaitGroup.Add(1)
-	go func() {
-		var err error
-		defer func() {
-			if recoverErr := recover(); recoverErr != nil {
-				var ok bool
-				err, ok = recoverErr.(error)
-				if !ok {
-					err = fmt.Errorf("%+v", recoverErr)
-				}
-			}
-			if err != nil {
-				log.Errorf("%s worker failed with: %+v", name, err)
-				c.stopWorkersContext()
-			}
-			c.workersWaitGroup.Done()
-		}()
-
-		err = fn()
-	}()
 }
 
 func (c *Commander) handleWorkerError() {
@@ -201,14 +171,9 @@ func (c *Commander) stop() error {
 	if err := c.metricsServer.Close(); err != nil {
 		return err
 	}
-	c.stopWorkersContext()
-	c.workersWaitGroup.Wait()
-	atomic.StoreUint32(&c.active, 0)
+	c.stopWorkersAndWait()
+	c.setActive(false)
 	return c.storage.Close()
-}
-
-func (c *Commander) isRollupLoopActive() bool {
-	return atomic.LoadUint32(&c.rollupLoopActive) != 0
 }
 
 func getClient(

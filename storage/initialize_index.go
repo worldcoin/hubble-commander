@@ -14,6 +14,8 @@ import (
 // See:
 // 	 * stored.TxReceipt Indexes() method
 //   * InitializeIndexTestSuite.TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil
+// Note, this does not create the index. In order to create the index we must implement
+// Indexes() on the relevant type.
 func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {
 	encodedZeroValue, err := db.Encode(zeroValue)
 	if err != nil {

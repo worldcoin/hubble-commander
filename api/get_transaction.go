@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,18 +25,9 @@ func (a *API) unsafeGetTransaction(hash common.Hash) (*dto.TransactionReceipt, e
 		return nil, err
 	}
 
-	var transactionBase models.TransactionBase
+	var transactionBase = transaction.Transaction.GetBase()
 
-	switch tx := transaction.Transaction.(type) {
-	case *models.Transfer:
-		transactionBase = tx.TransactionBase
-	case *models.Create2Transfer:
-		transactionBase = tx.TransactionBase
-	case *models.MassMigration:
-		transactionBase = tx.TransactionBase
-	}
-
-	status, err := CalculateTransactionStatus(a.storage, &transactionBase, a.storage.GetLatestBlockNumber())
+	status, err := CalculateTransactionStatus(a.storage, transactionBase, a.storage.GetLatestBlockNumber())
 	if err != nil {
 		return nil, err
 	}

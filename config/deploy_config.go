@@ -1,7 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,6 +20,15 @@ func GetDeployerConfig() *DeployerConfig {
 		},
 		Ethereum: getEthereumConfig(),
 	}
+}
+
+func GetDeployerTestConfig() *DeployerConfig {
+	err := os.Chdir(utils.GetProjectRoot())
+	if err != nil {
+		panic(err)
+	}
+
+	return GetDeployerConfig()
 }
 
 func getGenesisAccounts() []models.GenesisAccount {

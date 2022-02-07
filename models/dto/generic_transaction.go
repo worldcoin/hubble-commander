@@ -11,13 +11,13 @@ type TransactionWithBatchDetails struct {
 	ToPublicKey *models.PublicKey `json:",omitempty"`
 	SpokeID     *uint32           `json:",omitempty"`
 	BatchHash   *common.Hash
-	BatchTime   *models.Timestamp
+	MinedTime   *models.Timestamp
 }
 
 func MakeTransactionWithBatchDetails(tx *models.TransactionWithBatchDetails) TransactionWithBatchDetails {
 	dtoTx := TransactionWithBatchDetails{
 		BatchHash: tx.BatchHash,
-		BatchTime: tx.BatchTime,
+		MinedTime: tx.MinedTime,
 	}
 	switch subTx := tx.Transaction.(type) {
 	case *models.Transfer:

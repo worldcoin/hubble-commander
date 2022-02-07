@@ -28,16 +28,15 @@ type GenericTransactionArray interface {
 	Append(elems GenericTransactionArray) GenericTransactionArray
 	AppendOne(elem GenericTransaction) GenericTransactionArray
 	Slice(start, end int) GenericTransactionArray
-	Type() txtype.TransactionType
 	ToTransferArray() TransferArray
 	ToCreate2TransferArray() Create2TransferArray
 	ToMassMigrationArray() MassMigrationArray
 }
 
 type TransactionWithBatchDetails struct {
-	Transaction interface{}
+	Transaction GenericTransaction
 	BatchHash   *common.Hash
-	BatchTime   *Timestamp
+	MinedTime   *Timestamp
 }
 
 func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity int) GenericTransactionArray {
@@ -50,6 +49,78 @@ func NewGenericTransactionArray(txType txtype.TransactionType, size, capacity in
 		return make(MassMigrationArray, size, capacity)
 	}
 	return nil
+}
+
+type GenericArray []GenericTransaction
+
+func MakeGenericArray(txns ...GenericTransaction) GenericArray {
+	return txns
+}
+
+func (t GenericArray) Len() int {
+	return len(t)
+}
+
+func (t GenericArray) At(index int) GenericTransaction {
+	return t[index]
+}
+
+func (t GenericArray) Set(index int, value GenericTransaction) {
+	t[index] = value
+}
+
+func (t GenericArray) Append(elems GenericTransactionArray) GenericTransactionArray {
+	for i := 0; i < elems.Len(); i++ {
+		t = append(t, elems.At(i))
+	}
+	return t
+}
+
+func (t GenericArray) AppendOne(elem GenericTransaction) GenericTransactionArray {
+	return append(t, elem)
+}
+
+func (t GenericArray) Slice(start, end int) GenericTransactionArray {
+	return t[start:end]
+}
+
+// filters the array and returns the `Transfer`s
+func (t GenericArray) ToTransferArray() TransferArray {
+	array := make([]Transfer, 0, t.Len())
+	for i := 0; i < t.Len(); i++ {
+		txn := t.At(i)
+		if txn.Type() == txtype.Transfer {
+			array = append(array, *txn.ToTransfer())
+		}
+	}
+
+	return MakeTransferArray(array...)
+}
+
+// filters the array and returns the `Create2Transfer`s
+func (t GenericArray) ToCreate2TransferArray() Create2TransferArray {
+	array := make([]Create2Transfer, 0, t.Len())
+	for i := 0; i < t.Len(); i++ {
+		txn := t.At(i)
+		if txn.Type() == txtype.Create2Transfer {
+			array = append(array, *txn.ToCreate2Transfer())
+		}
+	}
+
+	return MakeCreate2TransferArray(array...)
+}
+
+// filters the array and returns the `MassMigration`s
+func (t GenericArray) ToMassMigrationArray() MassMigrationArray {
+	array := make([]MassMigration, 0, t.Len())
+	for i := 0; i < t.Len(); i++ {
+		txn := t.At(i)
+		if txn.Type() == txtype.MassMigration {
+			array = append(array, *txn.ToMassMigration())
+		}
+	}
+
+	return MakeMassMigrationArray(array...)
 }
 
 type TransferArray []Transfer
@@ -80,10 +151,6 @@ func (t TransferArray) AppendOne(elem GenericTransaction) GenericTransactionArra
 
 func (t TransferArray) Slice(start, end int) GenericTransactionArray {
 	return t[start:end]
-}
-
-func (t TransferArray) Type() txtype.TransactionType {
-	return txtype.Transfer
 }
 
 func (t TransferArray) ToTransferArray() TransferArray {
@@ -128,10 +195,6 @@ func (t Create2TransferArray) Slice(start, end int) GenericTransactionArray {
 	return t[start:end]
 }
 
-func (t Create2TransferArray) Type() txtype.TransactionType {
-	return txtype.Create2Transfer
-}
-
 func (t Create2TransferArray) ToTransferArray() TransferArray {
 	panic("Create2TransferArray cannot be cast to TransferArray")
 }
@@ -172,10 +235,6 @@ func (m MassMigrationArray) AppendOne(elem GenericTransaction) GenericTransactio
 
 func (m MassMigrationArray) Slice(start, end int) GenericTransactionArray {
 	return m[start:end]
-}
-
-func (m MassMigrationArray) Type() txtype.TransactionType {
-	return txtype.MassMigration
 }
 
 func (m MassMigrationArray) ToTransferArray() TransferArray {

@@ -2,7 +2,6 @@ package commander
 
 import (
 	"context"
-	"sync/atomic"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -33,7 +32,7 @@ func (c *Commander) startRollupLoop() {
 	ctx, cancel := context.WithCancel(c.workersContext)
 	c.startWorker("Rollup Loop", func() error { return c.rollupLoop(ctx) })
 	c.cancelRollupLoop = cancel
-	atomic.StoreUint32(&c.rollupLoopActive, 1)
+	c.setRollupLoopActive(true)
 }
 
 func (c *Commander) stopRollupLoop() {
@@ -43,7 +42,7 @@ func (c *Commander) stopRollupLoop() {
 	if c.cancelRollupLoop != nil {
 		c.cancelRollupLoop()
 	}
-	atomic.StoreUint32(&c.rollupLoopActive, 0)
+	c.setRollupLoopActive(false)
 }
 
 func (c *Commander) rollupLoop(ctx context.Context) (err error) {

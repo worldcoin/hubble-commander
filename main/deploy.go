@@ -5,9 +5,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/utils"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
-func deployCommanderContracts(filePath string) error {
+func deployContracts(ctx *cli.Context) error {
 	cfg := config.GetDeployerConfigAndSetupLogger()
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
@@ -20,5 +21,5 @@ func deployCommanderContracts(filePath string) error {
 	}
 	log.Printf(*chainSpec)
 
-	return utils.StoreChainSpec(filePath, *chainSpec)
+	return utils.StoreChainSpec(ctx.String("file"), *chainSpec)
 }

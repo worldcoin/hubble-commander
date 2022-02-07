@@ -65,5 +65,5 @@ func getAccountsPath() string {
 	if accountsPath != "" {
 		return accountsPath
 	}
-	return path.Join("setup", "accounts.yaml")
+	return path.Join("e2e", "setup", "accounts.yaml")
 }

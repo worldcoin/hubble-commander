@@ -51,13 +51,13 @@ func (a *API) unsafeGetBatchByID(id models.Uint256) (*dto.BatchWithRootAndCommit
 }
 
 func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWithRootAndCommitments, error) {
-	submissionBlock, err := a.getSubmissionBlock(batch)
+	minedBlock, err := a.getMinedBlock(batch)
 	if err != nil {
 		return nil, err
 	}
 
 	if batch.Type == batchtype.Genesis {
-		return a.createBatchWithCommitments(batch, submissionBlock, batchstatus.Finalised.Ref(), nil)
+		return a.createBatchWithCommitments(batch, minedBlock, batchstatus.Finalised.Ref(), nil)
 	}
 
 	status := calculateBatchStatus(a.storage.GetLatestBlockNumber(), batch)
@@ -67,30 +67,30 @@ func (a *API) getCommitmentsAndCreateBatchDTO(batch *models.Batch) (*dto.BatchWi
 		return nil, err
 	}
 
-	return a.createBatchWithCommitments(batch, submissionBlock, status, commitments)
+	return a.createBatchWithCommitments(batch, minedBlock, status, commitments)
 }
 
 func (a *API) createBatchWithCommitments(
 	batch *models.Batch,
-	submissionBlock *uint32,
+	minedBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
 	switch batch.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer:
-		return a.createBatchWithTxCommitments(batch, submissionBlock, status, commitments)
+		return a.createBatchWithTxCommitments(batch, minedBlock, status, commitments)
 	case batchtype.MassMigration:
-		return a.createBatchWithMMCommitments(batch, submissionBlock, status, commitments)
+		return a.createBatchWithMMCommitments(batch, minedBlock, status, commitments)
 	case batchtype.Deposit:
-		return a.createBatchWithDepositCommitments(batch, submissionBlock, status, commitments)
+		return a.createBatchWithDepositCommitments(batch, minedBlock, status, commitments)
 	default:
-		return dto.MakeBatchWithRootAndCommitments(dto.NewBatch(batch, submissionBlock, status), batch.AccountTreeRoot, nil), nil
+		return dto.MakeBatchWithRootAndCommitments(dto.NewBatch(batch, minedBlock, status), batch.AccountTreeRoot, nil), nil
 	}
 }
 
 func (a *API) createBatchWithTxCommitments(
 	batch *models.Batch,
-	submissionBlock *uint32,
+	minedBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -106,12 +106,12 @@ func (a *API) createBatchWithTxCommitments(
 			stateLeaf.TokenID,
 		))
 	}
-	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, minedBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithMMCommitments(
 	batch *models.Batch,
-	submissionBlock *uint32,
+	minedBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -121,12 +121,12 @@ func (a *API) createBatchWithMMCommitments(
 			commitments[i].ToMMCommitment(),
 		))
 	}
-	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, minedBlock, status, batchCommitments), nil
 }
 
 func (a *API) createBatchWithDepositCommitments(
 	batch *models.Batch,
-	submissionBlock *uint32,
+	minedBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments []models.Commitment,
 ) (*dto.BatchWithRootAndCommitments, error) {
@@ -136,10 +136,10 @@ func (a *API) createBatchWithDepositCommitments(
 			commitments[i].ToDepositCommitment(),
 		))
 	}
-	return createBatchWithRootAndCommitmentsDTO(batch, submissionBlock, status, batchCommitments), nil
+	return createBatchWithRootAndCommitmentsDTO(batch, minedBlock, status, batchCommitments), nil
 }
 
-func (a *API) getSubmissionBlock(batch *models.Batch) (*uint32, error) {
+func (a *API) getMinedBlock(batch *models.Batch) (*uint32, error) {
 	if batch.ID.IsZero() {
 		return batch.FinalisationBlock, nil
 	}
@@ -170,7 +170,7 @@ func calculateBatchStatus(latestBlockNumber uint32, batch *models.Batch) *batchs
 
 func createBatchWithRootAndCommitmentsDTO(
 	batch *models.Batch,
-	submissionBlock *uint32,
+	minedBlock *uint32,
 	status *batchstatus.BatchStatus,
 	commitments interface{},
 ) *dto.BatchWithRootAndCommitments {
@@ -183,7 +183,7 @@ func createBatchWithRootAndCommitmentsDTO(
 	}
 
 	return dto.MakeBatchWithRootAndCommitments(
-		dto.NewBatch(batch, submissionBlock, status),
+		dto.NewBatch(batch, minedBlock, status),
 		batch.AccountTreeRoot,
 		commitments,
 	)

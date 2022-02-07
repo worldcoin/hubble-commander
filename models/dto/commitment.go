@@ -31,7 +31,7 @@ type TxCommitment struct {
 	FeeReceiverStateID uint32
 	CombinedSignature  models.Signature
 	Status             batchstatus.BatchStatus
-	BatchTime          *models.Timestamp
+	MinedTime          *models.Timestamp
 	Transactions       interface{}
 }
 
@@ -42,7 +42,7 @@ type MMCommitment struct {
 	LeafHash          *common.Hash
 	CombinedSignature models.Signature
 	Status            batchstatus.BatchStatus
-	BatchTime         *models.Timestamp
+	MinedTime         *models.Timestamp
 	WithdrawRoot      common.Hash
 	Meta              MassMigrationMeta
 	Transactions      interface{}
@@ -54,17 +54,17 @@ type DepositCommitment struct {
 	PostStateRoot common.Hash
 	LeafHash      *common.Hash
 	Status        batchstatus.BatchStatus
-	BatchTime     *models.Timestamp
+	MinedTime     *models.Timestamp
 	SubtreeID     models.Uint256
 	SubtreeRoot   common.Hash
-	Deposits      []PendingDeposit
+	Deposits      []Deposit
 }
 
 func NewTxCommitment(
 	commitment *models.TxCommitment,
 	tokenID models.Uint256,
 	status *batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 	transactions interface{},
 ) *TxCommitment {
 	return &TxCommitment{
@@ -76,7 +76,7 @@ func NewTxCommitment(
 		FeeReceiverStateID: commitment.FeeReceiver,
 		CombinedSignature:  commitment.CombinedSignature,
 		Status:             *status,
-		BatchTime:          batchTime,
+		MinedTime:          minedTime,
 		Transactions:       transactions,
 	}
 }
@@ -84,7 +84,7 @@ func NewTxCommitment(
 func NewMMCommitment(
 	commitment *models.MMCommitment,
 	status *batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 	transactions interface{},
 ) *MMCommitment {
 	return &MMCommitment{
@@ -94,7 +94,7 @@ func NewMMCommitment(
 		LeafHash:          LeafHashOrNil(commitment),
 		CombinedSignature: commitment.CombinedSignature,
 		Status:            *status,
-		BatchTime:         batchTime,
+		MinedTime:         minedTime,
 		WithdrawRoot:      commitment.WithdrawRoot,
 		Meta: MassMigrationMeta{
 			SpokeID:            commitment.Meta.SpokeID,
@@ -109,7 +109,7 @@ func NewMMCommitment(
 func NewDepositCommitment(
 	commitment *models.DepositCommitment,
 	status *batchstatus.BatchStatus,
-	batchTime *models.Timestamp,
+	minedTime *models.Timestamp,
 ) *DepositCommitment {
 	return &DepositCommitment{
 		ID:            *NewCommitmentID(&commitment.ID),
@@ -117,10 +117,10 @@ func NewDepositCommitment(
 		PostStateRoot: commitment.PostStateRoot,
 		LeafHash:      LeafHashOrNil(commitment),
 		Status:        *status,
-		BatchTime:     batchTime,
+		MinedTime:     minedTime,
 		SubtreeID:     commitment.SubtreeID,
 		SubtreeRoot:   commitment.SubtreeRoot,
-		Deposits:      MakePendingDeposits(commitment.Deposits),
+		Deposits:      MakeDeposits(commitment.Deposits),
 	}
 }
 

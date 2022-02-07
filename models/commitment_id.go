@@ -3,6 +3,7 @@ package models
 const CommitmentIDDataLength = 33
 
 type CommitmentID struct {
+	// GetTransactionHashesByBatchIDs assumes BatchID is the first field
 	BatchID      Uint256
 	IndexInBatch uint8
 }

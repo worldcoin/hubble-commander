@@ -6,14 +6,15 @@
 ## Notes and design rationale
 - Some indices are specified using badgerhold tags on struct fields.
   Others by implementing the `Indexes()` method of `bh.Storer` interface.
-- Badger does not support indices on fields of pointer types well.
-  By default, it would add IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
+- Watch out when using indices on fields of pointer types.
+  By default, badgerhold adds IDs of all structs that have the indexed field set to `nil` to a single index entry, for instance: 
 
-  `_bhIndex:TxReceipt:ToStateID:nil -> bh.KeyList{ txHash1, txHash2, ... }`  
+  `_bhIndex:Batch:Hash:nil -> bh.KeyList{ batchID1, batchID2, ... }`  
 
   Such index entry can quickly grow in size.
-  Thus, for structs that have indices on fields of pointer type we implement `Indexes()` method and specify our own `IndexFunc`.
+  For structs that have indices on fields of pointer type we can implement `Indexes()` method and specify our own `IndexFunc`.
   Returning `nil` from such `IndexFunc` for `nil` field values prevents creation of the `nil` index entry.
+  In case you go down this path, make sure to initialise the index using `initializeIndex` function (see `storage/initialize_index.go` for more info).
 - All transaction details were previously held in a single **Transaction** structure. 
   We had to split transaction details between **Stored Transaction** and **Stored Transaction Receipt** because of conflict 
   between API `hubble_sendTransaction` method and Rollup loop iterations. If we kept all data in the same structure the API method would be 
@@ -120,15 +121,14 @@ Value: node `common.Hash` (through clever encoding of `models.MerkleTreeNode`)
 
 ## Transactions
 
-### Stored Transaction
-- Stores pending and mined transactions data
+### Pending Transaction
 
 Key: tx hash `common.Hash`
 
-Value: `stored.Tx`
+Value: `stored.PendingTx`
 
 ```go
-type Tx struct {
+type PendingTx struct {
     Hash        common.Hash
     TxType      txtype.TransactionType
     FromStateID uint32
@@ -157,6 +157,7 @@ Body: `stored.TxCreate2TransferBody`
 ```go
 type TxCreate2TransferBody struct {
     ToPublicKey models.PublicKey
+    ToStateID   *uint32
 }
 ```
 
@@ -169,33 +170,41 @@ type TxMassMigrationBody struct {
 }
 ```
 
-### Stored Transaction Receipt
-- Stores transactions details known only after it is mined
+### Batched Transaction
+
+- Stores transactions which have been added to a batch and submitted to the chain
 
 Key: tx hash `common.Hash`
 
-Value: `stored.TxReceipt`
+Value: `stored.BatchedTx`
 
 ```go
-type TxReceipt struct {
-    Hash         common.Hash
-    CommitmentID *models.CommitmentID
-    ToStateID    *uint32 // specified for C2Ts, nil for Transfers and MassMigrations
-    ErrorMessage *string
+type BatchedTx struct {
+	PendingTx
+	CommitmentID models.CommitmentID
+}
+```
+
+### Failed Transaction
+
+- Stores transactions which the rollup loop attempted to add to a batch, but failed
+
+Key: tx hash `common.Hash`
+
+Value: `stored.FailedTx`
+
+```go
+type FailedTx struct {
+	PendingTx
+
+	ErrorMessage *string
 }
 ```
 
 #### Index on `CommitmentID`
 Key: commitment ID `models.CommitmentID`
 
-Prefix: `_bhIndex:TxReceipt:CommitmentID:`
-
-Value: list of tx hashes `bh.KeyList`
-
-#### Index on `ToStateID`
-Key: to state ID `uint32`
-
-Prefix: `_bhIndex:TxReceipt:ToStateID:`
+Prefix: `_bhIndex:BatchedTx:CommitmentID:`
 
 Value: list of tx hashes `bh.KeyList`
 
@@ -333,7 +342,7 @@ type Batch struct {
     FinalisationBlock *uint32
     AccountTreeRoot   *common.Hash
     PrevStateRoot     *common.Hash
-    SubmissionTime    *models.Timestamp
+    MinedTime         *models.Timestamp
 }
 ```
 

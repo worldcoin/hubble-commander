@@ -35,7 +35,7 @@ func (s *BatchTestSuite) TearDownTest() {
 }
 
 func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
-	submissionTime := &models.Timestamp{Time: time.Unix(140, 0).UTC()}
+	minedTime := &models.Timestamp{Time: time.Unix(140, 0).UTC()}
 	batch := &models.Batch{
 		ID:                models.MakeUint256(1),
 		Type:              batchtype.Transfer,
@@ -44,14 +44,14 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 		PrevStateRoot:     utils.NewRandomHash(),
-		SubmissionTime:    submissionTime,
+		MinedTime:         minedTime,
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)
 
 	actual, err := s.storage.GetBatch(batch.ID)
 	s.NoError(err)
-	actualUnixTime := actual.SubmissionTime.Unix()
+	actualUnixTime := actual.MinedTime.Unix()
 
 	s.Equal(batch, actual)
 	s.EqualValues(140, actualUnixTime)
@@ -71,7 +71,7 @@ func (s *BatchTestSuite) TestUpdateBatch() {
 		Type:              pendingBatch.Type,
 		TransactionHash:   pendingBatch.TransactionHash,
 		Hash:              utils.NewRandomHash(),
-		SubmissionTime:    &models.Timestamp{Time: time.Unix(140, 0).UTC()},
+		MinedTime:         &models.Timestamp{Time: time.Unix(140, 0).UTC()},
 		FinalisationBlock: ref.Uint32(1234),
 		AccountTreeRoot:   utils.NewRandomHash(),
 	}
