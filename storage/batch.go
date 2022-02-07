@@ -63,10 +63,10 @@ func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, err
 }
 
 func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
-	var storedBatches []stored.Batch
+	storedBatches := make([]stored.Batch, 0, 1)
 	err := s.database.Badger.Find(
 		&storedBatches,
-		bh.Where("Hash").Eq(batchHash).Index("Hash").Limit(1),
+		bh.Where("Hash").Eq(&batchHash).Index("Hash").Limit(1),
 	)
 	if err != nil {
 		return nil, err
