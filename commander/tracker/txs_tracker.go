@@ -60,7 +60,6 @@ func (t *TxsTracker) StartTracking(ctx context.Context) error {
 		}
 		sentTxs = sentTxs[1:]
 	}
-	return nil
 }
 
 func (t *TxsTracker) checkTxForFail(tx *types.Transaction, receipt *types.Receipt) error {

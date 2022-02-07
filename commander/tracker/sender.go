@@ -21,21 +21,30 @@ func newTxRequestsSender(ethClient *eth.Client) *TxsSender {
 	}
 }
 
-func (t *TxsSender) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (t *TxsSender) SubmitTransfersBatch(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return t.sendTxRequest(&submitTransfersBatchRequestParams{
 		batchID:     batchID,
 		commitments: commitments,
 	})
 }
 
-func (t *TxsSender) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (t *TxsSender) SubmitCreate2TransfersBatch(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return t.sendTxRequest(&submitCreate2TransfersBatchRequestParams{
 		batchID:     batchID,
 		commitments: commitments,
 	})
 }
 
-func (t *TxsSender) SubmitMassMigrationsBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (t *TxsSender) SubmitMassMigrationsBatch(
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return t.sendTxRequest(&submitMassMigrationsBatchRequestParams{
 		batchID:     batchID,
 		commitments: commitments,
