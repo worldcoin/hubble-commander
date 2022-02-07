@@ -41,7 +41,7 @@ func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
 }

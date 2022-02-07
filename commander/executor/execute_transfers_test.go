@@ -61,7 +61,7 @@ func (s *ExecuteTransfersTestSuite) SetupTest() {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, nil, s.cfg)
 	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	s.feeReceiver = &FeeReceiver{

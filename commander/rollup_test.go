@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -21,6 +22,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	testStorage *storage.TestStorage
 	testClient  *eth.TestClient
 	commander   *Commander
@@ -39,6 +41,8 @@ func (s *RollupTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
+	s.InitTracker(s.testClient.Client, nil)
+
 	s.commander = &Commander{
 		cfg: &config.Config{
 			Rollup: &config.RollupConfig{
@@ -48,9 +52,10 @@ func (s *RollupTestSuite) SetupTest() {
 				MaxCommitmentsPerBatch: 32,
 			},
 		},
-		storage: s.testStorage.Storage,
-		client:  s.testClient.Client,
-		metrics: metrics.NewCommanderMetrics(),
+		storage:    s.testStorage.Storage,
+		client:     s.testClient.Client,
+		metrics:    metrics.NewCommanderMetrics(),
+		txsTracker: s.TxsTracker,
 	}
 
 	domain, err := s.testClient.GetDomain()
@@ -58,9 +63,12 @@ func (s *RollupTestSuite) SetupTest() {
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 
 	s.addUserStates()
+
+	s.StartTracker(s.T())
 }
 
 func (s *RollupTestSuite) TearDownTest() {
+	s.StopTracker()
 	err := s.testStorage.Teardown()
 	s.NoError(err)
 	s.testClient.Close()

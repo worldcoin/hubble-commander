@@ -25,12 +25,12 @@ import (
 type TxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	cmd        *Commander
-	storage    *st.TestStorage
-	client     *eth.TestClient
-	cfg        *config.Config
-	wallets    []bls.Wallet
-	txsTracker *tracker.TxsTracker
+	tracker.TestSuiteWithTxsTracker
+	cmd     *Commander
+	storage *st.TestStorage
+	client  *eth.TestClient
+	cfg     *config.Config
+	wallets []bls.Wallet
 }
 
 func (s *TxsTrackingTestSuite) SetupSuite() {
@@ -56,6 +56,9 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 		BatchAccountRegistrationGasLimit: &lowGasLimit,
 	})
 
+	s.InitTracker(s.client.Client, nil)
+	s.client.TxsChan = s.TxsTracker.TxsChan
+
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
@@ -65,8 +68,6 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 
-	s.txsTracker = tracker.NewTxTracker(s.client.Client, s.client.TxsChan)
-
 	s.cmd.metrics = metrics.NewCommanderMetrics()
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
@@ -75,11 +76,14 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 
 	s.setAccountsAndChainState()
 
+	s.StartTracker(s.T())
+
 	s.startWorkers()
 	s.waitForLatestBlockSync()
 }
 
 func (s *TxsTrackingTestSuite) TearDownTest() {
+	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -163,7 +167,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchType)
 	handler(txStorage, txsCtx)
 }

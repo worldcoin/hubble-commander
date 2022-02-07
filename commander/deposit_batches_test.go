@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -24,6 +25,7 @@ import (
 type DepositBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	cmd            *Commander
 	client         *eth.TestClient
 	storage        *st.TestStorage
@@ -44,9 +46,13 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
+	s.InitTracker(s.client.Client, nil)
+	s.client.TxsChan = s.TxsTracker.TxsChan
+
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = s.TxsTracker
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	err = s.cmd.addGenesisBatch()
@@ -75,6 +81,7 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 }
 
 func (s *DepositBatchesTestSuite) TearDownTest() {
+	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -133,7 +140,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.TxCommitmentWithTxs) {

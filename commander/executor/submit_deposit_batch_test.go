@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -19,6 +20,7 @@ import (
 type SubmitDepositBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	storage        *st.TestStorage
 	client         *eth.TestClient
 	depositsCtx    *DepositsContext
@@ -43,11 +45,17 @@ func (s *SubmitDepositBatchTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
+	s.InitTracker(s.client.Client, nil)
+	s.client.TxsChan = s.TxsTracker.TxsChan
+
+	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.TxsTracker.TxsSender, nil)
 	s.depositsCtx = NewTestDepositsContext(executionCtx)
+
+	s.StartTracker(s.T())
 }
 
 func (s *SubmitDepositBatchTestSuite) TearDownTest() {
+	s.StopTracker()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

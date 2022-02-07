@@ -1,7 +1,6 @@
 package tracker
 
 import (
-	"context"
 	"sync"
 	"testing"
 
@@ -17,11 +16,9 @@ import (
 type TxsTrackerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	testClient    *eth.TestClient
-	txsTracker    *TxsTracker
-	cancelTracker func()
-	waitGroup     sync.WaitGroup
-	txsChan       chan *types.Transaction
+	TestSuiteWithTxsTracker
+	testClient *eth.TestClient
+	txsChan    chan *types.Transaction
 }
 
 func (s *TxsTrackerTestSuite) SetupSuite() {
@@ -33,12 +30,14 @@ func (s *TxsTrackerTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.initAndStartTracker()
+	s.InitTracker(s.testClient.Client, nil)
+	s.txsChan = s.TxsTracker.TxsChan
+
+	s.StartTracker(s.T())
 }
 
 func (s *TxsTrackerTestSuite) TearDownTest() {
-	s.cancelTracker()
-	s.waitGroup.Wait()
+	s.StopTracker()
 	s.testClient.Close()
 }
 
@@ -52,7 +51,7 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 	go func() {
 		var err error
 		<-start
-		resultTxs[0], err = s.txsTracker.WithdrawStakeRequest(batchID)
+		resultTxs[0], err = s.TxsTracker.WithdrawStakeRequest(batchID)
 		s.NoError(err)
 		waitGroup.Done()
 	}()
@@ -61,7 +60,7 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 		var err error
 		commitments := getCommitments(batchtype.Transfer)
 		<-start
-		resultTxs[1], err = s.txsTracker.SubmitTransfersBatchRequest(batchID, commitments)
+		resultTxs[1], err = s.TxsTracker.SubmitTransfersBatch(batchID, commitments)
 		s.NoError(err)
 		waitGroup.Done()
 	}()
@@ -70,20 +69,6 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 	waitGroup.Wait()
 
 	s.NotEqual(resultTxs[0].Nonce(), resultTxs[1].Nonce())
-}
-
-func (s *TxsTrackerTestSuite) initAndStartTracker() {
-	s.txsTracker = NewTxTracker(s.testClient.Client, s.txsChan)
-	s.waitGroup = sync.WaitGroup{}
-	s.waitGroup.Add(1)
-
-	var ctx context.Context
-	ctx, s.cancelTracker = context.WithCancel(context.Background())
-	go func() {
-		err := s.txsTracker.StartTracking(ctx)
-		s.NoError(err)
-		s.waitGroup.Done()
-	}()
 }
 
 func getCommitments(batchType batchtype.BatchType) []models.CommitmentWithTxs {

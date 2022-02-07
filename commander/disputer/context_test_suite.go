@@ -114,7 +114,7 @@ func (s *testSuiteWithContexts) newContexts(
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) {
-	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
+	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
 	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, txtype.TransactionType(batchType))
 	s.disputeCtx = NewContext(storage, s.client.Client)

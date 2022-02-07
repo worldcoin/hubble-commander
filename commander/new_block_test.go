@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -23,6 +24,7 @@ import (
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	cmd      *Commander
 	storage  *st.TestStorage
 	client   *eth.TestClient
@@ -49,6 +51,9 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
+	s.InitTracker(s.client.Client, nil)
+	s.client.TxsChan = s.TxsTracker.TxsChan
+
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
@@ -63,9 +68,12 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	s.setAccountsAndChainState()
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
+
+	s.StartTracker(s.T())
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
+	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -181,7 +189,7 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	handler(txStorage, txsCtx)
 }

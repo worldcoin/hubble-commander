@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -26,6 +27,7 @@ import (
 type TxsBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
@@ -48,13 +50,16 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
+	s.InitTracker(s.client.Client, nil)
+
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 	s.cmd.metrics = metrics.NewCommanderMetrics()
+	s.cmd.txsTracker = s.TxsTracker
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
-	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 
 	err = s.cmd.addGenesisBatch()
@@ -64,9 +69,12 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
+
+	s.StartTracker(s.T())
 }
 
 func (s *TxsBatchesTestSuite) TearDownTest() {
+	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -353,7 +361,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
 	// Change batch type used in TxsContext
-	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
 
 	// Register public keys added to the account tree for signature disputes to work
@@ -536,7 +544,7 @@ func (s *TxsBatchesTestSuite) submitInvalidBatchInTx(
 func (s *TxsBatchesTestSuite) beginTransaction() (*db.TxController, *st.Storage, *executor.TxsContext) {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.client.Client, s.cfg.Rollup)
 	return txController, txStorage, executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
 }
 

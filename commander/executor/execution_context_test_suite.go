@@ -38,7 +38,7 @@ func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg *config.RollupCo
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, s.cfg)
 }
 
 func (s *testSuiteWithExecutionContext) TearDownTest() {

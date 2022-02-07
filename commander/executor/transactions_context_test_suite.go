@@ -25,6 +25,6 @@ func (s *testSuiteWithTxsContext) SetupTestWithConfig(batchType batchtype.BatchT
 // setup
 func (s *testSuiteWithTxsContext) AcceptNewConfig() {
 	batchType := s.txsCtx.BatchType
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, s.cfg)
 	s.txsCtx = NewTestTxsContext(s.executionCtx, batchType)
 }

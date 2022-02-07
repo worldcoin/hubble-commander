@@ -121,7 +121,7 @@ func (s *syncTestSuite) recreateDatabase() {
 
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -21,6 +22,7 @@ import (
 type MMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsTracker
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
@@ -40,16 +42,23 @@ func (s *MMBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
+	s.InitTracker(s.client.Client, nil)
+	s.client.TxsChan = s.TxsTracker.TxsChan
+
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = s.TxsTracker
 	s.cmd.workersContext, s.cmd.stopWorkersContext = context.WithCancel(context.Background())
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
+
+	s.StartTracker(s.T())
 }
 
 func (s *MMBatchesTestSuite) TearDownTest() {
+	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -140,7 +149,7 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	err := txStorage.AddTransaction(tx)
 	s.NoError(err)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
@@ -162,7 +171,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	txsCtx := executor.NewTxsContext(
 		storage,
 		s.client.Client,
-		s.cmd.txsTracker.TxsSender,
+		s.TxsTracker.TxsSender,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
 		context.Background(),
