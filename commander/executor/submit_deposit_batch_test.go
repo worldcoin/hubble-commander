@@ -45,8 +45,7 @@ func (s *SubmitDepositBatchTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.InitTracker(s.client.Client, nil)
-	s.client.TxsChan = s.TxsTracker.TxsChan
+	s.InitTracker(s.client.Client, s.client.TxsChan)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.TxsTracker.TxsSender, nil)
 	s.depositsCtx = NewTestDepositsContext(executionCtx)

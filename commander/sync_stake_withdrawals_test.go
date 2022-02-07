@@ -50,8 +50,7 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisStateAndFastBlockFinalization(s.T(), s.storage)
 
-	s.InitTracker(s.client.Client, nil)
-	s.client.TxsChan = s.TxsTracker.TxsChan
+	s.InitTracker(s.client.Client, s.client.TxsChan)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
