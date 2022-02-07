@@ -29,7 +29,7 @@ func (t *TxsTracker) StartTracking(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case reqParams := <-t.requestsChan:
-			_, err := t.sendTransaction(reqParams)
+			_, err := t.sendRequest(reqParams)
 			if err != nil {
 				panic(err)
 			}
