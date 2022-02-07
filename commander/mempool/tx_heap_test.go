@@ -1,7 +1,6 @@
 package mempool
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -19,13 +18,16 @@ func (s *TxHeapTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxHeapTestSuite) TestHeap() {
+func (s *TxHeapTestSuite) TestPop_OrdersCorrectly() {
 	txs := s.makeTestTxs()
 	heap := NewTxHeap(txs...)
 
-	for i := 0; i < heap.Size(); i++ {
-		fmt.Printf("%s,", heap.Pop().GetBase().Fee.String())
+	initialSize := heap.Size()
+	orderedFees := make([]uint64, initialSize)
+	for i := 0; i < initialSize; i++ {
+		orderedFees[i] = heap.Pop().GetBase().Fee.Uint64()
 	}
+	require.Equal(s.T(), []uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
 }
 
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {
