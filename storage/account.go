@@ -7,19 +7,20 @@ import (
 )
 
 func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
-	var account models.AccountLeaf
-	err := s.database.Badger.FindOne(
-		&account,
-		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey"),
+	var accounts []models.AccountLeaf
+	err := s.database.Badger.Find(
+		&accounts,
+		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey").Limit(1),
 	)
-	if err == bh.ErrNotFound {
-		return nil, errors.WithStack(NewNotFoundError("pub key id"))
-	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &account.PubKeyID, nil
+	if len(accounts) == 0 {
+		return nil, errors.WithStack(NewNotFoundError("pub key id"))
+	}
+
+	return &accounts[0].PubKeyID, nil
 }
 
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {
