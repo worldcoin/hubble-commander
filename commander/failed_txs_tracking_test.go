@@ -65,20 +65,18 @@ func (s *FailedTxsTrackingTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = s.TxsTracker
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
 
 	s.setAccountsAndChainState()
 
-	s.StartTracker(s.T())
-
 	s.startWorkers()
 	s.waitForLatestBlockSync()
 }
 
 func (s *FailedTxsTrackingTestSuite) TearDownTest() {
-	s.StopTracker()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
