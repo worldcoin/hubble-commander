@@ -18,16 +18,24 @@ func (s *TxHeapTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxHeapTestSuite) TestPop_OrdersCorrectly() {
-	txs := s.makeTestTxs()
-	heap := NewTxHeap(txs...)
+func (s *TxHeapTestSuite) TestPeek() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+	s.EqualValues(20, heap.Peek().GetBase().Fee.Uint64())
+}
 
-	initialSize := heap.Size()
-	orderedFees := make([]uint64, initialSize)
-	for i := 0; i < initialSize; i++ {
-		orderedFees[i] = heap.Pop().GetBase().Fee.Uint64()
-	}
-	require.Equal(s.T(), []uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
+func (s *TxHeapTestSuite) TestPop() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+
+	orderedFees := s.popAll(&heap)
+	s.Equal([]uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
+}
+
+func (s *TxHeapTestSuite) TestReplace() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+	newTx := s.newTx(7)
+	s.EqualValues(20, heap.Replace(newTx).GetBase().Fee.Uint64())
+	orderedFees := s.popAll(&heap)
+	s.Equal([]uint64{10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, orderedFees)
 }
 
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {
@@ -43,6 +51,15 @@ func (s *TxHeapTestSuite) newTx(fee uint64) models.GenericTransaction {
 	tx := testutils.MakeTransfer(0, 1, 0, 100)
 	tx.Fee = models.MakeUint256(fee)
 	return &tx
+}
+
+func (s *TxHeapTestSuite) popAll(heap *TxHeap) []uint64 {
+	initialSize := heap.Size()
+	orderedFees := make([]uint64, initialSize)
+	for i := 0; i < initialSize; i++ {
+		orderedFees[i] = heap.Pop().GetBase().Fee.Uint64()
+	}
+	return orderedFees
 }
 
 func TestTxHeapTestSuite(t *testing.T) {

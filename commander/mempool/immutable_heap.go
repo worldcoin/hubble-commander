@@ -16,6 +16,10 @@ func newImmutableHeap(elements []interface{}, less func(a, b interface{}) bool) 
 	}
 }
 
+func (h *immutableHeap) Peek() interface{} {
+	return h.heap.get(0)
+}
+
 func (h immutableHeap) Push(element interface{}) *immutableHeap {
 	heap.Push(&h.heap, element)
 	return &h
@@ -25,10 +29,11 @@ func (h immutableHeap) Pop() (interface{}, *immutableHeap) {
 	return heap.Pop(&h.heap), &h
 }
 
-func (h immutableHeap) Replace(element interface{}) *immutableHeap {
+func (h immutableHeap) Replace(element interface{}) (interface{}, *immutableHeap) {
+	previous := h.heap.get(0)
 	h.heap.set(0, element)
 	heap.Fix(&h.heap, 0)
-	return &h
+	return previous, &h
 }
 
 func (h *immutableHeap) Size() int {
@@ -55,6 +60,10 @@ func makeInternalHeap(elements []interface{}, less func(a, b interface{}) bool) 
 
 func (h *internalHeap) set(index int, value interface{}) {
 	h.list = h.list.Set(index, value)
+}
+
+func (h *internalHeap) get(index int) interface{} {
+	return h.list.Get(index)
 }
 
 func (h *internalHeap) Len() int {
