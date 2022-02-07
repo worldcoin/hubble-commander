@@ -6,7 +6,7 @@ type TxHeap struct {
 	heap *immutableHeap
 }
 
-func NewTxHeap(txs ...models.GenericTransaction) TxHeap {
+func NewTxHeap(txs ...models.GenericTransaction) *TxHeap {
 	less := func(a, b interface{}) bool {
 		txA := a.(models.GenericTransaction).GetBase()
 		txB := b.(models.GenericTransaction).GetBase()
@@ -18,7 +18,7 @@ func NewTxHeap(txs ...models.GenericTransaction) TxHeap {
 		interfaces[i] = txs[i]
 	}
 
-	return TxHeap{
+	return &TxHeap{
 		heap: newImmutableHeap(interfaces, less),
 	}
 }
@@ -47,6 +47,6 @@ func (h *TxHeap) Size() int {
 	return h.heap.Size()
 }
 
-func (h TxHeap) Copy() TxHeap {
-	return h
+func (h TxHeap) Copy() *TxHeap {
+	return &h
 }
