@@ -63,6 +63,8 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
 	}
+
+	s.StartTracker(s.T())
 }
 
 func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestClient {
