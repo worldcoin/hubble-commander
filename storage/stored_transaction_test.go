@@ -257,13 +257,13 @@ func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
 	err = s.storage.AddTransaction(&failedMM)
 	s.NoError(err)
 
-	txs, err := s.storage.GetAllFailedTxs()
+	txs, err := s.storage.GetAllFailedTransactions()
 	s.NoError(err)
 	s.Len(txs, 3)
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions() {
-	txs, err := s.storage.GetAllFailedTxs()
+	txs, err := s.storage.GetAllFailedTransactions()
 	s.NoError(err)
 	s.Len(txs, 0)
 }

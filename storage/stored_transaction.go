@@ -255,7 +255,7 @@ func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericTransact
 	return models.MakeGenericArray(txs...), nil
 }
 
-func (s *TransactionStorage) GetAllFailedTxs() (models.GenericTransactionArray, error) {
+func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericTransactionArray, error) {
 	var failedTxs []stored.FailedTx
 	err := s.database.Badger.Find(&failedTxs, nil)
 	if err != nil {

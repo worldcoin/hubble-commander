@@ -12,5 +12,5 @@ func (a *API) GetFailedTransactions(ctx context.Context) (models.GenericTransact
 		return nil, err
 	}
 
-	return a.storage.GetAllFailedTxs()
+	return a.storage.GetAllFailedTransactions()
 }
