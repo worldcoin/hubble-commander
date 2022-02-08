@@ -41,18 +41,6 @@ func (s *TxHeapTestSuite) TestReplace() {
 	s.Equal([]uint64{10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(heap))
 }
 
-func (s *TxHeapTestSuite) TestCopy() {
-	heap := NewTxHeap()
-	heap.Push(s.newTx(3))
-	heap.Push(s.newTx(5))
-	heap.Push(s.newTx(1))
-	heapCopy := heap.Copy()
-	heapCopy.Replace(s.newTx(2))
-	heapCopy.Replace(s.newTx(7))
-	s.Equal([]uint64{5, 3, 1}, s.popAll(heap))
-	s.Equal([]uint64{7, 2, 1}, s.popAll(heapCopy))
-}
-
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {
 	fees := []uint64{3, 2, 20, 5, 3, 1, 2, 5, 6, 9, 10, 4}
 	txs := make([]models.GenericTransaction, len(fees))
