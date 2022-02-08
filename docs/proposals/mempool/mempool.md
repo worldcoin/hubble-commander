@@ -95,6 +95,21 @@ func(m *Mempool) resetExecutableIndices() {
 func(m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
 	// remove given txs from the mempool and possibly rebalance txs list
 }
+
+func (m *Mempool) getExecutableIndex(stateID uint32) int {
+    // returns current executableIndex for given user 
+	return m.userTxsMap[stateID].executableIndex
+}
+
+func (m *Mempool) updateExecutableIndicesAndNonce(newExecutableIndicesMap map[uint32]int) {
+    for stateID, index := range newExecutableIndicesMap {
+		// calculate applied txs count and decrease nonce based on executableIndex difference
+        userTxs := m.userTxsMap[stateID]
+		txsCountDifference = userTxs.executableIndex - index
+        userTxs.executableIndex = index
+        userTxs.nonce -= txsCountDifference
+    }
+}
 ```
 
 ```go
@@ -125,6 +140,7 @@ type RollupContext struct {
 	mempool Mempool
 	sucessfulTxs []models.GenericTransaction
 	failedTxs []models.GenericTransaction
+	executableIndicesCache map[uint32]int // map StateID -> ExecutableIndex before each commitment
 }
 
 func (r *RollupContext) rollupLoopIteration(txType txtype.TransactionType) {
@@ -134,26 +150,23 @@ func (r *RollupContext) rollupLoopIteration(txType txtype.TransactionType) {
 
 	
 	// Apply txs modifying Mempool and Heap data structures
-
-	tx := heap.peek()
-	for tx != nil {
-		res := applyTx(tx)
-		if res == ERROR {
-			r.failedTxs = append(r.failedTxs, tx)
-			r.mempool.ignoreUserTxs(tx.From)
-			heap.pop()
-		} else {
-			nextTx := r.mempool.getNextExecutableTx(tx.From)
-			heap.replace(nextTx)
-			sucessfulTxs := append(sucessfulTxs, tx)
+	commitments := make([]models.Commitment, 0, MAX_COMMITMENT)
+    for i := 0; i != MAX_COMMITMENT; i++{
+        r.executableIndicesCache = make(map[uint32]int, MAX_TXS_PER_COMMITMENT)
+	    commitmentTxs, err := r.CreateCommitment()
+		if err == ErrNotEnoughTxs {
+            r.mempool.updateExecutableIndicesAndNonce(r.executableIndicesCache)
+			break
+        }
+		if err != nil {
+		    return err
 		}
-		tx = heap.peek()
+        sucessfulTxs := append(sucessfulTxs, commitmentTxs)
 	}
-
 
 	// Clean up Mempool
 
-	if len(sucessfulTxs) < MIN_TXS {
+	if len(commitments) < MIN_COMMITMENTS {
 		r.resetExecutableIndices()
 		r.mempool.removeTxsAndRebalance(r.failedTxs)
 		// Move failedTxs from PendingTx to FailedTx in DB
@@ -163,10 +176,43 @@ func (r *RollupContext) rollupLoopIteration(txType txtype.TransactionType) {
 	r.mempool.removeTxsAndRebalance(append(r.sucessfulTxs, r.failedTxs))
 	// Move sucessfulTxs from PendingTx to MinedTx in DB
 	// Move failedTxs from PendingTx to FailedTx in DB
+	
+	// Clean up RollupContext
 }
+
+func (r *RollupContext) CreateCommitment() ([]models.GenericTranscation, error) {
+    commitmentTxs := make([]models.GenericTransaction, 0, MAX_TXS_PER_COMMITMENT)
+    for i := 0; len(commitmentTxs) != MAX_TXS_PER_COMMITMENT; i++ {
+        tx := heap.peek()
+        if tx == nil {
+			if len(commtimentTxs) < MIN_TXS_PER_COMMITMENT {
+				return nil, ErrNotEnoughTxs
+            }
+            return commitmentTxs, nil
+        }
+
+        // save executableIndex for user before commitment
+        if _, ok := r.executableIndicesCache[tx.FromStateID]; !ok {
+            r.executableIndicesCache[tx.FromStateID] = r.mempool.getExecutableIndex(tx.FromStateID)
+        }
+
+        res := applyTx(tx)
+        if res == ERROR {
+            r.failedTxs = append(r.failedTxs, tx)
+            r.mempool.ignoreUserTxs(tx.From)
+            heap.pop()
+        } else {
+            nextTx := r.mempool.getNextExecutableTx(tx.From)
+            heap.replace(nextTx)
+            commitmentTxs := append(commitmentTxs, tx)
+        }
+    }
+	return commitmentTxs, nil
+}
+
 ```
 
 ### Notes
 ~~- Idea: store user transactions in a single list to avoid "rebalancing" between `pendingTxs` and `queuedTxs`. 
   Instead, use a pointer to mark the last executable transaction on the list.~~
-- This pseudo code ignores the fact that txs are applied in multiple commitments. There can be a situation where we might need to revert some txs applied in commitment `N` (for instance because of not enough txs) but keep the txs applied in commitments `0 ... N-1`.
+~~- This pseudo code ignores the fact that txs are applied in multiple commitments. There can be a situation where we might need to revert some txs applied in commitment `N` (for instance because of not enough txs) but keep the txs applied in commitments `0 ... N-1`.~~
