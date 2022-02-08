@@ -35,6 +35,14 @@ For now, the rest of the description in pseudo code below.
 
 ### Pseudo code
 ```go
+type MempoolBuilder struct {
+	storage *storage.Storage
+}
+
+func (mb *MempoolBuilder) Build() Mempool {
+    // loads txs and user states from DB and builds userTxsMap
+}
+
 type Mempool struct {
 	incomingTxs <-chan models.GenericTransaction
 	userTxsMap map[uint32]UserTxs
@@ -44,11 +52,6 @@ type UserTxs struct {
 	txs []models.GenericTransaction // "executable" and "non-executable" txs
 	nonce uint // user nonce
 	executableIndex int // index of next executable tx from txs
-}
-
-func NewMempool() *Mempool {
-	// loads txs from DB and adds them to userTxsMap using addOrReplace()
-	// sets user nonces from DB
 }
 
 func(m *Mempool) fetchIncomingTxs() {
