@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var errMismatchedAppliedTxs = fmt.Errorf("mismatched applied txs from pending batch")
+var errInvalidPendingBatchTxs = fmt.Errorf("failed to apply all transactions from pending batch")
 
 func (c *TxsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 	err := c.storage.AddBatch(&models.Batch{
@@ -41,7 +41,7 @@ func (c *TxsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 			return err
 		}
 		if executeTxsResult.AppliedTxs().Len() != pendingCommitment.Transactions.Len() {
-			return errors.WithStack(errMismatchedAppliedTxs)
+			return errors.WithStack(errInvalidPendingBatchTxs)
 		}
 	}
 	return nil
