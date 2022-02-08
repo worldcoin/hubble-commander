@@ -8,6 +8,7 @@ import (
 
 func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
 	var accounts []models.AccountLeaf
+	// We're not using FindOne here because of inefficient underlying implementation
 	err := s.database.Badger.Find(
 		&accounts,
 		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey").Limit(1),
