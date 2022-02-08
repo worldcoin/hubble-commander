@@ -2,7 +2,6 @@ package setup
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 
@@ -32,10 +31,8 @@ func NewConfiguredCommanderFromEnv(commanderConfig *config.Config, deployerConfi
 		})
 	case "local":
 		return ConnectToLocalCommander(), nil
-	case "in-process":
-		return DeployAndCreateInProcessCommander(commanderConfig, deployerConfig)
 	default:
-		return nil, fmt.Errorf("invalid HUBBLE_E2E env var")
+		return DeployAndCreateInProcessCommander(commanderConfig, deployerConfig)
 	}
 }
 
