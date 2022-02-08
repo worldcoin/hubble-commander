@@ -35,6 +35,5 @@ func (a *AccountManager) WaitToBeMined(tx *types.Transaction) (*types.Receipt, e
 }
 
 func (c *Client) IsTxMined(tx *types.Transaction) (bool, *types.Receipt, error) {
-	// TODO: replace TxMineTimeout with another variable from config
 	return chain.IsTxMined(c.Blockchain.GetBackend(), *c.config.TxMineTimeout, tx)
 }
