@@ -10,7 +10,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 )
 
-const batchTxCount = 1024
+const (
+	batchTxCount             = 1024
+	measureBenchDataCreation = true
+	predictedMaxN            = 250 // adjust this value based on txCount if measureBenchDataCreation=false
+)
 
 func BenchmarkTxHeap_100txs(b *testing.B)    { benchmarkTxHeap(100, b) }
 func BenchmarkTxHeap_500txs(b *testing.B)    { benchmarkTxHeap(500, b) }
@@ -25,14 +29,33 @@ func BenchmarkTxHeap_60000txs(b *testing.B)  { benchmarkTxHeap(60000, b) }
 func BenchmarkTxHeap_80000txs(b *testing.B)  { benchmarkTxHeap(80000, b) }
 func BenchmarkTxHeap_100000txs(b *testing.B) { benchmarkTxHeap(100000, b) }
 
-// func BenchmarkTxHeap_1000000txs(b *testing.B) { benchmarkTxHeap(1_000_000, b) }
-
 func benchmarkTxHeap(txCount int, b *testing.B) {
 	rand.Seed(time.Now().UnixNano())
 
+	if measureBenchDataCreation {
+		benchTxHeapWithDataCreation(txCount, b)
+	} else {
+		benchTxHeapOperationsOnly(txCount, b)
+	}
+}
+
+func benchTxHeapWithDataCreation(txCount int, b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		txQueue, heap := makeBenchData(txCount)
 		benchTxHeapPopReplace(txQueue, heap)
+	}
+}
+
+func benchTxHeapOperationsOnly(txCount int, b *testing.B) {
+	txQueues := make([][]models.GenericTransaction, predictedMaxN)
+	heaps := make([]*TxHeap, predictedMaxN)
+	for i := 0; i < predictedMaxN; i++ {
+		txQueues[i], heaps[i] = makeBenchData(txCount)
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		benchTxHeapPopReplace(txQueues[i], heaps[i])
 	}
 }
 
