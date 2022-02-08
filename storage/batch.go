@@ -63,19 +63,20 @@ func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, err
 }
 
 func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
-	var storedBatch stored.Batch
-	err := s.database.Badger.FindOne(
-		&storedBatch,
-		bh.Where("Hash").Eq(batchHash).Index("Hash"),
+	storedBatches := make([]stored.Batch, 0, 1)
+	err := s.database.Badger.Find(
+		&storedBatches,
+		bh.Where("Hash").Eq(&batchHash).Index("Hash").Limit(1),
 	)
-	if err == bh.ErrNotFound {
-		return nil, errors.WithStack(NewNotFoundError("batch"))
-	}
 	if err != nil {
 		return nil, err
 	}
 
-	return storedBatch.ToModelsBatch(), nil
+	if len(storedBatches) == 0 {
+		return nil, errors.WithStack(NewNotFoundError("batch"))
+	}
+
+	return storedBatches[0].ToModelsBatch(), nil
 }
 
 func (s *BatchStorage) GetPendingBatches() ([]models.Batch, error) {
