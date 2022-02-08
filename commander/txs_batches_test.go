@@ -572,7 +572,7 @@ func (s *TxsBatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 }
 
 func checkBatchAfterDispute(s *require.Assertions, cmd *Commander, batchID models.Uint256) {
-	_, err := cmd.client.GetBatch(&batchID)
+	_, err := cmd.client.GetContractBatch(&batchID)
 	s.Error(err)
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
 

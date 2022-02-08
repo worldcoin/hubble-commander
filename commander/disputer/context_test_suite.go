@@ -94,9 +94,10 @@ func (s *testSuiteWithContexts) setAccounts(domain *bls.Domain) []bls.Wallet {
 }
 
 func (s *testSuiteWithContexts) addGenesisBatch(root *common.Hash) {
-	batch, err := s.client.GetBatch(models.NewUint256(0))
+	contractBatch, err := s.client.GetContractBatch(models.NewUint256(0))
 	s.NoError(err)
 
+	batch := contractBatch.ToModelBatch()
 	batch.PrevStateRoot = root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
