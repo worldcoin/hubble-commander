@@ -88,6 +88,7 @@ func benchTxHeapPopReplace(txQueue []models.GenericTransaction, heap *TxHeap) {
 	}
 }
 
+// nolint:gosec
 func randomTx() models.GenericTransaction {
 	return &models.Transfer{
 		TransactionBase: models.TransactionBase{
