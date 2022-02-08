@@ -65,7 +65,7 @@ func (s *DisputeTransferTransitionTestSuite) TestDisputeTransition_ValidBatch() 
 
 	err = s.disputeCtx.DisputeTransition(remoteBatches[0].ToDecodedTxBatch(), 0, proofs)
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
+	_, err = s.client.GetContractBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
 }
 
