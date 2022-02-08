@@ -41,13 +41,14 @@ type Mempool struct {
 }
 
 type UserTxs struct {
-	pendingTxs []models.GenericTransaction // "executable" txs
-	queuedTxs []models.GenericTransaction // "non-executable" txs
-	executableIndex int // index of next executable tx from pendingTxs
+	txs []models.GenericTransaction // "executable" and "non-executable" txs
+	nonce uint // user nonce
+	executableIndex int // index of next executable tx from txs
 }
 
 func NewMempool() *Mempool {
 	// loads txs from DB and adds them to userTxsMap using addOrReplace()
+	// sets user nonces from DB
 }
 
 func(m *Mempool) fetchIncomingTxs() {
@@ -56,9 +57,10 @@ func(m *Mempool) fetchIncomingTxs() {
 }
 
 func(m *Mempool) addOrReplace(tx models.GenericTransaction) {
-	// adds a new transaction to pendingTxs or queuedTxs possibly rebalancing the lists
+	// adds a new transaction to txs possibly rebalancing the lists
 	// OR
 	// replaces an existing transaction
+	// sets executableIndex 
 }
 
 func(m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
@@ -67,7 +69,7 @@ func(m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.Generi
 		if executableIndex == -1 {
 			continue
 		}
-		executableTx := userTx.pendingTxs[userTx.executableIndex]
+		executableTx := userTx.txs[userTx.executableIndex]
 		if (executableTx.Type == txType) {
 			result = append(result, executableTx)
 		}
@@ -76,13 +78,13 @@ func(m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.Generi
 }
 
 func(m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
-	// increments executableIndex for given user state in userTxsMap by 1
-	// returns pendingTxs[executableIndex]
+	// checks if tx from userTxsMap for given user is executable, if so increments executableIndex by 1
+	// returns txs[executableIndex]
 }
 
 func(m *Mempool) ignoreUserTxs(stateID uint32) {
 	// makes subsequent getExecutableTxs not return transactions from this user state
-	// this virtually "moves" all user's txs from pendingTxs to queuedTxs
+	// this virtually marks all user's txs as non-executable
 	m.userTxsMap[stateID].executableIndex = -1
 }
 
@@ -91,7 +93,7 @@ func(m *Mempool) resetExecutableIndices() {
 }
 
 func(m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
-	// remove given txs from the mempool and possibly rebalance pendingTxs and queuedTxs lists
+	// remove given txs from the mempool and possibly rebalance txs list
 }
 ```
 
@@ -106,7 +108,7 @@ func NewHeap(txs []models.GenericTransaction) *Heap {
 }
 
 func(h *Heap) peek() models.GenericTransaction {
-	// get referance to the tx with the highest fee
+	// get reference to the tx with the highest fee
 }
 
 func(h *Heap) pop() models.GenericTransaction {
@@ -165,6 +167,6 @@ func (r *RollupContext) rollupLoopIteration(txType txtype.TransactionType) {
 ```
 
 ### Notes
-- Idea: store user transactions in a single list to avoid "rebalancing" between `pendingTxs` and `queuedTxs`. 
-  Instead, use a pointer to mark the last executable transaction on the list.
+~~- Idea: store user transactions in a single list to avoid "rebalancing" between `pendingTxs` and `queuedTxs`. 
+  Instead, use a pointer to mark the last executable transaction on the list.~~
 - This pseudo code ignores the fact that txs are applied in multiple commitments. There can be a situation where we might need to revert some txs applied in commitment `N` (for instance because of not enough txs) but keep the txs applied in commitments `0 ... N-1`.
