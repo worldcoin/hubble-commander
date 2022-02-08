@@ -187,6 +187,12 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Transfers() {
 	s.Contains(transferArray, transfers[1])
 }
 
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoTransfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Create2Transfers() {
 	transactions := s.populatePendingTransactions()
 	create2transfers := transactions.ToCreate2TransferArray()
@@ -198,6 +204,12 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Create2Transfers
 	c2tArray := res.ToCreate2TransferArray()
 	s.Contains(c2tArray, create2transfers[0])
 	s.Contains(c2tArray, create2transfers[1])
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoCreate2Transfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
 }
 
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_MassMigrations() {
@@ -213,18 +225,6 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_MassMigrations()
 	s.Contains(mmArray, massMigrations[1])
 }
 
-func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoTransfers() {
-	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
-	s.NoError(err)
-	s.Len(txs, 0)
-}
-
-func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoCreate2Transfers() {
-	txs, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
-	s.NoError(err)
-	s.Len(txs, 0)
-}
-
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations() {
 	txs, err := s.storage.GetPendingTransactions(txtype.MassMigration)
 	s.NoError(err)
@@ -232,16 +232,11 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
-	err := s.storage.AddTransaction(&transfer)
-	s.NoError(err)
-	err = s.storage.AddTransaction(&create2Transfer)
-	s.NoError(err)
-	err = s.storage.AddTransaction(&massMigration)
-	s.NoError(err)
+	s.populatePendingTransactions()
 
 	txs, err := s.storage.GetAllPendingTransactions()
 	s.NoError(err)
-	s.Len(txs, 3)
+	s.Len(txs, 6)
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransactions() {
