@@ -1,0 +1,33 @@
+go test -bench=. -benchtime=10s -benchmem=true
+goos: darwin
+goarch: arm64
+pkg: github.com/Worldcoin/hubble-commander/commander/mempool
+BenchmarkTxHeap_100txs-8          102633            117487 ns/op          114216 B/op       2005 allocs/op
+BenchmarkTxHeap_500txs-8           19880            598360 ns/op          504619 B/op      10005 allocs/op
+BenchmarkTxHeap_1000txs-8           9576           1260915 ns/op          992814 B/op      20005 allocs/op
+BenchmarkTxHeap_3000txs-8           3097           3946801 ns/op         3091647 B/op      60009 allocs/op
+BenchmarkTxHeap_5000txs-8           1776           6744152 ns/op         5216474 B/op     100011 allocs/op
+BenchmarkTxHeap_8000txs-8           1107          11053013 ns/op         8424162 B/op     160013 allocs/op
+BenchmarkTxHeap_10000txs-8           864          13820902 ns/op        10573548 B/op     200014 allocs/op
+BenchmarkTxHeap_20000txs-8           426          28163257 ns/op        21287674 B/op     400017 allocs/op
+BenchmarkTxHeap_40000txs-8           202          58961374 ns/op        42683146 B/op     800020 allocs/op
+BenchmarkTxHeap_60000txs-8           128          95322099 ns/op        63169317 B/op    1200021 allocs/op
+BenchmarkTxHeap_80000txs-8            82         132129769 ns/op        85416719 B/op    1600023 allocs/op
+BenchmarkTxHeap_100000txs-8           67         170985803 ns/op        106836751 B/op   2000024 allocs/op
+
+100;117
+500;598
+1000;1260
+3000;3946
+5000;6744
+8000;11053
+10000;13820
+20000;28163
+40000;58961
+60000;95322
+80000;132129
+100000;170985
+
+
+1024 txs (1 full batch) - 171ms
+1tx = 171ms/1024 = 0,16ms
