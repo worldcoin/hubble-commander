@@ -26,14 +26,6 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	return transfer, nil
 }
 
-func (s *TransactionStorage) GetPendingTransfers() (txs models.TransferArray, err error) {
-	genericTxs, err := s.GetPendingTransactions(txtype.Transfer)
-	if err != nil {
-		return nil, err
-	}
-	return genericTxs.ToTransferArray(), nil
-}
-
 func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) ([]models.Transfer, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
