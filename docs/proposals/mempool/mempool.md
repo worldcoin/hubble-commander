@@ -57,10 +57,10 @@ func(m *Mempool) fetchIncomingTxs() {
 }
 
 func(m *Mempool) addOrReplace(tx models.GenericTransaction) {
-	// adds a new transaction to txs possibly rebalancing the lists
+	// adds a new transaction to txs possibly rebalancing the list
 	// OR
 	// replaces an existing transaction
-	// sets executableIndex 
+	// sets executableIndex based on nonce
 }
 
 func(m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
@@ -101,7 +101,7 @@ func (m *Mempool) getExecutableIndex(stateID uint32) int {
 	return m.userTxsMap[stateID].executableIndex
 }
 
-func (m *Mempool) updateExecutableIndicesAndNonce(newExecutableIndicesMap map[uint32]int) {
+func (m *Mempool) updateExecutableIndicesAndNonces(newExecutableIndicesMap map[uint32]int) {
     for stateID, index := range newExecutableIndicesMap {
 		// calculate applied txs count and decrease nonce based on executableIndex difference
         userTxs := m.userTxsMap[stateID]
