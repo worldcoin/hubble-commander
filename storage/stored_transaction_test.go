@@ -175,7 +175,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 }
 
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Transfers() {
-	transactions := s.populatePendingTransactions()
+	transactions := s.populateTransactions()
 	transfers := transactions.ToTransferArray()
 
 	res, err := s.storage.GetPendingTransactions(txtype.Transfer)
@@ -194,7 +194,7 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoTransfers() {
 }
 
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Create2Transfers() {
-	transactions := s.populatePendingTransactions()
+	transactions := s.populateTransactions()
 	create2transfers := transactions.ToCreate2TransferArray()
 
 	res, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
@@ -213,7 +213,7 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoCreate2Transfe
 }
 
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_MassMigrations() {
-	transactions := s.populatePendingTransactions()
+	transactions := s.populateTransactions()
 	massMigrations := transactions.ToMassMigrationArray()
 
 	res, err := s.storage.GetPendingTransactions(txtype.MassMigration)
@@ -232,11 +232,22 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
-	s.populatePendingTransactions()
+	txs := s.populateTransactions()
+	expectedTxs := make([]models.GenericTransaction, 0, 6)
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		base := tx.GetBase()
+		if base.CommitmentID == nil && base.ErrorMessage == nil {
+			expectedTxs = append(expectedTxs, tx)
+		}
+	}
 
-	txs, err := s.storage.GetAllPendingTransactions()
+	res, err := s.storage.GetAllPendingTransactions()
 	s.NoError(err)
-	s.Len(txs, 6)
+	s.Len(res, 6)
+	for _, expectedTx := range expectedTxs {
+		s.Contains(res, expectedTx)
+	}
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransactions() {
@@ -246,24 +257,21 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransaction
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
-	failedTransfer := transfer
-	failedTransfer.ErrorMessage = ref.String("quacked transfer")
-	err := s.storage.AddTransaction(&failedTransfer)
-	s.NoError(err)
+	txs := s.populateTransactions()
+	expectedTxs := make([]models.GenericTransaction, 0, 3)
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		if tx.GetBase().ErrorMessage != nil {
+			expectedTxs = append(expectedTxs, tx)
+		}
+	}
 
-	failedC2T := create2Transfer
-	failedC2T.ErrorMessage = ref.String("quacked create2transfer")
-	err = s.storage.AddTransaction(&failedC2T)
+	res, err := s.storage.GetAllFailedTransactions()
 	s.NoError(err)
-
-	failedMM := massMigration
-	failedMM.ErrorMessage = ref.String("quacked migration")
-	err = s.storage.AddTransaction(&failedMM)
-	s.NoError(err)
-
-	txs, err := s.storage.GetAllFailedTransactions()
-	s.NoError(err)
-	s.Len(txs, 3)
+	s.Len(res, 3)
+	for _, expectedTx := range expectedTxs {
+		s.Contains(res, expectedTx)
+	}
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions() {
@@ -272,7 +280,7 @@ func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions
 	s.Len(txs, 0)
 }
 
-func (s *StoredTransactionTestSuite) populatePendingTransactions() models.GenericTransactionArray {
+func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransactionArray {
 	transfers := make([]models.Transfer, 4)
 	for i := range transfers {
 		transfers[i] = transfer
