@@ -12,6 +12,15 @@ type ContractBatch struct {
 	models.BatchMeta
 }
 
+func (cb *ContractBatch) ToModelBatch() *models.Batch {
+	return &models.Batch{
+		ID:                cb.ID,
+		Type:              cb.BatchType,
+		Hash:              &cb.Hash,
+		FinalisationBlock: &cb.FinaliseOn,
+	}
+}
+
 // TODO Replace usages of GetBatch with GetContractBatch
 
 func (c *Client) GetBatch(batchID *models.Uint256) (*models.Batch, error) {
