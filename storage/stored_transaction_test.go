@@ -222,6 +222,25 @@ func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations
 	s.Len(txs, 0)
 }
 
+func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
+	err := s.storage.AddTransaction(&transfer)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&create2Transfer)
+	s.NoError(err)
+	err = s.storage.AddTransaction(&massMigration)
+	s.NoError(err)
+
+	txs, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Len(txs, 3)
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransactions() {
+	txs, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
 func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
 	failedTransfer := transfer
 	failedTransfer.ErrorMessage = ref.String("quacked transfer")

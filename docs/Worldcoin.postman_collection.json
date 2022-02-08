@@ -38,6 +38,35 @@
                     "response": []
                 },
                 {
+                    "name": "getPendingTransactions",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Auth-Key",
+                                "value": "{{auth_key}}",
+                                "type": "default"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jsonrpc\": \"2.0\",\n    \"method\": \"admin_getPendingTransactions\",\n    \"params\": [],\n    \"id\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{commander}}",
+                            "host": [
+                                "{{commander}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
                     "name": "getFailedTransactions",
                     "request": {
                         "method": "POST",
