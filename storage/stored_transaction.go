@@ -240,6 +240,36 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 	return models.MakeGenericArray(txs...), nil
 }
 
+func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericTransactionArray, error) {
+	var pendingTxs []stored.PendingTx
+	err := s.database.Badger.Find(&pendingTxs, &bh.Query{})
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]models.GenericTransaction, len(pendingTxs))
+	for i := range pendingTxs {
+		txs[i] = pendingTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(txs...), nil
+}
+
+func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericTransactionArray, error) {
+	var failedTxs []stored.FailedTx
+	err := s.database.Badger.Find(&failedTxs, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]models.GenericTransaction, len(failedTxs))
+	for i := range failedTxs {
+		txs[i] = failedTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(txs...), nil
+}
+
 func (s *TransactionStorage) MarkTransactionsAsIncluded(
 	txs models.GenericTransactionArray,
 	commitmentID *models.CommitmentID,
