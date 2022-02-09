@@ -3,7 +3,6 @@ package commander
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/Worldcoin/hubble-commander/client"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -41,10 +40,6 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) error {
 	if err != nil {
 		return err
 	}
-
-	sort.Slice(pendingBatches, func(i, j int) bool {
-		return pendingBatches[i].ID.Cmp(&pendingBatches[j].ID) < 0
-	})
 
 	for i := range pendingBatches {
 		err = c.syncPendingBatch(dtoToModelsBatch(&pendingBatches[i]))

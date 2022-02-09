@@ -74,8 +74,8 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	batches := []dto.PendingBatch{
-		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 		makePendingBatch(1, models.TransferArray{testutils.MakeTransfer(0, 1, 0, 100)}),
+		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 	}
 
 	hubble := new(MockHubble)
