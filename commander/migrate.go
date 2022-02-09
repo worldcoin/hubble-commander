@@ -67,7 +67,7 @@ func (c *Commander) saveFailedTxs(failedTxs models.GenericTransactionArray) erro
 
 	dbTxsCount, err := c.storage.UpdateInMultipleTransactions(operations)
 	if err != nil {
-		err = fmt.Errorf("saving %d failed txs failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
+		err = fmt.Errorf("storing %d failed tx(s) failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
 		return errors.WithStack(err)
 	}
 
