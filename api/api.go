@@ -25,6 +25,7 @@ type API struct {
 	commanderMetrics        *metrics.CommanderMetrics
 	disableSignatures       bool
 	isAcceptingTransactions bool
+	isMigrating             func() bool
 }
 
 func NewServer(
@@ -33,8 +34,17 @@ func NewServer(
 	client *eth.Client,
 	commanderMetrics *metrics.CommanderMetrics,
 	enableBatchCreation func(enable bool),
+	isMigrating func() bool,
 ) (*http.Server, error) {
-	server, err := getAPIServer(cfg.API, storage, client, commanderMetrics, cfg.Rollup.DisableSignatures, enableBatchCreation)
+	server, err := getAPIServer(
+		cfg.API,
+		storage,
+		client,
+		commanderMetrics,
+		cfg.Rollup.DisableSignatures,
+		enableBatchCreation,
+		isMigrating,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +67,7 @@ func getAPIServer(
 	commanderMetrics *metrics.CommanderMetrics,
 	disableSignatures bool,
 	enableBatchCreation func(enable bool),
+	isMigrating func() bool,
 ) (*rpc.Server, error) {
 	hubbleAPI := &API{
 		cfg:                     cfg,
@@ -65,6 +76,7 @@ func getAPIServer(
 		commanderMetrics:        commanderMetrics,
 		disableSignatures:       disableSignatures,
 		isAcceptingTransactions: true,
+		isMigrating:             isMigrating,
 	}
 	if err := hubbleAPI.initSignature(); err != nil {
 		return nil, errors.WithMessage(err, "failed to create mock signature")
