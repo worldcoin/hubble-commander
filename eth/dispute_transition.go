@@ -128,11 +128,11 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 }
 
 func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256, batchHash *common.Hash) error {
-	contractBatch, err := c.GetBatch(batchID)
+	contractBatch, err := c.GetContractBatch(batchID)
 	if err != nil {
 		return err
 	}
-	if *contractBatch.Hash != *batchHash {
+	if contractBatch.Hash != *batchHash {
 		return ErrBatchAlreadyDisputed
 	}
 	return nil

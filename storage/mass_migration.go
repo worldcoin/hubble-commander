@@ -25,14 +25,6 @@ func (s *TransactionStorage) GetMassMigration(hash common.Hash) (*models.MassMig
 	return transfer, nil
 }
 
-func (s *TransactionStorage) GetPendingMassMigrations() (txs models.MassMigrationArray, err error) {
-	genericTxs, err := s.GetPendingTransactions(txtype.MassMigration)
-	if err != nil {
-		return nil, err
-	}
-	return genericTxs.ToMassMigrationArray(), nil
-}
-
 func (s *TransactionStorage) GetMassMigrationsByCommitmentID(id models.CommitmentID) (models.MassMigrationArray, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 

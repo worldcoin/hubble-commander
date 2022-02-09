@@ -409,7 +409,7 @@ func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *typ
 	_, err := ethClient.WaitToBeMined(transaction)
 	require.NoError(t, err)
 
-	_, err = ethClient.GetBatch(models.NewUint256(batchID))
+	_, err = ethClient.GetContractBatch(models.NewUint256(batchID))
 	require.NoError(t, err)
 }
 
