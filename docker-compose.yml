@@ -20,3 +20,5 @@ services:
       - --http.addr=0.0.0.0
       - --ws
       - --ws.addr=0.0.0.0
+      - --http.api="eth,miner"
+      - --ws.api="eth,miner"
