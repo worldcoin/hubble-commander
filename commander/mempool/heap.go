@@ -10,7 +10,7 @@ type mutableHeap struct {
 
 func newMutableHeap(elements []interface{}, less func(a, b interface{}) bool) *mutableHeap {
 	return &mutableHeap{
-		heap: newInternalMutableHeap(elements, less),
+		heap: newInternalHeap(elements, less),
 	}
 }
 
@@ -19,17 +19,16 @@ func (h *mutableHeap) Peek() interface{} {
 	return h.heap.data[0]
 }
 
-func (h mutableHeap) Push(element interface{}) {
+func (h *mutableHeap) Push(element interface{}) {
 	heap.Push(h.heap, element)
 }
 
-func (h mutableHeap) Pop() interface{} {
+func (h *mutableHeap) Pop() interface{} {
 	return heap.Pop(h.heap)
 }
 
 // Replace pops the heap, pushes an item then returns the popped value. This is more efficient than doing Pop then Push.
-// TODO only push in case heap is empty
-func (h mutableHeap) Replace(element interface{}) interface{} {
+func (h *mutableHeap) Replace(element interface{}) interface{} {
 	previous := h.Peek()
 	h.heap.data[0] = element
 	heap.Fix(h.heap, 0)
@@ -40,12 +39,16 @@ func (h *mutableHeap) Size() int {
 	return h.heap.Len()
 }
 
+func (h *mutableHeap) IsEmpty() bool {
+	return h.heap.Len() == 0
+}
+
 type internalHeap struct {
 	data []interface{}
 	less func(a, b interface{}) bool
 }
 
-func newInternalMutableHeap(elements []interface{}, less func(a, b interface{}) bool) *internalHeap {
+func newInternalHeap(elements []interface{}, less func(a, b interface{}) bool) *internalHeap {
 	h := &internalHeap{
 		data: elements,
 		less: less,
@@ -56,9 +59,7 @@ func newInternalMutableHeap(elements []interface{}, less func(a, b interface{}) 
 
 func (h internalHeap) Len() int { return len(h.data) }
 
-func (h internalHeap) Less(i, j int) bool {
-	return h.less(h.data[i], h.data[j])
-}
+func (h internalHeap) Less(i, j int) bool { return h.less(h.data[i], h.data[j]) }
 
 func (h internalHeap) Swap(i, j int) { h.data[i], h.data[j] = h.data[j], h.data[i] }
 
@@ -67,9 +68,9 @@ func (h *internalHeap) Push(x interface{}) {
 }
 
 func (h *internalHeap) Pop() interface{} {
-	oldData := h.data
-	newLength := len(oldData) - 1
-	x := oldData[newLength]
-	h.data = oldData[:newLength]
-	return x
+	previousData := h.data
+	newLength := len(previousData) - 1
+	newData := previousData[newLength]
+	h.data = previousData[:newLength]
+	return newData
 }

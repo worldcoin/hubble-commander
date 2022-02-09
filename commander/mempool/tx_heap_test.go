@@ -20,7 +20,16 @@ func (s *TxHeapTestSuite) SetupSuite() {
 
 func (s *TxHeapTestSuite) TestPeek() {
 	heap := NewTxHeap(s.makeTestTxs()...)
-	s.EqualValues(20, heap.Peek().GetBase().Fee.Uint64())
+	element, err := heap.Peek()
+	s.NoError(err)
+	s.EqualValues(20, element.GetBase().Fee.Uint64())
+}
+
+func (s *TxHeapTestSuite) TestPeek_EmptyHeap() {
+	heap := NewTxHeap()
+	element, err := heap.Peek()
+	s.ErrorIs(err, ErrEmptyHeap)
+	s.Nil(element)
 }
 
 func (s *TxHeapTestSuite) TestPush() {
@@ -34,11 +43,26 @@ func (s *TxHeapTestSuite) TestPop() {
 	s.Equal([]uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(heap))
 }
 
+func (s *TxHeapTestSuite) TestPop_EmptyHeap() {
+	heap := NewTxHeap()
+	element, err := heap.Pop()
+	s.ErrorIs(err, ErrEmptyHeap)
+	s.Nil(element)
+}
+
 func (s *TxHeapTestSuite) TestReplace() {
 	heap := NewTxHeap(s.makeTestTxs()...)
 	newTx := s.newTx(7)
 	s.EqualValues(20, heap.Replace(newTx).GetBase().Fee.Uint64())
 	s.Equal([]uint64{10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(heap))
+}
+
+func (s *TxHeapTestSuite) TestReplace_EmptyHeap() {
+	heap := NewTxHeap()
+	newTx := s.newTx(7)
+	replacedElement := heap.Replace(newTx)
+	s.Nil(replacedElement)
+	s.Equal([]uint64{7}, s.popAll(heap))
 }
 
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {
@@ -60,7 +84,10 @@ func (s *TxHeapTestSuite) popAll(heap *TxHeap) []uint64 {
 	initialSize := heap.Size()
 	orderedFees := make([]uint64, initialSize)
 	for i := 0; i < initialSize; i++ {
-		orderedFees[i] = heap.Pop().GetBase().Fee.Uint64()
+		element, err := heap.Pop()
+		s.NoError(err)
+
+		orderedFees[i] = element.GetBase().Fee.Uint64()
 	}
 	return orderedFees
 }
