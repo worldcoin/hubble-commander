@@ -68,7 +68,7 @@ func (a *API) unsafeGetWithdrawProof(
 	}
 
 	// TODO remove when new primary key for transactions with transaction index is implement
-	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
+	txQueue := executor.NewTxQueue(unsortedMassMigrations)
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
 	withdrawTree, targetUserState, massMigrationIndex, err := a.generateWithdrawTreeForWithdrawProof(massMigrations, transactionHash)

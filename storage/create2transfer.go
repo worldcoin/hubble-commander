@@ -25,7 +25,7 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 	return transfer, nil
 }
 
-func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.CommitmentID) ([]models.Create2Transfer, error) {
+func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.CommitmentID) (models.Create2TransferArray, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
 	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")

@@ -56,7 +56,7 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 	return dtoCommitments, nil
 }
 
-func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interface{}, error) {
+func (a *API) getTransactionsForCommitment(commitment models.Commitment) (models.GenericTransactionArray, error) {
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
 	case batchtype.Transfer:
