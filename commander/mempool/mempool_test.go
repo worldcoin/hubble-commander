@@ -3,7 +3,7 @@ package mempool
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -45,6 +45,31 @@ func (s *MempoolTestSuite) TestNewMempool() {
 	s.Equal(s.initialTransactions[5], executable[1])
 }
 
+func (s *MempoolTestSuite) TestAddTransaction() {
+	mempool := NewMempool(s.initialTransactions, s.initialNonces)
+
+	tx := createTx(3, 10)
+	mempool.addOrReplace(tx, 10)
+
+	executable := mempool.getExecutableTxs(txtype.Transfer)
+	s.Len(executable, 3)
+	s.Equal(s.initialTransactions[0], executable[0])
+	s.Equal(s.initialTransactions[5], executable[1])
+	s.Equal(tx, executable[2])
+}
+
+func (s *MempoolTestSuite) TestReplaceTransaction() {
+	mempool := NewMempool(s.initialTransactions, s.initialNonces)
+
+	tx := createTx(0, 10)
+	mempool.addOrReplace(tx, 10)
+
+	executable := mempool.getExecutableTxs(txtype.Transfer)
+	s.Len(executable, 2)
+	s.Equal(tx, executable[0])
+	s.Equal(s.initialTransactions[5], executable[1])
+}
+
 func TestMempoolTestSuite(t *testing.T) {
 	suite.Run(t, new(MempoolTestSuite))
 }
@@ -52,7 +77,7 @@ func TestMempoolTestSuite(t *testing.T) {
 func createTx(from, nonce uint32) models.GenericTransaction {
 	return &models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:         common.Hash{},
+			Hash:         utils.RandomHash(),
 			TxType:       txtype.Transfer,
 			FromStateID:  from,
 			Amount:       models.Uint256{},

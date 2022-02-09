@@ -7,7 +7,7 @@ import (
 
 func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempool {
 	mempool := &Mempool{
-		userTxsMap: map[uint32]*UserTxs{},
+		userTxsMap: map[uint32]*txBucket{},
 	}
 
 	for _, tx := range txs {
@@ -17,14 +17,7 @@ func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempoo
 		}
 
 		bucket := mempool.getOrInitBucket(tx.GetFromStateID(), nonce)
-
-		bucket.txs = append(bucket.txs, tx)
-		if len(bucket.txs) == 1 { // If first transaction in this bucket
-			nonce := tx.GetNonce()
-			if nonce.EqN(uint64(bucket.nonce)) {
-				bucket.executableIndex = 0
-			}
-		}
+		bucket.appendTx(tx)
 	}
 
 	return mempool
@@ -37,19 +30,19 @@ func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempoo
 //
 // Mempool is persisted between batches.
 type Mempool struct {
-	userTxsMap map[uint32]*UserTxs // Storing pointers in the map so that data is mutable
+	userTxsMap map[uint32]*txBucket // Storing pointers in the map so that data is mutable
 }
 
-type UserTxs struct {
+type txBucket struct {
 	txs             []models.GenericTransaction // "executable" and "non-executable" txs
 	nonce           uint                        // user nonce
 	executableIndex int                         // index of next executable tx from txs
 }
 
-func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *UserTxs {
+func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *txBucket {
 	bucket, present := m.userTxsMap[stateId]
 	if !present {
-		bucket = &UserTxs{
+		bucket = &txBucket{
 			txs:             make([]models.GenericTransaction, 0),
 			nonce:           currentNonce,
 			executableIndex: -1,
@@ -59,8 +52,28 @@ func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *UserTxs {
 	return bucket
 }
 
+func (b *txBucket) appendTx(tx models.GenericTransaction) {
+	b.txs = append(b.txs, tx)
+	if len(b.txs) == 1 { // If first transaction in this bucket
+		nonce := tx.GetNonce()
+		if nonce.EqN(uint64(b.nonce)) {
+			b.executableIndex = 0
+		}
+	}
+}
+
 func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint) {
-	//bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
+	bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
+
+	for idx := range bucket.txs {
+		if bucket.txs[idx].GetNonce() == tx.GetNonce() {
+			// TODO: Should we replace a transactions that's below executable index (and/or nonce)?
+			bucket.txs[idx] = tx
+			return
+		}
+	}
+
+	bucket.appendTx(tx)
 
 	// adds a new transaction to txs possibly rebalancing the list
 	// OR
@@ -93,7 +106,7 @@ func (m *Mempool) ignoreUserTxs(stateID uint32) {
 	m.userTxsMap[stateID].executableIndex = -1
 }
 func (m *Mempool) resetExecutableIndices() {
-	// iterate over all UserTxs and set executableIndex to 0
+	// iterate over all txBucket and set executableIndex to 0
 }
 func (m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
 	// remove given txs from the mempool and possibly rebalance txs list
