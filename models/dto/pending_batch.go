@@ -15,5 +15,7 @@ type PendingBatch struct {
 
 type PendingCommitment struct {
 	models.Commitment
+
+	// We're using type from models, because commander is only consumer of API returning that type
 	Transactions models.GenericTransactionArray
 }
