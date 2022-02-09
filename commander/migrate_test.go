@@ -61,8 +61,8 @@ func (s *MigrateTestSuite) SetupTest() {
 	setStateLeaves(s.T(), s.storage.Storage)
 
 	s.pendingBatches = []dto.PendingBatch{
-		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 		makePendingBatch(1, models.TransferArray{testutils.MakeTransfer(0, 1, 0, 100)}),
+		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 	}
 
 	s.failedTxs = models.MakeTransferArray(
@@ -111,13 +111,8 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
 }
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
-	batches := []dto.PendingBatch{
-		makePendingBatch(1, models.TransferArray{testutils.MakeTransfer(0, 1, 0, 100)}),
-		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
-	}
-
 	hubble := new(MockHubble)
-	hubble.On(getPendingBatchesMethod).Return(batches, nil)
+	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
 	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
