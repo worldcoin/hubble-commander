@@ -3,12 +3,40 @@ package mempool
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/storage"
 )
 
-// BuildMempool loads txs and user states from DB and builds userTxsMap
-func BuildMempool(storage *storage.Storage) *Mempool {
-	panic("not implemented")
+func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempool {
+	mempool := &Mempool{
+		incomingTxs: make(chan models.GenericTransaction),
+		userTxsMap:  map[uint32]*UserTxs{},
+	}
+
+	for _, tx := range txs {
+		bucket, present := mempool.userTxsMap[tx.GetFromStateID()]
+		if !present {
+			nonce, noncePresent := nonces[tx.GetFromStateID()]
+			if !noncePresent {
+				panic("nonce not present")
+			}
+
+			bucket = &UserTxs{
+				txs:             make([]models.GenericTransaction, 0),
+				nonce:           nonce,
+				executableIndex: -1,
+			}
+			mempool.userTxsMap[tx.GetFromStateID()] = bucket
+		}
+
+		bucket.txs = append(bucket.txs, tx)
+		if len(bucket.txs) == 1 { // If first transaction in this bucket
+			nonce := tx.GetNonce()
+			if nonce.EqN(uint64(bucket.nonce)) {
+				bucket.executableIndex = 0
+			}
+		}
+	}
+
+	return mempool
 }
 
 // Mempool is a data structure that queues pending transactions.
@@ -55,10 +83,12 @@ func (m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.Gener
 func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
 	// checks if tx from userTxsMap for given user is executable, if so increments executableIndex by 1
 	// returns txs[executableIndex]
+	panic("not implemented")
 }
+
 func (m *Mempool) ignoreUserTxs(stateID uint32) {
 	// makes subsequent getExecutableTxs not return transactions from this user state
-	// this virtually marks all user's txs as non-executable
+	// this virtually marks all user's txŁs as non-executable
 	m.userTxsMap[stateID].executableIndex = -1
 }
 func (m *Mempool) resetExecutableIndices() {
