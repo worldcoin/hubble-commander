@@ -7,25 +7,16 @@ import (
 
 func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempool {
 	mempool := &Mempool{
-		incomingTxs: make(chan models.GenericTransaction),
-		userTxsMap:  map[uint32]*UserTxs{},
+		userTxsMap: map[uint32]*UserTxs{},
 	}
 
 	for _, tx := range txs {
-		bucket, present := mempool.userTxsMap[tx.GetFromStateID()]
-		if !present {
-			nonce, noncePresent := nonces[tx.GetFromStateID()]
-			if !noncePresent {
-				panic("nonce not present")
-			}
-
-			bucket = &UserTxs{
-				txs:             make([]models.GenericTransaction, 0),
-				nonce:           nonce,
-				executableIndex: -1,
-			}
-			mempool.userTxsMap[tx.GetFromStateID()] = bucket
+		nonce, noncePresent := nonces[tx.GetFromStateID()]
+		if !noncePresent {
+			panic("nonce not present")
 		}
+
+		bucket := mempool.getOrInitBucket(tx.GetFromStateID(), nonce)
 
 		bucket.txs = append(bucket.txs, tx)
 		if len(bucket.txs) == 1 { // If first transaction in this bucket
@@ -46,8 +37,7 @@ func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempoo
 //
 // Mempool is persisted between batches.
 type Mempool struct {
-	incomingTxs <-chan models.GenericTransaction
-	userTxsMap  map[uint32]*UserTxs // Storing pointers in the map so that data is mutable
+	userTxsMap map[uint32]*UserTxs // Storing pointers in the map so that data is mutable
 }
 
 type UserTxs struct {
@@ -56,11 +46,22 @@ type UserTxs struct {
 	executableIndex int                         // index of next executable tx from txs
 }
 
-func (m *Mempool) fetchIncomingTxs() {
-	// fetches all txs from incomingTxs channel and adds them to userTxsMap /
-	// replaces some existing ones using addOrReplace()
+func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *UserTxs {
+	bucket, present := m.userTxsMap[stateId]
+	if !present {
+		bucket = &UserTxs{
+			txs:             make([]models.GenericTransaction, 0),
+			nonce:           currentNonce,
+			executableIndex: -1,
+		}
+		m.userTxsMap[stateId] = bucket
+	}
+	return bucket
 }
-func (m *Mempool) addOrReplace(tx models.GenericTransaction) {
+
+func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint) {
+	//bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
+
 	// adds a new transaction to txs possibly rebalancing the list
 	// OR
 	// replaces an existing transaction

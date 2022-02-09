@@ -26,14 +26,23 @@ func (s *MempoolTestSuite) SetupSuite() {
 
 		createTx(1, 12), // non-executable
 		createTx(1, 13),
+
+		createTx(2, 15), // executable
+		createTx(2, 16),
 	}
 	s.initialNonces = map[uint32]uint{}
 	s.initialNonces[0] = 10
 	s.initialNonces[1] = 11
+	s.initialNonces[2] = 15
 }
 
 func (s *MempoolTestSuite) TestNewMempool() {
-	NewMempool(s.initialTransactions, s.initialNonces)
+	mempool := NewMempool(s.initialTransactions, s.initialNonces)
+
+	executable := mempool.getExecutableTxs(txtype.Transfer)
+	s.Len(executable, 2)
+	s.Equal(s.initialTransactions[0], executable[0])
+	s.Equal(s.initialTransactions[5], executable[1])
 }
 
 func TestMempoolTestSuite(t *testing.T) {
