@@ -44,7 +44,7 @@ func (s *MigrateTestSuite) SetupTest() {
 	s.NoError(err)
 	s.cfg = config.GetTestConfig()
 
-	s.cmd = NewCommander(s.cfg, nil, false)
+	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.storage = s.storage.Storage
 
 	setStateLeaves(s.T(), s.storage.Storage)

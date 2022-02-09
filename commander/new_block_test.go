@@ -47,7 +47,7 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain, false)
+	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 

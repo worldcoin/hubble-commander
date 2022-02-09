@@ -40,7 +40,7 @@ func (s *MMBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.cmd = NewCommander(s.cfg, nil, false)
+	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 

@@ -11,14 +11,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func startCommander(ctx *cli.Context) error {
+func startCommander(_ *cli.Context) error {
 	cfg := config.GetCommanderConfigAndSetupLogger()
 	blockchain, err := commander.GetChainConnection(cfg.Ethereum)
 	if err != nil {
 		return err
 	}
 
-	cmd := commander.NewCommander(cfg, blockchain, ctx.Bool("migrate"))
+	cmd := commander.NewCommander(cfg, blockchain)
 	setupCloseHandler(cmd)
 
 	return cmd.StartAndWait()

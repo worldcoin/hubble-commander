@@ -52,11 +52,11 @@ type Commander struct {
 	txsHashesChan chan common.Hash
 }
 
-func NewCommander(cfg *config.Config, blockchain chain.Connection, migrate bool) *Commander {
+func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		lifecycle:      lifecycle{},
 		workers:        makeWorkers(),
-		rollupControls: makeRollupControls(migrate),
+		rollupControls: makeRollupControls(cfg.Bootstrap.Migrate),
 		cfg:            cfg,
 		blockchain:     blockchain,
 		metrics:        metrics.NewCommanderMetrics(),
