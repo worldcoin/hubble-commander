@@ -4,6 +4,7 @@
 #
 #bootstrap:
 #  prune: false
+#  migrate: false
 #  node_url: http://localhost:8080   # set this url to bootstrap from a remote node
 #  chain_spec_path: chain-spec.yaml  # set this path to bootstrap from a chain spec file
 #

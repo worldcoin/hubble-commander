@@ -56,7 +56,7 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 	return &Commander{
 		lifecycle:      lifecycle{},
 		workers:        makeWorkers(),
-		rollupControls: makeRollupControls(),
+		rollupControls: makeRollupControls(cfg.Bootstrap.Migrate),
 		cfg:            cfg,
 		blockchain:     blockchain,
 		metrics:        metrics.NewCommanderMetrics(),

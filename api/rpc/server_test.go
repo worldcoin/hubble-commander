@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +32,7 @@ func TestServer_ServeHTTP(t *testing.T) {
 
 	keyValue := "secret key"
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(authKeyHeader, keyValue)
+	req.Header.Set(consts.AuthKeyHeader, keyValue)
 
 	server := NewServer()
 	err = server.RegisterName("test", &API{})
