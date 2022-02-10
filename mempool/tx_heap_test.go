@@ -34,6 +34,13 @@ func (s *TxHeapTestSuite) TestPush() {
 	s.Equal([]uint64{20, 10, 9, 7, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(heap))
 }
 
+func (s *TxHeapTestSuite) TestPush_NilElement() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+	s.Panics(func() {
+		heap.Push(nil)
+	})
+}
+
 func (s *TxHeapTestSuite) TestPop() {
 	heap := NewTxHeap(s.makeTestTxs()...)
 	s.Equal([]uint64{20, 10, 9, 6, 5, 5, 4, 3, 3, 2, 2, 1}, s.popAll(heap))
@@ -57,6 +64,13 @@ func (s *TxHeapTestSuite) TestReplace_EmptyHeap() {
 	replacedElement := heap.Replace(newTx)
 	s.Nil(replacedElement)
 	s.Equal([]uint64{7}, s.popAll(heap))
+}
+
+func (s *TxHeapTestSuite) TestReplace_NilElement() {
+	heap := NewTxHeap(s.makeTestTxs()...)
+	s.Panics(func() {
+		heap.Replace(nil)
+	})
 }
 
 func (s *TxHeapTestSuite) makeTestTxs() []models.GenericTransaction {

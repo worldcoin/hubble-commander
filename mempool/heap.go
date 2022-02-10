@@ -23,6 +23,9 @@ func (h *mutableHeap) Peek() interface{} {
 }
 
 func (h *mutableHeap) Push(element interface{}) {
+	if element == nil {
+		panic("cannot push nil element")
+	}
 	heap.Push(h.heap, element)
 }
 
@@ -35,6 +38,10 @@ func (h *mutableHeap) Pop() interface{} {
 
 // Replace pops the heap, pushes an item then returns the popped value. This is more efficient than doing Pop then Push.
 func (h *mutableHeap) Replace(element interface{}) interface{} {
+	if element == nil {
+		panic("cannot replace with nil element")
+	}
+
 	if h.isEmpty() {
 		h.Push(element)
 		return nil
