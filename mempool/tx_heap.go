@@ -17,6 +17,9 @@ func NewTxHeap(txs ...models.GenericTransaction) *TxHeap {
 
 	elements := make([]interface{}, len(txs))
 	for i := range txs {
+		if txs[i] == nil {
+			panic("input slice contains nil element")
+		}
 		elements[i] = txs[i]
 	}
 
