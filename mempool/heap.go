@@ -16,6 +16,9 @@ func newMutableHeap(elements []interface{}, less func(a, b interface{}) bool) *m
 
 // Peek retrieves the min item of the heap
 func (h *mutableHeap) Peek() interface{} {
+	if h.isEmpty() {
+		return nil
+	}
 	return h.heap.data[0]
 }
 
@@ -24,11 +27,19 @@ func (h *mutableHeap) Push(element interface{}) {
 }
 
 func (h *mutableHeap) Pop() interface{} {
+	if h.isEmpty() {
+		return nil
+	}
 	return heap.Pop(h.heap)
 }
 
 // Replace pops the heap, pushes an item then returns the popped value. This is more efficient than doing Pop then Push.
 func (h *mutableHeap) Replace(element interface{}) interface{} {
+	if h.isEmpty() {
+		h.Push(element)
+		return nil
+	}
+
 	previous := h.Peek()
 	h.heap.data[0] = element
 	heap.Fix(h.heap, 0)
@@ -39,7 +50,7 @@ func (h *mutableHeap) Size() int {
 	return h.heap.Len()
 }
 
-func (h *mutableHeap) IsEmpty() bool {
+func (h *mutableHeap) isEmpty() bool {
 	return h.heap.Len() == 0
 }
 
