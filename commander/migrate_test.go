@@ -42,7 +42,6 @@ type MigrateTestSuite struct {
 	cmd            *Commander
 	cfg            *config.Config
 	pendingBatches []dto.PendingBatch
-	failedTxs      models.GenericTransactionArray
 }
 
 func (s *MigrateTestSuite) SetupSuite() {
@@ -64,11 +63,6 @@ func (s *MigrateTestSuite) SetupTest() {
 		makePendingBatch(1, models.TransferArray{testutils.MakeTransfer(0, 1, 0, 100)}),
 		makePendingBatch(2, models.TransferArray{testutils.MakeTransfer(0, 1, 1, 100)}),
 	}
-
-	s.failedTxs = models.MakeTransferArray(
-		makeFailedTransfer(0),
-		makeFailedTransfer(1),
-	)
 }
 
 func (s *MigrateTestSuite) TearDownTest() {
@@ -96,17 +90,22 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 }
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
+	failedTxs := models.MakeTransferArray(
+		makeFailedTransfer(0),
+		makeFailedTransfer(1),
+	)
+
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
-	hubble.On(getFailedTransactionsMethod).Return(s.failedTxs, nil)
+	hubble.On(getFailedTransactionsMethod).Return(failedTxs, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
 
-	for i := 0; i < s.failedTxs.Len(); i++ {
-		tx, err := s.cmd.storage.GetTransfer(s.failedTxs.At(i).GetBase().Hash)
+	for i := 0; i < failedTxs.Len(); i++ {
+		tx, err := s.cmd.storage.GetTransfer(failedTxs.At(i).GetBase().Hash)
 		s.NoError(err)
-		s.Equal(*s.failedTxs.At(i).ToTransfer(), *tx)
+		s.Equal(*failedTxs.At(i).ToTransfer(), *tx)
 	}
 }
 
