@@ -12,6 +12,17 @@ Example result:
 "0.5.0"
 ```
 
+### `hubble_getStatus()`
+
+Returns the status of commander. Statuses:
+
+- `READY`
+- `MIGRATING`
+
+```json
+"READY"
+```
+
 ### `hubble_getNetworkInfo()`
 
 This returns a number of datapoints about the current state of the system:

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/pkg/errors"
@@ -9,6 +10,7 @@ import (
 
 type Hubble interface {
 	GetPendingBatches() ([]dto.PendingBatch, error)
+	GetFailedTransactions() (models.GenericTransactionArray, error)
 }
 
 type hubble struct {
@@ -35,4 +37,14 @@ func (h *hubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	}
 
 	return pendingBatches, nil
+}
+
+func (h *hubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
+	var failedTxs models.GenericTransactionArray
+	err := h.client.CallFor(&failedTxs, "admin_getFailedTransactions")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return failedTxs, nil
 }
