@@ -57,14 +57,7 @@ func (c *Commander) syncFailedTxs(hubble client.Hubble) error {
 		return err
 	}
 
-	if failedTxs.Len() > 0 {
-		err = c.storage.SaveFailedTxs(failedTxs)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return c.storage.AddFailedTransactions(failedTxs)
 }
 
 func (c *Commander) syncPendingBatches(hubble client.Hubble) error {

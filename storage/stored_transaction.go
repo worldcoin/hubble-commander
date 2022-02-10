@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"

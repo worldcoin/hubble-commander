@@ -85,12 +85,9 @@ func (s *MigrateTestSuite) TestMigrate_MissingBootstrapNodeURL() {
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 	hubble := new(MockHubble)
-	hubble.On(getPendingBatchesMethod).
-		Return([]dto.PendingBatch{}, nil)
-	hubble.On(getPendingTransactionsMethod).
-		Return(models.TransferArray{}, nil)
-	hubble.On(getFailedTransactionsMethod).
-		Return(models.TransferArray{}, nil)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
@@ -106,6 +103,7 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
 
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
 	hubble.On(getFailedTransactionsMethod).Return(failedTxs, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
@@ -121,8 +119,8 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
-	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
@@ -148,8 +146,8 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
 
 	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
 	s.NoError(err)
-	s.Contains(txs, expectedTxs[0])
-	s.Contains(txs, expectedTxs[1])
+	s.Contains(txs, &expectedTxs[0])
+	s.Contains(txs, &expectedTxs[1])
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
