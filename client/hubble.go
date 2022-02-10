@@ -31,31 +31,35 @@ func NewHubble(url, authenticationKey string) Hubble {
 }
 
 func (h *hubble) GetPendingBatches() ([]dto.PendingBatch, error) {
-	var pendingBatches []dto.PendingBatch
+	var pendingBatches []Batch
 	err := h.client.CallFor(&pendingBatches, "admin_getPendingBatches")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return pendingBatches, nil
+	batches := make([]dto.PendingBatch, 0, len(pendingBatches))
+	for i := range pendingBatches {
+		batches = append(batches, pendingBatches[i].ToDTO())
+	}
+	return batches, nil
 }
 
 func (h *hubble) GetPendingTransactions() (models.GenericTransactionArray, error) {
-	var pendingTxs models.GenericTransactionArray
+	pendingTxs := make([]Transaction, 0)
 	err := h.client.CallFor(&pendingTxs, "admin_getPendingTransactions")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return pendingTxs, nil
+	return txsToTransactionArray(pendingTxs), nil
 }
 
 func (h *hubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
-	var failedTxs models.GenericTransactionArray
+	failedTxs := make([]Transaction, 0)
 	err := h.client.CallFor(&failedTxs, "admin_getFailedTransactions")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return failedTxs, nil
+	return txsToTransactionArray(failedTxs), nil
 }
