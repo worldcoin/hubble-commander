@@ -30,11 +30,11 @@ func waitToBeMinedWithCtx(ctx context.Context, r ReceiptProvider, tx *types.Tran
 	defer ticker.Stop()
 
 	for {
-		isMined, receipt, err := isTxMined(ctx, r, tx)
-		if err != nil {
+		receipt, err := r.TransactionReceipt(ctx, tx.Hash())
+		if err != nil && err != ethereum.NotFound {
 			return nil, handleWaitToBeMinedError(err)
 		}
-		if isMined {
+		if receipt != nil && receipt.BlockNumber != nil {
 			return receipt, nil
 		}
 
@@ -44,24 +44,6 @@ func waitToBeMinedWithCtx(ctx context.Context, r ReceiptProvider, tx *types.Tran
 		case <-ticker.C:
 		}
 	}
-}
-
-func IsTxMined(r ReceiptProvider, timeout time.Duration, tx *types.Transaction) (bool, *types.Receipt, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	return isTxMined(ctx, r, tx)
-}
-
-func isTxMined(ctx context.Context, r ReceiptProvider, tx *types.Transaction) (bool, *types.Receipt, error) {
-	receipt, err := r.TransactionReceipt(ctx, tx.Hash())
-	if err != nil && err != ethereum.NotFound {
-		return false, nil, err
-	}
-	if receipt != nil && receipt.BlockNumber != nil {
-		return true, receipt, nil
-	}
-	return false, nil, nil
 }
 
 func handleWaitToBeMinedError(err error) error {
