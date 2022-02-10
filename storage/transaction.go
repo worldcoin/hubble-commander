@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
@@ -180,20 +178,30 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 	})
 }
 
-func (s *TransactionStorage) SaveFailedTxs(failedTxs models.GenericTransactionArray) error {
-	operations := make([]dbOperation, failedTxs.Len())
-	for i := 0; i < failedTxs.Len(); i++ {
-		failedTx := failedTxs.At(i)
-		operations[i] = func(txStorage *TransactionStorage) error {
-			return txStorage.AddTransaction(failedTx)
-		}
+func (s *TransactionStorage) AddFailedTransactions(txs models.GenericTransactionArray) error {
+	return s.addTxsInMultipleDBTransactions(txs, "failed")
+}
+
+func (s *TransactionStorage) AddPendingTransactions(txs models.GenericTransactionArray) error {
+	return s.addTxsInMultipleDBTransactions(txs, "pending")
+}
+
+func (s *TransactionStorage) addTxsInMultipleDBTransactions(txs models.GenericTransactionArray, status string) error {
+	if txs.Len() == 0 {
+		return nil
+	}
+
+	operations := make([]dbOperation, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		operations = append(operations, func(txStorage *TransactionStorage) error {
+			return txStorage.AddTransaction(tx)
+		})
 	}
 
 	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
-		err = fmt.Errorf("storing %d failed tx(s) failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
-		return errors.WithStack(err)
+		return errors.Wrapf(err, "storing %d %s tx(s) failed during database transaction #%d", txs.Len(), status, dbTxsCount)
 	}
-
 	return nil
 }

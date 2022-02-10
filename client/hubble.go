@@ -10,6 +10,7 @@ import (
 
 type Hubble interface {
 	GetPendingBatches() ([]dto.PendingBatch, error)
+	GetPendingTransactions() (models.GenericTransactionArray, error)
 	GetFailedTransactions() (models.GenericTransactionArray, error)
 }
 
@@ -37,6 +38,16 @@ func (h *hubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	}
 
 	return pendingBatches, nil
+}
+
+func (h *hubble) GetPendingTransactions() (models.GenericTransactionArray, error) {
+	var pendingTxs models.GenericTransactionArray
+	err := h.client.CallFor(&pendingTxs, "admin_getPendingTransactions")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return pendingTxs, nil
 }
 
 func (h *hubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
