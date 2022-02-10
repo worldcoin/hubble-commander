@@ -197,3 +197,23 @@ func (s *TransactionStorage) SaveFailedTxs(failedTxs models.GenericTransactionAr
 
 	return nil
 }
+
+func (s *TransactionStorage) AddPendingTransactions(txs models.GenericTransactionArray) error {
+	if txs.Len() == 0 {
+		return nil
+	}
+
+	operations := make([]dbOperation, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		operations = append(operations, func(txStorage *TransactionStorage) error {
+			return txStorage.AddTransaction(tx)
+		})
+	}
+
+	dbTxsCount, err := s.updateInMultipleTransactions(operations)
+	if err != nil {
+		return errors.Wrapf(err, "storing %d pending tx(s) failed during database transaction #%d", txs.Len(), dbTxsCount)
+	}
+	return nil
+}

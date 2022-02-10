@@ -48,10 +48,7 @@ func (c *Commander) syncPendingTxs(hubble client.Hubble) error {
 		return err
 	}
 
-	if txs.Len() > 0 {
-		return c.storage.BatchAddTransaction(txs)
-	}
-	return nil
+	return c.storage.AddPendingTransactions(txs)
 }
 
 func (c *Commander) syncFailedTxs(hubble client.Hubble) error {
