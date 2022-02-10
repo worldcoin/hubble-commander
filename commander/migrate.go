@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 )
 
@@ -47,28 +46,10 @@ func (c *Commander) syncFailedTxs(hubble client.Hubble) error {
 	}
 
 	if failedTxs.Len() > 0 {
-		err = c.saveFailedTxs(failedTxs)
+		err = c.storage.SaveFailedTxs(failedTxs)
 		if err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (c *Commander) saveFailedTxs(failedTxs models.GenericTransactionArray) error {
-	operations := make([]storage.DBOperation, failedTxs.Len())
-	for i := 0; i < failedTxs.Len(); i++ {
-		failedTx := failedTxs.At(i)
-		operations[i] = func(txStorage *storage.TransactionStorage) error {
-			return txStorage.AddTransaction(failedTx)
-		}
-	}
-
-	dbTxsCount, err := c.storage.UpdateInMultipleTransactions(operations)
-	if err != nil {
-		err = fmt.Errorf("storing %d failed tx(s) failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
-		return errors.WithStack(err)
 	}
 
 	return nil

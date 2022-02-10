@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
@@ -176,4 +178,22 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 		}
 		return nil
 	})
+}
+
+func (s *TransactionStorage) SaveFailedTxs(failedTxs models.GenericTransactionArray) error {
+	operations := make([]DBOperation, failedTxs.Len())
+	for i := 0; i < failedTxs.Len(); i++ {
+		failedTx := failedTxs.At(i)
+		operations[i] = func(txStorage *TransactionStorage) error {
+			return txStorage.AddTransaction(failedTx)
+		}
+	}
+
+	dbTxsCount, err := s.UpdateInMultipleTransactions(operations)
+	if err != nil {
+		err = fmt.Errorf("storing %d failed tx(s) failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
