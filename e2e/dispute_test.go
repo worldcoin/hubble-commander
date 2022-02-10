@@ -450,6 +450,11 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
+	txsChannels := &eth.TxsTrackingChannels{
+		Requests: make(chan *eth.TxSendingRequest, 10),
+		SentTxs:  make(chan *types.Transaction, 10),
+	}
+
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
@@ -457,7 +462,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		Rollup:          rollupContract,
-		TxsChannels:     make(chan *types.Transaction, 32),
+		TxsChannels:     txsChannels,
 	})
 	require.NoError(t, err)
 	return ethClient
