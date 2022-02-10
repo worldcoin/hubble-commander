@@ -59,7 +59,7 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		return a.innerGetTransactionsForCommitment(commitmentBase.ID)
+		return a.getDTOsForCommitment(commitmentBase.ID)
 	case batchtype.Deposit:
 		return nil, nil
 	case batchtype.Genesis:
@@ -68,7 +68,7 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 	return nil, dto.ErrNotImplemented
 }
 
-func (a *API) innerGetTransactionsForCommitment(id models.CommitmentID) (interface{}, error) {
+func (a *API) getDTOsForCommitment(id models.CommitmentID) (interface{}, error) {
 	txns, err := a.storage.GetTransactionsByCommitmentID(id)
 	if err != nil {
 		return nil, err
