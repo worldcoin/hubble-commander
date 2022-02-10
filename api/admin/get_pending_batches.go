@@ -50,12 +50,15 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 			return nil, err
 		}
 
-		// TODO remove when new primary key for transactions with transaction index is implement
-		txQueue := executor.NewTxQueue(txs)
+		if txs != nil {
+			// TODO remove when new primary key for transactions with transaction index is implement
+			txQueue := executor.NewTxQueue(txs)
+			txs = txQueue.PickTxsForCommitment()
+		}
 
 		dtoCommitments = append(dtoCommitments, dto.PendingCommitment{
 			Commitment:   commitments[i],
-			Transactions: txQueue.PickTxsForCommitment(),
+			Transactions: txs,
 		})
 	}
 	return dtoCommitments, nil
