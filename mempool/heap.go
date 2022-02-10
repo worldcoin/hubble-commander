@@ -68,9 +68,10 @@ func (h *internalHeap) Push(x interface{}) {
 }
 
 func (h *internalHeap) Pop() interface{} {
-	previousData := h.data
-	newLength := len(previousData) - 1
-	newData := previousData[newLength]
-	h.data = previousData[:newLength]
-	return newData
+	oldData := h.data
+	l := len(oldData) - 1
+	element := oldData[l]
+	oldData[l] = nil // avoid memory leak
+	h.data = oldData[0:l]
+	return element
 }
