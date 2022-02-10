@@ -17,7 +17,12 @@ type TxsTrackingChannels struct {
 	SentTxs  chan *types.Transaction
 }
 
-func (c *Client) packAndRequest(contract *Contract, opts *bind.TransactOpts, method string, data ...interface{}) (*types.Transaction, error) {
+func (c *Client) packAndRequest(
+	contract *Contract,
+	opts *bind.TransactOpts,
+	method string,
+	data ...interface{},
+) (*types.Transaction, error) {
 	input, err := contract.ABI.Pack(method, data...)
 	if err != nil {
 		return nil, err
