@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 )
 
@@ -73,4 +74,17 @@ func (tx *Transaction) unmarshalMassMigration(bytes []byte) error {
 	}
 	tx.Parsed = transfer
 	return nil
+}
+
+func MakeTransactionForCommitment(transaction models.GenericTransaction) interface{} {
+	switch transaction.Type() {
+	case txtype.Transfer:
+		return MakeTransferForCommitment(transaction.ToTransfer())
+	case txtype.Create2Transfer:
+		return MakeCreate2TransferForCommitment(transaction.ToCreate2Transfer())
+	case txtype.MassMigration:
+		return MakeMassMigrationForCommitment(transaction.ToMassMigration())
+	}
+
+	panic("unexpected transaction type")
 }

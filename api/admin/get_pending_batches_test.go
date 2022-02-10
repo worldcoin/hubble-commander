@@ -171,7 +171,7 @@ func (s *GetPendingBatchesTestSuite) addPendingTransferBatch(tx *models.Transfer
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	return newPendingBatch(&batch, commitment, models.TransferArray{*tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingCT2Batch(tx *models.Create2Transfer) *dto.PendingBatch {
@@ -201,7 +201,7 @@ func (s *GetPendingBatchesTestSuite) addPendingCT2Batch(tx *models.Create2Transf
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	return newPendingBatch(&batch, commitment, models.Create2TransferArray{*tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingMMBatch() *dto.PendingBatch {
@@ -233,7 +233,7 @@ func (s *GetPendingBatchesTestSuite) addPendingMMBatch() *dto.PendingBatch {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 	s.addCommitmentWithTx(commitment, &tx)
 
-	return newPendingBatch(&batch, commitment, models.MassMigrationArray{tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(&tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingDepositBatch() *dto.PendingBatch {

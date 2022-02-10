@@ -58,12 +58,8 @@ func (a *API) createCommitmentDTO(commitment models.Commitment, batch *models.Ba
 func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interface{}, error) {
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
-	case batchtype.Transfer:
-		return a.getTransfersForCommitment(commitmentBase.ID)
-	case batchtype.Create2Transfer:
-		return a.getCreate2TransfersForCommitment(commitmentBase.ID)
-	case batchtype.MassMigration:
-		return a.getMassMigrationsForCommitment(commitmentBase.ID)
+	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
+		return a.innerGetTransactionsForCommitment(commitmentBase.ID)
 	case batchtype.Deposit:
 		return nil, nil
 	case batchtype.Genesis:
@@ -72,41 +68,15 @@ func (a *API) getTransactionsForCommitment(commitment models.Commitment) (interf
 	return nil, dto.ErrNotImplemented
 }
 
-func (a *API) getTransfersForCommitment(id models.CommitmentID) (interface{}, error) {
-	transfers, err := a.storage.GetTransfersByCommitmentID(id)
+func (a *API) innerGetTransactionsForCommitment(id models.CommitmentID) (interface{}, error) {
+	txns, err := a.storage.GetTransactionsByCommitmentID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	txs := make([]dto.TransferForCommitment, 0, len(transfers))
-	for i := range transfers {
-		txs = append(txs, dto.MakeTransferForCommitment(&transfers[i]))
-	}
-	return txs, nil
-}
-
-func (a *API) getCreate2TransfersForCommitment(id models.CommitmentID) (interface{}, error) {
-	transfers, err := a.storage.GetCreate2TransfersByCommitmentID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]dto.Create2TransferForCommitment, 0, len(transfers))
-	for i := range transfers {
-		txs = append(txs, dto.MakeCreate2TransferForCommitment(&transfers[i]))
-	}
-	return txs, nil
-}
-
-func (a *API) getMassMigrationsForCommitment(id models.CommitmentID) (interface{}, error) {
-	massMigrations, err := a.storage.GetMassMigrationsByCommitmentID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]dto.MassMigrationForCommitment, 0, len(massMigrations))
-	for i := range massMigrations {
-		txs = append(txs, dto.MakeMassMigrationForCommitment(&massMigrations[i]))
+	txs := make([]interface{}, 0, txns.Len())
+	for i := 0; i < txns.Len(); i++ {
+		txs = append(txs, dto.MakeTransactionForCommitment(txns.At(i)))
 	}
 	return txs, nil
 }

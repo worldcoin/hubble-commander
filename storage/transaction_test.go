@@ -152,6 +152,31 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
+func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
+	transfer1 := transfer
+	transfer1.CommitmentID = &txCommitment.ID
+	err := s.storage.AddTransaction(&transfer1)
+	s.NoError(err)
+
+	otherCommitmentID := txCommitment.ID
+	otherCommitmentID.IndexInBatch += 1
+	transfer2 := create2Transfer
+	transfer2.Hash = utils.RandomHash()
+	transfer2.CommitmentID = &otherCommitmentID
+	err = s.storage.AddTransaction(&transfer2)
+	s.NoError(err)
+
+	transfers, err := s.storage.GetTransactionsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 1)
+}
+
+func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions() {
+	transfers, err := s.storage.GetTransactionsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
+
 func TestTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionTestSuite))
 }

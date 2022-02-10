@@ -47,6 +47,26 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 	return result, nil
 }
 
+func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentID) (models.GenericTransactionArray, error) {
+	batchedTxs := make([]stored.BatchedTx, 0, 32)
+
+	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+
+	err := s.database.Badger.Find(&batchedTxs, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var txs models.GenericTransactionArray
+
+	txs = models.MakeGenericArray()
+	for i := range batchedTxs {
+		txs = txs.AppendOne(batchedTxs[i].ToGenericTransaction())
+	}
+
+	return txs, nil
+}
+
 // returns error if the tranasaction is not a FailedTx
 func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
