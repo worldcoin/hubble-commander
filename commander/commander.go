@@ -98,7 +98,7 @@ func (c *Commander) Start() (err error) {
 
 	c.metricsServer = c.metrics.NewServer(c.cfg.Metrics)
 
-	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics, c.EnableBatchCreation)
+	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics, c.EnableBatchCreation, c.isMigrating)
 	if err != nil {
 		return err
 	}
