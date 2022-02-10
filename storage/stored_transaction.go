@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -151,8 +150,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 
 	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
-		err = fmt.Errorf("storing %d tx error(s) failed during database transaction #%d because of: %w", errorsCount, dbTxsCount, err)
-		return errors.WithStack(err)
+		return errors.Wrapf(err, "storing %d tx error(s) failed during database transaction #%d", errorsCount, dbTxsCount)
 	}
 	log.Debugf("Stored %d tx error(s) in %d database transaction(s)", errorsCount, dbTxsCount)
 	return nil
