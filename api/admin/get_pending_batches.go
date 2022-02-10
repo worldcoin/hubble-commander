@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -48,9 +49,13 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 		if err != nil {
 			return nil, err
 		}
+
+		// TODO remove when new primary key for transactions with transaction index is implement
+		txQueue := executor.NewTxQueue(txs)
+
 		dtoCommitments = append(dtoCommitments, dto.PendingCommitment{
 			Commitment:   commitments[i],
-			Transactions: txs,
+			Transactions: txQueue.PickTxsForCommitment(),
 		})
 	}
 	return dtoCommitments, nil
