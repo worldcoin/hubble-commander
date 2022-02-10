@@ -1,13 +1,8 @@
 package mempool
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/pkg/errors"
 )
-
-var ErrEmptyHeap = fmt.Errorf("heap is empty")
 
 type TxHeap struct {
 	heap *mutableHeap
@@ -30,22 +25,22 @@ func NewTxHeap(txs ...models.GenericTransaction) *TxHeap {
 	}
 }
 
-func (h *TxHeap) Peek() (models.GenericTransaction, error) {
+func (h *TxHeap) Peek() models.GenericTransaction {
 	if h.heap.IsEmpty() {
-		return nil, errors.WithStack(ErrEmptyHeap)
+		return nil
 	}
-	return h.heap.Peek().(models.GenericTransaction), nil
+	return h.heap.Peek().(models.GenericTransaction)
 }
 
 func (h *TxHeap) Push(tx models.GenericTransaction) {
 	h.heap.Push(tx)
 }
 
-func (h *TxHeap) Pop() (models.GenericTransaction, error) {
+func (h *TxHeap) Pop() models.GenericTransaction {
 	if h.heap.IsEmpty() {
-		return nil, errors.WithStack(ErrEmptyHeap)
+		return nil
 	}
-	return h.heap.Pop().(models.GenericTransaction), nil
+	return h.heap.Pop().(models.GenericTransaction)
 }
 
 func (h *TxHeap) Replace(tx models.GenericTransaction) models.GenericTransaction {

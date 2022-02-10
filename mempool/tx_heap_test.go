@@ -20,16 +20,12 @@ func (s *TxHeapTestSuite) SetupSuite() {
 
 func (s *TxHeapTestSuite) TestPeek() {
 	heap := NewTxHeap(s.makeTestTxs()...)
-	element, err := heap.Peek()
-	s.NoError(err)
-	s.EqualValues(20, element.GetBase().Fee.Uint64())
+	s.EqualValues(20, heap.Peek().GetBase().Fee.Uint64())
 }
 
 func (s *TxHeapTestSuite) TestPeek_EmptyHeap() {
 	heap := NewTxHeap()
-	element, err := heap.Peek()
-	s.ErrorIs(err, ErrEmptyHeap)
-	s.Nil(element)
+	s.Nil(heap.Peek())
 }
 
 func (s *TxHeapTestSuite) TestPush() {
@@ -45,9 +41,7 @@ func (s *TxHeapTestSuite) TestPop() {
 
 func (s *TxHeapTestSuite) TestPop_EmptyHeap() {
 	heap := NewTxHeap()
-	element, err := heap.Pop()
-	s.ErrorIs(err, ErrEmptyHeap)
-	s.Nil(element)
+	s.Nil(heap.Pop())
 }
 
 func (s *TxHeapTestSuite) TestReplace() {
@@ -84,10 +78,7 @@ func (s *TxHeapTestSuite) popAll(heap *TxHeap) []uint64 {
 	initialSize := heap.Size()
 	orderedFees := make([]uint64, initialSize)
 	for i := 0; i < initialSize; i++ {
-		element, err := heap.Pop()
-		s.NoError(err)
-
-		orderedFees[i] = element.GetBase().Fee.Uint64()
+		orderedFees[i] = heap.Pop().GetBase().Fee.Uint64()
 	}
 	return orderedFees
 }
