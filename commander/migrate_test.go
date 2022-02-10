@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -17,8 +18,9 @@ import (
 )
 
 const (
-	getPendingBatchesMethod     = "GetPendingBatches"
-	getFailedTransactionsMethod = "GetFailedTransactions"
+	getPendingBatchesMethod      = "GetPendingBatches"
+	getPendingTransactionsMethod = "GetPendingTransactions"
+	getFailedTransactionsMethod  = "GetFailedTransactions"
 )
 
 type MockHubble struct {
@@ -28,6 +30,11 @@ type MockHubble struct {
 func (m *MockHubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	args := m.Called()
 	return args.Get(0).([]dto.PendingBatch), args.Error(1)
+}
+
+func (m *MockHubble) GetPendingTransactions() (models.GenericTransactionArray, error) {
+	args := m.Called()
+	return args.Get(0).(models.GenericTransactionArray), args.Error(1)
 }
 
 func (m *MockHubble) GetFailedTransactions() (models.GenericTransactionArray, error) {
@@ -78,10 +85,9 @@ func (s *MigrateTestSuite) TestMigrate_MissingBootstrapNodeURL() {
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SetsMigrateToFalse() {
 	hubble := new(MockHubble)
-	hubble.On(getPendingBatchesMethod).
-		Return([]dto.PendingBatch{}, nil)
-	hubble.On(getFailedTransactionsMethod).
-		Return(models.TransferArray{}, nil)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
@@ -97,6 +103,7 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
 
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
 	hubble.On(getFailedTransactionsMethod).Return(failedTxs, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
@@ -112,6 +119,7 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsFailedTxs() {
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	hubble := new(MockHubble)
 	hubble.On(getPendingBatchesMethod).Return(s.pendingBatches, nil)
+	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
 	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
 	err := s.cmd.migrateCommanderData(hubble)
@@ -120,6 +128,30 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	leaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
 	s.EqualValues(200, leaf.Balance.Uint64())
+}
+
+func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
+	expectedTxs := models.TransferArray{
+		testutils.MakeTransfer(0, 1, 0, 100),
+		testutils.MakeTransfer(0, 1, 1, 110),
+	}
+
+	hubble := new(MockHubble)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(expectedTxs, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
+
+	err := s.cmd.migrateCommanderData(hubble)
+	s.NoError(err)
+
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+
+	for i := 0; i < txs.Len(); i++ {
+		tx, err := s.cmd.storage.GetTransfer(txs.At(i).GetBase().Hash)
+		s.NoError(err)
+		s.Equal(*txs.At(i).ToTransfer(), *tx)
+	}
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
