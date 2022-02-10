@@ -146,8 +146,12 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
 
 	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
 	s.NoError(err)
-	s.Contains(txs, &expectedTxs[0])
-	s.Contains(txs, &expectedTxs[1])
+
+	for i := 0; i < txs.Len(); i++ {
+		tx, err := s.cmd.storage.GetTransfer(txs.At(i).GetBase().Hash)
+		s.NoError(err)
+		s.Equal(*txs.At(i).ToTransfer(), *tx)
+	}
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
