@@ -181,7 +181,7 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 }
 
 func (s *TransactionStorage) SaveFailedTxs(failedTxs models.GenericTransactionArray) error {
-	operations := make([]DBOperation, failedTxs.Len())
+	operations := make([]dbOperation, failedTxs.Len())
 	for i := 0; i < failedTxs.Len(); i++ {
 		failedTx := failedTxs.At(i)
 		operations[i] = func(txStorage *TransactionStorage) error {
@@ -189,7 +189,7 @@ func (s *TransactionStorage) SaveFailedTxs(failedTxs models.GenericTransactionAr
 		}
 	}
 
-	dbTxsCount, err := s.UpdateInMultipleTransactions(operations)
+	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
 		err = fmt.Errorf("storing %d failed tx(s) failed during database transaction #%d because of: %w", failedTxs.Len(), dbTxsCount, err)
 		return errors.WithStack(err)

@@ -20,7 +20,7 @@ type TransactionStorage struct {
 	database *Database
 }
 
-type DBOperation func(txStorage *TransactionStorage) error
+type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) *TransactionStorage {
 	return &TransactionStorage{
@@ -49,7 +49,7 @@ func (s *TransactionStorage) executeInTransaction(opts TxOptions, fn func(txStor
 // Be careful. For these operations to be correctly spread across multiple transactions:
 // (1) they must popagate up any badger errors they encounter (wrapping is okay)
 // (2) they must be idempotent, because they might be retried.
-func (s *TransactionStorage) UpdateInMultipleTransactions(operations []DBOperation) (txCount uint, err error) {
+func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperation) (txCount uint, err error) {
 	txController, txStorage := s.beginTransaction(TxOptions{})
 	defer txController.Rollback(&err)
 	txCount = 1
@@ -141,7 +141,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 		return nil
 	}
 
-	operations := make([]DBOperation, errorsCount)
+	operations := make([]dbOperation, errorsCount)
 	for i := range txErrors {
 		txError := txErrors[i]
 		operations[i] = func(txStorage *TransactionStorage) error {
@@ -149,7 +149,7 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 		}
 	}
 
-	dbTxsCount, err := s.UpdateInMultipleTransactions(operations)
+	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
 		err = fmt.Errorf("storing %d tx error(s) failed during database transaction #%d because of: %w", errorsCount, dbTxsCount, err)
 		return errors.WithStack(err)
