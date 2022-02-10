@@ -26,7 +26,7 @@ func NewTxHeap(txs ...models.GenericTransaction) *TxHeap {
 }
 
 func (h *TxHeap) Peek() models.GenericTransaction {
-	return h.heap.Peek().(models.GenericTransaction)
+	return h.toGenericTransaction(h.heap.Peek())
 }
 
 func (h *TxHeap) Push(tx models.GenericTransaction) {
@@ -34,13 +34,20 @@ func (h *TxHeap) Push(tx models.GenericTransaction) {
 }
 
 func (h *TxHeap) Pop() models.GenericTransaction {
-	return h.heap.Pop().(models.GenericTransaction)
+	return h.toGenericTransaction(h.heap.Pop())
 }
 
 func (h *TxHeap) Replace(tx models.GenericTransaction) models.GenericTransaction {
-	return h.heap.Replace(tx).(models.GenericTransaction)
+	return h.toGenericTransaction(h.heap.Replace(tx))
 }
 
 func (h *TxHeap) Size() int {
 	return h.heap.Size()
+}
+
+func (h *TxHeap) toGenericTransaction(element interface{}) models.GenericTransaction {
+	if tx, ok := element.(models.GenericTransaction); ok {
+		return tx
+	}
+	return nil
 }
