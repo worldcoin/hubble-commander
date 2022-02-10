@@ -22,7 +22,7 @@ import (
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	cmd      *Commander
 	storage  *st.TestStorage
 	client   *eth.TestClient
@@ -49,11 +49,10 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.InitTracker(s.client.Client, s.client.TxsChan)
-
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -64,11 +63,11 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.setAccountsAndChainState()
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
-	s.StopTracker()
+	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -184,7 +183,7 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	handler(txStorage, txsCtx)
 }

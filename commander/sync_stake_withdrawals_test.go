@@ -23,7 +23,7 @@ import (
 type SyncStakeWithdrawalsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	cmd      *Commander
 	storage  *st.TestStorage
 	client   *eth.TestClient
@@ -50,18 +50,17 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	s.NoError(err)
 	s.client = newClientWithGenesisStateAndFastBlockFinalization(s.T(), s.storage)
 
-	s.InitTracker(s.client.Client, s.client.TxsChan)
-
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 
 	s.setupCommander()
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -137,7 +136,7 @@ func (s *SyncStakeWithdrawalsTestSuite) runInTransaction(handler func(*st.Storag
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	handler(txStorage, txsCtx)
 }

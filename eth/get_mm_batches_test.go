@@ -15,6 +15,7 @@ import (
 type GetMMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	testSuiteWithRequestsSending
 	client     *TestClient
 	commitment *models.MMCommitmentWithTxs
 }
@@ -47,9 +48,12 @@ func (s *GetMMBatchesTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
+
+	s.StartTxsSending(s.T(), client.TxsChannels.Requests)
 }
 
 func (s *GetMMBatchesTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	s.client.Close()
 }
 

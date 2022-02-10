@@ -18,6 +18,7 @@ import (
 type GetBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	testSuiteWithRequestsSending
 	client      *TestClient
 	commitments []models.TxCommitmentWithTxs
 }
@@ -60,9 +61,12 @@ func (s *GetBatchesTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
+
+	s.StartTxsSending(s.T(), client.TxsChannels.Requests)
 }
 
 func (s *GetBatchesTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	s.client.Close()
 }
 

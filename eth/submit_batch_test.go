@@ -15,6 +15,7 @@ import (
 type SubmitBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	testSuiteWithRequestsSending
 	client     *TestClient
 	commitment models.TxCommitmentWithTxs
 }
@@ -38,9 +39,12 @@ func (s *SubmitBatchTestSuite) SetupTest() {
 		},
 		Transactions: utils.RandomBytes(12),
 	}
+
+	s.StartTxsSending(s.T(), s.client.TxsChannels.Requests)
 }
 
 func (s *SubmitBatchTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	s.client.Close()
 }
 

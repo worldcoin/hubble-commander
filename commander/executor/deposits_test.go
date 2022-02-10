@@ -39,7 +39,7 @@ func (s *DepositsTestSuite) SetupTest() {
 	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 
-	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, s.client.Client, nil)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
 	s.depositsCtx = NewTestDepositsContext(executionCtx)
 }
 

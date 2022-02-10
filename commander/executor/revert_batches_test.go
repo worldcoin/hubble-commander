@@ -32,7 +32,7 @@ func (s *RevertBatchesTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	s.executionCtx = NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, eth.DomainOnlyTestClient, &config.RollupConfig{
+	s.executionCtx = NewTestExecutionContext(s.storage.Storage, eth.DomainOnlyTestClient, &config.RollupConfig{
 		MinCommitmentsPerBatch: 1,
 		MaxCommitmentsPerBatch: 32,
 		MinTxsPerCommitment:    1,

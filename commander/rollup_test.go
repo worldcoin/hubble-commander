@@ -22,7 +22,7 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	testStorage *storage.TestStorage
 	testClient  *eth.TestClient
 	commander   *Commander
@@ -41,8 +41,6 @@ func (s *RollupTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.InitTracker(s.testClient.Client, nil)
-
 	s.commander = &Commander{
 		cfg: &config.Config{
 			Rollup: &config.RollupConfig{
@@ -52,10 +50,10 @@ func (s *RollupTestSuite) SetupTest() {
 				MaxCommitmentsPerBatch: 32,
 			},
 		},
-		storage:    s.testStorage.Storage,
-		client:     s.testClient.Client,
-		metrics:    metrics.NewCommanderMetrics(),
-		txsTracker: s.TxsTracker,
+		storage:             s.testStorage.Storage,
+		client:              s.testClient.Client,
+		metrics:             metrics.NewCommanderMetrics(),
+		txsTrackingChannels: s.testClient.TxsChannels,
 	}
 
 	domain, err := s.testClient.GetDomain()
@@ -64,11 +62,11 @@ func (s *RollupTestSuite) SetupTest() {
 
 	s.addUserStates()
 
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.commander.txsTrackingChannels.Requests)
 }
 
 func (s *RollupTestSuite) TearDownTest() {
-	s.StopTracker()
+	s.StopTxsSending()
 	err := s.testStorage.Teardown()
 	s.NoError(err)
 	s.testClient.Close()

@@ -24,7 +24,7 @@ import (
 type FailedTxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	cmd     *Commander
 	storage *st.TestStorage
 	client  *eth.TestClient
@@ -55,8 +55,6 @@ func (s *FailedTxsTrackingTestSuite) SetupTest() {
 		BatchAccountRegistrationGasLimit: &lowGasLimit,
 	})
 
-	s.InitTracker(s.client.Client, s.client.TxsChan)
-
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
@@ -65,7 +63,7 @@ func (s *FailedTxsTrackingTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = s.TxsTracker
+	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -77,6 +75,7 @@ func (s *FailedTxsTrackingTestSuite) SetupTest() {
 }
 
 func (s *FailedTxsTrackingTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -169,14 +168,15 @@ func (s *FailedTxsTrackingTestSuite) runInTransaction(
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchType)
 	handler(txStorage, txsCtx)
 }
 
 func (s *FailedTxsTrackingTestSuite) startWorkers() {
+	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 	s.cmd.startWorker("Test Txs Tracking", func() error {
-		err := s.cmd.txsTracker.StartTracking(s.cmd.workersContext)
+		err := s.cmd.startFailedTxsTracking(s.cmd.txsTrackingChannels.SentTxs)
 		s.NoError(err)
 		return nil
 	})

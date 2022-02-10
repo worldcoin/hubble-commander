@@ -23,7 +23,7 @@ func NewDepositsContext(
 	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
 ) *DepositsContext {
-	executionCtx := NewExecutionContext(storage, client, nil, cfg, commanderMetrics, ctx)
+	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
 	return newDepositsContext(executionCtx)
 }
 

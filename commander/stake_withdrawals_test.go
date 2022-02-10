@@ -3,6 +3,7 @@ package commander
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -16,6 +17,7 @@ import (
 type StakeWithdrawalsTestSuite struct {
 	*require.Assertions
 	suite.Suite
+	tracker.TestSuiteWithTxsSending
 	teardown   func() error
 	testClient *eth.TestClient
 	cmd        *Commander
@@ -37,13 +39,17 @@ func (s *StakeWithdrawalsTestSuite) SetupTest() {
 
 	s.NoError(err)
 	s.cmd = &Commander{
-		storage: testStorage.Storage,
-		client:  s.testClient.Client,
-		metrics: metrics.NewCommanderMetrics(),
+		storage:             testStorage.Storage,
+		client:              s.testClient.Client,
+		metrics:             metrics.NewCommanderMetrics(),
+		txsTrackingChannels: s.testClient.TxsChannels,
 	}
+
+	s.StartTxsSending(s.testClient.TxsChannels.Requests)
 }
 
 func (s *StakeWithdrawalsTestSuite) TearDownTest() {
+	s.StopTxsSending()
 	s.testClient.Close()
 	err := s.teardown()
 	s.NoError(err)

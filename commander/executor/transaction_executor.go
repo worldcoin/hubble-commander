@@ -3,6 +3,7 @@ package executor
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
+	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -32,11 +33,11 @@ type TransactionExecutor interface {
 func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.TransactionType) TransactionExecutor {
 	switch txType {
 	case txtype.Transfer:
-		return NewTransferExecutor(executionCtx.storage, executionCtx.txsSender)
+		return NewTransferExecutor(executionCtx.storage, executionCtx.client)
 	case txtype.Create2Transfer:
-		return NewC2TExecutor(executionCtx.storage, executionCtx.txsSender)
+		return NewC2TExecutor(executionCtx.storage, executionCtx.client)
 	case txtype.MassMigration:
-		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.txsSender)
+		return NewMassMigrationExecutor(executionCtx.storage, executionCtx.client)
 	}
 	return nil
 }
@@ -44,18 +45,14 @@ func NewTransactionExecutor(executionCtx *ExecutionContext, txType txtype.Transa
 // TransferExecutor implements TransactionExecutor
 type TransferExecutor struct {
 	storage *st.Storage
-	sender  TransferTxsSender
+	client  *eth.Client
 	applier *applier.Applier
 }
 
-type TransferTxsSender interface {
-	SubmitTransfersBatch(*models.Uint256, []models.CommitmentWithTxs) (*types.Transaction, error)
-}
-
-func NewTransferExecutor(storage *st.Storage, sender TransferTxsSender) *TransferExecutor {
+func NewTransferExecutor(storage *st.Storage, client *eth.Client) *TransferExecutor {
 	return &TransferExecutor{
 		storage: storage,
-		sender:  sender,
+		client:  client,
 		applier: applier.NewApplier(storage),
 	}
 }
@@ -101,7 +98,7 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 }
 
 func (e *TransferExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return e.sender.SubmitTransfersBatch(batchID, commitments)
+	return e.client.SubmitTransfersBatch(batchID, commitments)
 }
 
 func (e *TransferExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
@@ -136,19 +133,15 @@ func (e *TransferExecutor) NewCommitment(
 // C2TExecutor implements TransactionExecutor
 type C2TExecutor struct {
 	storage *st.Storage
+	client  *eth.Client
 	applier *applier.Applier
-	sender  C2TTxsSender
 }
 
-type C2TTxsSender interface {
-	SubmitCreate2TransfersBatch(*models.Uint256, []models.CommitmentWithTxs) (*types.Transaction, error)
-}
-
-func NewC2TExecutor(storage *st.Storage, sender C2TTxsSender) *C2TExecutor {
+func NewC2TExecutor(storage *st.Storage, client *eth.Client) *C2TExecutor {
 	return &C2TExecutor{
 		storage: storage,
+		client:  client,
 		applier: applier.NewApplier(storage),
-		sender:  sender,
 	}
 }
 
@@ -201,7 +194,7 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 }
 
 func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return e.sender.SubmitCreate2TransfersBatch(batchID, commitments)
+	return e.client.SubmitCreate2TransfersBatch(batchID, commitments)
 }
 
 func (e *C2TExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
@@ -236,19 +229,15 @@ func (e *C2TExecutor) NewCommitment(
 // MassMigrationExecutor implements TransactionExecutor
 type MassMigrationExecutor struct {
 	storage *st.Storage
+	client  *eth.Client
 	applier *applier.Applier
-	sender  MassMigrationTxsSender
 }
 
-type MassMigrationTxsSender interface {
-	SubmitMassMigrationsBatch(*models.Uint256, []models.CommitmentWithTxs) (*types.Transaction, error)
-}
-
-func NewMassMigrationExecutor(storage *st.Storage, sender MassMigrationTxsSender) *MassMigrationExecutor {
+func NewMassMigrationExecutor(storage *st.Storage, client *eth.Client) *MassMigrationExecutor {
 	return &MassMigrationExecutor{
 		storage: storage,
+		client:  client,
 		applier: applier.NewApplier(storage),
-		sender:  sender,
 	}
 }
 
@@ -296,7 +285,7 @@ func (e *MassMigrationExecutor) SubmitBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
-	return e.sender.SubmitMassMigrationsBatch(batchID, commitments)
+	return e.client.SubmitMassMigrationsBatch(batchID, commitments)
 }
 
 func (e *MassMigrationExecutor) GenerateMetaAndWithdrawRoots(

@@ -22,7 +22,7 @@ import (
 type MMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
@@ -42,21 +42,19 @@ func (s *MMBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.InitTracker(s.client.Client, s.client.TxsChan)
-
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = s.TxsTracker
+	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
 
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func (s *MMBatchesTestSuite) TearDownTest() {
-	s.StopTracker()
+	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -147,7 +145,7 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	err := txStorage.AddTransaction(tx)
 	s.NoError(err)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.TxsTracker.TxsSender, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
@@ -169,7 +167,6 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	txsCtx := executor.NewTxsContext(
 		storage,
 		s.client.Client,
-		s.TxsTracker.TxsSender,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
 		context.Background(),

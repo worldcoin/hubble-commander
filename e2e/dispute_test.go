@@ -457,7 +457,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		Rollup:          rollupContract,
-		TxsChan:         make(chan *types.Transaction, 32),
+		TxsChannels:     make(chan *types.Transaction, 32),
 	})
 	require.NoError(t, err)
 	return ethClient

@@ -3,7 +3,6 @@ package executor
 import (
 	"context"
 
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -22,7 +21,6 @@ type RollupLoopContext interface {
 func NewRollupLoopContext(
 	storage *st.Storage,
 	client *eth.Client,
-	txsSender *tracker.TxsSender,
 	cfg *config.RollupConfig,
 	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
@@ -30,7 +28,7 @@ func NewRollupLoopContext(
 ) RollupLoopContext {
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		return NewTxsContext(storage, client, txsSender, cfg, commanderMetrics, ctx, batchType)
+		return NewTxsContext(storage, client, cfg, commanderMetrics, ctx, batchType)
 	case batchtype.Deposit:
 		return NewDepositsContext(storage, client, cfg, commanderMetrics, ctx)
 	case batchtype.Genesis:

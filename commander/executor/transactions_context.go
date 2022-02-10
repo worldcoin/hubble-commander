@@ -27,13 +27,12 @@ type TxsContext struct {
 func NewTxsContext(
 	storage *st.Storage,
 	client *eth.Client,
-	txsSender TxsSender,
 	cfg *config.RollupConfig,
 	commanderMetrics *metrics.CommanderMetrics,
 	ctx context.Context,
 	batchType batchtype.BatchType,
 ) *TxsContext {
-	executionCtx := NewExecutionContext(storage, client, txsSender, cfg, commanderMetrics, ctx)
+	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
 	return newTxsContext(executionCtx, batchType)
 }
 

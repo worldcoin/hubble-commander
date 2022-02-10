@@ -16,7 +16,7 @@ import (
 type TxsTrackerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	TestSuiteWithTxsTracker
+	TestSuiteWithTxsSending
 	testClient *eth.TestClient
 	txsChan    chan *types.Transaction
 }
@@ -30,14 +30,11 @@ func (s *TxsTrackerTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
-	s.InitTracker(s.testClient.Client, nil)
-	s.txsChan = s.TxsTracker.TxsChan
-
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.testClient.TxsChannels.Requests)
 }
 
 func (s *TxsTrackerTestSuite) TearDownTest() {
-	s.StopTracker()
+	s.StopTxsSending()
 	s.testClient.Close()
 }
 
@@ -51,7 +48,7 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 	go func() {
 		var err error
 		<-start
-		resultTxs[0], err = s.TxsTracker.WithdrawStakeRequest(batchID)
+		resultTxs[0], err = s.testClient.WithdrawStake(batchID)
 		s.NoError(err)
 		waitGroup.Done()
 	}()
@@ -60,7 +57,7 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 		var err error
 		commitments := getCommitments(batchtype.Transfer)
 		<-start
-		resultTxs[1], err = s.TxsTracker.SubmitTransfersBatch(batchID, commitments)
+		resultTxs[1], err = s.testClient.SubmitTransfersBatch(batchID, commitments)
 		s.NoError(err)
 		waitGroup.Done()
 	}()

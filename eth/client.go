@@ -17,7 +17,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -28,7 +27,7 @@ type NewClientParams struct {
 	TokenRegistry   *tokenregistry.TokenRegistry
 	SpokeRegistry   *spokeregistry.SpokeRegistry
 	DepositManager  *depositmanager.DepositManager
-	TxsChan         chan<- *types.Transaction
+	TxsChannels     *TxsTrackingChannels
 	ClientConfig
 }
 
@@ -57,7 +56,7 @@ type Client struct {
 	blocksToFinalise       *int64
 	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
-	txsChan                chan<- *types.Transaction
+	txsChannels            *TxsTrackingChannels
 
 	*AccountManager
 }
@@ -89,7 +88,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
 		MineTimeout:                      *params.TxMineTimeout,
-		TxsChan:                          params.TxsChan,
+		TxsChannels:                      params.TxsChannels,
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -120,7 +119,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
-		txsChan: params.TxsChan,
+		txsChannels: params.TxsChannels,
 	}, nil
 }
 

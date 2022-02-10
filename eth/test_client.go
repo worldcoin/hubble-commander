@@ -14,7 +14,7 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
-	TxsChan             chan *types.Transaction
+	TxsChannels         *TxsTrackingChannels
 }
 
 var (
@@ -37,7 +37,11 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 	if err != nil {
 		return nil, err
 	}
-	txsChan := make(chan *types.Transaction, 32)
+
+	txsChannels := TxsTrackingChannels{
+		Requests: make(chan *TxSendingRequest, 32),
+		SentTxs:  make(chan *types.Transaction, 32),
+	}
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
@@ -57,7 +61,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
 		ClientConfig:    *clientCfg,
-		TxsChan:         txsChan,
+		TxsChannels:     &txsChannels,
 	})
 	if err != nil {
 		return nil, err
@@ -67,6 +71,6 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		TxsChan:             txsChan,
+		TxsChannels:         &txsChannels,
 	}, nil
 }

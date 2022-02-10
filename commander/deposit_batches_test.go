@@ -25,7 +25,7 @@ import (
 type DepositBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsTracker
+	tracker.TestSuiteWithTxsSending
 	cmd            *Commander
 	client         *eth.TestClient
 	storage        *st.TestStorage
@@ -46,12 +46,10 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 
 	s.client = newClientWithGenesisState(s.T(), s.storage)
 
-	s.InitTracker(s.client.Client, s.client.TxsChan)
-
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = s.TxsTracker
+	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -62,7 +60,7 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 		Deposits: testutils.GetFourDeposits(),
 	}
 
-	s.StartTracker(s.T())
+	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestClient {
@@ -81,7 +79,7 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 }
 
 func (s *DepositBatchesTestSuite) TearDownTest() {
-	s.StopTracker()
+	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -140,7 +138,7 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.client.Client, s.cfg.Rollup)
+	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.TxCommitmentWithTxs) {
