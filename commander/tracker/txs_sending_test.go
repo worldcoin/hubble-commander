@@ -18,7 +18,6 @@ type TxsTrackerTestSuite struct {
 	suite.Suite
 	TestSuiteWithTxsSending
 	testClient *eth.TestClient
-	txsChan    chan *types.Transaction
 }
 
 func (s *TxsTrackerTestSuite) SetupSuite() {

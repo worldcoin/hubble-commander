@@ -10,7 +10,6 @@ import (
 type testSuiteWithRequestsSending struct {
 	senderCtxCancel func()
 	wg              sync.WaitGroup
-	requestsChan    chan *TxSendingRequest
 }
 
 func (ts *testSuiteWithRequestsSending) StartTxsSending(t require.TestingT, requests chan *TxSendingRequest) {
