@@ -57,11 +57,9 @@ func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentI
 		return nil, err
 	}
 
-	var txs models.GenericTransactionArray
-
-	txs = models.MakeGenericArray()
+	txs := make(models.GenericArray, 0, len(batchedTxs))
 	for i := range batchedTxs {
-		txs = txs.AppendOne(batchedTxs[i].ToGenericTransaction())
+		txs = append(txs, batchedTxs[i].ToGenericTransaction())
 	}
 
 	return txs, nil

@@ -169,6 +169,7 @@ func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	transfers, err := s.storage.GetTransactionsByCommitmentID(txCommitment.ID)
 	s.NoError(err)
 	s.Len(transfers, 1)
+	s.Equal(transfers.At(0), &transfer1)
 }
 
 func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions() {
