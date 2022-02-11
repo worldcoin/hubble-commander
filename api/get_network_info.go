@@ -34,7 +34,6 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		BlockNumber:                    a.storage.GetLatestBlockNumber(),
 	}
 
-	// TODO replace with a more effective approach when we get to a huge number of txs
 	txCount := a.storage.GetTransactionCount()
 	networkInfo.TransactionCount = txCount
 
