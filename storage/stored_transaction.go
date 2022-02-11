@@ -27,14 +27,15 @@ type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) *TransactionStorage {
 	return &TransactionStorage{
-		database: database,
+		database:        database,
+		batchedTxsCount: ref.Uint64(0),
 	}
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
 	newTransactionStorage := *s
 	newTransactionStorage.database = database
-	*newTransactionStorage.batchedTxsCount = s.GetTransactionCount()
+	atomic.StoreUint64(newTransactionStorage.batchedTxsCount, s.GetTransactionCount())
 
 	return &newTransactionStorage
 }
