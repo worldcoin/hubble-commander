@@ -49,6 +49,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 		ID:              models.MakeUint256(1),
 		Type:            batchtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
+		PrevStateRoot:   utils.NewRandomHash(),
 	}
 
 	s.batches = []models.Batch{
@@ -56,6 +57,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 			ID:                models.MakeUint256(1),
 			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
+			PrevStateRoot:     utils.NewRandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
 			MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
@@ -64,11 +66,13 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 			ID:              models.MakeUint256(2),
 			Type:            batchtype.Create2Transfer,
 			TransactionHash: utils.RandomHash(),
+			PrevStateRoot:   utils.NewRandomHash(),
 		},
 		{
 			ID:              models.MakeUint256(3),
 			Type:            batchtype.MassMigration,
 			TransactionHash: utils.RandomHash(),
+			PrevStateRoot:   utils.NewRandomHash(),
 		},
 	}
 }
@@ -90,6 +94,7 @@ func (s *GetPendingBatchesTestSuite) TestGetPendingBatches_DifferentBatchTypes()
 		s.Equal(expected[i].ID, batches[i].ID)
 		s.Equal(expected[i].Type, batches[i].Type)
 		s.Equal(expected[i].TransactionHash, batches[i].TransactionHash)
+		s.Equal(*expected[i].PrevStateRoot, batches[i].PrevStateRoot)
 	}
 }
 
@@ -277,6 +282,7 @@ func newPendingBatch(batch *models.Batch, commitment models.Commitment, txs mode
 		ID:              batch.ID,
 		Type:            batch.Type,
 		TransactionHash: batch.TransactionHash,
+		PrevStateRoot:   *batch.PrevStateRoot,
 		Commitments: []dto.PendingCommitment{
 			{
 				Commitment:   commitment,
