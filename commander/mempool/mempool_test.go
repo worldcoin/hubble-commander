@@ -88,19 +88,18 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 	s.Contains(executable, s.initialTransactions[8])
 }
 
-//func (s *MempoolTestSuite) TestAddTransaction() {
-//	mempool, err := NewMempool(s.storage.Storage)
-//	s.NoError(err)
-//
-//	tx := createTx(3, 10)
-//	mempool.AddOrReplace(tx, 10)
-//
-//	executable := mempool.GetExecutableTxs(txtype.Transfer)
-//	s.Len(executable, 3)
-//	s.Equal(s.initialTransactions[0], executable[0])
-//	s.Equal(s.initialTransactions[5], executable[1])
-//	s.Equal(tx, executable[2])
-//}
+func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := s.newTransfer(0, 14)
+	err = mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := mempool.userTxsMap[0]
+	s.Equal(tx, bucket.txs[len(bucket.txs)-1])
+}
+
 //
 //func (s *MempoolTestSuite) TestReplaceTransaction() {
 //	mempool, err := NewMempool(s.storage.Storage)

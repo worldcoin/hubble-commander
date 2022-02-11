@@ -1,14 +1,18 @@
 package mempool
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
 
 const nonExecutableIndex = -1
+
+var ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 
 // Mempool is a data structure that queues pending transactions.
 //
@@ -49,14 +53,7 @@ func (m *Mempool) initTxs(txs models.GenericTransactionArray) {
 	for i := 0; i < txs.Len(); i++ {
 		tx := txs.At(i)
 
-		bucket, ok := m.userTxsMap[tx.GetFromStateID()]
-		if !ok {
-			bucket = &txBucket{
-				txs:             make([]models.GenericTransaction, 0, 1),
-				executableIndex: nonExecutableIndex,
-			}
-			m.userTxsMap[tx.GetFromStateID()] = bucket
-		}
+		bucket := m.getOrInitBucket(tx.GetFromStateID(), 0)
 		bucket.txs = append(bucket.txs, tx)
 	}
 }
@@ -97,30 +94,32 @@ func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.Gener
 	return result
 }
 
-func (m *Mempool) AddOrReplace(tx models.GenericTransaction, currentNonce uint64) {
-	bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
+func (m *Mempool) AddOrReplace(tx models.GenericTransaction, senderNonce uint64) error {
+	bucket := m.getOrInitBucket(tx.GetFromStateID(), senderNonce)
 
 	for idx := range bucket.txs {
 		if bucket.txs[idx].GetNonce() == tx.GetNonce() {
-			// TODO: Should we replace a transactions that's below executable index (and/or nonce)?
+			if !replaceCondition(bucket.txs[idx], tx) {
+				return errors.WithStack(ErrTxReplacementFailed)
+			}
 			bucket.txs[idx] = tx
-			return
+			return nil
 		}
 	}
 
 	bucket.insertTx(tx)
+	return nil
+}
 
-	// adds a new transaction to txs possibly rebalancing the list
-	// OR
-	// replaces an existing transaction
-	// sets executableIndex based on nonce
+func replaceCondition(previous, new models.GenericTransaction) bool {
+	return new.GetBase().Fee.Cmp(&previous.GetBase().Fee) > 0
 }
 
 func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
 	bucket, present := m.userTxsMap[stateId]
 	if !present {
 		bucket = &txBucket{
-			txs:             make([]models.GenericTransaction, 0),
+			txs:             make([]models.GenericTransaction, 0, 1),
 			nonce:           currentNonce,
 			executableIndex: nonExecutableIndex,
 		}
