@@ -122,6 +122,24 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLow() {
 	s.ErrorIs(err, ErrTxReplacementFailed)
 }
 
+func (s *MempoolTestSuite) TestGetNextExecutableTx() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := mempool.GetNextExecutableTx(0)
+	s.Equal(s.initialTransactions[1], tx)
+}
+
+func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreExecutableTxs() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	_ = mempool.GetNextExecutableTx(0)
+	tx := mempool.GetNextExecutableTx(0)
+	s.Nil(tx)
+	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
+}
+
 func (s *MempoolTestSuite) addInitialStateLeaves(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{

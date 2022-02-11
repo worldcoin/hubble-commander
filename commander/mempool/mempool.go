@@ -132,15 +132,15 @@ func (b *txBucket) insertTx(tx models.GenericTransaction) {
 	txNonce := tx.GetNonce()
 	for i := range b.txs {
 		if txNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
-			b.insertAndSetNonce(i, tx)
+			b.insertAndSetIndex(i, tx)
 			return
 		}
 	}
-	b.insertAndSetNonce(len(b.txs), tx)
+	b.insertAndSetIndex(len(b.txs), tx)
 }
 
 //TODO: maybe merge with insert function
-func (b *txBucket) insertAndSetNonce(index int, tx models.GenericTransaction) {
+func (b *txBucket) insertAndSetIndex(index int, tx models.GenericTransaction) {
 	b.insert(index, tx)
 	nonce := tx.GetNonce()
 	if index == 0 && nonce.EqN(b.nonce) {
@@ -157,15 +157,28 @@ func (b *txBucket) insert(index int, tx models.GenericTransaction) {
 	b.txs = append(b.txs[:index+1], b.txs[index:]...)
 	b.txs[index] = tx
 }
-func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
-	// checks if tx from buckets for given user is executable, if so increments executableIndex by 1
-	// returns txs[executableIndex]
-	panic("not implemented")
+
+func (m *Mempool) GetNextExecutableTx(stateID uint32) models.GenericTransaction {
+	bucket := m.buckets[stateID]
+	nextExecutableIndex := bucket.executableIndex + 1
+	if bucket.executableIndex == nonExecutableIndex || nextExecutableIndex >= len(bucket.txs) {
+		return nil
+	}
+
+	nextTx := bucket.txs[nextExecutableIndex]
+	currentNonce := bucket.nonce + uint64(nextExecutableIndex)
+	if !nextTx.GetBase().Nonce.EqN(currentNonce) {
+		bucket.executableIndex = nonExecutableIndex
+		return nil
+	}
+
+	bucket.executableIndex = nextExecutableIndex
+	return nextTx
 }
 
-func (m *Mempool) ignoreUserTxs(stateID uint32) {
+func (m *Mempool) IgnoreUserTxs(stateID uint32) {
 	// makes subsequent GetExecutableTxs not return transactions from this user state
-	// this virtually marks all user's txŁs as non-executable
+	// this virtually marks all user's txs as non-executable
 	m.buckets[stateID].executableIndex = nonExecutableIndex
 }
 func (m *Mempool) resetExecutableIndices() {
