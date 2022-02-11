@@ -21,7 +21,7 @@ var ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace con
 //
 // Mempool is persisted between Rollup Loop iterations.
 type Mempool struct {
-	userTxsMap map[uint32]*txBucket // storing pointers in the map so that data is mutable
+	buckets map[uint32]*txBucket // storing pointers in the map so that data is mutable
 }
 
 type txBucket struct {
@@ -37,7 +37,7 @@ func NewMempool(storage *st.Storage) (*Mempool, error) {
 	}
 
 	mempool := &Mempool{
-		userTxsMap: map[uint32]*txBucket{},
+		buckets: map[uint32]*txBucket{},
 	}
 
 	mempool.initTxs(txs)
@@ -59,7 +59,7 @@ func (m *Mempool) initTxs(txs models.GenericTransactionArray) {
 }
 
 func (m *Mempool) initBuckets(storage *st.Storage) error {
-	for stateID, bucket := range m.userTxsMap {
+	for stateID, bucket := range m.buckets {
 		stateLeaf, err := storage.StateTree.Leaf(stateID)
 		if err != nil {
 			return err
@@ -82,7 +82,7 @@ func (m *Mempool) initBuckets(storage *st.Storage) error {
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
 	result := make([]models.GenericTransaction, 0)
-	for _, userTx := range m.userTxsMap {
+	for _, userTx := range m.buckets {
 		if userTx.executableIndex == nonExecutableIndex {
 			continue
 		}
@@ -116,14 +116,14 @@ func replaceCondition(previous, new models.GenericTransaction) bool {
 }
 
 func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
-	bucket, present := m.userTxsMap[stateId]
+	bucket, present := m.buckets[stateId]
 	if !present {
 		bucket = &txBucket{
 			txs:             make([]models.GenericTransaction, 0, 1),
 			nonce:           currentNonce,
 			executableIndex: nonExecutableIndex,
 		}
-		m.userTxsMap[stateId] = bucket
+		m.buckets[stateId] = bucket
 	}
 	return bucket
 }
@@ -158,7 +158,7 @@ func (b *txBucket) insert(index int, tx models.GenericTransaction) {
 	b.txs[index] = tx
 }
 func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
-	// checks if tx from userTxsMap for given user is executable, if so increments executableIndex by 1
+	// checks if tx from buckets for given user is executable, if so increments executableIndex by 1
 	// returns txs[executableIndex]
 	panic("not implemented")
 }
@@ -166,7 +166,7 @@ func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction 
 func (m *Mempool) ignoreUserTxs(stateID uint32) {
 	// makes subsequent GetExecutableTxs not return transactions from this user state
 	// this virtually marks all user's txŁs as non-executable
-	m.userTxsMap[stateID].executableIndex = nonExecutableIndex
+	m.buckets[stateID].executableIndex = nonExecutableIndex
 }
 func (m *Mempool) resetExecutableIndices() {
 	// iterate over all txBucket and set executableIndex to 0
@@ -176,12 +176,12 @@ func (m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
 }
 func (m *Mempool) getExecutableIndex(stateID uint32) int {
 	// returns current executableIndex for given user
-	return m.userTxsMap[stateID].executableIndex
+	return m.buckets[stateID].executableIndex
 }
 func (m *Mempool) updateExecutableIndicesAndNonces(newExecutableIndicesMap map[uint32]int) {
 	for stateID, index := range newExecutableIndicesMap {
 		// calculate applied txs count and decrease nonce based on executableIndex difference
-		userTxs := m.userTxsMap[stateID]
+		userTxs := m.buckets[stateID]
 		txsCountDifference := userTxs.executableIndex - index
 		userTxs.executableIndex = index
 		userTxs.nonce -= uint64(txsCountDifference)

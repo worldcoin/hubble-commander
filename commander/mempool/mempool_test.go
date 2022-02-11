@@ -63,15 +63,15 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
-	s.Len(mempool.userTxsMap, 4)
-	s.Equal(mempool.userTxsMap[0].txs, []models.GenericTransaction{
+	s.Len(mempool.buckets, 4)
+	s.Equal(mempool.buckets[0].txs, []models.GenericTransaction{
 		s.initialTransactions[2],
 		s.initialTransactions[1],
 		s.initialTransactions[0],
 	})
-	s.Len(mempool.userTxsMap[1].txs, 2)
-	s.Len(mempool.userTxsMap[2].txs, 2)
-	s.Len(mempool.userTxsMap[3].txs, 2)
+	s.Len(mempool.buckets[1].txs, 2)
+	s.Len(mempool.buckets[2].txs, 2)
+	s.Len(mempool.buckets[3].txs, 2)
 }
 
 func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectType() {
@@ -96,7 +96,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	err = mempool.AddOrReplace(tx, 10)
 	s.NoError(err)
 
-	bucket := mempool.userTxsMap[0]
+	bucket := mempool.buckets[0]
 	s.Equal(tx, bucket.txs[len(bucket.txs)-1])
 }
 
@@ -109,7 +109,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	err = mempool.AddOrReplace(tx, 10)
 	s.NoError(err)
 
-	bucket := mempool.userTxsMap[0]
+	bucket := mempool.buckets[0]
 	s.Equal(tx, bucket.txs[1])
 }
 
