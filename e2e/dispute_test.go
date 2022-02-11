@@ -451,8 +451,8 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	require.NoError(t, err)
 
 	txsChannels := &eth.TxsTrackingChannels{
-		Requests: make(chan *eth.TxSendingRequest, 10),
-		SentTxs:  make(chan *types.Transaction, 10),
+		SentTxs:                           make(chan *types.Transaction, 10),
+		SkipSendingRequestsThroughChannel: true,
 	}
 
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{

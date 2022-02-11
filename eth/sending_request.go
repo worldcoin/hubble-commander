@@ -13,8 +13,9 @@ type TxSendingRequest struct {
 }
 
 type TxsTrackingChannels struct {
-	Requests chan *TxSendingRequest
-	SentTxs  chan *types.Transaction
+	Requests                          chan *TxSendingRequest
+	SentTxs                           chan *types.Transaction
+	SkipSendingRequestsThroughChannel bool // must be use only for tests
 }
 
 func (c *Client) packAndRequest(
@@ -26,6 +27,9 @@ func (c *Client) packAndRequest(
 	input, err := contract.ABI.Pack(method, data...)
 	if err != nil {
 		return nil, err
+	}
+	if c.txsChannels.SkipSendingRequestsThroughChannel {
+		return contract.BoundContract.RawTransact(opts, input)
 	}
 	responseChan := make(chan *types.Transaction, 1)
 	c.txsChannels.Requests <- &TxSendingRequest{
