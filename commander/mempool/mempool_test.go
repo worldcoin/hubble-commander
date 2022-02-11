@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,27 +17,25 @@ type MempoolTestSuite struct {
 	suite.Suite
 	storage             *st.TestStorage
 	initialTransactions []models.GenericTransaction
-	initialNonces       map[uint32]uint64
 }
 
 func (s *MempoolTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 
 	s.initialTransactions = []models.GenericTransaction{
-		testutils.NewTransfer(0, 1, 13, 1), // gap
-		testutils.NewTransfer(0, 1, 11, 1),
-		testutils.NewTransfer(0, 1, 10, 1), // executable
+		s.newTransfer(0, 13), // 0 - gap
+		s.newTransfer(0, 11), // 1
+		s.newTransfer(0, 10), // 2 - executable
 
-		testutils.NewTransfer(1, 1, 13, 1),
-		testutils.NewTransfer(1, 1, 12, 1), // non-executable
+		s.newTransfer(1, 12), // 3
+		s.newTransfer(1, 11), // 4 - non-executable
 
-		testutils.NewTransfer(2, 1, 16, 1),
-		testutils.NewTransfer(2, 1, 15, 1), // executable
+		s.newTransfer(2, 16), // 5
+		s.newTransfer(2, 15), // 6 - executable
+
+		s.newC2T(3, 11), // 7
+		s.newC2T(3, 10), // 8 - executable
 	}
-	s.initialNonces = map[uint32]uint64{}
-	s.initialNonces[0] = 10
-	s.initialNonces[1] = 11
-	s.initialNonces[2] = 15
 }
 
 func (s *MempoolTestSuite) SetupTest() {
@@ -49,8 +48,9 @@ func (s *MempoolTestSuite) SetupTest() {
 
 	s.addInitialStateLeaves(map[uint32]uint64{
 		0: 10,
-		1: 11,
+		1: 10,
 		2: 15,
+		3: 10,
 	})
 }
 
@@ -59,7 +59,22 @@ func (s *MempoolTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *MempoolTestSuite) TestNewMempool() {
+func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	s.Len(mempool.userTxsMap, 4)
+	s.Equal(mempool.userTxsMap[0].txs, []models.GenericTransaction{
+		s.initialTransactions[2],
+		s.initialTransactions[1],
+		s.initialTransactions[0],
+	})
+	s.Len(mempool.userTxsMap[1].txs, 2)
+	s.Len(mempool.userTxsMap[2].txs, 2)
+	s.Len(mempool.userTxsMap[3].txs, 2)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectType() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
@@ -67,6 +82,10 @@ func (s *MempoolTestSuite) TestNewMempool() {
 	s.Len(executable, 2)
 	s.Contains(executable, s.initialTransactions[2])
 	s.Contains(executable, s.initialTransactions[6])
+
+	executable = mempool.getExecutableTxs(txtype.Create2Transfer)
+	s.Len(executable, 1)
+	s.Contains(executable, s.initialTransactions[8])
 }
 
 //func (s *MempoolTestSuite) TestAddTransaction() {
@@ -106,6 +125,14 @@ func (s *MempoolTestSuite) addInitialStateLeaves(nonces map[uint32]uint64) {
 		})
 		s.NoError(err)
 	}
+}
+
+func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
+	return testutils.NewTransfer(from, 1, nonce, 100)
+}
+
+func (s *MempoolTestSuite) newC2T(from uint32, nonce uint64) *models.Create2Transfer {
+	return testutils.NewCreate2Transfer(from, ref.Uint32(1), nonce, 100, nil)
 }
 
 func TestMempoolTestSuite(t *testing.T) {
