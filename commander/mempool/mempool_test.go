@@ -108,6 +108,18 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	s.Equal(tx, lastTxInBucket)
 }
 
+func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := s.newTransfer(0, 12)
+	err = mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := mempool.buckets[0]
+	s.Equal(tx, bucket.txs[2])
+}
+
 func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)

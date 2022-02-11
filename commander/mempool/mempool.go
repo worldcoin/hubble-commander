@@ -94,21 +94,9 @@ func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.Gener
 	return result
 }
 
-func (m *Mempool) AddOrReplace(tx models.GenericTransaction, senderNonce uint64) error {
-	bucket := m.getOrInitBucket(tx.GetFromStateID(), senderNonce)
-
-	for idx := range bucket.txs {
-		if bucket.txs[idx].GetNonce() == tx.GetNonce() {
-			if !replaceCondition(bucket.txs[idx], tx) {
-				return errors.WithStack(ErrTxReplacementFailed)
-			}
-			bucket.txs[idx] = tx
-			return nil
-		}
-	}
-
-	bucket.insertTx(tx)
-	return nil
+func (m *Mempool) AddOrReplace(newTx models.GenericTransaction, senderNonce uint64) error {
+	bucket := m.getOrInitBucket(newTx.GetFromStateID(), senderNonce)
+	return bucket.addOrReplace(newTx)
 }
 
 func replaceCondition(previousTx, newTx models.GenericTransaction) bool {
@@ -128,27 +116,39 @@ func (m *Mempool) getOrInitBucket(stateID uint32, currentNonce uint64) *txBucket
 	return bucket
 }
 
-func (b *txBucket) insertTx(tx models.GenericTransaction) {
-	txNonce := tx.GetNonce()
-	for i := range b.txs {
-		if txNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
-			b.insertAndSetIndex(i, tx)
-			return
+func (b *txBucket) addOrReplace(newTx models.GenericTransaction) error {
+	newTxNonce := &newTx.GetBase().Nonce
+	for i, tx := range b.txs {
+		if newTxNonce.Eq(&tx.GetBase().Nonce) {
+			return b.replace(i, newTx)
+		}
+
+		if newTxNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
+			b.insertAndSetIndex(i, newTx)
+			return nil
 		}
 	}
-	b.insertAndSetIndex(len(b.txs), tx)
+	b.insertAndSetIndex(len(b.txs), newTx)
+	return nil
 }
 
-//TODO: maybe merge with insert function
-func (b *txBucket) insertAndSetIndex(index int, tx models.GenericTransaction) {
-	b.insert(index, tx)
-	nonce := tx.GetNonce()
+func (b *txBucket) replace(index int, newTx models.GenericTransaction) error {
+	if !replaceCondition(b.txs[index], newTx) {
+		return errors.WithStack(ErrTxReplacementFailed)
+	}
+	b.txs[index] = newTx
+	return nil
+}
+
+func (b *txBucket) insertAndSetIndex(index int, newTx models.GenericTransaction) {
+	b.insertAt(index, newTx)
+	nonce := &newTx.GetBase().Nonce
 	if index == 0 && nonce.EqN(b.nonce) {
 		b.executableIndex = 0
 	}
 }
 
-func (b *txBucket) insert(index int, tx models.GenericTransaction) {
+func (b *txBucket) insertAt(index int, tx models.GenericTransaction) {
 	if index == len(b.txs) {
 		b.txs = append(b.txs, tx)
 		return
