@@ -42,7 +42,10 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	commitmentStorage := NewCommitmentStorage(database)
 
-	transactionStorage := NewTransactionStorage(database)
+	transactionStorage, err := NewTransactionStorage(database, batchStorage)
+	if err != nil {
+		return nil, err
+	}
 
 	depositStorage := NewDepositStorage(database)
 
@@ -59,7 +62,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	pendingStakeWithdrawalStorage := NewPendingStakeWithdrawalStorage(database)
 
-	storage := &Storage{
+	return &Storage{
 		BatchStorage:                  batchStorage,
 		CommitmentStorage:             commitmentStorage,
 		TransactionStorage:            transactionStorage,
@@ -72,12 +75,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
 		database:                      database,
 		feeReceiverStateIDs:           make(map[string]uint32),
-	}
-	err = storage.initBatchedTxsCounter()
-	if err != nil {
-		return nil, err
-	}
-	return storage, nil
+	}, nil
 }
 
 func (s *Storage) copyWithNewDatabase(database *Database) *Storage {

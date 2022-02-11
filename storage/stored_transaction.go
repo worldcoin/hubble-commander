@@ -25,11 +25,15 @@ type TransactionStorage struct {
 
 type dbOperation func(txStorage *TransactionStorage) error
 
-func NewTransactionStorage(database *Database) *TransactionStorage {
+func NewTransactionStorage(database *Database, batchStorage *BatchStorage) (*TransactionStorage, error) {
+	batchTxsCount, err := batchStorage.getTransactionCountFromStorage()
+	if err != nil {
+		return nil, err
+	}
 	return &TransactionStorage{
 		database:        database,
-		batchedTxsCount: ref.Uint64(0),
-	}
+		batchedTxsCount: batchTxsCount,
+	}, nil
 }
 
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
@@ -196,11 +200,6 @@ func (s *BatchStorage) unsafeGetTransactionCount() (*uint64, error) {
 		return nil, err
 	}
 	return ref.Uint64(count), nil
-}
-
-func (s *Storage) initBatchedTxsCounter() (err error) {
-	s.batchedTxsCount, err = s.getTransactionCountFromStorage()
-	return err
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
