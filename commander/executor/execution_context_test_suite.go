@@ -46,6 +46,7 @@ func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg *config.RollupCo
 }
 
 func (s *testSuiteWithExecutionContext) TearDownTest() {
+	s.StopTxsSending()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
