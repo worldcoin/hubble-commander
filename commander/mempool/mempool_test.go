@@ -140,6 +140,14 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreExecutableTxs() {
 	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
 }
 
+func (s *MempoolTestSuite) TestIgnoreUserTxs() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	mempool.IgnoreUserTxs(0)
+	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
+}
+
 func (s *MempoolTestSuite) addInitialStateLeaves(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{

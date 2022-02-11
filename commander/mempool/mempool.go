@@ -111,19 +111,19 @@ func (m *Mempool) AddOrReplace(tx models.GenericTransaction, senderNonce uint64)
 	return nil
 }
 
-func replaceCondition(previous, new models.GenericTransaction) bool {
-	return new.GetBase().Fee.Cmp(&previous.GetBase().Fee) > 0
+func replaceCondition(previousTx, newTx models.GenericTransaction) bool {
+	return newTx.GetBase().Fee.Cmp(&previousTx.GetBase().Fee) > 0
 }
 
-func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
-	bucket, present := m.buckets[stateId]
+func (m *Mempool) getOrInitBucket(stateID uint32, currentNonce uint64) *txBucket {
+	bucket, present := m.buckets[stateID]
 	if !present {
 		bucket = &txBucket{
 			txs:             make([]models.GenericTransaction, 0, 1),
 			nonce:           currentNonce,
 			executableIndex: nonExecutableIndex,
 		}
-		m.buckets[stateId] = bucket
+		m.buckets[stateID] = bucket
 	}
 	return bucket
 }
@@ -177,8 +177,6 @@ func (m *Mempool) GetNextExecutableTx(stateID uint32) models.GenericTransaction 
 }
 
 func (m *Mempool) IgnoreUserTxs(stateID uint32) {
-	// makes subsequent GetExecutableTxs not return transactions from this user state
-	// this virtually marks all user's txs as non-executable
 	m.buckets[stateID].executableIndex = nonExecutableIndex
 }
 func (m *Mempool) resetExecutableIndices() {
