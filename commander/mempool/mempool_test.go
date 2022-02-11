@@ -21,21 +21,6 @@ type MempoolTestSuite struct {
 
 func (s *MempoolTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-
-	s.initialTransactions = []models.GenericTransaction{
-		s.newTransfer(0, 13), // 0 - gap
-		s.newTransfer(0, 11), // 1
-		s.newTransfer(0, 10), // 2 - executable
-
-		s.newTransfer(1, 12), // 3
-		s.newTransfer(1, 11), // 4 - non-executable
-
-		s.newTransfer(2, 16), // 5
-		s.newTransfer(2, 15), // 6 - executable
-
-		s.newC2T(3, 11), // 7
-		s.newC2T(3, 10), // 8 - executable
-	}
 }
 
 func (s *MempoolTestSuite) SetupTest() {
@@ -43,10 +28,26 @@ func (s *MempoolTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
+	// no need to shuffle initial transactions as they are retrieved from DB sorted by tx hashes which are random
+	s.initialTransactions = []models.GenericTransaction{
+		s.newTransfer(0, 10), // 0 - executable
+		s.newTransfer(0, 11), // 1
+		s.newTransfer(0, 13), // 2 - non-executable
+
+		s.newTransfer(1, 11), // 3 - non-executable
+		s.newTransfer(1, 12), // 4
+
+		s.newTransfer(2, 15), // 5 - executable
+		s.newTransfer(2, 16), // 6
+
+		s.newC2T(3, 10), // 7 - executable
+		s.newC2T(3, 11), // 8
+	}
+
 	err = s.storage.BatchAddTransaction(models.GenericArray(s.initialTransactions))
 	s.NoError(err)
 
-	s.addInitialStateLeaves(map[uint32]uint64{
+	s.setUserStates(map[uint32]uint64{
 		0: 10,
 		1: 10,
 		2: 15,
@@ -64,14 +65,20 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.NoError(err)
 
 	s.Len(mempool.buckets, 4)
-	s.Equal(mempool.buckets[0].txs, []models.GenericTransaction{
-		s.initialTransactions[2],
-		s.initialTransactions[1],
-		s.initialTransactions[0],
-	})
-	s.Len(mempool.buckets[1].txs, 2)
-	s.Len(mempool.buckets[2].txs, 2)
-	s.Len(mempool.buckets[3].txs, 2)
+	s.Equal(mempool.buckets[0].txs, s.initialTransactions[0:3])
+	s.Equal(mempool.buckets[1].txs, s.initialTransactions[3:5])
+	s.Equal(mempool.buckets[2].txs, s.initialTransactions[5:7])
+	s.Equal(mempool.buckets[3].txs, s.initialTransactions[7:9])
+
+	s.EqualValues(mempool.buckets[0].nonce, 10)
+	s.EqualValues(mempool.buckets[1].nonce, 10)
+	s.EqualValues(mempool.buckets[2].nonce, 15)
+	s.EqualValues(mempool.buckets[3].nonce, 10)
+
+	s.Equal(mempool.buckets[0].executableIndex, 0)
+	s.Equal(mempool.buckets[1].executableIndex, nonExecutableIndex)
+	s.Equal(mempool.buckets[2].executableIndex, 0)
+	s.Equal(mempool.buckets[3].executableIndex, 0)
 }
 
 func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectType() {
@@ -80,12 +87,12 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 
 	executable := mempool.GetExecutableTxs(txtype.Transfer)
 	s.Len(executable, 2)
-	s.Contains(executable, s.initialTransactions[2])
-	s.Contains(executable, s.initialTransactions[6])
+	s.Contains(executable, s.initialTransactions[0])
+	s.Contains(executable, s.initialTransactions[5])
 
 	executable = mempool.GetExecutableTxs(txtype.Create2Transfer)
 	s.Len(executable, 1)
-	s.Contains(executable, s.initialTransactions[8])
+	s.Contains(executable, s.initialTransactions[7])
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
@@ -97,7 +104,8 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	s.NoError(err)
 
 	bucket := mempool.buckets[0]
-	s.Equal(tx, bucket.txs[len(bucket.txs)-1])
+	lastTxInBucket := bucket.txs[len(bucket.txs)-1]
+	s.Equal(tx, lastTxInBucket)
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
@@ -113,7 +121,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	s.Equal(tx, bucket.txs[1])
 }
 
-func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLow() {
+func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
@@ -148,7 +156,7 @@ func (s *MempoolTestSuite) TestIgnoreUserTxs() {
 	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
 }
 
-func (s *MempoolTestSuite) addInitialStateLeaves(nonces map[uint32]uint64) {
+func (s *MempoolTestSuite) setUserStates(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{
 			PubKeyID: 0,
