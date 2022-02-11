@@ -34,7 +34,7 @@ func NewTransactionStorage(database *Database) *TransactionStorage {
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
 	newTransactionStorage := *s
 	newTransactionStorage.database = database
-	newTransactionStorage.batchedTxsCount = s.batchedTxsCount
+	*newTransactionStorage.batchedTxsCount = s.GetTransactionCount()
 
 	return &newTransactionStorage
 }
@@ -163,8 +163,8 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 	return nil
 }
 
-func (s *Storage) GetTransactionCount() uint64 {
-	return *s.batchedTxsCount
+func (s *TransactionStorage) GetTransactionCount() uint64 {
+	return atomic.LoadUint64(s.batchedTxsCount)
 }
 
 func (s *Storage) getTransactionCountFromStorage() (count *uint64, err error) {
