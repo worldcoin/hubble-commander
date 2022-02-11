@@ -8,6 +8,8 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+const nonExecutableIndex = -1
+
 // Mempool is a data structure that queues pending transactions.
 //
 // Transactions in Mempool are tracked for each sender separately.
@@ -51,7 +53,7 @@ func (m *Mempool) initTxs(txs models.GenericTransactionArray) {
 		if !ok {
 			bucket = &txBucket{
 				txs:             make([]models.GenericTransaction, 0, 1),
-				executableIndex: -1,
+				executableIndex: nonExecutableIndex,
 			}
 			m.userTxsMap[tx.GetFromStateID()] = bucket
 		}
@@ -84,7 +86,7 @@ func (m *Mempool) initBuckets(storage *st.Storage) error {
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
 	result := make([]models.GenericTransaction, 0)
 	for _, userTx := range m.userTxsMap {
-		if userTx.executableIndex == -1 {
+		if userTx.executableIndex == nonExecutableIndex {
 			continue
 		}
 		executableTx := userTx.txs[userTx.executableIndex]
@@ -101,7 +103,7 @@ func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket
 		bucket = &txBucket{
 			txs:             make([]models.GenericTransaction, 0),
 			nonce:           currentNonce,
-			executableIndex: -1,
+			executableIndex: nonExecutableIndex,
 		}
 		m.userTxsMap[stateId] = bucket
 	}
@@ -165,7 +167,7 @@ func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction 
 func (m *Mempool) ignoreUserTxs(stateID uint32) {
 	// makes subsequent GetExecutableTxs not return transactions from this user state
 	// this virtually marks all user's txŁs as non-executable
-	m.userTxsMap[stateID].executableIndex = -1
+	m.userTxsMap[stateID].executableIndex = nonExecutableIndex
 }
 func (m *Mempool) resetExecutableIndices() {
 	// iterate over all txBucket and set executableIndex to 0
