@@ -36,7 +36,7 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 
 	// TODO replace with a more effective approach when we get to a huge number of txs
 	txCount := a.storage.GetTransactionCount()
-	networkInfo.TransactionCount = int(txCount)
+	networkInfo.TransactionCount = txCount
 
 	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
 	accountCount, err := a.storage.StateTree.NextAvailableStateID()
