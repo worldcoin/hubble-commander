@@ -100,19 +100,27 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	s.Equal(tx, bucket.txs[len(bucket.txs)-1])
 }
 
-//
-//func (s *MempoolTestSuite) TestReplaceTransaction() {
-//	mempool, err := NewMempool(s.storage.Storage)
-//	s.NoError(err)
-//
-//	tx := createTx(0, 10)
-//	mempool.AddOrReplace(tx, 10)
-//
-//	executable := mempool.GetExecutableTxs(txtype.Transfer)
-//	s.Len(executable, 2)
-//	s.Equal(tx, executable[0])
-//	s.Equal(s.initialTransactions[5], executable[1])
-//}
+func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := s.newTransfer(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	err = mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := mempool.userTxsMap[0]
+	s.Equal(tx, bucket.txs[1])
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLow() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := s.newTransfer(0, 11)
+	err = mempool.AddOrReplace(tx, 10)
+	s.ErrorIs(err, ErrTxReplacementFailed)
+}
 
 func (s *MempoolTestSuite) addInitialStateLeaves(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
