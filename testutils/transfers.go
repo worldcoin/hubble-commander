@@ -7,7 +7,11 @@ import (
 )
 
 func MakeTransfer(from, to uint32, nonce, amount uint64) models.Transfer {
-	return models.Transfer{
+	return *NewTransfer(from, to, nonce, amount)
+}
+
+func NewTransfer(from, to uint32, nonce, amount uint64) *models.Transfer {
+	return &models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Transfer,
@@ -21,7 +25,11 @@ func MakeTransfer(from, to uint32, nonce, amount uint64) models.Transfer {
 }
 
 func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKey *models.PublicKey) models.Create2Transfer {
-	c2t := models.Create2Transfer{
+	return *NewCreate2Transfer(from, to, nonce, amount, publicKey)
+}
+
+func NewCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKey *models.PublicKey) *models.Create2Transfer {
+	c2t := &models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Create2Transfer,
@@ -39,7 +47,11 @@ func MakeCreate2Transfer(from uint32, to *uint32, nonce, amount uint64, publicKe
 }
 
 func MakeMassMigration(from, spokeID uint32, nonce, amount uint64) models.MassMigration {
-	return models.MassMigration{
+	return *NewMassMigration(from, spokeID, nonce, amount)
+}
+
+func NewMassMigration(from, spokeID uint32, nonce, amount uint64) *models.MassMigration {
+	return &models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.MassMigration,
