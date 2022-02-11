@@ -130,7 +130,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	err = s.storage.AddTransaction(&mm)
 	s.NoError(err)
 
-	storageCount, err := s.storage.getTransactionCountFromStorage()
+	storageCount, err := s.storage.getTransactionCount()
 	s.NoError(err)
 	s.EqualValues(3, *storageCount)
 	count := s.storage.GetTransactionCount()
@@ -138,7 +138,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 
 	err = s.storage.MarkTransactionsAsPending([]common.Hash{transferInCommitment.Hash})
 	s.NoError(err)
-	storageCount, err = s.storage.getTransactionCountFromStorage()
+	storageCount, err = s.storage.getTransactionCount()
 	s.NoError(err)
 	s.EqualValues(2, *storageCount)
 	count = s.storage.GetTransactionCount()
@@ -146,7 +146,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 
 	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{transferInCommitment}, &commitmentInBatch.ID)
 	s.NoError(err)
-	storageCount, err = s.storage.getTransactionCountFromStorage()
+	storageCount, err = s.storage.getTransactionCount()
 	s.NoError(err)
 	s.EqualValues(3, *storageCount)
 	count = s.storage.GetTransactionCount()

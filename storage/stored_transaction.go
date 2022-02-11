@@ -26,7 +26,7 @@ type TransactionStorage struct {
 type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database, batchStorage *BatchStorage) (*TransactionStorage, error) {
-	batchTxsCount, err := batchStorage.getTransactionCountFromStorage()
+	batchTxsCount, err := batchStorage.getTransactionCount()
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (s *TransactionStorage) GetTransactionCount() uint64 {
 	return atomic.LoadUint64(s.batchedTxsCount)
 }
 
-func (s *BatchStorage) getTransactionCountFromStorage() (count *uint64, err error) {
+func (s *BatchStorage) getTransactionCount() (count *uint64, err error) {
 	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *BatchStorage) error {
 		count, err = txStorage.unsafeGetTransactionCount()
 		return err
