@@ -6,6 +6,22 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
+// Mempool is a data structure that queues pending transactions.
+//
+// Transactions in Mempool are tracked for each sender separately.
+// They can be divided into _executable_ and _non-executable_ categories.
+//
+// Mempool is persisted between Rollup Loop iterations.
+type Mempool struct {
+	userTxsMap map[uint32]*txBucket // storing pointers in the map so that data is mutable
+}
+
+type txBucket struct {
+	txs             []models.GenericTransaction // "executable" and "non-executable" txs
+	nonce           uint64                      // user nonce
+	executableIndex int                         // index of next executable tx from txs
+}
+
 func NewMempool(storage *st.Storage) (*Mempool, error) {
 	txs, err := storage.GetAllPendingTransactions()
 	if err != nil {
@@ -32,22 +48,6 @@ func NewMempool(storage *st.Storage) (*Mempool, error) {
 	}
 
 	return mempool, nil
-}
-
-// Mempool is a data structure that queues pending transactions.
-//
-// Transactions in Mempool are tracked for each sender separately.
-// They can be divided into _executable_ and _non-executable_ categories.
-//
-// Mempool is persisted between batches.
-type Mempool struct {
-	userTxsMap map[uint32]*txBucket // Storing pointers in the map so that data is mutable
-}
-
-type txBucket struct {
-	txs             []models.GenericTransaction // "executable" and "non-executable" txs
-	nonce           uint64                      // user nonce
-	executableIndex int                         // index of next executable tx from txs
 }
 
 func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
