@@ -1,19 +1,20 @@
 package mempool
 
 import (
+	"testing"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 type MempoolTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	initialTransactions []models.GenericTransaction
-	initialNonces       map[uint32]uint
+	initialNonces       map[uint32]uint64
 }
 
 func (s *MempoolTestSuite) SetupSuite() {
@@ -30,7 +31,7 @@ func (s *MempoolTestSuite) SetupSuite() {
 		createTx(2, 15), // executable
 		createTx(2, 16),
 	}
-	s.initialNonces = map[uint32]uint{}
+	s.initialNonces = map[uint32]uint64{}
 	s.initialNonces[0] = 10
 	s.initialNonces[1] = 11
 	s.initialNonces[2] = 15

@@ -3,24 +3,35 @@ package mempool
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func NewMempool(txs []models.GenericTransaction, nonces map[uint32]uint) *Mempool {
+func NewMempool(storage *st.Storage) (*Mempool, error) {
+	txs, err := storage.GetAllPendingTransactions()
+	if err != nil {
+		return nil, err
+	}
+
 	mempool := &Mempool{
 		userTxsMap: map[uint32]*txBucket{},
 	}
 
-	for _, tx := range txs {
-		nonce, noncePresent := nonces[tx.GetFromStateID()]
-		if !noncePresent {
-			panic("nonce not present")
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+
+		bucket, ok := mempool.userTxsMap[tx.GetFromStateID()]
+		if !ok {
+			stateLeaf, err := storage.StateTree.Leaf(tx.GetFromStateID())
+			if err != nil {
+				return nil, err
+			}
+			bucket = mempool.initBucket(tx.GetFromStateID(), stateLeaf.Nonce.Uint64())
 		}
 
-		bucket := mempool.getOrInitBucket(tx.GetFromStateID(), nonce)
 		bucket.appendTx(tx)
 	}
 
-	return mempool
+	return mempool, nil
 }
 
 // Mempool is a data structure that queues pending transactions.
@@ -35,11 +46,11 @@ type Mempool struct {
 
 type txBucket struct {
 	txs             []models.GenericTransaction // "executable" and "non-executable" txs
-	nonce           uint                        // user nonce
+	nonce           uint64                      // user nonce
 	executableIndex int                         // index of next executable tx from txs
 }
 
-func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *txBucket {
+func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
 	bucket, present := m.userTxsMap[stateId]
 	if !present {
 		bucket = &txBucket{
@@ -52,17 +63,47 @@ func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint) *txBucket {
 	return bucket
 }
 
+func (m *Mempool) initBucket(stateId uint32, currentNonce uint64) *txBucket {
+	bucket := &txBucket{
+		txs:             make([]models.GenericTransaction, 0, 1),
+		nonce:           currentNonce,
+		executableIndex: -1,
+	}
+	m.userTxsMap[stateId] = bucket
+	return bucket
+}
+
 func (b *txBucket) appendTx(tx models.GenericTransaction) {
-	b.txs = append(b.txs, tx)
-	if len(b.txs) == 1 { // If first transaction in this bucket
-		nonce := tx.GetNonce()
-		if nonce.EqN(uint64(b.nonce)) {
-			b.executableIndex = 0
+	txNonce := tx.GetNonce()
+	for i := range b.txs {
+		if txNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
+			b.insertAndSetNonce(i, tx)
+			return
 		}
+	}
+	b.insertAndSetNonce(len(b.txs), tx)
+}
+
+//TODO: maybe merge with insert function
+func (b *txBucket) insertAndSetNonce(index int, tx models.GenericTransaction) {
+	b.insert(index, tx)
+	nonce := tx.GetNonce()
+	if index == 0 && nonce.EqN(b.nonce) {
+		b.executableIndex = 0
 	}
 }
 
-func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint) {
+func (b *txBucket) insert(index int, tx models.GenericTransaction) {
+	if index == len(b.txs) {
+		b.txs = append(b.txs, tx)
+		return
+	}
+
+	b.txs = append(b.txs[:index+1], b.txs[index:]...)
+	b.txs[index] = tx
+}
+
+func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint64) {
 	bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
 
 	for idx := range bucket.txs {
@@ -121,6 +162,6 @@ func (m *Mempool) updateExecutableIndicesAndNonces(newExecutableIndicesMap map[u
 		userTxs := m.userTxsMap[stateID]
 		txsCountDifference := userTxs.executableIndex - index
 		userTxs.executableIndex = index
-		userTxs.nonce -= uint(txsCountDifference)
+		userTxs.nonce -= uint64(txsCountDifference)
 	}
 }
