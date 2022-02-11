@@ -194,3 +194,9 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *stored.Batch) bo
 	}
 	return storedBatch.ToModelsBatch(), nil
 }
+
+func (s *BatchStorage) executeInTransaction(opts TxOptions, fn func(txStorage *BatchStorage) error) error {
+	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
+		return fn(s.copyWithNewDatabase(txDatabase))
+	})
+}

@@ -168,8 +168,8 @@ func (s *TransactionStorage) GetTransactionCount() uint64 {
 	return atomic.LoadUint64(s.batchedTxsCount)
 }
 
-func (s *Storage) getTransactionCountFromStorage() (count *uint64, err error) {
-	err = s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
+func (s *BatchStorage) getTransactionCountFromStorage() (count *uint64, err error) {
+	err = s.executeInTransaction(TxOptions{ReadOnly: true}, func(txStorage *BatchStorage) error {
 		count, err = txStorage.unsafeGetTransactionCount()
 		return err
 	})
@@ -179,7 +179,7 @@ func (s *Storage) getTransactionCountFromStorage() (count *uint64, err error) {
 	return count, nil
 }
 
-func (s *Storage) unsafeGetTransactionCount() (*uint64, error) {
+func (s *BatchStorage) unsafeGetTransactionCount() (*uint64, error) {
 	latestBatch, err := s.GetLatestSubmittedBatch()
 	if IsNotFoundError(err) {
 		return ref.Uint64(0), nil
