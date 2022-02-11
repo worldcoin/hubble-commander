@@ -2,13 +2,14 @@ package tracker
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 )
 
 type TestSuiteWithTxsSending struct {
-	txsChannel    chan *eth.TxSendingRequest
+	txsChan       chan *eth.TxSendingRequest
 	cancelSending func()
 	waitGroup     sync.WaitGroup
 }
@@ -18,7 +19,7 @@ func (t *TestSuiteWithTxsSending) initTxsSending(channel chan *eth.TxSendingRequ
 		channel = make(chan *eth.TxSendingRequest, 32)
 	}
 
-	t.txsChannel = channel
+	t.txsChan = channel
 }
 
 func (t *TestSuiteWithTxsSending) StartTxsSending(channel chan *eth.TxSendingRequest) {
@@ -28,7 +29,7 @@ func (t *TestSuiteWithTxsSending) StartTxsSending(channel chan *eth.TxSendingReq
 	var ctx context.Context
 	ctx, t.cancelSending = context.WithCancel(context.Background())
 	go func() {
-		_ = StartTxsRequestsSending(ctx, t.txsChannel)
+		_ = StartTxsRequestsSending(ctx, t.txsChan)
 		t.waitGroup.Done()
 	}()
 }
@@ -36,4 +37,5 @@ func (t *TestSuiteWithTxsSending) StartTxsSending(channel chan *eth.TxSendingReq
 func (t *TestSuiteWithTxsSending) StopTxsSending() {
 	t.cancelSending()
 	t.waitGroup.Wait()
+	fmt.Println("stopped")
 }
