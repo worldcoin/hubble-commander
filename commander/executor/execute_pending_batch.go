@@ -15,6 +15,7 @@ func (c *TxsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 		ID:              batch.ID,
 		Type:            batch.Type,
 		TransactionHash: batch.TransactionHash,
+		PrevStateRoot:   &batch.PrevStateRoot,
 	})
 	if err != nil {
 		return err
@@ -72,6 +73,7 @@ func (c *DepositsContext) ExecutePendingBatch(batch *models.PendingBatch) error 
 		ID:              batch.ID,
 		Type:            batch.Type,
 		TransactionHash: batch.TransactionHash,
+		PrevStateRoot:   &batch.PrevStateRoot,
 	})
 	if err != nil {
 		return err
