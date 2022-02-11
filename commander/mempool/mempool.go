@@ -97,6 +97,25 @@ func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.Gener
 	return result
 }
 
+func (m *Mempool) AddOrReplace(tx models.GenericTransaction, currentNonce uint64) {
+	bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
+
+	for idx := range bucket.txs {
+		if bucket.txs[idx].GetNonce() == tx.GetNonce() {
+			// TODO: Should we replace a transactions that's below executable index (and/or nonce)?
+			bucket.txs[idx] = tx
+			return
+		}
+	}
+
+	bucket.insertTx(tx)
+
+	// adds a new transaction to txs possibly rebalancing the list
+	// OR
+	// replaces an existing transaction
+	// sets executableIndex based on nonce
+}
+
 func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
 	bucket, present := m.userTxsMap[stateId]
 	if !present {
@@ -138,25 +157,6 @@ func (b *txBucket) insert(index int, tx models.GenericTransaction) {
 
 	b.txs = append(b.txs[:index+1], b.txs[index:]...)
 	b.txs[index] = tx
-}
-
-func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint64) {
-	bucket := m.getOrInitBucket(tx.GetFromStateID(), currentNonce)
-
-	for idx := range bucket.txs {
-		if bucket.txs[idx].GetNonce() == tx.GetNonce() {
-			// TODO: Should we replace a transactions that's below executable index (and/or nonce)?
-			bucket.txs[idx] = tx
-			return
-		}
-	}
-
-	bucket.insertTx(tx)
-
-	// adds a new transaction to txs possibly rebalancing the list
-	// OR
-	// replaces an existing transaction
-	// sets executableIndex based on nonce
 }
 func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
 	// checks if tx from userTxsMap for given user is executable, if so increments executableIndex by 1

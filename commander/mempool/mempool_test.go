@@ -93,7 +93,7 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 //	s.NoError(err)
 //
 //	tx := createTx(3, 10)
-//	mempool.addOrReplace(tx, 10)
+//	mempool.AddOrReplace(tx, 10)
 //
 //	executable := mempool.GetExecutableTxs(txtype.Transfer)
 //	s.Len(executable, 3)
@@ -107,7 +107,7 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 //	s.NoError(err)
 //
 //	tx := createTx(0, 10)
-//	mempool.addOrReplace(tx, 10)
+//	mempool.AddOrReplace(tx, 10)
 //
 //	executable := mempool.GetExecutableTxs(txtype.Transfer)
 //	s.Len(executable, 2)
