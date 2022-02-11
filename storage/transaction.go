@@ -49,6 +49,24 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 	return result, nil
 }
 
+func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentID) (models.GenericTransactionArray, error) {
+	batchedTxs := make([]stored.BatchedTx, 0, 32)
+
+	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+
+	err := s.database.Badger.Find(&batchedTxs, query)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make(models.GenericArray, 0, len(batchedTxs))
+	for i := range batchedTxs {
+		txs = append(txs, batchedTxs[i].ToGenericTransaction())
+	}
+
+	return txs, nil
+}
+
 // returns error if the tranasaction is not a FailedTx
 func (s *TransactionStorage) ReplaceFailedTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
@@ -183,4 +201,32 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 		}
 		return nil
 	})
+}
+
+func (s *TransactionStorage) AddFailedTransactions(txs models.GenericTransactionArray) error {
+	return s.addTxsInMultipleDBTransactions(txs, "failed")
+}
+
+func (s *TransactionStorage) AddPendingTransactions(txs models.GenericTransactionArray) error {
+	return s.addTxsInMultipleDBTransactions(txs, "pending")
+}
+
+func (s *TransactionStorage) addTxsInMultipleDBTransactions(txs models.GenericTransactionArray, status string) error {
+	if txs.Len() == 0 {
+		return nil
+	}
+
+	operations := make([]dbOperation, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		operations = append(operations, func(txStorage *TransactionStorage) error {
+			return txStorage.AddTransaction(tx)
+		})
+	}
+
+	dbTxsCount, err := s.updateInMultipleTransactions(operations)
+	if err != nil {
+		return errors.Wrapf(err, "storing %d %s tx(s) failed during database transaction #%d", txs.Len(), status, dbTxsCount)
+	}
+	return nil
 }

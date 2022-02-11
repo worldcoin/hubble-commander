@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 
+	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -48,6 +49,13 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 		if err != nil {
 			return nil, err
 		}
+
+		if txs != nil {
+			// TODO remove when new primary key for transactions with transaction index is implement
+			txQueue := executor.NewTxQueue(txs)
+			txs = txQueue.PickTxsForCommitment()
+		}
+
 		dtoCommitments = append(dtoCommitments, dto.PendingCommitment{
 			Commitment:   commitments[i],
 			Transactions: txs,
@@ -59,12 +67,8 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 func (a *API) getTransactionsForCommitment(commitment models.Commitment) (models.GenericTransactionArray, error) {
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
-	case batchtype.Transfer:
-		return a.storage.GetTransfersByCommitmentID(commitmentBase.ID)
-	case batchtype.Create2Transfer:
-		return a.storage.GetCreate2TransfersByCommitmentID(commitmentBase.ID)
-	case batchtype.MassMigration:
-		return a.storage.GetMassMigrationsByCommitmentID(commitmentBase.ID)
+	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
+		return a.storage.GetTransactionsByCommitmentID(commitmentBase.ID)
 	case batchtype.Deposit:
 		return nil, nil
 	case batchtype.Genesis:

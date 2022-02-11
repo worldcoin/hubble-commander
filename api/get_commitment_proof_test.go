@@ -124,7 +124,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.txCommitment.CombinedSignature,
 			FeeReceiver: s.txCommitment.FeeReceiver,
-			Transactions: []dto.TransferForCommitment{
+			Transactions: []interface{}{
 				dto.MakeTransferForCommitment(&transfer),
 			},
 		},
@@ -168,7 +168,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.txCommitment.CombinedSignature,
 			FeeReceiver: s.txCommitment.FeeReceiver,
-			Transactions: []dto.Create2TransferForCommitment{
+			Transactions: []interface{}{
 				dto.MakeCreate2TransferForCommitment(&transfer),
 			},
 		},
@@ -211,7 +211,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 			AccountRoot: *s.batch.AccountTreeRoot,
 			Signature:   s.mmCommitment.CombinedSignature,
 			FeeReceiver: s.mmCommitment.Meta.FeeReceiver,
-			Transactions: []dto.MassMigrationForCommitment{
+			Transactions: []interface{}{
 				dto.MakeMassMigrationForCommitment(&massMigration),
 			},
 		},
