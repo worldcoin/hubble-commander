@@ -81,6 +81,20 @@ func (m *Mempool) initBuckets(storage *st.Storage) error {
 	return nil
 }
 
+func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
+	result := make([]models.GenericTransaction, 0)
+	for _, userTx := range m.userTxsMap {
+		if userTx.executableIndex == -1 {
+			continue
+		}
+		executableTx := userTx.txs[userTx.executableIndex]
+		if executableTx.Type() == txType {
+			result = append(result, executableTx)
+		}
+	}
+	return result
+}
+
 func (m *Mempool) getOrInitBucket(stateId uint32, currentNonce uint64) *txBucket {
 	bucket, present := m.userTxsMap[stateId]
 	if !present {
@@ -142,20 +156,6 @@ func (m *Mempool) addOrReplace(tx models.GenericTransaction, currentNonce uint64
 	// replaces an existing transaction
 	// sets executableIndex based on nonce
 }
-
-func (m *Mempool) getExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
-	result := make([]models.GenericTransaction, 0)
-	for _, userTx := range m.userTxsMap {
-		if userTx.executableIndex == -1 {
-			continue
-		}
-		executableTx := userTx.txs[userTx.executableIndex]
-		if executableTx.Type() == txType {
-			result = append(result, executableTx)
-		}
-	}
-	return result
-}
 func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction {
 	// checks if tx from userTxsMap for given user is executable, if so increments executableIndex by 1
 	// returns txs[executableIndex]
@@ -163,7 +163,7 @@ func (m *Mempool) getNextExecutableTx(stateID uint32) models.GenericTransaction 
 }
 
 func (m *Mempool) ignoreUserTxs(stateID uint32) {
-	// makes subsequent getExecutableTxs not return transactions from this user state
+	// makes subsequent GetExecutableTxs not return transactions from this user state
 	// this virtually marks all user's txŁs as non-executable
 	m.userTxsMap[stateID].executableIndex = -1
 }

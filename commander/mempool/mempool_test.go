@@ -78,12 +78,12 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
-	executable := mempool.getExecutableTxs(txtype.Transfer)
+	executable := mempool.GetExecutableTxs(txtype.Transfer)
 	s.Len(executable, 2)
 	s.Contains(executable, s.initialTransactions[2])
 	s.Contains(executable, s.initialTransactions[6])
 
-	executable = mempool.getExecutableTxs(txtype.Create2Transfer)
+	executable = mempool.GetExecutableTxs(txtype.Create2Transfer)
 	s.Len(executable, 1)
 	s.Contains(executable, s.initialTransactions[8])
 }
@@ -95,7 +95,7 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 //	tx := createTx(3, 10)
 //	mempool.addOrReplace(tx, 10)
 //
-//	executable := mempool.getExecutableTxs(txtype.Transfer)
+//	executable := mempool.GetExecutableTxs(txtype.Transfer)
 //	s.Len(executable, 3)
 //	s.Equal(s.initialTransactions[0], executable[0])
 //	s.Equal(s.initialTransactions[5], executable[1])
@@ -109,7 +109,7 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 //	tx := createTx(0, 10)
 //	mempool.addOrReplace(tx, 10)
 //
-//	executable := mempool.getExecutableTxs(txtype.Transfer)
+//	executable := mempool.GetExecutableTxs(txtype.Transfer)
 //	s.Len(executable, 2)
 //	s.Equal(tx, executable[0])
 //	s.Equal(s.initialTransactions[5], executable[1])
