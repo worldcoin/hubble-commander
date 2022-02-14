@@ -178,6 +178,29 @@ func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions(
 	s.Len(transfers, 0)
 }
 
+func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
+	err := s.storage.AddTransaction(&transfer)
+	s.NoError(err)
+
+	txBeforeUpsert, err := s.storage.GetTransfer(transfer.Hash)
+	s.NoError(err)
+	s.Nil(txBeforeUpsert.CommitmentID)
+
+	newTransfer := transfer
+	newTransfer.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+
+	err = s.storage.BatchUpsertTransaction(models.GenericArray{&newTransfer})
+	s.NoError(err)
+
+	txAfterUpsert, err := s.storage.GetTransfer(newTransfer.Hash)
+	s.NoError(err)
+
+	s.Equal(newTransfer.CommitmentID, txAfterUpsert.CommitmentID)
+}
+
 func TestTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionTestSuite))
 }
