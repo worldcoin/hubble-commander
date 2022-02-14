@@ -82,16 +82,34 @@ func (m *Mempool) initBuckets(storage *st.Storage) error {
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
 	result := make([]models.GenericTransaction, 0)
-	for _, userTx := range m.buckets {
-		if userTx.executableIndex == nonExecutableIndex {
+	for _, bucket := range m.buckets {
+		if bucket.executableIndex == nonExecutableIndex {
 			continue
 		}
-		executableTx := userTx.txs[userTx.executableIndex]
+		executableTx := bucket.txs[bucket.executableIndex]
 		if executableTx.Type() == txType {
 			result = append(result, executableTx)
 		}
 	}
 	return result
+}
+
+func (m *Mempool) GetExecutableTx(stateID uint32) models.GenericTransaction {
+	bucket := m.buckets[stateID]
+	nextExecutableIndex := bucket.executableIndex + 1
+	if bucket.executableIndex == nonExecutableIndex || nextExecutableIndex >= len(bucket.txs) {
+		return nil
+	}
+
+	nextTx := bucket.txs[nextExecutableIndex]
+	currentNonce := bucket.nonce + uint64(nextExecutableIndex)
+	if !nextTx.GetBase().Nonce.EqN(currentNonce) {
+		bucket.executableIndex = nonExecutableIndex
+		return nil
+	}
+
+	bucket.executableIndex = nextExecutableIndex
+	return nextTx
 }
 
 func (m *Mempool) AddOrReplace(newTx models.GenericTransaction, senderNonce uint64) error {
@@ -156,24 +174,6 @@ func (b *txBucket) insertAt(index int, tx models.GenericTransaction) {
 
 	b.txs = append(b.txs[:index+1], b.txs[index:]...)
 	b.txs[index] = tx
-}
-
-func (m *Mempool) GetNextExecutableTx(stateID uint32) models.GenericTransaction {
-	bucket := m.buckets[stateID]
-	nextExecutableIndex := bucket.executableIndex + 1
-	if bucket.executableIndex == nonExecutableIndex || nextExecutableIndex >= len(bucket.txs) {
-		return nil
-	}
-
-	nextTx := bucket.txs[nextExecutableIndex]
-	currentNonce := bucket.nonce + uint64(nextExecutableIndex)
-	if !nextTx.GetBase().Nonce.EqN(currentNonce) {
-		bucket.executableIndex = nonExecutableIndex
-		return nil
-	}
-
-	bucket.executableIndex = nextExecutableIndex
-	return nextTx
 }
 
 func (m *Mempool) IgnoreUserTxs(stateID uint32) {

@@ -142,20 +142,20 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	s.ErrorIs(err, ErrTxReplacementFailed)
 }
 
-func (s *MempoolTestSuite) TestGetNextExecutableTx() {
+func (s *MempoolTestSuite) TestGetExecutableTx() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
-	tx := mempool.GetNextExecutableTx(0)
+	tx := mempool.GetExecutableTx(0)
 	s.Equal(s.initialTransactions[1], tx)
 }
 
-func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreExecutableTxs() {
+func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
-	_ = mempool.GetNextExecutableTx(0)
-	tx := mempool.GetNextExecutableTx(0)
+	_ = mempool.GetExecutableTx(0)
+	tx := mempool.GetExecutableTx(0)
 	s.Nil(tx)
 	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
 }
