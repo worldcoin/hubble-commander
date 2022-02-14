@@ -32,10 +32,8 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		WithdrawManager:                a.client.ChainState.WithdrawManager,
 		Rollup:                         a.client.ChainState.Rollup,
 		BlockNumber:                    a.storage.GetLatestBlockNumber(),
+		TransactionCount:               a.storage.GetTransactionCount(),
 	}
-
-	txCount := a.storage.GetTransactionCount()
-	networkInfo.TransactionCount = txCount
 
 	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
 	accountCount, err := a.storage.StateTree.NextAvailableStateID()
