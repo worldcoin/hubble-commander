@@ -179,9 +179,27 @@ func (m *Mempool) GetNextExecutableTx(stateID uint32) models.GenericTransaction 
 func (m *Mempool) IgnoreUserTxs(stateID uint32) {
 	m.buckets[stateID].executableIndex = nonExecutableIndex
 }
-func (m *Mempool) resetExecutableIndices() {
-	// iterate over all txBucket and set executableIndex to 0
+
+func (m *Mempool) ResetExecutableIndices() {
+	for _, bucket := range m.buckets {
+		bucket.setExecutableIndex()
+	}
 }
+
+func (b *txBucket) setExecutableIndex() {
+	if len(b.txs) == 0 {
+		b.executableIndex = nonExecutableIndex
+		return
+	}
+
+	firstNonce := b.txs[0].GetNonce()
+	if firstNonce.EqN(b.nonce) {
+		b.executableIndex = 0
+		return
+	}
+	b.executableIndex = nonExecutableIndex
+}
+
 func (m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
 	// remove given txs from the mempool and possibly rebalance txs list
 }

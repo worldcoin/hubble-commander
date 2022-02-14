@@ -168,6 +168,18 @@ func (s *MempoolTestSuite) TestIgnoreUserTxs() {
 	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
 }
 
+func (s *MempoolTestSuite) TestResetExecutableIndices() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	mempool.buckets[0].executableIndex = 2
+	mempool.buckets[2].executableIndex = nonExecutableIndex
+
+	mempool.ResetExecutableIndices()
+	s.Equal(0, mempool.buckets[0].executableIndex)
+	s.Equal(0, mempool.buckets[2].executableIndex)
+}
+
 func (s *MempoolTestSuite) setUserStates(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{
