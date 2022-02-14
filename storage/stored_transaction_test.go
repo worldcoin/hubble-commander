@@ -130,15 +130,40 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	err = s.storage.AddTransaction(&mm)
 	s.NoError(err)
 
-	count, err := s.storage.GetTransactionCount()
+	storageCount, err := s.storage.getTransactionCount()
 	s.NoError(err)
-	s.Equal(3, *count)
+	s.EqualValues(3, *storageCount)
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(3, count)
+
+	err = s.storage.MarkTransactionsAsPending([]common.Hash{transferInCommitment.Hash})
+	s.NoError(err)
+	storageCount, err = s.storage.getTransactionCount()
+	s.NoError(err)
+	s.EqualValues(2, *storageCount)
+	count = s.storage.GetTransactionCount()
+	s.EqualValues(2, count)
+
+	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{transferInCommitment}, &commitmentInBatch.ID)
+	s.NoError(err)
+	storageCount, err = s.storage.getTransactionCount()
+	s.NoError(err)
+	s.EqualValues(3, *storageCount)
+	count = s.storage.GetTransactionCount()
+	s.EqualValues(3, count)
+}
+
+func (s *StoredTransactionTestSuite) TestGetTransactionCount_IncrementsTxCountOnStorageCopy() {
+	transactionStorageCopy := s.storage.TransactionStorage.copyWithNewDatabase(s.storage.database)
+	transactionStorageCopy.incrementTransactionCount()
+
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(1, count)
 }
 
 func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
-	count, err := s.storage.GetTransactionCount()
-	s.NoError(err)
-	s.Equal(0, *count)
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(0, count)
 }
 
 func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {

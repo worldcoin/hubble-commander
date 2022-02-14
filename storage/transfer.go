@@ -3,10 +3,8 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
@@ -24,27 +22,6 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	}
 	transfer := tx.ToTransfer()
 	return transfer, nil
-}
-
-func (s *TransactionStorage) GetTransfersByCommitmentID(id models.CommitmentID) (models.TransferArray, error) {
-	batchedTxs := make([]stored.BatchedTx, 0, 32)
-
-	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
-	// We're not using `.And("TxType").Eq(txtype.Transfer)` here because of inefficiency in BH implementation
-
-	err := s.database.Badger.Find(&batchedTxs, query)
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]models.Transfer, 0, len(batchedTxs))
-	for i := range batchedTxs {
-		if batchedTxs[i].TxType == txtype.Transfer {
-			txs = append(txs, *batchedTxs[i].ToTransfer())
-		}
-	}
-
-	return txs, nil
 }
 
 func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {

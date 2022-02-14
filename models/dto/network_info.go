@@ -16,7 +16,7 @@ type NetworkInfo struct {
 	WithdrawManager                common.Address
 	Rollup                         common.Address
 	BlockNumber                    uint32
-	TransactionCount               int
+	TransactionCount               uint64
 	AccountCount                   uint32
 	LatestBatch                    *models.Uint256
 	LatestFinalisedBatch           *models.Uint256

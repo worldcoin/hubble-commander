@@ -94,7 +94,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_UpdatesUserBala
 func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
-	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
+	s.pendingBatch.Commitments[0].Transactions = models.MakeGenericArray(&tx)
 
 	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
 	s.NoError(err)
@@ -114,7 +114,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatc
 	s.Len(commitments, 1)
 	s.Equal(s.pendingBatch.Commitments[0].Commitment, commitments[0])
 
-	txs, err := s.storage.GetTransfersByCommitmentID(commitments[0].GetCommitmentBase().ID)
+	txs, err := s.storage.GetTransactionsByCommitmentID(commitments[0].GetCommitmentBase().ID)
 	s.NoError(err)
 	s.Len(txs, 1)
 	s.Equal(s.pendingBatch.Commitments[0].Transactions, txs)
