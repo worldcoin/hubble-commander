@@ -15,10 +15,20 @@ type TxSendingRequest struct {
 type TxsTrackingChannels struct {
 	Requests                          chan *TxSendingRequest
 	SentTxs                           chan *types.Transaction
-	SkipSendingRequestsThroughChannel bool // must be use only for tests
+	SkipSendingRequestsThroughChannel bool // must be used only for tests
 }
 
 func (c *Client) packAndRequest(
+	contract *Contract,
+	opts *bind.TransactOpts,
+	method string,
+	data ...interface{},
+) (*types.Transaction, error) {
+	return packAndRequest(c.txsChannels, contract, opts, method, data...)
+}
+
+func packAndRequest(
+	txsChannels *TxsTrackingChannels,
 	contract *Contract,
 	opts *bind.TransactOpts,
 	method string,
@@ -30,11 +40,11 @@ func (c *Client) packAndRequest(
 	}
 
 	var tx *types.Transaction
-	if c.txsChannels.SkipSendingRequestsThroughChannel {
+	if txsChannels.SkipSendingRequestsThroughChannel {
 		tx, err = contract.BoundContract.RawTransact(opts, input)
 	} else {
 		responseChan := make(chan *types.Transaction, 1)
-		c.txsChannels.Requests <- &TxSendingRequest{
+		txsChannels.Requests <- &TxSendingRequest{
 			contract:     contract.BoundContract,
 			input:        input,
 			opts:         opts,
@@ -45,7 +55,7 @@ func (c *Client) packAndRequest(
 	if err != nil {
 		return nil, err
 	}
-	c.txsChannels.SentTxs <- tx
+	txsChannels.SentTxs <- tx
 	return tx, nil
 }
 

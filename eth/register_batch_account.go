@@ -43,9 +43,9 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 		pubKeys[i] = publicKeys[i].BigInts()
 	}
 
-	tx, err := a.accountRegistry().
-		WithGasLimit(a.batchAccountRegistrationGasLimit).
-		RegisterBatch(pubKeys)
+	opts := *a.Blockchain.GetAccount()
+	opts.GasLimit = a.batchAccountRegistrationGasLimit
+	tx, err := packAndRequest(a.txsChannels, &a.AccountRegistry.Contract, &opts, "registerBatch", pubKeys)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
