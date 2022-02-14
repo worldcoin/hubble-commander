@@ -252,6 +252,24 @@ func (s *MempoolTestSuite) TestRemoveTxs_SetsExecutableIndices() {
 	s.EqualValues(0, mempool.buckets[3].executableIndex)
 }
 
+func (s *MempoolTestSuite) TestRemoveTxs_RemovesEmptyBucket() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	successfulTxs := []models.GenericTransaction{
+		mempool.GetExecutableTx(txtype.Create2Transfer, 3),
+		mempool.GetExecutableTx(txtype.Create2Transfer, 3),
+		mempool.GetExecutableTx(txtype.Transfer, 2),
+	}
+	failedTxs := []models.GenericTransaction{
+		mempool.GetExecutableTx(txtype.Transfer, 2),
+	}
+
+	mempool.RemoveTxs(successfulTxs, failedTxs)
+	s.NotContains(mempool.buckets, 3)
+	s.NotContains(mempool.buckets, 2)
+}
+
 func (s *MempoolTestSuite) modifyMempool(mempool *Mempool) ([]models.GenericTransaction, []models.GenericTransaction) {
 	txs := mempool.GetExecutableTxs(txtype.Transfer)
 	successfulTxs := make([]models.GenericTransaction, 0, 1)

@@ -220,6 +220,11 @@ func (m *Mempool) removeSuccessfulTxs(txs []models.GenericTransaction) {
 		bucket := m.buckets[senderID]
 		successfulTxs := nonce - bucket.nonce + 1
 		bucket.txs = bucket.txs[successfulTxs:]
+
+		if len(bucket.txs) == 0 {
+			delete(m.buckets, senderID)
+		}
+
 		bucket.nonce += successfulTxs
 		bucket.setExecutableIndex()
 	}
@@ -232,6 +237,11 @@ func (m *Mempool) removeFailedTxs(txs []models.GenericTransaction) {
 		bucket := m.buckets[senderID]
 		failedTxs := nonce - bucket.nonce + 1
 		bucket.txs = bucket.txs[failedTxs:]
+
+		if len(bucket.txs) == 0 {
+			delete(m.buckets, senderID)
+		}
+
 		bucket.executableIndex = nonExecutableIndex
 	}
 }
