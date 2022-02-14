@@ -48,7 +48,7 @@ func (tx *Transaction) unmarshalTransfer(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer.Copy()
+	tx.Parsed = &transfer
 	return nil
 }
 
@@ -58,7 +58,7 @@ func (tx *Transaction) unmarshalCreate2Transfer(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer.Copy()
+	tx.Parsed = &transfer
 	return nil
 }
 
@@ -68,7 +68,7 @@ func (tx *Transaction) unmarshalMassMigration(bytes []byte) error {
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer.Copy()
+	tx.Parsed = &transfer
 	return nil
 }
 
