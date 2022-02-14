@@ -28,17 +28,24 @@ func (c *Client) packAndRequest(
 	if err != nil {
 		return nil, err
 	}
+
+	var tx *types.Transaction
 	if c.txsChannels.SkipSendingRequestsThroughChannel {
-		return contract.BoundContract.RawTransact(opts, input)
+		tx, err = contract.BoundContract.RawTransact(opts, input)
+	} else {
+		responseChan := make(chan *types.Transaction, 1)
+		c.txsChannels.Requests <- &TxSendingRequest{
+			contract:     contract.BoundContract,
+			input:        input,
+			opts:         opts,
+			resultTxChan: responseChan,
+		}
+		tx = <-responseChan
 	}
-	responseChan := make(chan *types.Transaction, 1)
-	c.txsChannels.Requests <- &TxSendingRequest{
-		contract:     contract.BoundContract,
-		input:        input,
-		opts:         opts,
-		resultTxChan: responseChan,
+	if err != nil {
+		return nil, err
 	}
-	tx := <-responseChan
+	c.txsChannels.SentTxs <- tx
 	return tx, nil
 }
 

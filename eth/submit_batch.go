@@ -19,8 +19,6 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	c.txsChannels.SentTxs <- tx
-
 	return tx, nil
 }
 
@@ -31,8 +29,6 @@ func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitment
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	c.txsChannels.SentTxs <- tx
-
 	return tx, nil
 }
 
@@ -46,8 +42,6 @@ func (c *Client) SubmitMassMigrationsBatch(
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	c.txsChannels.SentTxs <- tx
-
 	return tx, nil
 }
 
