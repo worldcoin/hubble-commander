@@ -209,7 +209,7 @@ func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactio
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := 0; i < txs.Len(); i++ {
 			err := txStorage.AddTransaction(txs.At(i))
-			if err == bh.ErrKeyExists {
+			if errors.Is(err, bh.ErrKeyExists) {
 				err = s.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
 				if err != nil {
 					return err
