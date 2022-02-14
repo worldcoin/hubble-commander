@@ -7,7 +7,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -24,7 +23,6 @@ import (
 type TxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd     *Commander
 	storage *st.TestStorage
 	client  *eth.TestClient
@@ -82,8 +80,11 @@ func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
 	})
 }
 
+func (s *TxsTrackingTestSuite) setupTestWithDefaultClient() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{})
+}
+
 func (s *TxsTrackingTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -190,8 +191,12 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 }
 
 func (s *TxsTrackingTestSuite) startWorkers() {
-	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
-	s.cmd.startWorker("Test Txs Tracking", func() error {
+	s.cmd.startWorker("Test Txs Requests Sending", func() error {
+		err := s.cmd.startTxsRequestsSending(s.cmd.txsTrackingChannels.Requests)
+		s.NoError(err)
+		return nil
+	})
+	s.cmd.startWorker("Test Failed Txs Tracking", func() error {
 		err := s.cmd.startFailedTxsTracking(s.cmd.txsTrackingChannels.SentTxs)
 		s.NoError(err)
 		return nil
