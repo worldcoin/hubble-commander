@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type FailedTxsTrackingTestSuite struct {
+type TxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	tracker.TestSuiteWithTxsSending
@@ -32,7 +32,7 @@ type FailedTxsTrackingTestSuite struct {
 	wallets []bls.Wallet
 }
 
-func (s *FailedTxsTrackingTestSuite) SetupSuite() {
+func (s *TxsTrackingTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 	s.cfg = config.GetTestConfig()
 	s.cfg.Rollup.MinCommitmentsPerBatch = 1
@@ -42,18 +42,14 @@ func (s *FailedTxsTrackingTestSuite) SetupSuite() {
 	s.cfg.Rollup.DisableSignatures = true
 }
 
-func (s *FailedTxsTrackingTestSuite) SetupTest() {
+func (s *TxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	lowGasLimit := uint64(30_000)
+}
 
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, &eth.ClientConfig{
-		TransferBatchSubmissionGasLimit:  &lowGasLimit,
-		C2TBatchSubmissionGasLimit:       &lowGasLimit,
-		MMBatchSubmissionGasLimit:        &lowGasLimit,
-		BatchAccountRegistrationGasLimit: &lowGasLimit,
-	})
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(config *eth.ClientConfig) {
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, config)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
@@ -74,7 +70,19 @@ func (s *FailedTxsTrackingTestSuite) SetupTest() {
 	s.waitForLatestBlockSync()
 }
 
-func (s *FailedTxsTrackingTestSuite) TearDownTest() {
+func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
+	lowGasLimit := uint64(30_000)
+	s.setupTestWithClientConfig(&eth.ClientConfig{
+		TransferBatchSubmissionGasLimit:  &lowGasLimit,
+		C2TBatchSubmissionGasLimit:       &lowGasLimit,
+		MMBatchSubmissionGasLimit:        &lowGasLimit,
+		BatchAccountRegistrationGasLimit: &lowGasLimit,
+		StakeWithdrawalGasLimit:          &lowGasLimit,
+		DepositBatchSubmissionGasLimit:   &lowGasLimit,
+	})
+}
+
+func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
@@ -82,14 +90,18 @@ func (s *FailedTxsTrackingTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_TransferTransaction() {
+	s.setupTestWithFailedTxs()
+
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
 	s.waitForWorkersCancellation()
 }
 
-func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransaction() {
+	s.setupTestWithFailedTxs()
+
 	transfer := testutils.MakeCreate2Transfer(
 		0,
 		ref.Uint32(1),
@@ -102,7 +114,9 @@ func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTrans
 	s.waitForWorkersCancellation()
 }
 
-func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_MassMigrationTransaction() {
+	s.setupTestWithFailedTxs()
+
 	commitment := models.MMCommitmentWithTxs{
 		MMCommitment: models.MMCommitment{
 			CommitmentBase: models.CommitmentBase{
@@ -129,7 +143,9 @@ func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransact
 	s.waitForWorkersCancellation()
 }
 
-func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_BatchAccountRegistrationTransaction() {
+	s.setupTestWithFailedTxs()
+
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
@@ -137,14 +153,14 @@ func (s *FailedTxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrat
 	s.waitForWorkersCancellation()
 }
 
-func (s *FailedTxsTrackingTestSuite) waitForWorkersCancellation() {
+func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
 	s.Eventually(func() bool {
 		err := s.cmd.workersContext.Err()
 		return err == context.Canceled
 	}, time.Second, time.Millisecond*300)
 }
 
-func (s *FailedTxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
+func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
 	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
@@ -161,7 +177,7 @@ func (s *FailedTxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericT
 	})
 }
 
-func (s *FailedTxsTrackingTestSuite) runInTransaction(
+func (s *TxsTrackingTestSuite) runInTransaction(
 	batchType batchtype.BatchType,
 	handler func(*st.Storage, *executor.TxsContext),
 ) {
@@ -173,7 +189,7 @@ func (s *FailedTxsTrackingTestSuite) runInTransaction(
 	handler(txStorage, txsCtx)
 }
 
-func (s *FailedTxsTrackingTestSuite) startWorkers() {
+func (s *TxsTrackingTestSuite) startWorkers() {
 	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 	s.cmd.startWorker("Test Txs Tracking", func() error {
 		err := s.cmd.startFailedTxsTracking(s.cmd.txsTrackingChannels.SentTxs)
@@ -187,7 +203,7 @@ func (s *FailedTxsTrackingTestSuite) startWorkers() {
 	})
 }
 
-func (s *FailedTxsTrackingTestSuite) waitForLatestBlockSync() {
+func (s *TxsTrackingTestSuite) waitForLatestBlockSync() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
@@ -198,7 +214,7 @@ func (s *FailedTxsTrackingTestSuite) waitForLatestBlockSync() {
 	}, time.Hour, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
-func (s *FailedTxsTrackingTestSuite) setAccountsAndChainState() {
+func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setChainState(s.T(), s.storage)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
@@ -219,6 +235,6 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 	return client
 }
 
-func TestFailedTxsTrackingTestSuite(t *testing.T) {
-	suite.Run(t, new(FailedTxsTrackingTestSuite))
+func TestTxsTrackingTestSuite(t *testing.T) {
+	suite.Run(t, new(TxsTrackingTestSuite))
 }
