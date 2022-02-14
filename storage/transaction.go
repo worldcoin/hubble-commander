@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"sync/atomic"
-
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
@@ -155,7 +153,7 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		if err != nil {
 			return err
 		}
-		atomic.AddUint64(s.batchedTxsCount, 1)
+		s.incrementTransactionCount()
 		return nil
 	} else {
 		// This is a PendingTx

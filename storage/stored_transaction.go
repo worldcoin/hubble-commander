@@ -105,7 +105,7 @@ func (s *TransactionStorage) unsafeMarkTransactionAsPending(txHash *common.Hash)
 	err := s.getAndDelete(*txHash, &batchedTx)
 	if err == nil {
 		pendingTx = batchedTx.PendingTx
-		atomic.AddUint64(s.batchedTxsCount, ^uint64(0))
+		s.decrementTransactionCount()
 	} else {
 		var failedTx stored.FailedTx
 		err = s.getAndDelete(*txHash, &failedTx)
@@ -169,6 +169,14 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 
 func (s *TransactionStorage) GetTransactionCount() uint64 {
 	return atomic.LoadUint64(s.batchedTxsCount)
+}
+
+func (s *TransactionStorage) incrementTransactionCount() {
+	atomic.AddUint64(s.batchedTxsCount, 1)
+}
+
+func (s *TransactionStorage) decrementTransactionCount() {
+	atomic.AddUint64(s.batchedTxsCount, ^uint64(0))
 }
 
 func (s *BatchStorage) getTransactionCount() (count *uint64, err error) {
@@ -312,7 +320,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 			if err != nil {
 				return err
 			}
-			atomic.AddUint64(s.batchedTxsCount, 1)
+			s.incrementTransactionCount()
 		}
 		return nil
 	})
