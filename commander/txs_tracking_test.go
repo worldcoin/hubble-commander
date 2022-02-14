@@ -134,6 +134,18 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_BatchAccountRegistrati
 	s.waitForWorkersCancellation()
 }
 
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_WithdrawStake() {
+	s.setupTestWithFailedTxs()
+
+	transfer := testutils.MakeTransfer(0, 1, 0, 400)
+	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
+
+	_, err := s.client.Client.WithdrawStake(&batch.ID)
+	s.NoError(err)
+
+	s.waitForWorkersCancellation()
+}
+
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_SubmitDepositBatch() {
 	s.setupTestWithFailedTxs()
 
@@ -159,7 +171,10 @@ func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
 	}, time.Second, time.Millisecond*300)
 }
 
-func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
+func (s *TxsTrackingTestSuite) submitBatchInTransaction(
+	tx models.GenericTransaction,
+	batchType batchtype.BatchType,
+) (batch *models.Batch) {
 	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
@@ -168,12 +183,13 @@ func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransac
 		s.NoError(err)
 		s.Len(batchData, 1)
 
-		batch, err := txsCtx.NewPendingBatch(batchType)
+		batch, err = txsCtx.NewPendingBatch(batchType)
 		s.NoError(err)
 		err = txsCtx.SubmitBatch(batch, batchData)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 	})
+	return batch
 }
 
 func (s *TxsTrackingTestSuite) runInTransaction(
