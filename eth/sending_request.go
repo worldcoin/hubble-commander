@@ -13,9 +13,12 @@ type TxSendingRequest struct {
 }
 
 type TxsTrackingChannels struct {
-	Requests                          chan *TxSendingRequest
-	SentTxs                           chan *types.Transaction
-	SkipSendingRequestsThroughChannel bool // must be used only for tests
+	Requests chan *TxSendingRequest
+	SentTxs  chan *types.Transaction
+
+	// must be used only for tests
+	SkipSendingRequestsThroughChannel bool
+	SkipSentTxsChannel                bool
 }
 
 func (c *Client) packAndRequest(
@@ -55,7 +58,9 @@ func packAndRequest(
 	if err != nil {
 		return nil, err
 	}
-	txsChannels.SentTxs <- tx
+	if !txsChannels.SkipSentTxsChannel {
+		txsChannels.SentTxs <- tx
+	}
 	return tx, nil
 }
 

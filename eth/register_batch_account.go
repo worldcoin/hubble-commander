@@ -49,7 +49,6 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	a.txsChannels.SentTxs <- tx
 
 	return tx, nil
 }

@@ -451,7 +451,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	require.NoError(t, err)
 
 	txsChannels := &eth.TxsTrackingChannels{
-		SentTxs:                           make(chan *types.Transaction, 10),
+		SkipSentTxsChannel:                true,
 		SkipSendingRequestsThroughChannel: true,
 	}
 
