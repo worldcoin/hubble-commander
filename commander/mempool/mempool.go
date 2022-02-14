@@ -80,36 +80,44 @@ func (m *Mempool) initBuckets(storage *st.Storage) error {
 	return nil
 }
 
+func (m *Mempool) GetExecutableTx(txType txtype.TransactionType, stateID uint32) models.GenericTransaction {
+	return m.getExecutableTx(txType, m.buckets[stateID])
+}
+
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
 	result := make([]models.GenericTransaction, 0)
 	for _, bucket := range m.buckets {
-		if bucket.executableIndex == nonExecutableIndex {
-			continue
-		}
-		executableTx := bucket.txs[bucket.executableIndex]
-		if executableTx.Type() == txType {
-			result = append(result, executableTx)
+		tx := m.getExecutableTx(txType, bucket)
+		if tx != nil {
+			result = append(result, tx)
 		}
 	}
 	return result
 }
 
-func (m *Mempool) GetExecutableTx(stateID uint32) models.GenericTransaction {
-	bucket := m.buckets[stateID]
-	nextExecutableIndex := bucket.executableIndex + 1
-	if bucket.executableIndex == nonExecutableIndex || nextExecutableIndex >= len(bucket.txs) {
+func (m *Mempool) getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.GenericTransaction {
+	if bucket.executableIndex == nonExecutableIndex || bucket.executableIndex >= len(bucket.txs) {
 		return nil
 	}
 
-	nextTx := bucket.txs[nextExecutableIndex]
-	currentNonce := bucket.nonce + uint64(nextExecutableIndex)
+	currentTx := bucket.txs[bucket.executableIndex]
+	if currentTx.Type() != txType {
+		return nil
+	}
+
+	bucket.executableIndex++
+	if bucket.executableIndex >= len(bucket.txs) {
+		bucket.executableIndex = nonExecutableIndex
+		return currentTx
+	}
+
+	currentNonce := bucket.nonce + uint64(bucket.executableIndex)
+	nextTx := bucket.txs[bucket.executableIndex]
 	if !nextTx.GetBase().Nonce.EqN(currentNonce) {
 		bucket.executableIndex = nonExecutableIndex
-		return nil
 	}
 
-	bucket.executableIndex = nextExecutableIndex
-	return nextTx
+	return currentTx
 }
 
 func (m *Mempool) AddOrReplace(newTx models.GenericTransaction, senderNonce uint64) error {

@@ -81,6 +81,45 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.Equal(mempool.buckets[3].executableIndex, 0)
 }
 
+func (s *MempoolTestSuite) TestGetExecutableTx_ReturnsNextExecutableTxOfGivenStateID() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := mempool.GetExecutableTx(txtype.Transfer, 0)
+	s.Equal(s.initialTransactions[0], tx)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreTxs() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	_ = mempool.GetExecutableTx(txtype.Create2Transfer, 3)
+	_ = mempool.GetExecutableTx(txtype.Create2Transfer, 3)
+	tx := mempool.GetExecutableTx(txtype.Create2Transfer, 3)
+	s.Nil(tx)
+	s.Equal(nonExecutableIndex, mempool.buckets[3].executableIndex)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	_ = mempool.GetExecutableTx(txtype.Transfer, 0)
+	_ = mempool.GetExecutableTx(txtype.Transfer, 0)
+	tx := mempool.GetExecutableTx(txtype.Transfer, 0)
+	s.Nil(tx)
+	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoExecutableTxsOfGivenType() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	tx := mempool.GetExecutableTx(txtype.Create2Transfer, 0)
+	s.Nil(tx)
+	s.Equal(0, mempool.buckets[0].executableIndex)
+}
+
 func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectType() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
@@ -93,6 +132,18 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsExecutableTxsOfCorrectTyp
 	executable = mempool.GetExecutableTxs(txtype.Create2Transfer)
 	s.Len(executable, 1)
 	s.Contains(executable, s.initialTransactions[7])
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTxs_UpdatesExecutableIndices() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	mempool.GetExecutableTxs(txtype.Transfer)
+	s.Equal(1, mempool.buckets[0].executableIndex)
+	s.Equal(1, mempool.buckets[2].executableIndex)
+
+	mempool.GetExecutableTxs(txtype.Create2Transfer)
+	s.Equal(1, mempool.buckets[3].executableIndex)
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
@@ -140,24 +191,6 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	tx := s.newTransfer(0, 11)
 	err = mempool.AddOrReplace(tx, 10)
 	s.ErrorIs(err, ErrTxReplacementFailed)
-}
-
-func (s *MempoolTestSuite) TestGetExecutableTx() {
-	mempool, err := NewMempool(s.storage.Storage)
-	s.NoError(err)
-
-	tx := mempool.GetExecutableTx(0)
-	s.Equal(s.initialTransactions[1], tx)
-}
-
-func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
-	mempool, err := NewMempool(s.storage.Storage)
-	s.NoError(err)
-
-	_ = mempool.GetExecutableTx(0)
-	tx := mempool.GetExecutableTx(0)
-	s.Nil(tx)
-	s.Equal(nonExecutableIndex, mempool.buckets[0].executableIndex)
 }
 
 func (s *MempoolTestSuite) TestIgnoreUserTxs() {
