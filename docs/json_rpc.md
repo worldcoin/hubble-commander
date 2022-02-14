@@ -883,6 +883,7 @@ Returns pending batches that haven't been mined yet, see below.
         "ID": "1",
         "Type": "TRANSFER",
         "TransactionHash": "0x7c24f82171937322d49b382ec79d6fb40bc10086694d805a399b92c061b17e0d",
+        "PrevStateRoot": "0xd410805014ad1013a74342380d54fde1e59896030c0679cda2de56544cd2541f",
         "Commitments": [
             {
                 "Commitment": {
