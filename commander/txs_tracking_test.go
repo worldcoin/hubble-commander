@@ -46,8 +46,8 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithClientConfig(config *eth.ClientConfig) {
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, config)
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.ClientConfig) {
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, conf)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
@@ -69,7 +69,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(config *eth.ClientConfi
 }
 
 func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
-	lowGasLimit := uint64(30_000)
+	lowGasLimit := uint64(40_000)
 	s.setupTestWithClientConfig(&eth.ClientConfig{
 		TransferBatchSubmissionGasLimit:  &lowGasLimit,
 		C2TBatchSubmissionGasLimit:       &lowGasLimit,
@@ -149,6 +149,24 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_BatchAccountRegistrati
 
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
+	s.NoError(err)
+
+	s.waitForWorkersCancellation()
+}
+
+func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_SubmitDepositBatch() {
+	s.setupTestWithFailedTxs()
+
+	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
+		ID:       models.MakeUint256(1),
+		Root:     utils.RandomHash(),
+		Deposits: testutils.GetFourDeposits(),
+	})
+	s.NoError(err)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
+	depositsCtx := executor.NewTestDepositsContext(executionCtx)
+
+	_, _, err = depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.waitForWorkersCancellation()
