@@ -68,12 +68,8 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 func (a *API) getTransactionsForCommitment(commitment models.Commitment) (models.GenericTransactionArray, error) {
 	commitmentBase := commitment.GetCommitmentBase()
 	switch commitmentBase.Type {
-	case batchtype.Transfer:
-		return a.storage.GetTransfersByCommitmentID(commitmentBase.ID)
-	case batchtype.Create2Transfer:
-		return a.storage.GetCreate2TransfersByCommitmentID(commitmentBase.ID)
-	case batchtype.MassMigration:
-		return a.storage.GetMassMigrationsByCommitmentID(commitmentBase.ID)
+	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
+		return a.storage.GetTransactionsByCommitmentID(commitmentBase.ID)
 	case batchtype.Deposit:
 		return nil, nil
 	case batchtype.Genesis:

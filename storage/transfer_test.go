@@ -133,35 +133,6 @@ func (s *TransferTestSuite) TestGetTransfer_NonexistentTransfer() {
 	s.Nil(res)
 }
 
-func (s *TransferTestSuite) TestGetTransfersByCommitmentID() {
-	transfer1 := transfer
-	transfer1.CommitmentID = &txCommitment.ID
-
-	err := s.storage.AddTransaction(&transfer1)
-	s.NoError(err)
-
-	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 1)
-}
-
-func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransactions() {
-	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
-func (s *TransferTestSuite) TestGetTransfersByCommitmentID_NoTransfersButSomeCreate2Transfers() {
-	c2t := create2Transfer
-	c2t.CommitmentID = &txCommitment.ID
-	err := s.storage.AddTransaction(&c2t)
-	s.NoError(err)
-
-	transfers, err := s.storage.GetTransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
 func TestTransferTestSuite(t *testing.T) {
 	suite.Run(t, new(TransferTestSuite))
 }

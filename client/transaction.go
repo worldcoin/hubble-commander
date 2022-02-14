@@ -1,11 +1,11 @@
-package dto
+package client
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -14,27 +14,23 @@ var (
 )
 
 type Transaction struct {
-	Parsed interface{}
-}
-
-func MakeTransaction(parsed interface{}) Transaction {
-	return Transaction{Parsed: parsed}
+	Parsed models.GenericTransaction
 }
 
 func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 	var rawTx struct {
-		Type *txtype.TransactionType
+		TxType *txtype.TransactionType
 	}
 	err := json.Unmarshal(bytes, &rawTx)
 	if err != nil {
 		return err
 	}
 
-	if rawTx.Type == nil {
+	if rawTx.TxType == nil {
 		return ErrMissingType
 	}
 
-	switch *rawTx.Type {
+	switch *rawTx.TxType {
 	case txtype.Transfer:
 		return tx.unmarshalTransfer(bytes)
 	case txtype.Create2Transfer:
@@ -47,44 +43,39 @@ func (tx *Transaction) UnmarshalJSON(bytes []byte) error {
 }
 
 func (tx *Transaction) unmarshalTransfer(bytes []byte) error {
-	var transfer Transfer
+	var transfer models.Transfer
 	err := json.Unmarshal(bytes, &transfer)
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer
+	tx.Parsed = &transfer
 	return nil
 }
 
 func (tx *Transaction) unmarshalCreate2Transfer(bytes []byte) error {
-	var transfer Create2Transfer
+	var transfer models.Create2Transfer
 	err := json.Unmarshal(bytes, &transfer)
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer
+	tx.Parsed = &transfer
 	return nil
 }
 
 func (tx *Transaction) unmarshalMassMigration(bytes []byte) error {
-	var transfer MassMigration
+	var transfer models.MassMigration
 	err := json.Unmarshal(bytes, &transfer)
 	if err != nil {
 		return err
 	}
-	tx.Parsed = transfer
+	tx.Parsed = &transfer
 	return nil
 }
 
-func MakeTransactionForCommitment(transaction models.GenericTransaction) interface{} {
-	switch transaction.Type() {
-	case txtype.Transfer:
-		return MakeTransferForCommitment(transaction.ToTransfer())
-	case txtype.Create2Transfer:
-		return MakeCreate2TransferForCommitment(transaction.ToCreate2Transfer())
-	case txtype.MassMigration:
-		return MakeMassMigrationForCommitment(transaction.ToMassMigration())
+func txsToTransactionArray(txs []Transaction) models.GenericTransactionArray {
+	genericTxs := make([]models.GenericTransaction, 0, len(txs))
+	for i := range txs {
+		genericTxs = append(genericTxs, txs[i].Parsed)
 	}
-
-	panic("unexpected transaction type")
+	return models.MakeGenericArray(genericTxs...)
 }

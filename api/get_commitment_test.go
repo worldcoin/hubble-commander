@@ -140,7 +140,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_TransferType() {
 	err = s.storage.AddTransaction(&s.transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(&s.transfer)}
+	expectedTransactions := []interface{}{dto.MakeTransferForCommitment(&s.transfer)}
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
@@ -164,7 +164,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_Create2TransferType() {
 	err = s.storage.AddTransaction(&s.create2transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.Create2TransferForCommitment{dto.MakeCreate2TransferForCommitment(&s.create2transfer)}
+	expectedTransactions := []interface{}{dto.MakeCreate2TransferForCommitment(&s.create2transfer)}
 
 	commitment, err := s.api.GetCommitment(s.txCommitment.ID)
 	s.NoError(err)
@@ -188,7 +188,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_MassMigrationType() {
 	err = s.storage.AddTransaction(&s.massMigration)
 	s.NoError(err)
 
-	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(&s.massMigration)}
+	expectedMassMigrations := []interface{}{dto.MakeMassMigrationForCommitment(&s.massMigration)}
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
@@ -230,7 +230,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedTxCommitment() {
 	err = s.storage.AddTransaction(&s.transfer)
 	s.NoError(err)
 
-	expectedTransactions := []dto.TransferForCommitment{dto.MakeTransferForCommitment(&s.transfer)}
+	expectedTransactions := []interface{}{dto.MakeTransferForCommitment(&s.transfer)}
 
 	commitment, err := s.api.GetCommitment(pendingCommitment.ID)
 	s.NoError(err)
@@ -254,7 +254,7 @@ func (s *GetCommitmentTestSuite) TestGetCommitment_SubmittedMMCommitment() {
 	err = s.storage.AddTransaction(&s.massMigration)
 	s.NoError(err)
 
-	expectedMassMigrations := []dto.MassMigrationForCommitment{dto.MakeMassMigrationForCommitment(&s.massMigration)}
+	expectedMassMigrations := []interface{}{dto.MakeMassMigrationForCommitment(&s.massMigration)}
 
 	commitment, err := s.api.GetCommitment(s.mmCommitment.ID)
 	s.NoError(err)
