@@ -153,6 +153,14 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	s.EqualValues(3, count)
 }
 
+func (s *StoredTransactionTestSuite) TestGetTransactionCount_IncrementsTxCountOnStorageCopy() {
+	transactionStorageCopy := s.storage.TransactionStorage.copyWithNewDatabase(s.storage.database)
+	transactionStorageCopy.incrementTransactionCount()
+
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(1, count)
+}
+
 func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
 	count := s.storage.GetTransactionCount()
 	s.EqualValues(0, count)

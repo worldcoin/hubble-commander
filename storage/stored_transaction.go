@@ -39,7 +39,6 @@ func NewTransactionStorage(database *Database, batchStorage *BatchStorage) (*Tra
 func (s *TransactionStorage) copyWithNewDatabase(database *Database) *TransactionStorage {
 	newTransactionStorage := *s
 	newTransactionStorage.database = database
-	atomic.StoreUint64(newTransactionStorage.batchedTxsCount, s.GetTransactionCount())
 
 	return &newTransactionStorage
 }
