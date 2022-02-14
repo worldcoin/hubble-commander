@@ -93,6 +93,7 @@ func dtoToModelsBatch(dtoBatch *dto.PendingBatch) *models.PendingBatch {
 		ID:              dtoBatch.ID,
 		Type:            dtoBatch.Type,
 		TransactionHash: dtoBatch.TransactionHash,
+		PrevStateRoot:   dtoBatch.PrevStateRoot,
 		Commitments:     make([]models.PendingCommitment, 0, len(dtoBatch.Commitments)),
 	}
 

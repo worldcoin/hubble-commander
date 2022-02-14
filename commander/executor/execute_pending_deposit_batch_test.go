@@ -48,6 +48,7 @@ func (s *ExecutePendingDepositBatchTestSuite) SetupTest() {
 		ID:              models.MakeUint256(1),
 		Type:            batchtype.Deposit,
 		TransactionHash: utils.RandomHash(),
+		PrevStateRoot:   utils.RandomHash(),
 		Commitments: []models.PendingCommitment{
 			{
 				Commitment: &models.DepositCommitment{
@@ -84,6 +85,7 @@ func (s *ExecutePendingDepositBatchTestSuite) TestExecutePendingBatch_AddsBatch(
 		ID:              s.pendingBatch.ID,
 		Type:            s.pendingBatch.Type,
 		TransactionHash: s.pendingBatch.TransactionHash,
+		PrevStateRoot:   &s.pendingBatch.PrevStateRoot,
 	}
 
 	batch, err := s.storage.GetBatch(s.pendingBatch.ID)

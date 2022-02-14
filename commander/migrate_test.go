@@ -159,6 +159,7 @@ func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.Pe
 		ID:              models.MakeUint256(batchID),
 		Type:            batchtype.Transfer,
 		TransactionHash: utils.RandomHash(),
+		PrevStateRoot:   utils.RandomHash(),
 		Commitments: []dto.PendingCommitment{
 			{
 				Commitment: &models.TxCommitment{

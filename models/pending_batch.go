@@ -9,6 +9,7 @@ type PendingBatch struct {
 	ID              Uint256
 	Type            batchtype.BatchType
 	TransactionHash common.Hash
+	PrevStateRoot   common.Hash
 	Commitments     []PendingCommitment
 }
 

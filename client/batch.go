@@ -11,6 +11,7 @@ type Batch struct {
 	ID              models.Uint256
 	Type            batchtype.BatchType
 	TransactionHash common.Hash
+	PrevStateRoot   common.Hash
 	Commitments     []PendingCommitment
 }
 
@@ -24,6 +25,7 @@ func (b *Batch) ToDTO() dto.PendingBatch {
 		ID:              b.ID,
 		Type:            b.Type,
 		TransactionHash: b.TransactionHash,
+		PrevStateRoot:   b.PrevStateRoot,
 		Commitments:     commitments,
 	}
 }
