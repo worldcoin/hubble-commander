@@ -80,10 +80,6 @@ func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
 	})
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithDefaultClient() {
-	s.setupTestWithClientConfig(&eth.ClientConfig{})
-}
-
 func (s *TxsTrackingTestSuite) TearDownTest() {
 	stopCommander(s.cmd)
 	s.client.Close()
