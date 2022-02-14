@@ -261,17 +261,3 @@ func maxUint64(a, b uint64) uint64 {
 	}
 	return b
 }
-
-func (m *Mempool) getExecutableIndex(stateID uint32) int {
-	// returns current executableIndex for given user
-	return m.buckets[stateID].executableIndex
-}
-func (m *Mempool) updateExecutableIndicesAndNonces(newExecutableIndicesMap map[uint32]int) {
-	for stateID, index := range newExecutableIndicesMap {
-		// calculate applied txs count and decrease nonce based on executableIndex difference
-		userTxs := m.buckets[stateID]
-		txsCountDifference := userTxs.executableIndex - index
-		userTxs.executableIndex = index
-		userTxs.nonce -= uint64(txsCountDifference)
-	}
-}

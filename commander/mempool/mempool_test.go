@@ -270,10 +270,10 @@ func (s *MempoolTestSuite) TestRemoveTxs_RemovesEmptyBucket() {
 	s.NotContains(mempool.buckets, 2)
 }
 
-func (s *MempoolTestSuite) modifyMempool(mempool *Mempool) ([]models.GenericTransaction, []models.GenericTransaction) {
+func (s *MempoolTestSuite) modifyMempool(mempool *Mempool) (successfulTxs, failedTxs []models.GenericTransaction) {
 	txs := mempool.GetExecutableTxs(txtype.Transfer)
-	successfulTxs := make([]models.GenericTransaction, 0, 1)
-	failedTxs := make([]models.GenericTransaction, 0, 1)
+	successfulTxs = make([]models.GenericTransaction, 0, 1)
+	failedTxs = make([]models.GenericTransaction, 0, 1)
 	for _, tx := range txs {
 		if tx.GetFromStateID() == 0 {
 			successfulTxs = append(successfulTxs, tx)
