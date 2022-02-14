@@ -13,18 +13,19 @@ func (c *Client) SubmitDeposits(
 	previous *models.CommitmentInclusionProof,
 	proof *models.SubtreeVacancyProof,
 ) (*types.Transaction, error) {
-	transaction, err := c.rollup().
-		WithValue(c.config.StakeAmount).
-		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).
-		SubmitDeposits(
-			batchID.ToBig(),
-			*commitmentProofToCalldata(previous),
-			*subtreeVacancyProofToCalldata(proof),
-		)
+	opts := c.transactOpts(c.config.StakeAmount.ToBig(), *c.config.DepositBatchSubmissionGasLimit)
+	tx, err := c.packAndRequest(
+		&c.Rollup.Contract,
+		opts,
+		"submitDeposits",
+		batchID.ToBig(),
+		*commitmentProofToCalldata(previous),
+		*subtreeVacancyProofToCalldata(proof),
+	)
 	if err != nil {
 		return nil, err
 	}
-	return transaction, nil
+	return tx, nil
 }
 
 func (c *Client) SubmitDepositsAndWait(
