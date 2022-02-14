@@ -118,28 +118,8 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransa
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_MassMigrationTransaction() {
 	s.setupTestWithFailedTxs()
 
-	commitment := models.MMCommitmentWithTxs{
-		MMCommitment: models.MMCommitment{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
-				},
-				Type: batchtype.MassMigration,
-			},
-			Meta: &models.MassMigrationMeta{
-				SpokeID:     1,
-				TokenID:     models.MakeUint256(0),
-				Amount:      models.MakeUint256(50),
-				FeeReceiver: 0,
-			},
-			WithdrawRoot: utils.RandomHash(),
-		},
-	}
-
-	_, err := s.client.Client.SubmitMassMigrationsBatch(models.NewUint256(1),
-		[]models.CommitmentWithTxs{&commitment})
-	s.NoError(err)
+	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
+	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
 
 	s.waitForWorkersCancellation()
 }
