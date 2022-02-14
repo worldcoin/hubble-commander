@@ -149,7 +149,12 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		}
 
 		batchedTx := stored.NewBatchedTx(tx)
-		return badger.Insert(hash, *batchedTx)
+		err = badger.Insert(hash, *batchedTx)
+		if err != nil {
+			return err
+		}
+		s.incrementTransactionCount()
+		return nil
 	} else {
 		// This is a PendingTx
 
