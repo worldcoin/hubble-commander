@@ -213,6 +213,62 @@ func (s *MempoolTestSuite) TestResetExecutableIndices() {
 	s.Equal(0, mempool.buckets[2].executableIndex)
 }
 
+func (s *MempoolTestSuite) TestRemoveTxs_RemovesTxsFromMempool() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	successfulTxs, failedTxs := s.modifyMempool(mempool)
+
+	mempool.RemoveTxs(successfulTxs, failedTxs)
+	s.Len(mempool.buckets[0].txs, 1)
+	s.Len(mempool.buckets[1].txs, 2)
+	s.Len(mempool.buckets[2].txs, 1)
+	s.Len(mempool.buckets[3].txs, 2)
+}
+
+func (s *MempoolTestSuite) TestRemoveTxs_IncrementsUserNonces() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	successfulTxs, failedTxs := s.modifyMempool(mempool)
+
+	mempool.RemoveTxs(successfulTxs, failedTxs)
+	s.EqualValues(12, mempool.buckets[0].nonce)
+	s.EqualValues(10, mempool.buckets[1].nonce)
+	s.EqualValues(15, mempool.buckets[2].nonce)
+	s.EqualValues(10, mempool.buckets[3].nonce)
+}
+
+func (s *MempoolTestSuite) TestRemoveTxs_SetsExecutableIndices() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	successfulTxs, failedTxs := s.modifyMempool(mempool)
+
+	mempool.RemoveTxs(successfulTxs, failedTxs)
+	s.EqualValues(nonExecutableIndex, mempool.buckets[0].executableIndex)
+	s.EqualValues(nonExecutableIndex, mempool.buckets[1].executableIndex)
+	s.EqualValues(nonExecutableIndex, mempool.buckets[2].executableIndex)
+	s.EqualValues(0, mempool.buckets[3].executableIndex)
+}
+
+func (s *MempoolTestSuite) modifyMempool(mempool *Mempool) ([]models.GenericTransaction, []models.GenericTransaction) {
+	txs := mempool.GetExecutableTxs(txtype.Transfer)
+	successfulTxs := make([]models.GenericTransaction, 0, 1)
+	failedTxs := make([]models.GenericTransaction, 0, 1)
+	for _, tx := range txs {
+		if tx.GetFromStateID() == 0 {
+			successfulTxs = append(successfulTxs, tx)
+		} else {
+			failedTxs = append(failedTxs, tx)
+		}
+	}
+
+	tx := mempool.GetExecutableTx(txtype.Transfer, 0)
+	successfulTxs = append(successfulTxs, tx)
+	return successfulTxs, failedTxs
+}
+
 func (s *MempoolTestSuite) setUserStates(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{

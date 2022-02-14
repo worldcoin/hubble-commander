@@ -208,9 +208,50 @@ func (b *txBucket) setExecutableIndex() {
 	b.executableIndex = nonExecutableIndex
 }
 
-func (m *Mempool) removeTxsAndRebalance(txs []models.GenericTransaction) {
-	// remove given txs from the mempool and possibly rebalance txs list
+func (m *Mempool) RemoveTxs(successfulTxs, failedTxs []models.GenericTransaction) {
+	m.removeSuccessfulTxs(successfulTxs)
+	m.removeFailedTxs(failedTxs)
 }
+
+func (m *Mempool) removeSuccessfulTxs(txs []models.GenericTransaction) {
+	userNonces := collectNonces(txs)
+
+	for senderID, nonce := range userNonces {
+		bucket := m.buckets[senderID]
+		successfulTxs := nonce - bucket.nonce + 1
+		bucket.txs = bucket.txs[successfulTxs:]
+		bucket.nonce += successfulTxs
+		bucket.setExecutableIndex()
+	}
+}
+
+func (m *Mempool) removeFailedTxs(txs []models.GenericTransaction) {
+	userNonces := collectNonces(txs)
+
+	for senderID, nonce := range userNonces {
+		bucket := m.buckets[senderID]
+		failedTxs := nonce - bucket.nonce + 1
+		bucket.txs = bucket.txs[failedTxs:]
+		bucket.executableIndex = nonExecutableIndex
+	}
+}
+
+func collectNonces(txs []models.GenericTransaction) map[uint32]uint64 {
+	userNonces := map[uint32]uint64{}
+	for _, tx := range txs {
+		senderID := tx.GetBase().FromStateID
+		userNonces[senderID] = maxUint64(tx.GetBase().Nonce.Uint64(), userNonces[senderID])
+	}
+	return userNonces
+}
+
+func maxUint64(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func (m *Mempool) getExecutableIndex(stateID uint32) int {
 	// returns current executableIndex for given user
 	return m.buckets[stateID].executableIndex
