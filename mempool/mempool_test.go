@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -73,6 +74,20 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.EqualValues(mempool.buckets[1].nonce, 10)
 	s.EqualValues(mempool.buckets[2].nonce, 15)
 	s.EqualValues(mempool.buckets[3].nonce, 10)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsAllExecutableTxsOfGivenType() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+
+	executable := mempool.GetExecutableTxs(txtype.Transfer)
+	s.Len(executable, 2)
+	s.Contains(executable, s.txs[0])
+	s.Contains(executable, s.txs[5])
+
+	executable = mempool.GetExecutableTxs(txtype.Create2Transfer)
+	s.Len(executable, 1)
+	s.Contains(executable, s.txs[7])
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
