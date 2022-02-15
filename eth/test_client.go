@@ -1,9 +1,6 @@
 package eth
 
 import (
-	"context"
-	"sync"
-
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -17,9 +14,7 @@ type TestClient struct {
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
 
-	cancelTxsSending context.CancelFunc
-	wg               sync.WaitGroup
-	TxsChannels      *TxsTrackingChannels
+	TxsChannels *TxsTrackingChannels
 }
 
 type TestClientConfig struct {
@@ -85,6 +80,5 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
 		TxsChannels:         clientCfg.TxsChannels,
-		cancelTxsSending:    func() {},
 	}, nil
 }
