@@ -1,6 +1,8 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
@@ -32,13 +34,19 @@ func (c *Client) rollup() *rollupSessionBuilder {
 
 type accountRegistrySessionBuilder struct {
 	accountregistry.AccountRegistrySession
+	contract       Contract
+	packAndRequest packAndRequestFunc
 }
 
 func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
-	return &accountRegistrySessionBuilder{accountregistry.AccountRegistrySession{
-		Contract:     a.AccountRegistry.AccountRegistry,
-		TransactOpts: *a.Blockchain.GetAccount(),
-	}}
+	return &accountRegistrySessionBuilder{
+		AccountRegistrySession: accountregistry.AccountRegistrySession{
+			Contract:     a.AccountRegistry.AccountRegistry,
+			TransactOpts: *a.Blockchain.GetAccount(),
+		},
+		contract:       a.AccountRegistry.Contract,
+		packAndRequest: a.packAndRequest,
+	}
 }
 
 func (b *accountRegistrySessionBuilder) WithValue(value *models.Uint256) *accountRegistrySessionBuilder {
@@ -49,6 +57,10 @@ func (b *accountRegistrySessionBuilder) WithValue(value *models.Uint256) *accoun
 func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRegistrySessionBuilder {
 	b.TransactOpts.GasLimit = gasLimit
 	return b
+}
+
+func (b *accountRegistrySessionBuilder) RegisterBatch(pubkeys [16][4]*big.Int) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "registerBatch", pubkeys)
 }
 
 type depositManagerSessionBuilder struct {

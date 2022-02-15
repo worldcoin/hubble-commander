@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -38,6 +39,15 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 		mineTimeout:                      params.MineTimeout,
 		txsChannels:                      params.TxsChannels,
 	}, nil
+}
+
+func (a *AccountManager) packAndRequest(
+	contract *Contract,
+	opts *bind.TransactOpts,
+	method string,
+	data ...interface{},
+) (*types.Transaction, error) {
+	return packAndRequest(a.txsChannels, contract, opts, method, data...)
 }
 
 type AccountManagerParams struct {
