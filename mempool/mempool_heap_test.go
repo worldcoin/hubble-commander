@@ -135,18 +135,6 @@ func (s *MempoolHeapTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool
 	return fmt.Errorf("not enough transacitons")
 }
 
-func (s *MempoolHeapTestSuite) setUserStates(nonces map[uint32]uint64) {
-	for stateID, nonce := range nonces {
-		_, err := s.storage.StateTree.Set(stateID, &models.UserState{
-			PubKeyID: 0,
-			TokenID:  models.MakeUint256(uint64(stateID)),
-			Balance:  models.MakeUint256(1000),
-			Nonce:    models.MakeUint256(nonce),
-		})
-		s.NoError(err)
-	}
-}
-
 func (s *MempoolHeapTestSuite) newTransfer(from uint32, nonce, fee uint64) *models.Transfer {
 	transfer := testutils.NewTransfer(from, 1, nonce, 100)
 	transfer.Fee = models.MakeUint256(fee)

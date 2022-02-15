@@ -40,8 +40,9 @@ func (s *MempoolTestSuite) SetupTest() {
 		s.newTransfer(2, 15), // 5 - executable
 		s.newTransfer(2, 16), // 6
 
-		s.newC2T(3, 10), // 7 - executable
-		s.newC2T(3, 11), // 8
+		s.newC2T(3, 10),      // 7 - executable
+		s.newC2T(3, 11),      // 8
+		s.newTransfer(3, 12), // 9
 	}
 
 	err = s.storage.BatchAddTransaction(models.GenericArray(s.txs))
@@ -68,7 +69,7 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.Equal(mempool.buckets[0].txs, s.txs[0:3])
 	s.Equal(mempool.buckets[1].txs, s.txs[3:5])
 	s.Equal(mempool.buckets[2].txs, s.txs[5:7])
-	s.Equal(mempool.buckets[3].txs, s.txs[7:9])
+	s.Equal(mempool.buckets[3].txs, s.txs[7:10])
 
 	s.EqualValues(mempool.buckets[0].nonce, 10)
 	s.EqualValues(mempool.buckets[1].nonce, 10)
@@ -88,6 +89,56 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsAllExecutableTxsOfGivenTy
 	executable = mempool.GetExecutableTxs(txtype.Create2Transfer)
 	s.Len(executable, 1)
 	s.Contains(executable, s.txs[7])
+}
+
+func (s *MempoolTestSuite) TestGetNextExecutableTx_ReturnsNextTx() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+	_, txMempool := mempool.BeginTransaction()
+
+	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.Equal(s.txs[1], tx)
+}
+
+func (s *MempoolTestSuite) TestGetNextExecutableTx_IncrementsNonce() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+	_, txMempool := mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.EqualValues(11, txMempool.buckets[0].nonce)
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.EqualValues(12, txMempool.buckets[0].nonce)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreTransactionsInSlice() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+	_, txMempool := mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.Nil(tx)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+	_, txMempool := mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.Nil(tx)
+}
+
+func (s *MempoolTestSuite) TestGetExecutableTx_NoExecutableTxsOfGivenType() {
+	mempool, err := NewMempool(s.storage.Storage)
+	s.NoError(err)
+	_, txMempool := mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
+	tx := txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
+	s.Nil(tx)
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {

@@ -136,6 +136,10 @@ func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.Gener
 	return result
 }
 
+func (m *TxMempool) GetExecutableTxs(txtype.TransactionType) []models.GenericTransaction {
+	panic("GetExecutableTxs should only be called on Mempool")
+}
+
 func (m *TxMempool) GetNextExecutableTx(txType txtype.TransactionType, stateID uint32) models.GenericTransaction {
 	bucket := m.getBucket(stateID)
 	bucket.txs = bucket.txs[1:]
