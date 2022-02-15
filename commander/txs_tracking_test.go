@@ -47,21 +47,23 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 }
 
 func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
+	s.cmd = NewCommander(s.cfg, nil)
+	// pass txs channels to testClient to use commander tracking worker
+	conf.TxsChannels = s.cmd.txsTrackingChannels
+
 	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, conf)
+
+	setStateLeaves(s.T(), s.storage.Storage)
+	s.cmd.client = s.client.Client
+	s.cmd.blockchain = s.client.Blockchain
+	s.cmd.storage = s.storage.Storage
+
+	err := s.cmd.addGenesisBatch()
+	s.NoError(err)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-
-	setStateLeaves(s.T(), s.storage.Storage)
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
-	s.cmd.client = s.client.Client
-	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTrackingChannels = s.client.TxsChannels
-
-	err = s.cmd.addGenesisBatch()
-	s.NoError(err)
-
 	s.setAccountsAndChainState()
 
 	s.startWorkers()

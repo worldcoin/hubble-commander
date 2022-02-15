@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -49,7 +50,8 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		return nil, err
 	}
 
-	if clientCfg.TxsChannels == nil {
+	startTxsSending := clientCfg.TxsChannels == nil
+	if startTxsSending {
 		clientCfg.TxsChannels = &TxsTrackingChannels{
 			Requests: make(chan *TxSendingRequest, 32),
 			SentTxs:  make(chan *types.Transaction, 32),
@@ -85,8 +87,13 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
 		TxsChannels:         clientCfg.TxsChannels,
+		cancelTxsSending:    func() {},
 	}
-	testClient.startTxsSending()
+
+	if startTxsSending {
+		fmt.Println("Started txs sending")
+		testClient.startTxsSending()
+	}
 	return testClient, nil
 }
 
