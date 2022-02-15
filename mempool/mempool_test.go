@@ -118,7 +118,7 @@ func (s *MempoolTestSuite) createCommitment(heap *TxHeap, mempool *TxMempool) {
 	s.Nil(tx)
 	heap.Pop()
 
-	// MaxTxsPerCommitment = 2
+	// finishing because MaxTxsPerCommitment = 2
 }
 
 func (s *MempoolTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool *TxMempool) error {
