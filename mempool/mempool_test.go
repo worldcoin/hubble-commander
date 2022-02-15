@@ -108,7 +108,7 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_IncrementsNonce() {
 	s.EqualValues(12, txMempool.buckets[0].nonce)
 }
 
-func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreTransactionsInSlice() {
+func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreTransactionsInSlice() {
 	_, txMempool := s.mempool.BeginTransaction()
 
 	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
@@ -116,7 +116,7 @@ func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreTransactionsInSlice() {
 	s.Nil(tx)
 }
 
-func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
+func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreExecutableTxs() {
 	_, txMempool := s.mempool.BeginTransaction()
 
 	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
@@ -124,12 +124,24 @@ func (s *MempoolTestSuite) TestGetExecutableTx_NoMoreExecutableTxs() {
 	s.Nil(tx)
 }
 
-func (s *MempoolTestSuite) TestGetExecutableTx_NoExecutableTxsOfGivenType() {
+func (s *MempoolTestSuite) TestGetNextExecutableTx_NoExecutableTxsOfGivenType() {
 	_, txMempool := s.mempool.BeginTransaction()
 
 	_ = txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
 	tx := txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
 	s.Nil(tx)
+}
+
+func (s *MempoolTestSuite) TestGetNextExecutableTx_RemovesEmptyBuckets() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.Contains(txMempool.buckets, uint32(2))
+	s.Nil(txMempool.buckets[2])
+
+	txController.Commit()
+	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
@@ -145,6 +157,18 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_MakesTheNextTxNonExecutable() {
 	txMempool.RemoveFailedTx(0)
 	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
 	s.Nil(tx)
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	txMempool.RemoveFailedTx(2)
+	s.Contains(txMempool.buckets, uint32(2))
+	s.Nil(txMempool.buckets[2])
+
+	txController.Commit()
+	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {

@@ -72,14 +72,14 @@ func (s *MempoolHeapTestSuite) Test_MempoolAndHeapRealUsage() {
 	txController.Commit()
 
 	s.Equal(0, heap.Size())
+	s.NotContains(mempool.buckets, 2)
+
 	s.Equal([]models.GenericTransaction{s.txs[1], s.txs[2]}, mempool.buckets[0].txs)
 	s.Equal([]models.GenericTransaction{s.txs[3], s.txs[4]}, mempool.buckets[1].txs)
-	s.Equal([]models.GenericTransaction{}, mempool.buckets[2].txs)
 	s.Equal([]models.GenericTransaction{s.txs[7], s.txs[8]}, mempool.buckets[3].txs)
 
 	s.EqualValues(10, mempool.buckets[0].nonce)
 	s.EqualValues(10, mempool.buckets[1].nonce)
-	s.EqualValues(17, mempool.buckets[2].nonce)
 	s.EqualValues(10, mempool.buckets[3].nonce)
 }
 

@@ -141,16 +141,15 @@ func (m *TxMempool) GetExecutableTxs(txtype.TransactionType) []models.GenericTra
 }
 
 func (m *TxMempool) GetNextExecutableTx(txType txtype.TransactionType, stateID uint32) models.GenericTransaction {
-	bucket := m.getBucket(stateID)
-	bucket.txs = bucket.txs[1:]
+	bucket := m.removeTx(stateID)
+	if bucket == nil {
+		return nil
+	}
 	bucket.nonce++
 	return getExecutableTx(txType, bucket)
 }
 
 func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.GenericTransaction {
-	if len(bucket.txs) == 0 {
-		return nil
-	}
 	firstTx := bucket.txs[0]
 	firstTxBase := firstTx.GetBase()
 	if firstTxBase.TxType == txType && firstTxBase.Nonce.EqN(bucket.nonce) {
@@ -160,17 +159,30 @@ func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.Gen
 }
 
 func (m *TxMempool) RemoveFailedTx(stateID uint32) {
+	m.removeTx(stateID)
+}
+
+func (m *TxMempool) removeTx(stateID uint32) *txBucket {
 	bucket := m.getBucket(stateID)
 	bucket.txs = bucket.txs[1:]
+	if len(bucket.txs) == 0 {
+		m.setBucket(stateID, nil)
+		return nil
+	}
+	return bucket
 }
 
 func (m *TxMempool) getBucket(stateID uint32) *txBucket {
-	bucket, ok := m.buckets[stateID]
-	if !ok {
+	bucket := m.buckets[stateID]
+	if bucket == nil {
 		bucket = m.underlying.getBucket(stateID).Copy()
+		m.buckets[stateID] = bucket
 	}
-	m.buckets[stateID] = bucket
 	return bucket
+}
+
+func (m *TxMempool) setBucket(stateID uint32, bucket *txBucket) {
+	m.buckets[stateID] = bucket
 }
 
 func (m *Mempool) getBucket(stateID uint32) *txBucket {
@@ -178,7 +190,11 @@ func (m *Mempool) getBucket(stateID uint32) *txBucket {
 }
 
 func (m *Mempool) setBucket(stateID uint32, bucket *txBucket) {
-	m.buckets[stateID] = bucket
+	if bucket == nil {
+		delete(m.buckets, stateID)
+	} else {
+		m.buckets[stateID] = bucket
+	}
 }
 
 func (b txBucket) Copy() *txBucket {
