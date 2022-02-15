@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TestClient struct {
@@ -52,8 +51,8 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 	startTxsSending := clientCfg.TxsChannels == nil
 	if startTxsSending {
 		clientCfg.TxsChannels = &TxsTrackingChannels{
-			Requests: make(chan *TxSendingRequest, 32),
-			SentTxs:  make(chan *types.Transaction, 32),
+			SkipSendingRequestsThroughChannel: true,
+			SkipSentTxsChannel:                true,
 		}
 	}
 
@@ -81,54 +80,11 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		return nil, err
 	}
 
-	testClient := &TestClient{
+	return &TestClient{
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
 		TxsChannels:         clientCfg.TxsChannels,
 		cancelTxsSending:    func() {},
-	}
-
-	if startTxsSending {
-		testClient.startTxsSending()
-	}
-	return testClient, nil
-}
-
-func (c *TestClient) Close() {
-	c.stopTxsSending()
-	c.Simulator.Close()
-}
-
-func (c *TestClient) startTxsSending() {
-	ctx, cancel := context.WithCancel(context.Background())
-	c.cancelTxsSending = cancel
-
-	c.wg.Add(1)
-	go func() {
-		err := c.sendTxs(ctx, c.TxsChannels.Requests)
-		if err != nil {
-			panic(err)
-		}
-		c.wg.Done()
-	}()
-}
-
-func (c *TestClient) stopTxsSending() {
-	c.cancelTxsSending()
-	c.wg.Wait()
-}
-
-func (c *TestClient) sendTxs(ctx context.Context, requests <-chan *TxSendingRequest) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case req := <-requests:
-			err := req.Send()
-			if err != nil {
-				return err
-			}
-		}
-	}
+	}, nil
 }
