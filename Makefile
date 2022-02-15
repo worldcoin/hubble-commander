@@ -20,7 +20,7 @@ build: clean compile
 
 start-geth-locally:
 	rm -rf e2e/geth-data/geth
-	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws
+	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws --http.api "eth,miner" --ws.api "eth,miner"
 
 setup-geth:
 	rm -rf e2e/geth-data/geth
