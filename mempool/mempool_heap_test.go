@@ -47,7 +47,7 @@ func (s *MempoolHeapTestSuite) SetupTest() {
 	err = s.storage.BatchAddTransaction(models.GenericArray(s.txs))
 	s.NoError(err)
 
-	s.setUserStates(map[uint32]uint64{
+	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
 		0: 10,
 		1: 10,
 		2: 15,
