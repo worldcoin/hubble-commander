@@ -63,19 +63,22 @@ func TestCommanderMigrationMode(t *testing.T) {
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
 
+	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 1)
+	testWaitForBatchStatus(t, adminRPCClient, 1, batchstatus.Mined)
+
 	testStopMining(t, gethRPCClient)
 
 	testSendInvalidTx(t, adminRPCClient, 4, wallets)
-	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 1)
+	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
 	testSendInvalidTx(t, adminRPCClient, 5, wallets)
 
-	testWaitForBatchStatus(t, adminRPCClient, 1, batchstatus.Submitted)
+	testWaitForBatchStatus(t, adminRPCClient, 2, batchstatus.Submitted)
 
 	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
 		CreateBatches: ref.Bool(false),
 	})
 
-	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
+	testSendValidTxs(t, adminRPCClient, 8, 4, wallets, 1)
 	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 2)
 
 	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
@@ -117,16 +120,16 @@ func TestCommanderMigrationMode(t *testing.T) {
 	testStartMining(t, gethRPCClient)
 
 	// Wait for pending batch migrated from Original Commander and validate it
-	batch1 := testWaitForBatchStatus(t, migratedCommander.Client(), 1, batchstatus.Mined)
+	batch1 := testWaitForBatchStatus(t, migratedCommander.Client(), 2, batchstatus.Mined)
 	testValidateBatch(t, migratedCommander.Client(), batch1, 4)
 
 	// Wait for new batch created by Migrated Commander from pending transactions and validate it
-	batch2 := testWaitForBatchStatus(t, migratedCommander.Client(), 2, batchstatus.Mined)
+	batch2 := testWaitForBatchStatus(t, migratedCommander.Client(), 3, batchstatus.Mined)
 	testValidateBatch(t, migratedCommander.Client(), batch2, 8)
 
 	// Send some txs to Migrated Commander and validate that it is creating new batches
 	testSendValidTxs(t, migratedAdminRPCClient, 0, 7, wallets, 0)
-	batch3 := testWaitForBatchStatus(t, migratedCommander.Client(), 3, batchstatus.Mined)
+	batch3 := testWaitForBatchStatus(t, migratedCommander.Client(), 4, batchstatus.Mined)
 	testValidateBatch(t, migratedCommander.Client(), batch3, 7)
 }
 
