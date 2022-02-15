@@ -226,13 +226,7 @@ func testConfigureCommander(t *testing.T, client jsonrpc.RPCClient, params dto.C
 func testWaitForCommanderReadyStatus(t *testing.T, client jsonrpc.RPCClient) {
 	require.Eventually(t, func() bool {
 		var status string
-		var rpcError *jsonrpc.RPCError
 		err := client.CallFor(&status, "hubble_getStatus")
-		if err != nil && errors.As(err, &rpcError) {
-			if rpcError.Code == 30000 {
-				return false
-			}
-		}
 		require.NoError(t, err)
 		return status == healthstatus.Ready
 	}, 30*time.Second, testutils.TryInterval)
