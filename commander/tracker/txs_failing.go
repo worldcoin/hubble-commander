@@ -3,7 +3,6 @@ package tracker
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,8 +19,6 @@ func StartFailedTxsTracking(ctx context.Context, client *eth.Client, txsHashChan
 			if err != nil {
 				panic(err)
 			}
-		default:
-			time.Sleep(time.Millisecond * 300)
 		}
 	}
 }
