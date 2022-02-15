@@ -42,7 +42,7 @@ func TestCommanderMigrationMode(t *testing.T) {
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5001"
 	cfg.Metrics.Port = "2001"
-	activeCommander, err := setup.DeployAndCreateInProcessCommander(cfg, nil)
+	firstCommander, err := setup.DeployAndCreateInProcessCommander(cfg, nil)
 	require.NoError(t, err)
 
 	adminRPCClient := testCreateAdminRPCClient(cfg)
@@ -50,15 +50,15 @@ func TestCommanderMigrationMode(t *testing.T) {
 	gethRPCClient, err := rpc.Dial(cfg.Ethereum.RPCURL)
 	require.NoError(t, err)
 
-	err = activeCommander.Start()
+	err = firstCommander.Start()
 	require.NoError(t, err)
 	defer func() {
 		gethRPCClient.Close()
-		require.NoError(t, activeCommander.Stop())
+		require.NoError(t, firstCommander.Stop())
 		require.NoError(t, os.Remove(*cfg.Bootstrap.ChainSpecPath))
 	}()
 
-	domain := GetDomain(t, activeCommander.Client())
+	domain := GetDomain(t, firstCommander.Client())
 
 	wallets, err := setup.CreateWallets(domain)
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestCommanderMigrationMode(t *testing.T) {
 
 	testStartMining(t, gethRPCClient)
 
-	// Wait for pending batch migrated from Commander 1 and validate it
+	// Wait for pending batch migrated from Original Commander and validate it
 	batch1 := testWaitForBatchStatus(t, migratedCommander.Client(), 1, batchstatus.Mined)
 	testValidateBatch(t, migratedCommander.Client(), batch1, 4)
 
