@@ -44,6 +44,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
+	s.setupTestWithFailedTxs()
 }
 
 func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
@@ -85,6 +86,7 @@ func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
 }
 
 func (s *TxsTrackingTestSuite) TearDownTest() {
+	s.waitForWorkersCancellation()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
@@ -92,17 +94,11 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_TransferTransaction() {
-	s.setupTestWithFailedTxs()
-
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransaction() {
-	s.setupTestWithFailedTxs()
-
 	transfer := testutils.MakeCreate2Transfer(
 		0,
 		ref.Uint32(1),
@@ -111,44 +107,28 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransa
 		&models.PublicKey{2, 3, 4},
 	)
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_MassMigrationTransaction() {
-	s.setupTestWithFailedTxs()
-
 	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
 	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_BatchAccountRegistrationTransaction() {
-	s.setupTestWithFailedTxs()
-
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_WithdrawStake() {
-	s.setupTestWithFailedTxs()
-
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
 	_, err := s.client.Client.WithdrawStake(&batch.ID)
 	s.NoError(err)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_SubmitDepositBatch() {
-	s.setupTestWithFailedTxs()
-
 	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
@@ -160,8 +140,6 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_SubmitDepositBatch() {
 
 	_, _, err = depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
-
-	s.waitForWorkersCancellation()
 }
 
 func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
