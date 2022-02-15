@@ -84,6 +84,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
+	//TODO: set c.txsTrackingChannels
 	txsChannels := eth.TxsTrackingChannels{
 		Requests: make(chan *eth.TxSendingRequest, 32),
 		SentTxs:  make(chan *types.Transaction, 32),

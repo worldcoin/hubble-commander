@@ -16,7 +16,7 @@ import (
 type TxsTrackerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	testClient *eth.TestClient
+	client *eth.TestClient
 }
 
 func (s *TxsTrackerTestSuite) SetupSuite() {
@@ -25,34 +25,35 @@ func (s *TxsTrackerTestSuite) SetupSuite() {
 
 func (s *TxsTrackerTestSuite) SetupTest() {
 	var err error
-	s.testClient, err = eth.NewTestClient()
+	s.client, err = eth.NewTestClient()
 	s.NoError(err)
 }
 
 func (s *TxsTrackerTestSuite) TearDownTest() {
-	s.testClient.Close()
+	s.client.Close()
 }
 
 func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 	start := make(chan struct{})
 	waitGroup := sync.WaitGroup{}
-	waitGroup.Add(2)
 	resultTxs := make([]*types.Transaction, 2)
 	batchID := models.NewUint256(1)
 
+	waitGroup.Add(1)
 	go func() {
 		var err error
 		<-start
-		resultTxs[0], err = s.testClient.WithdrawStake(batchID)
+		resultTxs[0], err = s.client.WithdrawStake(batchID)
 		s.NoError(err)
 		waitGroup.Done()
 	}()
 
+	waitGroup.Add(1)
 	go func() {
 		var err error
 		commitments := getCommitments(batchtype.Transfer)
 		<-start
-		resultTxs[1], err = s.testClient.SubmitTransfersBatch(batchID, commitments)
+		resultTxs[1], err = s.client.SubmitTransfersBatch(batchID, commitments)
 		s.NoError(err)
 		waitGroup.Done()
 	}()
@@ -64,18 +65,19 @@ func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
 }
 
 func getCommitments(batchType batchtype.BatchType) []models.CommitmentWithTxs {
-	commitment := models.TxCommitmentWithTxs{
-		TxCommitment: models.TxCommitment{
-			CommitmentBase: models.CommitmentBase{
-				Type:          batchType,
-				PostStateRoot: utils.RandomHash(),
+	return []models.CommitmentWithTxs{
+		&models.TxCommitmentWithTxs{
+			TxCommitment: models.TxCommitment{
+				CommitmentBase: models.CommitmentBase{
+					Type:          batchType,
+					PostStateRoot: utils.RandomHash(),
+				},
+				FeeReceiver:       uint32(1234),
+				CombinedSignature: models.MakeRandomSignature(),
 			},
-			FeeReceiver:       uint32(1234),
-			CombinedSignature: models.MakeRandomSignature(),
+			Transactions: utils.RandomBytes(12),
 		},
-		Transactions: utils.RandomBytes(12),
 	}
-	return []models.CommitmentWithTxs{&commitment}
 }
 
 func TestTxsTrackerTestSuite(t *testing.T) {

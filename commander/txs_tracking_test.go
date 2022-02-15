@@ -46,7 +46,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.ClientConfig) {
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
 	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, conf)
 
 	domain, err := s.client.GetDomain()
@@ -70,13 +70,15 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.ClientConfig)
 
 func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
 	lowGasLimit := uint64(40_000)
-	s.setupTestWithClientConfig(&eth.ClientConfig{
-		TransferBatchSubmissionGasLimit:  &lowGasLimit,
-		C2TBatchSubmissionGasLimit:       &lowGasLimit,
-		MMBatchSubmissionGasLimit:        &lowGasLimit,
-		BatchAccountRegistrationGasLimit: &lowGasLimit,
-		StakeWithdrawalGasLimit:          &lowGasLimit,
-		DepositBatchSubmissionGasLimit:   &lowGasLimit,
+	s.setupTestWithClientConfig(&eth.TestClientConfig{
+		ClientConfig: eth.ClientConfig{
+			TransferBatchSubmissionGasLimit:  &lowGasLimit,
+			C2TBatchSubmissionGasLimit:       &lowGasLimit,
+			MMBatchSubmissionGasLimit:        &lowGasLimit,
+			BatchAccountRegistrationGasLimit: &lowGasLimit,
+			StakeWithdrawalGasLimit:          &lowGasLimit,
+			DepositBatchSubmissionGasLimit:   &lowGasLimit,
+		},
 	})
 }
 
@@ -234,7 +236,7 @@ func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf *eth.ClientConfig) *eth.TestClient {
+func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf *eth.TestClientConfig) *eth.TestClient {
 	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)

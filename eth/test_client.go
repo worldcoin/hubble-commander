@@ -23,6 +23,11 @@ type TestClient struct {
 	TxsChannels      *TxsTrackingChannels
 }
 
+type TestClientConfig struct {
+	TxsChannels *TxsTrackingChannels
+	ClientConfig
+}
+
 var (
 	DomainOnlyTestClient = &Client{domain: &bls.TestDomain}
 )
@@ -30,10 +35,10 @@ var (
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
-	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &ClientConfig{})
+	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &TestClientConfig{})
 }
 
-func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConfig) (*TestClient, error) {
+func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClientConfig) (*TestClient, error) {
 	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
@@ -44,9 +49,11 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		return nil, err
 	}
 
-	txsChannels := TxsTrackingChannels{
-		Requests: make(chan *TxSendingRequest, 32),
-		SentTxs:  make(chan *types.Transaction, 32),
+	if clientCfg.TxsChannels == nil {
+		clientCfg.TxsChannels = &TxsTrackingChannels{
+			Requests: make(chan *TxSendingRequest, 32),
+			SentTxs:  make(chan *types.Transaction, 32),
+		}
 	}
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
@@ -66,8 +73,8 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		TokenRegistry:   contracts.TokenRegistry,
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
-		ClientConfig:    *clientCfg,
-		TxsChannels:     &txsChannels,
+		ClientConfig:    clientCfg.ClientConfig,
+		TxsChannels:     clientCfg.TxsChannels,
 	})
 	if err != nil {
 		return nil, err
@@ -77,7 +84,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		TxsChannels:         &txsChannels,
+		TxsChannels:         clientCfg.TxsChannels,
 	}
 	testClient.startTxsSending()
 	return testClient, nil
