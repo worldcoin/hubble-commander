@@ -276,19 +276,11 @@ func testValidateFailedTxs(t *testing.T, client jsonrpc.RPCClient) {
 }
 
 func testValidatePendingBatches(t *testing.T, client jsonrpc.RPCClient) {
-	require.Eventually(t, func() bool {
-		var pendingBatches []admintypes.Batch
-		err := client.CallFor(&pendingBatches, "admin_getPendingBatches")
-		if err != nil {
-			log.Debugf(err.Error())
-			return false
-		}
-		require.NoError(t, err)
+	pendingBatches := make([]admintypes.Batch, 0)
+	err := client.CallFor(&pendingBatches, "admin_getPendingBatches")
+	require.NoError(t, err)
 
-		require.Len(t, pendingBatches, 1)
-		require.Len(t, pendingBatches[0].Commitments, 1)
-		require.Len(t, pendingBatches[0].Commitments[0].Transactions, 4)
-
-		return true
-	}, 30*time.Second, testutils.TryInterval)
+	require.Len(t, pendingBatches, 1)
+	require.Len(t, pendingBatches[0].Commitments, 1)
+	require.Len(t, pendingBatches[0].Commitments[0].Transactions, 4)
 }
