@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -22,7 +21,6 @@ import (
 type NewBlockLoopTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd      *Commander
 	storage  *st.TestStorage
 	client   *eth.TestClient
@@ -62,12 +60,9 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	s.setAccountsAndChainState()
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
-
-	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()

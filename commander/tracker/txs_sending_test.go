@@ -16,7 +16,6 @@ import (
 type TxsTrackerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	TestSuiteWithTxsSending
 	testClient *eth.TestClient
 }
 
@@ -28,12 +27,9 @@ func (s *TxsTrackerTestSuite) SetupTest() {
 	var err error
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
-
-	s.StartTxsSending(s.testClient.TxsChannels.Requests)
 }
 
 func (s *TxsTrackerTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	s.testClient.Close()
 }
 

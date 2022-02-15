@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -21,7 +20,6 @@ import (
 type SyncDepositBatchTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	storage        *st.TestStorage
 	client         *eth.TestClient
 	syncCtx        *Context
@@ -51,12 +49,9 @@ func (s *SyncDepositBatchTestSuite) SetupTest() {
 
 	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, metrics.NewCommanderMetrics(), context.Background())
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
-
-	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *SyncDepositBatchTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 	err := s.storage.Close()
 	s.NoError(err)

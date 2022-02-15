@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -22,7 +21,6 @@ import (
 type testSuiteWithContexts struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	storage      *st.TestStorage
 	txController *db.TxController
 	cfg          *config.RollupConfig
@@ -64,8 +62,6 @@ func (s *testSuiteWithContexts) SetupTestWithConfig(batchType batchtype.BatchTyp
 
 	s.addGenesisBatch(root)
 	s.newContexts(s.storage.Storage, s.client.Client, s.cfg, batchType)
-
-	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *testSuiteWithContexts) setGenesisState() {
@@ -107,7 +103,6 @@ func (s *testSuiteWithContexts) addGenesisBatch(root *common.Hash) {
 }
 
 func (s *testSuiteWithContexts) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

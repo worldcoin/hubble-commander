@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -12,7 +11,6 @@ import (
 type testSuiteWithExecutionContext struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	storage      *st.TestStorage
 	cfg          *config.RollupConfig
 	client       *eth.TestClient
@@ -41,12 +39,9 @@ func (s *testSuiteWithExecutionContext) SetupTestWithConfig(cfg *config.RollupCo
 	s.NoError(err)
 
 	s.executionCtx = NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-
-	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *testSuiteWithExecutionContext) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

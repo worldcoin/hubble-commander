@@ -14,7 +14,6 @@ import (
 type DisputeTransitionTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	testSuiteWithRequestsSending
 	client *TestClient
 }
 
@@ -26,12 +25,9 @@ func (s *DisputeTransitionTestSuite) SetupTest() {
 	var err error
 	s.client, err = NewTestClient()
 	s.NoError(err)
-
-	s.StartTxsSending(s.T(), s.client.TxsChannels.Requests)
 }
 
 func (s *DisputeTransitionTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 }
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	rollupContract "github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -23,7 +22,6 @@ import (
 type SyncStakeWithdrawalsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd      *Commander
 	storage  *st.TestStorage
 	client   *eth.TestClient
@@ -56,11 +54,9 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 	signTransfer(s.T(), &s.wallets[s.transfer.FromStateID], &s.transfer)
 
 	s.setupCommander()
-	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()

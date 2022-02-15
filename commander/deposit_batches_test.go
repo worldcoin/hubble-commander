@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/erc20"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -25,7 +24,6 @@ import (
 type DepositBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd            *Commander
 	client         *eth.TestClient
 	storage        *st.TestStorage
@@ -59,8 +57,6 @@ func (s *DepositBatchesTestSuite) SetupTest() {
 		Root:     utils.RandomHash(),
 		Deposits: testutils.GetFourDeposits(),
 	}
-
-	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestClient {
@@ -79,7 +75,6 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 }
 
 func (s *DepositBatchesTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()

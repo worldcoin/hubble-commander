@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -25,7 +24,6 @@ import (
 type TxsBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
@@ -63,12 +61,9 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
-
-	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func (s *TxsBatchesTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()

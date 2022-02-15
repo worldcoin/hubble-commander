@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -14,7 +13,6 @@ import (
 type testSuiteWithSyncAndRollupContext struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	storage *st.TestStorage
 	client  *eth.TestClient
 	cfg     *config.RollupConfig
@@ -46,12 +44,9 @@ func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
-
-	s.StartTxsSending(s.client.TxsChannels.Requests)
 }
 
 func (s *testSuiteWithSyncAndRollupContext) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

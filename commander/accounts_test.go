@@ -3,7 +3,6 @@ package commander
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -16,7 +15,6 @@ import (
 type AccountsTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	teardown   func() error
 	testClient *eth.TestClient
 	cmd        *Commander
@@ -37,12 +35,9 @@ func (s *AccountsTestSuite) SetupTest() {
 		client:  s.testClient.Client,
 		metrics: metrics.NewCommanderMetrics(),
 	}
-
-	s.StartTxsSending(s.testClient.TxsChannels.Requests)
 }
 
 func (s *AccountsTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	s.testClient.Close()
 	err := s.teardown()
 	s.NoError(err)

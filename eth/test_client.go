@@ -1,6 +1,9 @@
 package eth
 
 import (
+	"context"
+	"sync"
+
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -14,7 +17,10 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
-	TxsChannels         *TxsTrackingChannels
+
+	cancelTxsSending context.CancelFunc
+	wg               sync.WaitGroup
+	TxsChannels      *TxsTrackingChannels
 }
 
 var (
@@ -67,10 +73,50 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		return nil, err
 	}
 
-	return &TestClient{
+	testClient := &TestClient{
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
 		TxsChannels:         &txsChannels,
-	}, nil
+	}
+	testClient.startTxsSending()
+	return testClient, nil
+}
+
+func (c *TestClient) Close() {
+	c.stopTxsSending()
+	c.Simulator.Close()
+}
+
+func (c *TestClient) startTxsSending() {
+	ctx, cancel := context.WithCancel(context.Background())
+	c.cancelTxsSending = cancel
+
+	c.wg.Add(1)
+	go func() {
+		err := c.sendTxs(ctx, c.TxsChannels.Requests)
+		if err != nil {
+			panic(err)
+		}
+		c.wg.Done()
+	}()
+}
+
+func (c *TestClient) stopTxsSending() {
+	c.cancelTxsSending()
+	c.wg.Wait()
+}
+
+func (c *TestClient) sendTxs(ctx context.Context, requests <-chan *TxSendingRequest) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case req := <-requests:
+			err := req.Send()
+			if err != nil {
+				return err
+			}
+		}
+	}
 }

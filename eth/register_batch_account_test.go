@@ -12,7 +12,6 @@ import (
 type RegisterBatchAccountTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	testSuiteWithRequestsSending
 	client *TestClient
 }
 
@@ -24,11 +23,9 @@ func (s *RegisterBatchAccountTestSuite) SetupTest() {
 	client, err := NewTestClient()
 	s.NoError(err)
 	s.client = client
-	s.StartTxsSending(s.T(), s.client.TxsChannels.Requests)
 }
 
 func (s *RegisterBatchAccountTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	s.client.Close()
 }
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/applier"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -22,7 +21,6 @@ import (
 type RollupTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	testStorage *storage.TestStorage
 	testClient  *eth.TestClient
 	commander   *Commander
@@ -61,12 +59,9 @@ func (s *RollupTestSuite) SetupTest() {
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 
 	s.addUserStates()
-
-	s.StartTxsSending(s.commander.txsTrackingChannels.Requests)
 }
 
 func (s *RollupTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	err := s.testStorage.Teardown()
 	s.NoError(err)
 	s.testClient.Close()

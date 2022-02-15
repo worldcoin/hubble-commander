@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
-	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -22,7 +21,6 @@ import (
 type MMBatchesTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	tracker.TestSuiteWithTxsSending
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
@@ -49,12 +47,9 @@ func (s *MMBatchesTestSuite) SetupTest() {
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
-
-	s.StartTxsSending(s.cmd.txsTrackingChannels.Requests)
 }
 
 func (s *MMBatchesTestSuite) TearDownTest() {
-	s.StopTxsSending()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
