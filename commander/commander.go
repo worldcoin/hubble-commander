@@ -60,6 +60,10 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 		cfg:            cfg,
 		blockchain:     blockchain,
 		metrics:        metrics.NewCommanderMetrics(),
+		txsTrackingChannels: &eth.TxsTrackingChannels{
+			Requests: make(chan *eth.TxSendingRequest, 32),
+			SentTxs:  make(chan *types.Transaction, 32),
+		},
 	}
 }
 
@@ -84,13 +88,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	//TODO: set c.txsTrackingChannels
-	txsChannels := eth.TxsTrackingChannels{
-		Requests: make(chan *eth.TxSendingRequest, 32),
-		SentTxs:  make(chan *types.Transaction, 32),
-	}
-
-	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, &txsChannels)
+	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, c.txsTrackingChannels)
 	if err != nil {
 		return err
 	}
@@ -121,8 +119,8 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Failed Txs Tracking", func() error { return c.startFailedTxsTracking(txsChannels.SentTxs) })
-	c.startWorker("Txs Requests Sending", func() error { return c.startTxsRequestsSending(txsChannels.Requests) })
+	c.startWorker("Failed Txs Tracking", func() error { return c.startFailedTxsTracking(c.txsTrackingChannels.SentTxs) })
+	c.startWorker("Txs Requests Sending", func() error { return c.startTxsRequestsSending(c.txsTrackingChannels.Requests) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()
