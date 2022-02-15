@@ -132,6 +132,21 @@ func (s *MempoolTestSuite) TestGetExecutableTx_NoExecutableTxsOfGivenType() {
 	s.Nil(tx)
 }
 
+func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	txMempool.RemoveFailedTx(0)
+	s.Equal(txMempool.buckets[0].txs, s.txs[1:3])
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTx_MakesTheNextTxNonExecutable() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	txMempool.RemoveFailedTx(0)
+	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.Nil(tx)
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }
