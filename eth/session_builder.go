@@ -9,10 +9,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type rollupSessionBuilder struct {
 	rollup.RollupSession
+	contract       Contract
+	packAndRequest packAndRequestFunc
 }
 
 func (b *rollupSessionBuilder) WithValue(value *models.Uint256) *rollupSessionBuilder {
@@ -25,11 +28,58 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 	return b
 }
 
+func (b *rollupSessionBuilder) WithdrawStake(batchID *big.Int) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "withdrawStake", batchID)
+}
+
+func (b *rollupSessionBuilder) SubmitTransfer(
+	batchID *big.Int,
+	stateRoots [][32]byte,
+	signatures [][2]*big.Int,
+	feeReceivers []*big.Int,
+	txss [][]byte,
+) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitTransfer", batchID, stateRoots, signatures, feeReceivers, txss)
+}
+
+func (b *rollupSessionBuilder) SubmitCreate2Transfer(
+	batchID *big.Int,
+	stateRoots [][32]byte,
+	signatures [][2]*big.Int,
+	feeReceivers []*big.Int,
+	txss [][]byte,
+) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitCreate2Transfer", batchID, stateRoots, signatures, feeReceivers, txss)
+}
+
+func (b *rollupSessionBuilder) SubmitMassMigration(
+	batchID *big.Int,
+	stateRoots [][32]byte,
+	signatures [][2]*big.Int,
+	meta [][4]*big.Int,
+	withdrawRoots [][32]byte,
+	txss [][]byte,
+) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitMassMigration", batchID, stateRoots, signatures, meta, withdrawRoots, txss)
+}
+
+func (b *rollupSessionBuilder) SubmitDeposits(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof, //nolint:gocritic
+	vacant rollup.TypesSubtreeVacancyProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitDeposits", batchID, previous, vacant)
+}
+
 func (c *Client) rollup() *rollupSessionBuilder {
-	return &rollupSessionBuilder{rollup.RollupSession{
-		Contract:     c.Rollup.Rollup,
-		TransactOpts: *c.Blockchain.GetAccount(),
-	}}
+	return &rollupSessionBuilder{
+		RollupSession: rollup.RollupSession{
+			Contract:     c.Rollup.Rollup,
+			TransactOpts: *c.Blockchain.GetAccount(),
+		},
+		contract:       c.Rollup.Contract,
+		packAndRequest: c.packAndRequest,
+	}
 }
 
 type accountRegistrySessionBuilder struct {
@@ -59,6 +109,7 @@ func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRe
 	return b
 }
 
+//nolint: gocritic
 func (b *accountRegistrySessionBuilder) RegisterBatch(pubkeys [16][4]*big.Int) (*types.Transaction, error) {
 	return b.packAndRequest(&b.contract, &b.TransactOpts, "registerBatch", pubkeys)
 }

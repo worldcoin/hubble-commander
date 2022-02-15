@@ -13,9 +13,10 @@ import (
 type SubmitBatchFunc func() (*types.Transaction, error)
 
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	opts := c.transactOpts(c.config.StakeAmount.ToBig(), *c.config.TransferBatchSubmissionGasLimit)
-	arg1, arg2, arg3, arg4, arg5 := encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments)
-	tx, err := c.packAndRequest(&c.Rollup.Contract, opts, "submitTransfer", arg1, arg2, arg3, arg4, arg5)
+	tx, err := c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
+		SubmitTransfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -23,9 +24,10 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	opts := c.transactOpts(c.config.StakeAmount.ToBig(), *c.config.C2TBatchSubmissionGasLimit)
-	arg1, arg2, arg3, arg4, arg5 := encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments)
-	tx, err := c.packAndRequest(&c.Rollup.Contract, opts, "submitCreate2Transfer", arg1, arg2, arg3, arg4, arg5)
+	tx, err := c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
+		SubmitCreate2Transfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -36,9 +38,10 @@ func (c *Client) SubmitMassMigrationsBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
-	opts := c.transactOpts(c.config.StakeAmount.ToBig(), *c.config.MMBatchSubmissionGasLimit)
-	arg1, arg2, arg3, arg4, arg5, arg6 := encoder.CommitmentsToSubmitMMBatchFields(batchID, commitments)
-	tx, err := c.packAndRequest(&c.Rollup.Contract, opts, "submitMassMigration", arg1, arg2, arg3, arg4, arg5, arg6)
+	tx, err := c.rollup().
+		WithValue(c.config.StakeAmount).
+		WithGasLimit(*c.config.MMBatchSubmissionGasLimit).
+		SubmitMassMigration(encoder.CommitmentsToSubmitMMBatchFields(batchID, commitments))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

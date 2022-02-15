@@ -15,9 +15,9 @@ func (c *Client) WithdrawStakeAndWait(batchID *models.Uint256) error {
 }
 
 func (c *Client) WithdrawStake(batchID *models.Uint256) (*types.Transaction, error) {
-	opts := *c.Blockchain.GetAccount()
-	opts.GasLimit = *c.config.StakeWithdrawalGasLimit
-	tx, err := c.packAndRequest(&c.Rollup.Contract, &opts, "withdrawStake", batchID.ToBig())
+	tx, err := c.rollup().
+		WithGasLimit(*c.config.StakeWithdrawalGasLimit).
+		WithdrawStake(batchID.ToBig())
 	if err != nil {
 		return nil, err
 	}
