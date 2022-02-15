@@ -206,12 +206,12 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Requests Sending", func() error {
-		err := s.cmd.startTxsRequestsSending(s.cmd.txsTrackingChannels.Requests)
+		err := s.cmd.startTxsRequestsSending()
 		s.NoError(err)
 		return nil
 	})
 	s.cmd.startWorker("Test Failed Txs Tracking", func() error {
-		err := s.cmd.startFailedTxsTracking(s.cmd.txsTrackingChannels.SentTxs)
+		err := s.cmd.startFailedTxsTracking()
 		s.NoError(err)
 		return nil
 	})
