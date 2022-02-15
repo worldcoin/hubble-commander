@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func StartFailedTxsTracking(ctx context.Context, client *eth.Client, txsHashChan <-chan *types.Transaction) error {
+func StartTrackingSentTxs(ctx context.Context, client *eth.Client, txsHashChan <-chan *types.Transaction) error {
 	for {
 		select {
 		case <-ctx.Done():

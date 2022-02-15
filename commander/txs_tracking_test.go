@@ -93,12 +93,12 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_TransferTransaction() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_TransferTransaction() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransaction() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_Create2TransfersTransaction() {
 	transfer := testutils.MakeCreate2Transfer(
 		0,
 		ref.Uint32(1),
@@ -109,18 +109,18 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_Create2TransfersTransa
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_MassMigrationTransaction() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_MassMigrationTransaction() {
 	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
 	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_BatchAccountRegistrationTransaction() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_BatchAccountRegistrationTransaction() {
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_WithdrawStake() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_WithdrawStake() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
@@ -128,7 +128,7 @@ func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_WithdrawStake() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartFailedTxsTracking_SubmitDepositBatch() {
+func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_SubmitDepositBatch() {
 	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
@@ -184,12 +184,12 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Txs Requests Sending", func() error {
-		err := s.cmd.startTxsRequestsSending()
+		err := s.cmd.startSendingRequestedTxs()
 		s.NoError(err)
 		return nil
 	})
 	s.cmd.startWorker("Test Failed Txs Tracking", func() error {
-		err := s.cmd.startFailedTxsTracking()
+		err := s.cmd.startTrackingSentTxs()
 		s.NoError(err)
 		return nil
 	})

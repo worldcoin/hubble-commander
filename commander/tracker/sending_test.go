@@ -1,10 +1,12 @@
 package tracker
 
 import (
+	"context"
 	"sync"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -16,7 +18,10 @@ import (
 type TxsTrackerTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	client *eth.TestClient
+	client           *eth.TestClient
+	txsChannels      *eth.TxsTrackingChannels
+	wg               sync.WaitGroup
+	cancelTxsSending context.CancelFunc
 }
 
 func (s *TxsTrackerTestSuite) SetupSuite() {
@@ -24,16 +29,40 @@ func (s *TxsTrackerTestSuite) SetupSuite() {
 }
 
 func (s *TxsTrackerTestSuite) SetupTest() {
+	s.txsChannels = &eth.TxsTrackingChannels{
+		Requests: make(chan *eth.TxSendingRequest, 32),
+		SentTxs:  make(chan *types.Transaction, 32),
+	}
+
 	var err error
-	s.client, err = eth.NewTestClient()
+	s.client, err = eth.NewConfiguredTestClient(
+		&rollup.DeploymentConfig{},
+		&eth.TestClientConfig{
+			TxsChannels: s.txsChannels,
+		},
+	)
 	s.NoError(err)
+	s.startTxsSending()
+}
+
+func (s *TxsTrackerTestSuite) startTxsSending() {
+	s.wg = sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancelTxsSending = cancel
+
+	go func() {
+		err := StartTxsRequestsSending(ctx, s.txsChannels.Requests)
+		s.NoError(err)
+	}()
 }
 
 func (s *TxsTrackerTestSuite) TearDownTest() {
+	s.cancelTxsSending()
+	s.wg.Wait()
 	s.client.Close()
 }
 
-func (s *TxsTrackerTestSuite) TestTxsTracker_SendTransactionsAtTheSameTime() {
+func (s *TxsTrackerTestSuite) TestStartTxsRequestsSending_SetsConsecutiveNoncesForTxsSentInSameTime() {
 	start := make(chan struct{})
 	waitGroup := sync.WaitGroup{}
 	resultTxs := make([]*types.Transaction, 2)
