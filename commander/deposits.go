@@ -1,9 +1,6 @@
 package commander
 
 import (
-	"bytes"
-	"context"
-
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -54,15 +51,6 @@ func (c *Commander) syncQueuedDeposits(start, end uint64) error {
 	defer func() { _ = it.Close() }()
 
 	for it.Next() {
-		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		if err != nil {
-			return err
-		}
-
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
-			continue // TODO handle internal transactions
-		}
-
 		deposit := models.PendingDeposit{
 			ID: models.DepositID{
 				SubtreeID:    models.MakeUint256FromBig(*it.Event.SubtreeID),
@@ -92,15 +80,6 @@ func (c *Commander) fetchDepositSubtrees(start, end uint64) ([]models.PendingDep
 	depositSubtrees := make([]models.PendingDepositSubtree, 0, 1)
 
 	for it.Next() {
-		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
-		if err != nil {
-			return nil, err
-		}
-
-		if !bytes.Equal(tx.Data()[:4], c.client.DepositManager.ABI.Methods["depositFor"].ID) {
-			continue // TODO handle internal transactions
-		}
-
 		subtree := models.PendingDepositSubtree{
 			ID:   models.MakeUint256FromBig(*it.Event.SubtreeID),
 			Root: it.Event.SubtreeRoot,
