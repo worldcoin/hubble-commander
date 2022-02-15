@@ -100,11 +100,19 @@ func TestCommanderMigrationMode(t *testing.T) {
 		require.NoError(t, migratedCommander.Stop())
 	}()
 
-	testWaitForCommanderReadyStatus(t, migratedCommander.Client())
-
 	migratedAdminRPCClient := testCreateAdminRPCClient(cfg)
 
+	testConfigureCommander(t, migratedAdminRPCClient, dto.ConfigureParams{
+		CreateBatches: ref.Bool(false),
+	})
+
+	testWaitForCommanderReadyStatus(t, migratedCommander.Client())
+
 	testValidateMigration(t, migratedAdminRPCClient)
+
+	testConfigureCommander(t, migratedAdminRPCClient, dto.ConfigureParams{
+		CreateBatches: ref.Bool(true),
+	})
 
 	testStartMining(t, gethRPCClient)
 
