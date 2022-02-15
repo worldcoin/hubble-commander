@@ -127,13 +127,13 @@ func TestCommanderMigrationMode(t *testing.T) {
 func testStopMining(t *testing.T, client *rpc.Client) {
 	err := client.Call(nil, "miner_stop")
 	require.NoError(t, err)
-	log.Printf("Stopining mining blocks")
+	log.Printf("Stopping mining new blocks")
 }
 
 func testStartMining(t *testing.T, client *rpc.Client) {
 	err := client.Call(nil, "miner_start")
 	require.NoError(t, err)
-	log.Printf("Starting mining blocks")
+	log.Printf("Starting mining new block")
 }
 
 func testCreateAdminRPCClient(cfg *config.Config) jsonrpc.RPCClient {
@@ -234,7 +234,6 @@ func testWaitForCommanderReadyStatus(t *testing.T, client jsonrpc.RPCClient) {
 			}
 		}
 		require.NoError(t, err)
-		log.Printf(status)
 		return status == healthstatus.Ready
 	}, 30*time.Second, testutils.TryInterval)
 }
