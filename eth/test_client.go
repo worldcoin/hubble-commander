@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -91,7 +90,6 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 	}
 
 	if startTxsSending {
-		fmt.Println("Started txs sending")
 		testClient.startTxsSending()
 	}
 	return testClient, nil

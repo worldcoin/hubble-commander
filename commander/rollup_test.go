@@ -48,10 +48,9 @@ func (s *RollupTestSuite) SetupTest() {
 				MaxCommitmentsPerBatch: 32,
 			},
 		},
-		storage:             s.testStorage.Storage,
-		client:              s.testClient.Client,
-		metrics:             metrics.NewCommanderMetrics(),
-		txsTrackingChannels: s.testClient.TxsChannels,
+		storage: s.testStorage.Storage,
+		client:  s.testClient.Client,
+		metrics: metrics.NewCommanderMetrics(),
 	}
 
 	domain, err := s.testClient.GetDomain()

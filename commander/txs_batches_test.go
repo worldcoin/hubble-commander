@@ -49,7 +49,6 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)

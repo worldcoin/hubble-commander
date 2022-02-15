@@ -37,10 +37,9 @@ func (s *StakeWithdrawalsTestSuite) SetupTest() {
 
 	s.NoError(err)
 	s.cmd = &Commander{
-		storage:             testStorage.Storage,
-		client:              s.testClient.Client,
-		metrics:             metrics.NewCommanderMetrics(),
-		txsTrackingChannels: s.testClient.TxsChannels,
+		storage: testStorage.Storage,
+		client:  s.testClient.Client,
+		metrics: metrics.NewCommanderMetrics(),
 	}
 }
 

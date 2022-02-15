@@ -43,7 +43,6 @@ func (s *MMBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTrackingChannels = s.client.TxsChannels
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
