@@ -13,23 +13,22 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MempoolTestSuite struct {
+type MempoolHeapTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *st.TestStorage
 	txs     []models.GenericTransaction
 }
 
-func (s *MempoolTestSuite) SetupSuite() {
+func (s *MempoolHeapTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *MempoolTestSuite) SetupTest() {
+func (s *MempoolHeapTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	// no need to shuffle initial transactions as they are retrieved from DB sorted by tx hashes which are random
 	s.txs = []models.GenericTransaction{
 		s.newTransfer(0, 10, 100), // 0 - executable
 		s.newTransfer(0, 11, 100), // 1
@@ -56,12 +55,12 @@ func (s *MempoolTestSuite) SetupTest() {
 	})
 }
 
-func (s *MempoolTestSuite) TearDownTest() {
+func (s *MempoolHeapTestSuite) TearDownTest() {
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *MempoolTestSuite) TestMempool() {
+func (s *MempoolHeapTestSuite) Test_MempoolAndHeapRealUsage() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
 
@@ -84,7 +83,7 @@ func (s *MempoolTestSuite) TestMempool() {
 	s.EqualValues(10, mempool.buckets[3].nonce)
 }
 
-func (s *MempoolTestSuite) createBatch(heap *TxHeap, mempool *TxMempool) {
+func (s *MempoolHeapTestSuite) createBatch(heap *TxHeap, mempool *TxMempool) {
 	txController, txMempool := mempool.BeginTransaction()
 	s.createCommitment(heap, txMempool)
 	txController.Commit()
@@ -97,7 +96,7 @@ func (s *MempoolTestSuite) createBatch(heap *TxHeap, mempool *TxMempool) {
 	txController.Commit()
 }
 
-func (s *MempoolTestSuite) createCommitment(heap *TxHeap, mempool *TxMempool) {
+func (s *MempoolHeapTestSuite) createCommitment(heap *TxHeap, mempool *TxMempool) {
 	tx := heap.Peek() // 5
 	s.Equal(s.txs[5], tx)
 	// execute 5 -- success
@@ -121,7 +120,7 @@ func (s *MempoolTestSuite) createCommitment(heap *TxHeap, mempool *TxMempool) {
 	// finishing because MaxTxsPerCommitment = 2
 }
 
-func (s *MempoolTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool *TxMempool) error {
+func (s *MempoolHeapTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool *TxMempool) error {
 	tx := heap.Peek() // 3
 	s.Equal(s.txs[3], tx)
 	// execute 3 -- success
@@ -136,7 +135,7 @@ func (s *MempoolTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool *Tx
 	return fmt.Errorf("not enough transacitons")
 }
 
-func (s *MempoolTestSuite) setUserStates(nonces map[uint32]uint64) {
+func (s *MempoolHeapTestSuite) setUserStates(nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := s.storage.StateTree.Set(stateID, &models.UserState{
 			PubKeyID: 0,
@@ -148,18 +147,18 @@ func (s *MempoolTestSuite) setUserStates(nonces map[uint32]uint64) {
 	}
 }
 
-func (s *MempoolTestSuite) newTransfer(from uint32, nonce, fee uint64) *models.Transfer {
+func (s *MempoolHeapTestSuite) newTransfer(from uint32, nonce, fee uint64) *models.Transfer {
 	transfer := testutils.NewTransfer(from, 1, nonce, 100)
 	transfer.Fee = models.MakeUint256(fee)
 	return transfer
 }
 
-func (s *MempoolTestSuite) newC2T(from uint32, nonce, fee uint64) *models.Create2Transfer {
+func (s *MempoolHeapTestSuite) newC2T(from uint32, nonce, fee uint64) *models.Create2Transfer {
 	c2t := testutils.NewCreate2Transfer(from, ref.Uint32(1), nonce, 100, nil)
 	c2t.Fee = models.MakeUint256(fee)
 	return c2t
 }
 
-func TestMempoolTestSuite(t *testing.T) {
-	suite.Run(t, new(MempoolTestSuite))
+func TestMempoolHeapTestSuite(t *testing.T) {
+	suite.Run(t, new(MempoolHeapTestSuite))
 }
