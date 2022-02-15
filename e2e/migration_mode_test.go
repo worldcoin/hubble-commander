@@ -72,15 +72,13 @@ func TestCommanderMigrationMode(t *testing.T) {
 	testWaitForBatchStatus(t, adminRPCClient, 1, batchstatus.Submitted)
 
 	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
-		CreateBatches:      ref.Bool(false),
-		AcceptTransactions: ref.Bool(true),
+		CreateBatches: ref.Bool(false),
 	})
 
 	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
 	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 2)
 
 	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
-		CreateBatches:      ref.Bool(false),
 		AcceptTransactions: ref.Bool(false),
 	})
 
