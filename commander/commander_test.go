@@ -69,7 +69,7 @@ func (s *CommanderTestSuite) TestStart_CreatesMempool() {
 	err := s.cmd.Start()
 	s.NoError(err)
 
-	txs := s.cmd.txPool.Mempool.GetExecutableTxs(txtype.Transfer)
+	txs := s.cmd.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
 	s.Len(txs, 1)
 	s.Equal(tx, txs[0])
 

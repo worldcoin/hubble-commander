@@ -7,25 +7,31 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-type TxPool struct {
+type TxPool interface {
+	Send(tx models.GenericTransaction)
+	ReadTxs(ctx context.Context) error
+	Mempool() *Mempool
+}
+
+type txPool struct {
 	storage *st.Storage
-	Mempool *Mempool
+	mempool *Mempool
 	TxChan  chan models.GenericTransaction
 }
 
-func NewTxPool(storage *st.Storage) (*TxPool, error) {
+func NewTxPool(storage *st.Storage) (TxPool, error) {
 	pool, err := NewMempool(storage)
 	if err != nil {
 		return nil, err
 	}
-	return &TxPool{
+	return &txPool{
 		storage: storage,
-		Mempool: pool,
+		mempool: pool,
 		TxChan:  make(chan models.GenericTransaction, 1024),
 	}, nil
 }
 
-func (p *TxPool) ReadTxs(ctx context.Context) error {
+func (p *txPool) ReadTxs(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -36,7 +42,7 @@ func (p *TxPool) ReadTxs(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			err = p.Mempool.AddOrReplace(tx, stateLeaf.Nonce.Uint64())
+			err = p.mempool.AddOrReplace(tx, stateLeaf.Nonce.Uint64())
 			if err == ErrTxReplacementFailed {
 				continue
 			}
@@ -48,4 +54,12 @@ func (p *TxPool) ReadTxs(ctx context.Context) error {
 			return nil
 		}
 	}
+}
+
+func (p *txPool) Send(tx models.GenericTransaction) {
+	p.TxChan <- tx
+}
+
+func (p *txPool) Mempool() *Mempool {
+	return p.mempool
 }

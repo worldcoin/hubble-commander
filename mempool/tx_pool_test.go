@@ -16,7 +16,7 @@ type TxPoolTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *st.TestStorage
-	txPool  *TxPool
+	txPool  TxPool
 }
 
 func (s *TxPoolTestSuite) SetupSuite() {
@@ -47,7 +47,7 @@ func (s *TxPoolTestSuite) TestReadTxs() {
 	s.NoError(err)
 
 	for i := 0; i < 5; i++ {
-		s.txPool.TxChan <- s.newTransfer(0, uint64(i))
+		s.txPool.Send(s.newTransfer(0, uint64(i)))
 	}
 
 	err = s.txPool.ReadTxs(context.Background())
@@ -62,9 +62,9 @@ func (s *TxPoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfe
 }
 
 func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction {
-	txs := s.txPool.Mempool.GetExecutableTxs(txtype.Transfer)
+	txs := s.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
 
-	_, txMempool := s.txPool.Mempool.BeginTransaction()
+	_, txMempool := s.txPool.Mempool().BeginTransaction()
 	for {
 		tx := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
 		if tx == nil {

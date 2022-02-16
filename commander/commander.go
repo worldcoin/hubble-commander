@@ -46,7 +46,7 @@ type Commander struct {
 	client        *eth.Client
 	apiServer     *http.Server
 	metricsServer *http.Server
-	txPool        *mempool.TxPool
+	txPool        mempool.TxPool
 
 	stateMutex     sync.Mutex
 	invalidBatchID *models.Uint256
