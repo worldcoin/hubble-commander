@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -45,6 +46,7 @@ type Commander struct {
 	client        *eth.Client
 	apiServer     *http.Server
 	metricsServer *http.Server
+	txPool        *mempool.Mempool
 
 	stateMutex     sync.Mutex
 	invalidBatchID *models.Uint256
@@ -92,6 +94,11 @@ func (c *Commander) Start() (err error) {
 	}
 
 	err = c.addGenesisBatch()
+	if err != nil {
+		return err
+	}
+
+	c.txPool, err = mempool.NewMempool(c.storage)
 	if err != nil {
 		return err
 	}
