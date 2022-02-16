@@ -1,4 +1,4 @@
-package txpool
+package mempool
 
 import (
 	"context"
@@ -62,9 +62,9 @@ func (s *TxPoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfe
 }
 
 func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction {
-	txs := s.txPool.Pool.GetExecutableTxs(txtype.Transfer)
+	txs := s.txPool.Mempool.GetExecutableTxs(txtype.Transfer)
 
-	_, txMempool := s.txPool.Pool.BeginTransaction()
+	_, txMempool := s.txPool.Mempool.BeginTransaction()
 	for {
 		tx := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
 		if tx == nil {
