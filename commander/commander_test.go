@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -24,8 +23,7 @@ func (s *CommanderTestSuite) SetupSuite() {
 
 func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := db.PruneDatabase(cfg.Badger)
-	s.NoError(err)
+	cfg.Bootstrap.Prune = true
 	blockchain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
 	s.prepareContracts(cfg, blockchain)
