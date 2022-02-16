@@ -171,6 +171,41 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
 	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
+func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
+	tx := s.newTransfer(0, 14)
+	err := s.mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := s.mempool.buckets[0]
+	lastTxInBucket := bucket.txs[len(bucket.txs)-1]
+	s.Equal(tx, lastTxInBucket)
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList() {
+	tx := s.newTransfer(0, 12)
+	err := s.mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := s.mempool.buckets[0]
+	s.Equal(tx, bucket.txs[2])
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
+	tx := s.newTransfer(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	err := s.mempool.AddOrReplace(tx, 10)
+	s.NoError(err)
+
+	bucket := s.mempool.buckets[0]
+	s.Equal(tx, bucket.txs[1])
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
+	tx := s.newTransfer(0, 11)
+	err := s.mempool.AddOrReplace(tx, 10)
+	s.ErrorIs(err, ErrTxReplacementFailed)
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }

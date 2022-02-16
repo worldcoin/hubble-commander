@@ -1,12 +1,16 @@
 package mempool
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 )
+
+var ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 
 type someMempool interface {
 	getBucket(stateID uint32) *txBucket
@@ -179,6 +183,53 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 		m.buckets[stateID] = bucket
 	}
 	return bucket
+}
+
+func (m *Mempool) AddOrReplace(newTx models.GenericTransaction, senderNonce uint64) error {
+	bucket := m.getOrInitBucket(newTx.GetFromStateID(), senderNonce)
+	return bucket.addOrReplace(newTx)
+}
+
+func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
+	panic("AddOrReplace should only be called on Mempool")
+}
+
+func (b *txBucket) addOrReplace(newTx models.GenericTransaction) error {
+	newTxNonce := &newTx.GetBase().Nonce
+	for i, tx := range b.txs {
+		if newTxNonce.Eq(&tx.GetBase().Nonce) {
+			return b.replace(i, newTx)
+		}
+
+		if newTxNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
+			b.insertAt(i, newTx)
+			return nil
+		}
+	}
+	b.insertAt(len(b.txs), newTx)
+	return nil
+}
+
+func (b *txBucket) replace(index int, newTx models.GenericTransaction) error {
+	if !replaceCondition(b.txs[index], newTx) {
+		return errors.WithStack(ErrTxReplacementFailed)
+	}
+	b.txs[index] = newTx
+	return nil
+}
+
+func replaceCondition(previousTx, newTx models.GenericTransaction) bool {
+	return newTx.GetBase().Fee.Cmp(&previousTx.GetBase().Fee) > 0
+}
+
+func (b *txBucket) insertAt(index int, tx models.GenericTransaction) {
+	if index == len(b.txs) {
+		b.txs = append(b.txs, tx)
+		return
+	}
+
+	b.txs = append(b.txs[:index+1], b.txs[index:]...)
+	b.txs[index] = tx
 }
 
 func (m *TxMempool) setBucket(stateID uint32, bucket *txBucket) {
