@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/commander/txpool"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -14,7 +15,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -46,7 +46,7 @@ type Commander struct {
 	client        *eth.Client
 	apiServer     *http.Server
 	metricsServer *http.Server
-	txPool        *mempool.Mempool
+	txPool        *txpool.TxPool
 
 	stateMutex     sync.Mutex
 	invalidBatchID *models.Uint256
@@ -98,7 +98,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txPool, err = mempool.NewMempool(c.storage)
+	c.txPool, err = txpool.NewTxPool(c.storage)
 	if err != nil {
 		return err
 	}
