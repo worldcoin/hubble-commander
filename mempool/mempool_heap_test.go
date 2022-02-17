@@ -100,20 +100,23 @@ func (s *MempoolHeapTestSuite) createCommitment(heap *TxHeap, mempool *TxMempool
 	tx := heap.Peek() // 5
 	s.Equal(s.txs[5], tx)
 	// execute 5 -- success
-	tx = mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // 6
+	tx, err := mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // 6
+	s.NoError(err)
 	s.Equal(s.txs[6], tx)
 	heap.Replace(tx)
 
 	tx = heap.Peek() // 0
 	s.Equal(s.txs[0], tx)
 	// execute 0 -- failure
-	mempool.RemoveFailedTx(tx.GetFromStateID())
+	err = mempool.RemoveFailedTx(tx.GetFromStateID())
+	s.NoError(err)
 	heap.Pop()
 
 	tx = heap.Peek() // 6
 	s.Equal(s.txs[6], tx)
 	// execute 6 -- success
-	tx = mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // nil
+	tx, err = mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // nil
+	s.NoError(err)
 	s.Nil(tx)
 	heap.Pop()
 
@@ -124,7 +127,8 @@ func (s *MempoolHeapTestSuite) tryCreatingSecondCommitment(heap *TxHeap, mempool
 	tx := heap.Peek() // 3
 	s.Equal(s.txs[3], tx)
 	// execute 3 -- success
-	tx = mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // nil
+	tx, err := mempool.GetNextExecutableTx(txtype.Transfer, tx.GetFromStateID()) // nil
+	s.NoError(err)
 	s.Nil(tx)
 	heap.Pop()
 

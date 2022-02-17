@@ -10,7 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
+var (
+	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
+	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
+)
 
 type someMempool interface {
 	getBucket(stateID uint32) *txBucket
@@ -146,13 +149,16 @@ func (m *TxMempool) GetExecutableTxs(txtype.TransactionType) []models.GenericTra
 	panic("GetExecutableTxs should only be called on Mempool")
 }
 
-func (m *TxMempool) GetNextExecutableTx(txType txtype.TransactionType, stateID uint32) models.GenericTransaction {
-	bucket := m.removeTx(stateID)
+func (m *TxMempool) GetNextExecutableTx(txType txtype.TransactionType, stateID uint32) (models.GenericTransaction, error) {
+	bucket, err := m.removeTx(stateID)
+	if err != nil {
+		return nil, err
+	}
 	if bucket == nil {
-		return nil
+		return nil, nil
 	}
 	bucket.nonce++
-	return getExecutableTx(txType, bucket)
+	return getExecutableTx(txType, bucket), nil
 }
 
 func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.GenericTransaction {
@@ -164,21 +170,22 @@ func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.Gen
 	return nil
 }
 
-func (m *TxMempool) RemoveFailedTx(stateID uint32) {
-	m.removeTx(stateID)
+func (m *TxMempool) RemoveFailedTx(stateID uint32) error {
+	_, err := m.removeTx(stateID)
+	return err
 }
 
-func (m *TxMempool) removeTx(stateID uint32) *txBucket {
+func (m *TxMempool) removeTx(stateID uint32) (*txBucket, error) {
 	bucket := m.getBucket(stateID)
 	if bucket == nil {
-		return nil
+		return nil, errors.WithStack(ErrNonexistentBucket)
 	}
 	bucket.txs = bucket.txs[1:]
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
-		return nil
+		return nil, nil
 	}
-	return bucket
+	return bucket, nil
 }
 
 func (m *TxMempool) getBucket(stateID uint32) *txBucket {
@@ -188,8 +195,8 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 		if bucket == nil {
 			return nil
 		}
-
-		m.buckets[stateID] = bucket.Copy()
+		bucket = bucket.Copy()
+		m.buckets[stateID] = bucket
 	}
 	return bucket
 }

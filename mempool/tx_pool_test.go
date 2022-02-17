@@ -87,7 +87,8 @@ func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction 
 
 	_, txMempool := s.txPool.Mempool().BeginTransaction()
 	for {
-		tx := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+		s.NoError(err)
 		if tx == nil {
 			break
 		}
