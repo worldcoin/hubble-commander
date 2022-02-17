@@ -14,7 +14,7 @@ func StartTxsRequestsSending(ctx context.Context, requestsChan <-chan *eth.TxSen
 		case request := <-requestsChan:
 			err := request.Send()
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 	}

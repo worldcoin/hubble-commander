@@ -22,20 +22,27 @@ func startTrackingSentTxs(
 	queue *txsQueue,
 ) error {
 	wg := sync.WaitGroup{}
+	subCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	wg.Add(1)
 	go func(queue *txsQueue) {
-		startReadingChannel(ctx, queue, sentTxsChan)
+		startReadingChannel(subCtx, queue, sentTxsChan)
 		wg.Done()
 	}(queue)
 
+	errChan := make(chan error)
 	wg.Add(1)
 	go func(queue *txsQueue) {
-		startCheckingTxs(ctx, queue, client)
+		err := startCheckingTxs(subCtx, queue, client)
+		errChan <- err
 		wg.Done()
 	}(queue)
+
+	err := <-errChan
+	cancel()
 	wg.Wait()
-	return nil
+	return err
 }
 
 func startReadingChannel(ctx context.Context, queue *txsQueue, txsChan <-chan *types.Transaction) {
@@ -49,11 +56,11 @@ func startReadingChannel(ctx context.Context, queue *txsQueue, txsChan <-chan *t
 	}
 }
 
-func startCheckingTxs(ctx context.Context, queue *txsQueue, client *eth.Client) {
+func startCheckingTxs(ctx context.Context, queue *txsQueue, client *eth.Client) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		default:
 			if queue.IsEmpty() {
 				continue
@@ -61,7 +68,7 @@ func startCheckingTxs(ctx context.Context, queue *txsQueue, client *eth.Client) 
 			tx := queue.First()
 			err := waitUntilTxMinedAndCheckForFail(client, tx)
 			if err != nil {
-				panic(err)
+				return err
 			}
 
 			queue.RemoveFirst()
