@@ -40,7 +40,7 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 		return nil, err
 	}
 
-	// a.txPool.Send(transfer)
+	a.txPool.Send(transfer)
 	a.countAcceptedTx(transfer.TxType)
 	return &transfer.Hash, nil
 }
