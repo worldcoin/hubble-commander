@@ -61,7 +61,7 @@ func (p *txPool) UpdateMempool() error {
 
 	for _, tx := range p.incomingTxs {
 		//TODO: add failed tx to FailedTxs and remove replaced one from pending
-		err := p.mempool.AddOrReplace(p.storage, tx)
+		_, err := p.mempool.AddOrReplace(p.storage, tx)
 		if err == ErrTxReplacementFailed {
 			continue
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 )
 
@@ -201,10 +202,10 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	return bucket
 }
 
-func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) error {
+func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
 	bucket, err := m.getOrInitBucket(storage, newTx.GetFromStateID())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return bucket.addOrReplace(newTx)
 }
@@ -213,7 +214,7 @@ func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
 	panic("AddOrReplace should only be called on Mempool")
 }
 
-func (b *txBucket) addOrReplace(newTx models.GenericTransaction) error {
+func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (*common.Hash, error) {
 	newTxNonce := &newTx.GetBase().Nonce
 	for i, tx := range b.txs {
 		if newTxNonce.Eq(&tx.GetBase().Nonce) {
@@ -222,19 +223,20 @@ func (b *txBucket) addOrReplace(newTx models.GenericTransaction) error {
 
 		if newTxNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
 			b.insertAt(i, newTx)
-			return nil
+			return nil, nil
 		}
 	}
 	b.insertAt(len(b.txs), newTx)
-	return nil
+	return nil, nil
 }
 
-func (b *txBucket) replace(index int, newTx models.GenericTransaction) error {
-	if !replaceCondition(b.txs[index], newTx) {
-		return errors.WithStack(ErrTxReplacementFailed)
+func (b *txBucket) replace(index int, newTx models.GenericTransaction) (*common.Hash, error) {
+	previousTx := b.txs[index]
+	if !replaceCondition(previousTx, newTx) {
+		return nil, errors.WithStack(ErrTxReplacementFailed)
 	}
 	b.txs[index] = newTx
-	return nil
+	return &previousTx.GetBase().Hash, nil
 }
 
 func replaceCondition(previousTx, newTx models.GenericTransaction) bool {
