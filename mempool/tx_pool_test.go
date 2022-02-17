@@ -51,7 +51,7 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	wg, cancel := s.startReadingTxs()
 
 	for i := 0; i < 5; i++ {
-		s.txPool.Send(s.newTransfer(0, uint64(i), 10))
+		s.txPool.Send(s.newTransfer(uint64(i), 10))
 	}
 
 	s.waitForTxsToBeRead(5)
@@ -67,13 +67,13 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
-	newTx := s.newTransfer(0, 0, 5)
+	newTx := s.newTransfer(0, 5)
 	err := s.storage.AddTransaction(newTx)
 	s.NoError(err)
 
 	wg, cancel := s.startReadingTxs()
 
-	s.txPool.Send(s.newTransfer(0, 0, 10))
+	s.txPool.Send(s.newTransfer(0, 10))
 	s.txPool.Send(newTx)
 
 	s.waitForTxsToBeRead(2)
@@ -92,8 +92,8 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
-	previousTx := s.newTransfer(0, 0, 5)
-	newTx := s.newTransfer(0, 0, 10)
+	previousTx := s.newTransfer(0, 5)
+	newTx := s.newTransfer(0, 10)
 
 	err := s.storage.AddTransaction(previousTx)
 	s.NoError(err)
@@ -140,8 +140,8 @@ func (s *TxPoolTestSuite) waitForTxsToBeRead(expectedTxsLength int) {
 	}, 1*time.Second, 10*time.Millisecond)
 }
 
-func (s *TxPoolTestSuite) newTransfer(from uint32, nonce, fee uint64) *models.Transfer {
-	tx := testutils.NewTransfer(from, 1, nonce, 100)
+func (s *TxPoolTestSuite) newTransfer(nonce, fee uint64) *models.Transfer {
+	tx := testutils.NewTransfer(0, 1, nonce, 100)
 	tx.Fee = models.MakeUint256(fee)
 	return tx
 }

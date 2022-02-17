@@ -126,6 +126,7 @@ func (c *Commander) Start() (err error) {
 	})
 	c.startWorker("Tracking Txs", func() error { return c.txsTracking(c.txsHashesChan) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
+	c.startWorker("Tx Pool", func() error { return c.txPool.ReadTxs(c.workersContext) })
 
 	go c.handleWorkerError()
 

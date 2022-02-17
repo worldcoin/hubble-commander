@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -275,15 +277,32 @@ func (s *SendTransferTestSuite) TestSendTransaction_SendsTxToTxPool() {
 	s.NoError(err)
 	s.api.txPool = txPool
 
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+
 	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
-	err = s.api.txPool.ReadTxs(context.Background())
-	s.NoError(err)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err = s.api.txPool.ReadTxs(ctx)
+		s.NoError(err)
+	}()
 
-	txs := txPool.Mempool().GetExecutableTxs(txtype.Transfer)
-	s.Len(txs, 1)
+	var txs []models.GenericTransaction
+	s.Eventually(func() bool {
+		err = s.api.txPool.UpdateMempool()
+		s.NoError(err)
+
+		txs = txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+		return len(txs) == 1
+	}, 1*time.Second, 10*time.Millisecond)
+
 	s.Equal(*hash, txs[0].GetBase().Hash)
+
+	cancel()
+	wg.Wait()
 }
 
 func TestSendTransferTestSuite(t *testing.T) {

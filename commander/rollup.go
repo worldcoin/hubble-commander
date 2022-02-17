@@ -81,7 +81,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return errors.WithStack(err)
 	}
 
-	err = c.txPool.ReadTxs(ctx)
+	err = c.txPool.UpdateMempool()
 	if err != nil {
 		return err
 	}
