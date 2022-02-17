@@ -59,7 +59,7 @@ func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDe
 	err := s.database.Badger.Iterator(models.PendingDepositPrefix, keyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		deposit, err := decodeDeposit(item)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 		deposits = append(deposits, *deposit)
 		return len(deposits) == amount, nil

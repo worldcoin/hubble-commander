@@ -48,13 +48,13 @@ func (s *PendingStakeWithdrawalStorage) GetReadyStateWithdrawals(currentBlock ui
 		func(item *bdg.Item) (bool, error) {
 			err := item.Value(stake.SetBytes)
 			if err != nil {
-				return false, err
+				return db.Continue, err
 			}
 			if stake.FinalisationBlock <= currentBlock {
 				stakes = append(stakes, stake)
-				return false, nil
+				return db.Continue, nil
 			}
-			return true, nil
+			return db.Break, nil
 		})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err

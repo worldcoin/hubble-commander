@@ -31,9 +31,9 @@ func (s *DepositStorage) GetFirstPendingDepositSubtree() (subtree *models.Pendin
 	err = s.database.Badger.Iterator(models.PendingDepositSubtreePrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		subtree, err = decodePendingDepositSubtree(item)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
-		return true, nil
+		return db.Break, nil
 	})
 	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))

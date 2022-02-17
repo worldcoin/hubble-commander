@@ -224,11 +224,11 @@ func (s *TransactionStorage) getTransactionIDsByBatchID(batchID models.Uint256) 
 	err := s.database.Badger.Iterator(seekPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		err := db.DecodeKey(item.Key(), &id, stored.BatchedTxPrefix)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 
 		slots = append(slots, id)
-		return false, nil
+		return db.Continue, nil
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err

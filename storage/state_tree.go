@@ -80,7 +80,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 		var key uint32
 		err := db.DecodeKey(item.Key(), &key, stored.StateLeafPrefix)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 		currentNodeIndex := int64(key)
 
@@ -88,12 +88,12 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 			roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, currentNodeIndex, subtreeWidth)
 			if roundedNodeIndex != nil {
 				result = uint32(*roundedNodeIndex)
-				return true, nil
+				return db.Break, nil
 			}
 		}
 
 		prevTakenNodeIndex = currentNodeIndex
-		return false, nil
+		return db.Continue, nil
 	})
 	if errors.Is(err, db.ErrIteratorFinished) { // We finished without finding any gaps, try to append the subtree at the end.
 		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
@@ -163,7 +163,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			var stateUpdate *models.StateUpdate
 			stateUpdate, err = decodeStateUpdate(item)
 			if err != nil {
-				return false, err
+				return db.Continue, err
 			}
 			if stateUpdate.CurrentRoot != *currentRootHash {
 				panic("invalid current root of a previous state update, this should never happen")
@@ -171,7 +171,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 
 			currentRootHash, err = stateTree.revertState(stateUpdate)
 			if err != nil {
-				return false, err
+				return db.Continue, err
 			}
 			return *currentRootHash == targetRootHash, nil
 		})
@@ -284,11 +284,11 @@ func (s *StateTree) IterateLeaves(action func(stateLeaf *models.StateLeaf) error
 		var stateLeaf stored.FlatStateLeaf
 		err := item.Value(stateLeaf.SetBytes)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 
 		err = action(stateLeaf.ToModelsStateLeaf())
-		return false, err
+		return db.Continue, err
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return err

@@ -150,14 +150,14 @@ func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 		var account models.AccountLeaf
 		err = item.Value(account.SetBytes)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 
 		if account.PubKeyID < AccountBatchOffset {
-			return true, nil
+			return db.Break, nil
 		}
 		nextPubKeyID = account.PubKeyID + 1
-		return true, nil
+		return db.Break, nil
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
@@ -170,11 +170,11 @@ func (s *AccountTree) IterateLeaves(action func(stateLeaf *models.AccountLeaf) e
 		var accountLeaf models.AccountLeaf
 		err := item.Value(accountLeaf.SetBytes)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 
 		err = action(&accountLeaf)
-		return false, err
+		return db.Continue, err
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return err

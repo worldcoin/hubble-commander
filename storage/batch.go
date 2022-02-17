@@ -177,7 +177,7 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *stored.Batch) bo
 			return db.Decode(v, &storedBatch)
 		})
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 		return filter(&storedBatch), nil
 	})

@@ -27,6 +27,7 @@ var (
 	}
 
 	Continue = false
+	Break    = true
 )
 
 type IteratorFilter func(item *badger.Item) (finish bool, err error)

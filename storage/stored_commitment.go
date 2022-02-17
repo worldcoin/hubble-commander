@@ -43,7 +43,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error
 	var err error
 	err = s.database.Badger.Iterator(stored.CommitmentPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (bool, error) {
 		storedCommitment, err = decodeStoredCommitment(item)
-		return true, err
+		return db.Break, err
 	})
 	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(NewNotFoundError("commitment"))
@@ -87,10 +87,10 @@ func (s *CommitmentStorage) getStoredCommitmentsByBatchID(batchID models.Uint256
 	err := s.database.Badger.Iterator(prefix, bdg.DefaultIteratorOptions, func(item *bdg.Item) (bool, error) {
 		commitment, err := decodeStoredCommitment(item)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 		storedCommitments = append(storedCommitments, *commitment)
-		return false, nil
+		return db.Continue, nil
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
@@ -114,10 +114,10 @@ func getCommitmentIDsByBatchID(txn *Database, batchID models.Uint256) ([]models.
 		var id models.CommitmentID
 		err := db.DecodeKey(item.Key(), &id, stored.CommitmentPrefix)
 		if err != nil {
-			return false, err
+			return db.Continue, err
 		}
 		ids = append(ids, id)
-		return false, nil
+		return db.Continue, nil
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
