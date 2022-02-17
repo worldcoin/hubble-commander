@@ -9,6 +9,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/stretchr/testify/require"
 )
@@ -33,6 +34,7 @@ func TestStartApiServer(t *testing.T) {
 		nil,
 		eth.DomainOnlyTestClient,
 		commanderMetrics,
+		mempool.NewTestTxPool(),
 		false,
 		func(enable bool) {},
 		func() bool { return false },

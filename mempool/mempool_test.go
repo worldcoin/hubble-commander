@@ -95,48 +95,59 @@ func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsAllExecutableTxsOfGivenTy
 func (s *MempoolTestSuite) TestGetNextExecutableTx_ReturnsNextTx() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
 	s.Equal(s.txs[1], tx)
 }
 
 func (s *MempoolTestSuite) TestGetNextExecutableTx_IncrementsNonce() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
 	s.EqualValues(11, txMempool.buckets[0].nonce)
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	_, err = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
 	s.EqualValues(12, txMempool.buckets[0].nonce)
 }
 
 func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreTransactionsInSlice() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
-	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.NoError(err)
+	tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.NoError(err)
 	s.Nil(tx)
 }
 
 func (s *MempoolTestSuite) TestGetNextExecutableTx_NoMoreExecutableTxs() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 0)
-	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
+	tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
 	s.Nil(tx)
 }
 
 func (s *MempoolTestSuite) TestGetNextExecutableTx_NoExecutableTxsOfGivenType() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
-	tx := txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
+	_, err := txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
+	s.NoError(err)
+	tx, err := txMempool.GetNextExecutableTx(txtype.Create2Transfer, 0)
+	s.NoError(err)
 	s.Nil(tx)
 }
 
 func (s *MempoolTestSuite) TestGetNextExecutableTx_RemovesEmptyBuckets() {
 	txController, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.NoError(err)
+	_, err = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.NoError(err)
 	s.Contains(txMempool.buckets, uint32(2))
 	s.Nil(txMempool.buckets[2])
 
@@ -144,26 +155,39 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_RemovesEmptyBuckets() {
 	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
+func (s *MempoolTestSuite) TestGetNextExecutableTx_BucketDoesNotExist() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 10)
+	s.ErrorIs(err, ErrNonexistentBucket)
+	s.Nil(tx)
+}
+
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	txMempool.RemoveFailedTx(0)
+	err := txMempool.RemoveFailedTx(0)
+	s.NoError(err)
 	s.Equal(txMempool.buckets[0].txs, s.txs[1:3])
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTx_MakesTheNextTxNonExecutable() {
 	_, txMempool := s.mempool.BeginTransaction()
 
-	txMempool.RemoveFailedTx(0)
-	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	err := txMempool.RemoveFailedTx(0)
+	s.NoError(err)
+	tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
 	s.Nil(tx)
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
 	txController, txMempool := s.mempool.BeginTransaction()
 
-	_ = txMempool.GetNextExecutableTx(txtype.Transfer, 2)
-	txMempool.RemoveFailedTx(2)
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 2)
+	s.NoError(err)
+	err = txMempool.RemoveFailedTx(2)
+	s.NoError(err)
 	s.Contains(txMempool.buckets, uint32(2))
 	s.Nil(txMempool.buckets[2])
 
@@ -171,10 +195,18 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
 	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
+func (s *MempoolTestSuite) TestRemoveFailedTx_BucketDoesNotExist() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	err := txMempool.RemoveFailedTx(10)
+	s.ErrorIs(err, ErrNonexistentBucket)
+}
+
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	tx := s.newTransfer(0, 14)
-	err := s.mempool.AddOrReplace(tx, 10)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
+	s.Nil(prevTxHash)
 
 	bucket := s.mempool.buckets[0]
 	lastTxInBucket := bucket.txs[len(bucket.txs)-1]
@@ -183,8 +215,9 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 
 func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList() {
 	tx := s.newTransfer(0, 12)
-	err := s.mempool.AddOrReplace(tx, 10)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
+	s.Nil(prevTxHash)
 
 	bucket := s.mempool.buckets[0]
 	s.Equal(tx, bucket.txs[2])
@@ -193,8 +226,9 @@ func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList(
 func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	tx := s.newTransfer(0, 11)
 	tx.Fee = models.MakeUint256(20)
-	err := s.mempool.AddOrReplace(tx, 10)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
+	s.Equal(s.txs[1].GetBase().Hash, *prevTxHash)
 
 	bucket := s.mempool.buckets[0]
 	s.Equal(tx, bucket.txs[1])
@@ -202,8 +236,9 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 
 func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	tx := s.newTransfer(0, 11)
-	err := s.mempool.AddOrReplace(tx, 10)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.ErrorIs(err, ErrTxReplacementFailed)
+	s.Nil(prevTxHash)
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
