@@ -81,6 +81,11 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return errors.WithStack(err)
 	}
 
+	err = c.txPool.ReadTxs(ctx)
+	if err != nil {
+		return err
+	}
+
 	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 

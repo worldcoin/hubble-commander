@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -51,6 +52,7 @@ func (s *RollupTestSuite) SetupTest() {
 		storage: s.testStorage.Storage,
 		client:  s.testClient.Client,
 		metrics: metrics.NewCommanderMetrics(),
+		txPool:  mempool.NewTestTxPool(),
 	}
 
 	domain, err := s.testClient.GetDomain()
