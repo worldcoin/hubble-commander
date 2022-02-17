@@ -144,6 +144,13 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_RemovesEmptyBuckets() {
 	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
+func (s *MempoolTestSuite) TestGetNextExecutableTx_BucketDoesNotExist() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	tx := txMempool.GetNextExecutableTx(txtype.Transfer, 10)
+	s.Nil(tx)
+}
+
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
 	_, txMempool := s.mempool.BeginTransaction()
 
@@ -169,6 +176,12 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
 
 	txController.Commit()
 	s.NotContains(s.mempool.buckets, uint32(2))
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTx_BucketDoesNotExist() {
+	_, txMempool := s.mempool.BeginTransaction()
+
+	txMempool.RemoveFailedTx(10)
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {

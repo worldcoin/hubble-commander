@@ -170,6 +170,9 @@ func (m *TxMempool) RemoveFailedTx(stateID uint32) {
 
 func (m *TxMempool) removeTx(stateID uint32) *txBucket {
 	bucket := m.getBucket(stateID)
+	if bucket == nil {
+		return nil
+	}
 	bucket.txs = bucket.txs[1:]
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
@@ -181,8 +184,12 @@ func (m *TxMempool) removeTx(stateID uint32) *txBucket {
 func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	bucket := m.buckets[stateID]
 	if bucket == nil {
-		bucket = m.underlying.getBucket(stateID).Copy()
-		m.buckets[stateID] = bucket
+		bucket = m.underlying.getBucket(stateID)
+		if bucket == nil {
+			return nil
+		}
+
+		m.buckets[stateID] = bucket.Copy()
 	}
 	return bucket
 }
