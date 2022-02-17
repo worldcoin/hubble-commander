@@ -15,11 +15,11 @@ func CalculateTransactionStatus(
 		return txstatus.Error.Ref(), nil
 	}
 
-	if transfer.CommitmentID == nil {
+	if transfer.CommitmentSlot == nil {
 		return txstatus.Pending.Ref(), nil
 	}
 
-	batch, err := storage.GetBatch(transfer.CommitmentID.BatchID)
+	batch, err := storage.GetBatch(transfer.CommitmentSlot.BatchID)
 	if err != nil {
 		return nil, err
 	}

@@ -238,9 +238,10 @@ func (s *GetMassMigrationCommitmentProofTestSuite) generateMassMigrationForTestS
 			0,
 			0,
 			models.NewTimestamp(time.Unix(140, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
+			models.CommitmentSlot{
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
+				IndexInCommitment: 0,
 			},
 		),
 		makeMassMigration(
@@ -248,9 +249,10 @@ func (s *GetMassMigrationCommitmentProofTestSuite) generateMassMigrationForTestS
 			0,
 			1,
 			models.NewTimestamp(time.Unix(150, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
+			models.CommitmentSlot{
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
+				IndexInCommitment: 1,
 			},
 		),
 		makeMassMigration(
@@ -258,9 +260,10 @@ func (s *GetMassMigrationCommitmentProofTestSuite) generateMassMigrationForTestS
 			0,
 			2,
 			models.NewTimestamp(time.Unix(160, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 1,
+			models.CommitmentSlot{
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      1,
+				IndexInCommitment: 2,
 			},
 		),
 	}
@@ -271,20 +274,20 @@ func makeMassMigration(
 	from uint32,
 	nonce uint64,
 	receiveTime *models.Timestamp,
-	commitmentID models.CommitmentID,
+	commitmentSlot models.CommitmentSlot,
 ) models.MassMigration {
 	return models.MassMigration{
 		TransactionBase: models.TransactionBase{
-			Hash:         hash,
-			TxType:       txtype.MassMigration,
-			FromStateID:  from,
-			Amount:       models.MakeUint256(90),
-			Fee:          models.MakeUint256(10),
-			Nonce:        models.MakeUint256(nonce),
-			Signature:    models.MakeRandomSignature(),
-			ReceiveTime:  receiveTime,
-			CommitmentID: &commitmentID,
-			ErrorMessage: nil,
+			Hash:           hash,
+			TxType:         txtype.MassMigration,
+			FromStateID:    from,
+			Amount:         models.MakeUint256(90),
+			Fee:            models.MakeUint256(10),
+			Nonce:          models.MakeUint256(nonce),
+			Signature:      models.MakeRandomSignature(),
+			ReceiveTime:    receiveTime,
+			CommitmentSlot: &commitmentSlot,
+			ErrorMessage:   nil,
 		},
 		SpokeID: 1,
 	}

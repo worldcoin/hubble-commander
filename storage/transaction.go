@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/stored"
+	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -32,11 +34,11 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 	result := &models.TransactionWithBatchDetails{Transaction: generic}
 
 	base := generic.GetBase()
-	if base.CommitmentID == nil {
+	if base.CommitmentSlot == nil {
 		return result, nil
 	}
 
-	batch, err := s.GetBatch(base.CommitmentID.BatchID)
+	batch, err := s.GetBatch(base.CommitmentSlot.BatchID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +52,28 @@ func (s *Storage) unsafeGetTransactionWithBatchDetails(hash common.Hash) (
 func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentID) (models.GenericTransactionArray, error) {
 	batchedTxs := make([]stored.BatchedTx, 0, 32)
 
-	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
+	// BatchedTx are stored with CommitmentSlot as their primary key:
+	// - CommitmentSlot is (BatchID, IndexInBatch, IndexInCommitment)
+	// - CommitmentID   is (BatchId, IndexInBatch)
+	// This means that if a CommitmentID and a CommitmentSlot represent the same
+	// commitment then the serialization of the CommitmentID will be a prefix of the
+	// serialization of the CommitmentSlot. This makes it easy to look for all
+	// BatchedTxs for `id`
 
-	err := s.database.Badger.Find(&batchedTxs, query)
-	if err != nil {
+	// nolint: gocritic
+	seekPrefix := append(stored.BatchedTxPrefix, id.Bytes()...)
+
+	err := s.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
+		var batchedTx stored.BatchedTx
+		err := item.Value(batchedTx.SetBytes)
+		if err != nil {
+			return db.Continue, err
+		}
+
+		batchedTxs = append(batchedTxs, batchedTx)
+		return db.Continue, nil
+	})
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
 
@@ -128,14 +148,14 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 			return err
 		}
 
-		err = s.checkNoTx(&hash, &stored.BatchedTx{})
+		err = s.checkNoBatchedTx(&hash)
 		if err != nil {
 			return err
 		}
 
 		failedTx := stored.NewFailedTx(tx)
 		return badger.Insert(hash, *failedTx)
-	} else if base.CommitmentID != nil {
+	} else if base.CommitmentSlot != nil {
 		// This is a BatchedTx
 
 		err := s.checkNoTx(&hash, &stored.PendingTx{})
@@ -149,7 +169,7 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		}
 
 		batchedTx := stored.NewBatchedTx(tx)
-		err = badger.Insert(hash, *batchedTx)
+		err = s.insertBatchedTx(batchedTx)
 		if err != nil {
 			return err
 		}
@@ -162,7 +182,8 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		if err != nil {
 			return err
 		}
-		err = s.checkNoTx(&hash, &stored.BatchedTx{})
+		// TODO: this needs to lookup using the hash index
+		err = s.checkNoBatchedTx(&hash)
 		if err != nil {
 			return err
 		}
@@ -170,6 +191,19 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		pendingTx := stored.NewPendingTx(tx)
 		return badger.Insert(pendingTx.Hash, *pendingTx)
 	}
+}
+
+func (s *TransactionStorage) checkNoBatchedTx(hash *common.Hash) error {
+	_, err := s.getBatchedTxByHash(*hash)
+	if errors.Is(err, bh.ErrNotFound) {
+		// there is no tx, so we're free to insert a tx!
+		return nil
+	}
+	if err == nil {
+		// we successfully fetched a tx, so our caller should fail
+		return bh.ErrKeyExists
+	}
+	return err
 }
 
 func (s *TransactionStorage) checkNoTx(hash *common.Hash, result interface{}) error {
@@ -210,7 +244,9 @@ func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactio
 		for i := 0; i < txs.Len(); i++ {
 			err := txStorage.AddTransaction(txs.At(i))
 			if errors.Is(err, bh.ErrKeyExists) {
-				err = txStorage.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
+				err = txStorage.MarkTransactionAsIncluded(
+					txs.At(i), txs.At(i).GetBase().CommitmentSlot,
+				)
 				if err != nil {
 					return err
 				}

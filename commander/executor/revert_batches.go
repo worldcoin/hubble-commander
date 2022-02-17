@@ -75,9 +75,9 @@ func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.
 	if len(batchIDs) == 0 {
 		return nil
 	}
-	hashes, err := c.storage.GetTransactionHashesByBatchIDs(batchIDs...)
+	slots, err := c.storage.GetTransactionIDsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
-	return c.storage.MarkTransactionsAsPending(hashes)
+	return c.storage.MarkTransactionsAsPending(slots)
 }

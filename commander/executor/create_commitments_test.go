@@ -227,7 +227,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInclu
 	for i := range transfers {
 		tx, err := s.storage.GetTransfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentSlot.CommitmentID())
 		s.Nil(tx.ErrorMessage)
 	}
 }
@@ -248,12 +248,12 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 		var tx *models.Transfer
 		tx, err = s.storage.GetTransfer(validTxs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentSlot.CommitmentID())
 	}
 
 	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
 	s.NoError(err)
-	s.Nil(tx.CommitmentID)
+	s.Nil(tx.CommitmentSlot)
 	s.Nil(tx.ErrorMessage)
 }
 
@@ -412,7 +412,12 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 
 	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
 	s.NoError(err)
-	s.Equal(models.MakeUint256(1), minedHigherFeeTransfer.CommitmentID.BatchID)
+
+	expectedCommitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentSlot.CommitmentID())
 }
 
 func (s *CreateCommitmentsTestSuite) initTxs(txs models.GenericTransactionArray) {

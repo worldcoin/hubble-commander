@@ -25,6 +25,8 @@ var (
 		PrefetchValues: false,
 		Reverse:        false,
 	}
+
+	Continue = false
 )
 
 type IteratorFilter func(item *badger.Item) (finish bool, err error)

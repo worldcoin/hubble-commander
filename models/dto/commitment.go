@@ -12,6 +12,16 @@ type CommitmentID struct {
 	IndexInBatch uint8
 }
 
+func NewCommitmentIDFromSlot(id *models.CommitmentSlot) *CommitmentID {
+	if id == nil {
+		return nil
+	}
+	return &CommitmentID{
+		BatchID:      id.BatchID,
+		IndexInBatch: id.IndexInBatch,
+	}
+}
+
 func NewCommitmentID(id *models.CommitmentID) *CommitmentID {
 	if id == nil {
 		return nil

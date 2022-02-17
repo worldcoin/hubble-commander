@@ -2,38 +2,42 @@ package stored
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 var (
-	BatchedTxName   = models.GetTypeName(BatchedTx{})
-	BatchedTxPrefix = models.GetBadgerHoldPrefix(BatchedTx{})
+	BatchedTxName                = models.GetTypeName(BatchedTx{})
+	BatchedTxPrefix              = models.GetBadgerHoldPrefix(BatchedTx{})
+	errInvalidBatchedTxIndexType = fmt.Errorf("invalid models.BatchedTx index type")
 )
 
 type BatchedTx struct {
 	PendingTx
-	CommitmentID models.CommitmentID `badgerhold:"index"`
+	ID models.CommitmentSlot // unsafeGetTransactionCount relies on this name
 }
 
 func NewBatchedTx(tx models.GenericTransaction) *BatchedTx {
 	base := tx.GetBase()
 
-	if base.CommitmentID == nil {
+	if base.CommitmentSlot == nil {
 		// this is a PendingTx or maybe a FailedTx
-		panic("missing CommitmentID in param passed to NewBatchedTx")
+		panic("missing CommitmentSlot in param passed to NewBatchedTx")
 	}
 
 	return &BatchedTx{
-		PendingTx:    *NewPendingTx(tx),
-		CommitmentID: *base.CommitmentID,
+		PendingTx: *NewPendingTx(tx),
+		ID:        *base.CommitmentSlot,
 	}
 }
 
-func NewBatchedTxFromPendingAndCommitment(pendingTx *PendingTx, commitmentID *models.CommitmentID) *BatchedTx {
+func NewBatchedTxFromPendingAndCommitment(pendingTx *PendingTx, commitmentSlot *models.CommitmentSlot) *BatchedTx {
 	return &BatchedTx{
-		PendingTx:    *pendingTx,
-		CommitmentID: *commitmentID,
+		PendingTx: *pendingTx,
+		ID:        *commitmentSlot,
 	}
 }
 
@@ -44,14 +48,14 @@ func (t *BatchedTx) Bytes() []byte {
 	buf.Grow(bytesLen)
 
 	buf.Write(t.PendingTx.Bytes())
-	buf.Write(t.CommitmentID.Bytes())
+	buf.Write(t.ID.Bytes())
 
 	return buf.Bytes()
 }
 
 func (t *BatchedTx) ToGenericTransaction() models.GenericTransaction {
 	txn := t.PendingTx.ToGenericTransaction()
-	txn.GetBase().CommitmentID = &t.CommitmentID
+	txn.GetBase().CommitmentSlot = &t.ID
 	return txn
 }
 
@@ -86,10 +90,44 @@ func (t *BatchedTx) SetBytes(data []byte) error {
 	// were read in the call to SetBytes()
 	_, rest := takeSlice(data, t.PendingTx.BytesLen())
 
-	slice, _ := takeSlice(rest, sizeCommitment)
-	return t.CommitmentID.SetBytes(slice)
+	slice, _ := takeSlice(rest, sizeCommitmentSlot)
+	return t.ID.SetBytes(slice)
 }
 
 func (t *BatchedTx) BytesLen() int {
-	return t.PendingTx.BytesLen() + sizeCommitment
+	return t.PendingTx.BytesLen() + sizeCommitmentSlot
+}
+
+// nolint:gocritic
+// Type implements badgerhold.Storer
+func (t BatchedTx) Type() string {
+	return string(BatchedTxName)
+}
+
+// nolint:gocritic
+// Indexes implements badgerhold.Storer
+func (t BatchedTx) Indexes() map[string]bh.Index {
+	return map[string]bh.Index{
+		"Hash": {
+			IndexFunc: func(_ string, value interface{}) ([]byte, error) {
+				b, err := interfaceToBatchedTx(value)
+				if err != nil {
+					return nil, err
+				}
+				return b.Hash.Bytes(), nil
+			},
+		},
+	}
+}
+
+func interfaceToBatchedTx(value interface{}) (*BatchedTx, error) {
+	p, ok := value.(*BatchedTx)
+	if ok {
+		return p, nil
+	}
+	v, ok := value.(BatchedTx)
+	if ok {
+		return &v, nil
+	}
+	return nil, errors.WithStack(errInvalidBatchedTxIndexType)
 }

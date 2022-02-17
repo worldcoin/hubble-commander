@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
 	"sync/atomic"
 
@@ -81,10 +80,10 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 	return txCount, txController.Commit()
 }
 
-func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) error {
+func (s *TransactionStorage) MarkTransactionsAsPending(txIDs []models.CommitmentSlot) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		for i := range txHashes {
-			err := txStorage.unsafeMarkTransactionAsPending(&txHashes[i])
+		for i := range txIDs {
+			err := txStorage.unsafeMarkTransactionAsPending(&txIDs[i])
 			if err != nil {
 				return err
 			}
@@ -93,24 +92,21 @@ func (s *TransactionStorage) MarkTransactionsAsPending(txHashes []common.Hash) e
 	})
 }
 
-func (s *TransactionStorage) unsafeMarkTransactionAsPending(txHash *common.Hash) error {
-	var pendingTx stored.PendingTx
-
+func (s *TransactionStorage) unsafeMarkTransactionAsPending(txSlot *models.CommitmentSlot) error {
 	var batchedTx stored.BatchedTx
-	err := s.getAndDelete(*txHash, &batchedTx)
-	if err == nil {
-		pendingTx = batchedTx.PendingTx
-		s.decrementTransactionCount()
-	} else {
-		var failedTx stored.FailedTx
-		err = s.getAndDelete(*txHash, &failedTx)
-		if err != nil {
-			return err
-		}
-		pendingTx = failedTx.PendingTx
+	err := s.getAndDelete(*txSlot, &batchedTx)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
-	return s.database.Badger.Insert(*txHash, pendingTx)
+	s.decrementTransactionCount()
+
+	pendingTx := batchedTx.PendingTx
+	err = s.database.Badger.Insert(pendingTx.Hash, pendingTx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
@@ -122,10 +118,15 @@ func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
 		}
 
 		failedTx := stored.NewFailedTxFromError(&pendingTx, txError.ErrorMessage)
-		return txStorage.database.Badger.Insert(txError.TxHash, *failedTx)
+		err = txStorage.database.Badger.Insert(txError.TxHash, *failedTx)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 }
 
+// this must be called from inside a transaction
 func (s *TransactionStorage) getAndDelete(key, result interface{}) error {
 	err := s.database.Badger.Get(key, result)
 	if err != nil {
@@ -196,7 +197,7 @@ func (s *Storage) unsafeGetTransactionCount() (*uint64, error) {
 
 	count, err := s.database.Badger.Count(
 		&stored.BatchedTx{},
-		bh.Where("CommitmentID.BatchID").Le(latestBatch.ID),
+		bh.Where("ID.BatchID").Le(latestBatch.ID),
 	)
 	if err != nil {
 		return nil, err
@@ -209,40 +210,48 @@ func (s *Storage) initBatchedTxsCounter() (err error) {
 	return err
 }
 
-func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
-	hashes := make([]common.Hash, 0, len(batchIDs)*32)
+func (s *TransactionStorage) getTransactionIDsByBatchID(batchID models.Uint256) ([]models.CommitmentSlot, error) {
+	slots := make([]models.CommitmentSlot, 0, 32)
 
-	// We have an index on CommitmentID. It turns out that BatchID is the first
-	// member of the BatchID struct, so we effectively have an index on BatchID.
-	// We can take advantage of that index by manually iterating.
-	// The slow version is: Badger.Find(..., bh.Where("CommitmentID.BatchID").In(...))
+	// nolint: gocritic
+	seekPrefix := append(stored.BatchedTxPrefix, batchID.Bytes()...)
 
-	var keyList bh.KeyList
-	batchPrefixes := batchIdsToBatchPrefixes(batchIDs)
-	seekPrefix := db.IndexKeyPrefix(stored.BatchedTxName, "CommitmentID")
-	err := s.database.Badger.Iterator(seekPrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
-		if validForPrefixes(keyValue(seekPrefix, item.Key()), batchPrefixes) {
-			err := item.Value(func(val []byte) error {
-				return db.Decode(val, &keyList)
-			})
-			if err != nil {
-				return false, err
-			}
-			txHashes, err := decodeKeyListHashes(stored.BatchedTxPrefix, keyList)
-			if err != nil {
-				return false, err
-			}
-			hashes = append(hashes, txHashes...)
+	// BatchedTx are stored with CommitmentSlot as their primary key: BatchID is the
+	// first member of CommitmentSlot which means we effectively have an index on
+	// BatchID.
+
+	var id models.CommitmentSlot
+	err := s.database.Badger.Iterator(seekPrefix, db.KeyIteratorOpts, func(item *bdg.Item) (bool, error) {
+		err := db.DecodeKey(item.Key(), &id, stored.BatchedTxPrefix)
+		if err != nil {
+			return false, err
 		}
+
+		slots = append(slots, id)
 		return false, nil
 	})
 	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
-	if len(hashes) == 0 {
+
+	return slots, nil
+}
+
+func (s *TransactionStorage) GetTransactionIDsByBatchIDs(batchIDs ...models.Uint256) ([]models.CommitmentSlot, error) {
+	ids := make([]models.CommitmentSlot, 0, len(batchIDs)*32)
+
+	for i := range batchIDs {
+		txIds, err := s.getTransactionIDsByBatchID(batchIDs[i])
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, txIds...)
+	}
+
+	if len(ids) == 0 {
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
-	return hashes, nil
+	return ids, nil
 }
 
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
@@ -291,44 +300,81 @@ func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericArray, er
 	return models.MakeGenericArray(txs...), nil
 }
 
+func (s *TransactionStorage) MarkTransactionAsIncluded(
+	tx models.GenericTransaction,
+	commitmentSlot *models.CommitmentSlot,
+) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		return txStorage.unsafeMarkTransactionAsIncluded(tx, commitmentSlot)
+	})
+}
+
+func (s *TransactionStorage) unsafeMarkTransactionAsIncluded(
+	tx models.GenericTransaction,
+	commitmentSlot *models.CommitmentSlot,
+) error {
+	// note: the rest of the txn is ignored. We take the existing txn
+	//       in our database and record which commitment it belongs
+	//       to. We assume that the executed transaction does not
+	//       differ from our local records.
+	hash := tx.GetBase().Hash
+
+	var pendingTx stored.PendingTx
+	err := s.getAndDelete(hash, &pendingTx)
+	if err != nil {
+		return err
+	}
+
+	// this body update is only needed for ToStateID
+	pendingTx.Body = stored.NewTxBody(tx)
+	batchedTx := stored.NewBatchedTxFromPendingAndCommitment(
+		&pendingTx, commitmentSlot,
+	)
+	err = s.insertBatchedTx(batchedTx)
+	if err != nil {
+		return err
+	}
+	s.incrementTransactionCount()
+
+	return nil
+}
+
+// Note: This method assumes that transactions were included in the commitment in the same
+// order as they are given here.
 func (s *TransactionStorage) MarkTransactionsAsIncluded(
 	txs models.GenericTransactionArray,
 	commitmentID *models.CommitmentID,
 ) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		if txs.Len() > 255 {
+			panic("Commitments cannot have more than 255 transactions")
+		}
+
 		for i := 0; i < txs.Len(); i++ {
 			tx := txs.At(i)
+			commitmentSlot := models.NewCommitmentSlot(*commitmentID, uint8(i))
 
-			// note: the rest of the txn is ignored. We take the existing txn
-			//       in our database and record which commitment it belongs
-			//       to. We assume that the executed transaction does not
-			//       differ from our local records.
-			hash := tx.GetBase().Hash
-
-			var pendingTx stored.PendingTx
-			err := txStorage.getAndDelete(hash, &pendingTx)
+			err := txStorage.unsafeMarkTransactionAsIncluded(tx, commitmentSlot)
 			if err != nil {
 				return err
 			}
-
-			// this body update is only needed for ToStateID
-			pendingTx.Body = stored.NewTxBody(tx)
-			batchedTx := stored.NewBatchedTxFromPendingAndCommitment(
-				&pendingTx, commitmentID,
-			)
-			err = txStorage.database.Badger.Insert(hash, *batchedTx)
-			if err != nil {
-				return err
-			}
-			txStorage.incrementTransactionCount()
 		}
 		return nil
 	})
 }
 
+func (s *TransactionStorage) insertBatchedTx(batchedTx *stored.BatchedTx) error {
+	key := batchedTx.ID
+	err := s.database.Badger.Insert(key, *batchedTx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
 func (s *TransactionStorage) getBatchedTxByHash(hash common.Hash) (*stored.BatchedTx, error) {
 	var batchedTx stored.BatchedTx
-	err := s.database.Badger.Get(hash, &batchedTx)
+	err := s.database.Badger.FindOneUsingIndex(&batchedTx, hash, "Hash")
 	if err != nil {
 		return nil, err
 	}
@@ -364,38 +410,4 @@ func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.Gene
 		return nil, err
 	}
 	return failedTx.ToGenericTransaction(), nil
-}
-
-func decodeKeyListHashes(prefix []byte, keyList bh.KeyList) ([]common.Hash, error) {
-	var hash common.Hash
-	hashes := make([]common.Hash, 0, len(keyList))
-	for i := range keyList {
-		err := stored.DecodeHash(keyValue(prefix, keyList[i]), &hash)
-		if err != nil {
-			return nil, err
-		}
-		hashes = append(hashes, hash)
-	}
-	return hashes, nil
-}
-
-func batchIdsToBatchPrefixes(batchIDs []models.Uint256) [][]byte {
-	batchPrefixes := make([][]byte, 0, len(batchIDs))
-	for i := range batchIDs {
-		batchPrefixes = append(batchPrefixes, batchIDs[i].Bytes())
-	}
-	return batchPrefixes
-}
-
-func keyValue(prefix, key []byte) []byte {
-	return key[len(prefix):]
-}
-
-func validForPrefixes(s []byte, prefixes [][]byte) bool {
-	for i := range prefixes {
-		if bytes.HasPrefix(s, prefixes[i]) {
-			return true
-		}
-	}
-	return false
 }

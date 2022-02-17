@@ -60,7 +60,7 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieveIncludedTransfer() {
 	includedTransfer := transfer
-	includedTransfer.CommitmentID = &models.CommitmentID{
+	includedTransfer.CommitmentSlot = &models.CommitmentSlot{
 		BatchID:      models.MakeUint256(3),
 		IndexInBatch: 1,
 	}
@@ -99,7 +99,7 @@ func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitmentID, *tx.CommitmentID)
+		s.Equal(commitmentID, *tx.CommitmentSlot.CommitmentID())
 	}
 }
 

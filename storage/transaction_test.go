@@ -61,7 +61,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_WithoutBatch()
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
 	transferInBatch := transfer
-	transferInBatch.CommitmentID = &models.CommitmentID{
+	transferInBatch.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: s.batch.ID,
 	}
 	err := s.storage.AddTransaction(&transferInBatch)
@@ -79,7 +79,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Transfer() {
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfer() {
 	create2TransferInBatch := create2Transfer
-	create2TransferInBatch.CommitmentID = &models.CommitmentID{
+	create2TransferInBatch.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: s.batch.ID,
 	}
 	err := s.storage.AddTransaction(&create2TransferInBatch)
@@ -97,7 +97,7 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_Create2Transfe
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration() {
 	massMigrationInBatch := massMigration
-	massMigrationInBatch.CommitmentID = &models.CommitmentID{
+	massMigrationInBatch.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: s.batch.ID,
 	}
 	err := s.storage.AddTransaction(&massMigrationInBatch)
@@ -131,7 +131,7 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_UpdatesTx() {
 
 func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdateBatchedTx() {
 	tx := create2Transfer
-	tx.CommitmentID = &models.CommitmentID{
+	tx.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: models.MakeUint256(1),
 	}
 	err := s.storage.AddTransaction(&tx)
@@ -155,7 +155,7 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 
 func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	transfer1 := transfer
-	transfer1.CommitmentID = &txCommitment.ID
+	transfer1.CommitmentSlot = models.NewCommitmentSlot(txCommitment.ID, 0)
 	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
@@ -163,7 +163,7 @@ func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	otherCommitmentID.IndexInBatch += 1
 	transfer2 := create2Transfer
 	transfer2.Hash = utils.RandomHash()
-	transfer2.CommitmentID = &otherCommitmentID
+	transfer2.CommitmentSlot = models.NewCommitmentSlot(otherCommitmentID, 0)
 	err = s.storage.AddTransaction(&transfer2)
 	s.NoError(err)
 
@@ -185,9 +185,9 @@ func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
 
 	txBeforeUpsert, err := s.storage.GetTransfer(transfer.Hash)
 	s.NoError(err)
-	s.Nil(txBeforeUpsert.CommitmentID)
+	s.Nil(txBeforeUpsert.CommitmentSlot)
 
-	txBeforeUpsert.CommitmentID = &models.CommitmentID{
+	txBeforeUpsert.CommitmentSlot = &models.CommitmentSlot{
 		BatchID:      models.MakeUint256(1),
 		IndexInBatch: 0,
 	}

@@ -68,12 +68,12 @@ func TestKeyListMetadata_Bytes(t *testing.T) {
 }
 
 func TestIndexKeyPrefix(t *testing.T) {
-	prefix := IndexKeyPrefix(stored.BatchedTxName, "CommitmentID")
-	require.Equal(t, []byte("_bhIndex:BatchedTx:CommitmentID:"), prefix)
+	prefix := IndexKeyPrefix(stored.BatchedTxName, "Hash")
+	require.Equal(t, []byte("_bhIndex:BatchedTx:Hash:"), prefix)
 }
 
 func TestIndexKey(t *testing.T) {
 	value := stored.EncodeUint32(1)
-	prefix := IndexKey(stored.BatchedTxName, "CommitmentID", value)
-	require.Equal(t, append([]byte("_bhIndex:BatchedTx:CommitmentID:"), value...), prefix)
+	prefix := IndexKey(stored.BatchedTxName, "Hash", value)
+	require.Equal(t, append([]byte("_bhIndex:BatchedTx:Hash:"), value...), prefix)
 }

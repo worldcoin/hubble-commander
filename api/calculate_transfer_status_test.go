@@ -89,7 +89,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.CommitmentID = &models.CommitmentID{
+	s.transfer.CommitmentSlot = &models.CommitmentSlot{
 		BatchID:      batch.ID,
 		IndexInBatch: 0,
 	}
@@ -108,7 +108,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.CommitmentID = &models.CommitmentID{
+	s.transfer.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: batch.ID,
 	}
 
@@ -129,7 +129,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
-	s.transfer.CommitmentID = &models.CommitmentID{
+	s.transfer.CommitmentSlot = &models.CommitmentSlot{
 		BatchID: batch.ID,
 	}
 

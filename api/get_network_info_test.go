@@ -111,10 +111,10 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 	s.NoError(err)
 	err = s.api.storage.AddTransaction(&models.Transfer{
 		TransactionBase: models.TransactionBase{
-			Hash:         common.Hash{1, 2, 3},
-			TxType:       txtype.Transfer,
-			FromStateID:  0,
-			CommitmentID: &commitmentInBatch.ID,
+			Hash:           common.Hash{1, 2, 3},
+			TxType:         txtype.Transfer,
+			FromStateID:    0,
+			CommitmentSlot: models.NewCommitmentSlot(commitmentInBatch.ID, 0),
 		},
 		ToStateID: 1,
 	})

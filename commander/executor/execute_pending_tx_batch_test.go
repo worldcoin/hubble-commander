@@ -73,7 +73,7 @@ func (s *ExecutePendingTxBatchTestSuite) TearDownTest() {
 
 func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalances() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
-	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(s.pendingBatch.Commitments[0].GetCommitmentBase().ID, 0)
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
 
 	prevSenderLeaf, err := s.storage.StateTree.Leaf(tx.FromStateID)
@@ -96,7 +96,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_UpdatesUserBala
 
 func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatch() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
-	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(s.pendingBatch.Commitments[0].GetCommitmentBase().ID, 0)
 	s.pendingBatch.Commitments[0].Transactions = models.MakeGenericArray(&tx)
 
 	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
@@ -126,7 +126,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatc
 
 func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_ErrorsOnFailureToApplyAllPendingBatchTxs() {
 	tx := testutils.MakeTransfer(1, 2, 1, 100)
-	tx.CommitmentID = &s.pendingBatch.Commitments[0].GetCommitmentBase().ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(s.pendingBatch.Commitments[0].GetCommitmentBase().ID, 0)
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
 
 	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)

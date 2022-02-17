@@ -37,6 +37,10 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.CommitmentID:
 		return v.Bytes(), nil
+	case models.CommitmentSlot:
+		return v.Bytes(), nil
+	case *models.CommitmentSlot:
+		return v.Bytes(), nil
 	case models.PendingDeposit:
 		return v.Bytes(), nil
 	case *models.PendingDeposit:
@@ -136,6 +140,8 @@ func Decode(data []byte, value interface{}) error {
 	case *models.ChainState:
 		return v.SetBytes(data)
 	case *models.CommitmentID:
+		return v.SetBytes(data)
+	case *models.CommitmentSlot:
 		return v.SetBytes(data)
 	case *models.PendingDeposit:
 		return v.SetBytes(data)
