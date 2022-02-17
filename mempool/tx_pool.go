@@ -6,6 +6,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 type TxPool interface {
@@ -61,12 +63,19 @@ func (p *txPool) UpdateMempool() error {
 
 	for _, tx := range p.incomingTxs {
 		//TODO: add failed tx to FailedTxs and remove replaced one from pending
-		_, err := p.mempool.AddOrReplace(p.storage, tx)
-		if err == ErrTxReplacementFailed {
+		prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
+		if errors.Is(err, ErrTxReplacementFailed) {
+			err = p.storage.SetTransactionError(getReplacementError(&tx.GetBase().Hash))
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		if err != nil {
 			return err
+		}
+		if prevTxHash != nil {
+
 		}
 	}
 
@@ -80,4 +89,11 @@ func (p *txPool) Send(tx models.GenericTransaction) {
 
 func (p *txPool) Mempool() *Mempool {
 	return p.mempool
+}
+
+func getReplacementError(txHash *common.Hash) models.TxError {
+	return models.TxError{
+		TxHash:       *txHash,
+		ErrorMessage: ErrTxReplacementFailed.Error(),
+	}
 }

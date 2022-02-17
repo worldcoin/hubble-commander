@@ -32,6 +32,14 @@ func (s *TxPoolTestSuite) SetupTest() {
 
 	s.txPool, err = NewTxPool(s.storage.Storage)
 	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(100),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
 }
 
 func (s *TxPoolTestSuite) TearDownTest() {
@@ -40,35 +48,15 @@ func (s *TxPoolTestSuite) TearDownTest() {
 }
 
 func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
-	_, err := s.storage.StateTree.Set(0, &models.UserState{
-		PubKeyID: 0,
-		TokenID:  models.MakeUint256(0),
-		Balance:  models.MakeUint256(100),
-		Nonce:    models.MakeUint256(0),
-	})
-	s.NoError(err)
-
-	wg := sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err = s.txPool.ReadTxs(ctx)
-		s.NoError(err)
-	}()
+	wg, cancel := s.startReadingTxs()
 
 	for i := 0; i < 5; i++ {
-		s.txPool.Send(s.newTransfer(0, uint64(i)))
+		s.txPool.Send(s.newTransfer(0, uint64(i), 10))
 	}
 
-	s.Eventually(func() bool {
-		s.txPool.mutex.Lock()
-		defer s.txPool.mutex.Unlock()
-		return len(s.txPool.incomingTxs) == 5
-	}, 1*time.Second, 10*time.Millisecond)
+	s.waitForTxsToBeRead(5)
 
-	err = s.txPool.UpdateMempool()
+	err := s.txPool.UpdateMempool()
 	s.NoError(err)
 
 	receivedTxs := s.getAllTxs(0)
@@ -78,8 +66,56 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	wg.Wait()
 }
 
-func (s *TxPoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
-	return testutils.NewTransfer(from, 1, nonce, 100)
+func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
+	newTx := s.newTransfer(0, 0, 5)
+	err := s.storage.AddTransaction(newTx)
+	s.NoError(err)
+
+	wg, cancel := s.startReadingTxs()
+
+	s.txPool.Send(s.newTransfer(0, 0, 10))
+	s.txPool.Send(newTx)
+
+	s.waitForTxsToBeRead(2)
+
+	err = s.txPool.UpdateMempool()
+	s.NoError(err)
+
+	txs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(txs, 1)
+	s.Equal(newTx.Hash, txs.At(0).GetBase().Hash)
+	s.Equal(ErrTxReplacementFailed.Error(), *txs.At(0).GetBase().ErrorMessage)
+
+	cancel()
+	wg.Wait()
+}
+
+func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc) {
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := s.txPool.ReadTxs(ctx)
+		s.NoError(err)
+	}()
+	return wg, cancel
+}
+
+func (s *TxPoolTestSuite) waitForTxsToBeRead(expectedTxsLength int) {
+	s.Eventually(func() bool {
+		s.txPool.mutex.Lock()
+		defer s.txPool.mutex.Unlock()
+		return len(s.txPool.incomingTxs) == expectedTxsLength
+	}, 1*time.Second, 10*time.Millisecond)
+}
+
+func (s *TxPoolTestSuite) newTransfer(from uint32, nonce, fee uint64) *models.Transfer {
+	tx := testutils.NewTransfer(from, 1, nonce, 100)
+	tx.Fee = models.MakeUint256(fee)
+	return tx
 }
 
 func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction {
