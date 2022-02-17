@@ -77,21 +77,24 @@ func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transfer
 		txs[i].Hash = utils.RandomHash()
-		txs[i].CommitmentID = &models.CommitmentID{
-			BatchID:      models.MakeUint256(5),
-			IndexInBatch: 3,
+		txs[i].CommitmentSlot = &models.CommitmentSlot{
+			BatchID:           models.MakeUint256(5),
+			IndexInBatch:      3,
+			IndexInCommitment: uint8(i),
 		}
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 	}
 
-	err := s.storage.MarkTransactionsAsPending([]common.Hash{txs[0].Hash, txs[1].Hash})
+	err := s.storage.MarkTransactionsAsPending([]models.CommitmentSlot{
+		*txs[0].CommitmentSlot, *txs[1].CommitmentSlot},
+	)
 	s.NoError(err)
 
 	for i := range txs {
 		tx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		s.Nil(tx.CommitmentID)
+		s.Nil(tx.CommitmentSlot)
 	}
 }
 
@@ -112,7 +115,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 
 	transferInCommitment := transfer
 	transferInCommitment.Hash = common.Hash{5, 5, 5}
-	transferInCommitment.CommitmentID = &commitmentInBatch.ID
+	transferInCommitment.CommitmentSlot = models.NewCommitmentSlot(commitmentInBatch.ID, 0)
 	err = s.storage.AddTransaction(&transferInCommitment)
 	s.NoError(err)
 	err = s.storage.AddTransaction(&transfer)
@@ -120,13 +123,13 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 
 	c2t := create2Transfer
 	c2t.Hash = common.Hash{3, 4, 5}
-	c2t.CommitmentID = &commitmentInBatch.ID
+	c2t.CommitmentSlot = models.NewCommitmentSlot(commitmentInBatch.ID, 1)
 	err = s.storage.AddTransaction(&c2t)
 	s.NoError(err)
 
 	mm := massMigration
 	mm.Hash = common.Hash{6, 7, 8}
-	mm.CommitmentID = &commitmentInBatch.ID
+	mm.CommitmentSlot = models.NewCommitmentSlot(commitmentInBatch.ID, 2)
 	err = s.storage.AddTransaction(&mm)
 	s.NoError(err)
 
@@ -136,7 +139,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	count := s.storage.GetTransactionCount()
 	s.EqualValues(3, count)
 
-	err = s.storage.MarkTransactionsAsPending([]common.Hash{transferInCommitment.Hash})
+	err = s.storage.MarkTransactionsAsPending([]models.CommitmentSlot{*transferInCommitment.CommitmentSlot})
 	s.NoError(err)
 	storageCount, err = s.storage.getTransactionCount()
 	s.NoError(err)
@@ -166,9 +169,9 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
 	s.EqualValues(0, count)
 }
 
-func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
+func (s *StoredTransactionTestSuite) TestGetTransactionIDsByBatchIDs() {
 	batchIDs := []models.Uint256{models.MakeUint256(1), models.MakeUint256(2)}
-	expectedHashes := make([]common.Hash, 0, 4)
+	expectedIDs := make([]models.CommitmentSlot, 0, 4)
 	for i := range batchIDs {
 		transfers := make([]models.Transfer, 2)
 		transfers[0] = transfer
@@ -176,27 +179,27 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
 		transfers[1] = transfer
 		transfers[1].Hash = utils.RandomHash()
 		s.addTransfersInCommitment(&batchIDs[i], transfers)
-		expectedHashes = append(expectedHashes, transfers[0].Hash, transfers[1].Hash)
+		expectedIDs = append(expectedIDs, *transfers[0].CommitmentSlot, *transfers[1].CommitmentSlot)
 	}
 
-	hashes, err := s.storage.GetTransactionHashesByBatchIDs(batchIDs...)
+	ids, err := s.storage.GetTransactionIDsByBatchIDs(batchIDs...)
 	s.NoError(err)
-	s.Len(hashes, 4)
-	for i := range expectedHashes {
-		s.Contains(hashes, expectedHashes[i])
+	s.Len(ids, 4)
+	for i := range expectedIDs {
+		s.Contains(ids, expectedIDs[i])
 	}
 }
 
-func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransactions() {
+func (s *StoredTransactionTestSuite) TestGetTransactionIDsByBatchIDs_NoTransactions() {
 	transfers := make([]models.Transfer, 2)
 	transfers[0] = transfer
 	transfers[1] = transfer
 	transfers[1].Hash = utils.RandomHash()
 	s.addTransfersInCommitment(models.NewUint256(1), transfers)
 
-	hashes, err := s.storage.GetTransactionHashesByBatchIDs(models.MakeUint256(2))
+	ids, err := s.storage.GetTransactionIDsByBatchIDs(models.MakeUint256(2))
 	s.ErrorIs(err, NewNotFoundError("transaction"))
-	s.Nil(hashes)
+	s.Nil(ids)
 }
 
 func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Transfers() {
@@ -262,7 +265,7 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
 	for i := 0; i < txs.Len(); i++ {
 		tx := txs.At(i)
 		base := tx.GetBase()
-		if base.CommitmentID == nil && base.ErrorMessage == nil {
+		if base.CommitmentSlot == nil && base.ErrorMessage == nil {
 			expectedTxs = append(expectedTxs, tx)
 		}
 	}
@@ -311,7 +314,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 		transfers[i] = transfer
 		transfers[i].Hash = utils.RandomHash()
 	}
-	transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(1)}
+	transfers[2].CommitmentSlot = &models.CommitmentSlot{BatchID: models.MakeUint256(1)}
 	transfers[3].ErrorMessage = ref.String("A very boring error message")
 
 	err := s.storage.BatchAddTransfer(transfers)
@@ -323,7 +326,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 		create2Transfers[i].Hash = utils.RandomHash()
 	}
 
-	create2Transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(2)}
+	create2Transfers[2].CommitmentSlot = &models.CommitmentSlot{BatchID: models.MakeUint256(2)}
 	create2Transfers[3].ErrorMessage = ref.String("A very boring error message")
 
 	err = s.storage.BatchAddCreate2Transfer(create2Transfers)
@@ -334,7 +337,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 		massMigrations[i] = massMigration
 		massMigrations[i].Hash = utils.RandomHash()
 	}
-	massMigrations[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
+	massMigrations[2].CommitmentSlot = &models.CommitmentSlot{BatchID: models.MakeUint256(3)}
 	massMigrations[3].ErrorMessage = ref.String("A very boring error message")
 
 	err = s.storage.BatchAddMassMigration(massMigrations)
@@ -350,9 +353,9 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {
 	for i := range transfers {
-		transfers[i].CommitmentID = &models.CommitmentID{
+		transfers[i].CommitmentSlot = &models.CommitmentSlot{
 			BatchID:      *batchID,
-			IndexInBatch: 0,
+			IndexInBatch: uint8(i),
 		}
 		err := s.storage.AddTransaction(&transfers[i])
 		s.NoError(err)

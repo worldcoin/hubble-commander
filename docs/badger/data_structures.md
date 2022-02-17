@@ -174,14 +174,14 @@ type TxMassMigrationBody struct {
 
 - Stores transactions which have been added to a batch and submitted to the chain
 
-Key: tx hash `common.Hash`
+Key: (BatchID, IndexInBatch, IndexInCommitment) `models.CommitmentSlot`
 
 Value: `stored.BatchedTx`
 
 ```go
 type BatchedTx struct {
 	PendingTx
-	CommitmentID models.CommitmentID
+	ID stored.CommitmentSlot
 }
 ```
 
@@ -201,12 +201,13 @@ type FailedTx struct {
 }
 ```
 
-#### Index on `CommitmentID`
-Key: commitment ID `models.CommitmentID`
+#### Index on `Hash`
 
-Prefix: `_bhIndex:BatchedTx:CommitmentID:`
+Key: Hash `common.Hash`
 
-Value: list of tx hashes `bh.KeyList`
+Prefix: `_bhIndex:BatchedTx:Hash:`
+
+Value: list `bh.KeyList` with single element, the tx
 
 ## Deposits
 

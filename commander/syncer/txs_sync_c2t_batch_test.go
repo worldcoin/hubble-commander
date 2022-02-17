@@ -161,7 +161,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_SingleBatch() {
 	transfer, err := s.storage.GetCreate2Transfer(tx.Hash)
 	s.NoError(err)
 	transfer.Signature = tx.Signature
-	tx.CommitmentID = &commitment.ToTxCommitment().ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(commitment.ToTxCommitment().ID, 0)
 	tx.ToStateID = transfer.ToStateID
 	s.Equal(tx, *transfer)
 }

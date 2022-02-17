@@ -85,7 +85,7 @@ func (s *Create2TransferTestSuite) TestMarkCreate2TransfersAsIncluded() {
 		err := s.storage.AddTransaction(&txs[i])
 		s.NoError(err)
 
-		txs[i].CommitmentID = commitmentID
+		txs[i].CommitmentSlot = models.NewCommitmentSlot(*commitmentID, uint8(i))
 	}
 
 	err := s.storage.MarkCreate2TransfersAsIncluded(txs, commitmentID)

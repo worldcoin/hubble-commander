@@ -46,9 +46,10 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 			0,
 			0,
 			models.NewTimestamp(time.Unix(140, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
+			models.CommitmentSlot{
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
+				IndexInCommitment: 0,
 			},
 		),
 		makeMassMigration(
@@ -56,9 +57,10 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 			1,
 			1,
 			models.NewTimestamp(time.Unix(150, 0).UTC()),
-			models.CommitmentID{
-				BatchID:      models.MakeUint256(1),
-				IndexInBatch: 0,
+			models.CommitmentSlot{
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
+				IndexInCommitment: 1,
 			},
 		),
 	}

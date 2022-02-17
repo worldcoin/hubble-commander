@@ -44,7 +44,7 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 	for i := range transfers {
 		tx, err := s.storage.GetCreate2Transfer(transfers[i].Hash)
 		s.NoError(err)
-		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentID)
+		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentSlot.CommitmentID())
 		s.Equal(uint32(i+3), *tx.ToStateID)
 		s.Nil(tx.ErrorMessage)
 	}

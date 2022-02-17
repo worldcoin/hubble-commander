@@ -1,6 +1,8 @@
 package db
 
 import (
+	"reflect"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
@@ -97,6 +99,32 @@ func (d *Database) FindOne(result interface{}, query *bh.Query) error {
 		return d.store.TxFindOne(d.txn, result, query)
 	}
 	return d.store.FindOne(result, query)
+}
+
+// The BadgerHold implementation of FindOne does not use indexes, this is a bit of a hack
+// which adapts our call into a call to Find, which does use indexes.
+func (d *Database) FindOneUsingIndex(result, key interface{}, index string) error {
+	typeResult := reflect.TypeOf(result)
+	if typeResult.Kind() != reflect.Ptr {
+		panic("`result` must be a pointer")
+	}
+	typeResult = typeResult.Elem()
+	valResults := reflect.New(reflect.SliceOf(typeResult))
+
+	err := d.Find(
+		valResults.Interface(),
+		bh.Where(index).Eq(key).Index(index).Limit(1),
+	)
+	if err != nil {
+		return err
+	}
+	if valResults.Elem().Len() == 0 {
+		return bh.ErrNotFound
+	}
+
+	valResult := reflect.ValueOf(result)
+	valResult.Elem().Set(valResults.Elem().Index(0))
+	return nil
 }
 
 func (d *Database) Get(key, result interface{}) error {

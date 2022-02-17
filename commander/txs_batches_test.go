@@ -153,7 +153,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 	// Correct tx stored
 	expectedTx := remoteTx
 	expectedTx.Signature = models.Signature{}
-	expectedTx.CommitmentID = &expectedCommitment.ID
+	expectedTx.CommitmentSlot = models.NewCommitmentSlot(expectedCommitment.ID, 0)
 	transfer, err := s.cmd.storage.GetTransfer(remoteTx.Hash)
 	s.NoError(err)
 	s.Equal(expectedTx, *transfer)

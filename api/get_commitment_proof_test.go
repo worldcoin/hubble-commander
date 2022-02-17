@@ -102,7 +102,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_TransferType() {
 	s.addStateLeaf()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
-	transfer.CommitmentID = &s.txCommitment.ID
+	transfer.CommitmentSlot = models.NewCommitmentSlot(s.txCommitment.ID, 0)
 	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
@@ -146,7 +146,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_Create2TransferType
 	s.addStateLeaf()
 
 	transfer := testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 50, &models.PublicKey{2, 3, 4})
-	transfer.CommitmentID = &s.txCommitment.ID
+	transfer.CommitmentSlot = models.NewCommitmentSlot(s.txCommitment.ID, 0)
 	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
@@ -189,7 +189,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_MassMigrationType()
 	s.addStateLeaf()
 
 	massMigration := testutils.MakeMassMigration(1, 2, 0, 50)
-	massMigration.CommitmentID = &s.mmCommitment.ID
+	massMigration.CommitmentSlot = models.NewCommitmentSlot(s.mmCommitment.ID, 0)
 	err = s.storage.AddTransaction(&massMigration)
 	s.NoError(err)
 
@@ -245,7 +245,7 @@ func (s *GetCommitmentProofTestSuite) TestGetCommitmentProof_PendingBatch() {
 	s.addStateLeaf()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 50)
-	transfer.CommitmentID = &s.txCommitment.ID
+	transfer.CommitmentSlot = models.NewCommitmentSlot(s.txCommitment.ID, 0)
 	err = s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 

@@ -7,21 +7,16 @@ import (
 )
 
 func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
-	var accounts []models.AccountLeaf
-	// We're not using FindOne here because of inefficient underlying implementation
-	err := s.database.Badger.Find(
-		&accounts,
-		bh.Where("PublicKey").Eq(*publicKey).Index("PublicKey").Limit(1),
-	)
+	var account models.AccountLeaf
+	err := s.database.Badger.FindOneUsingIndex(&account, *publicKey, "PublicKey")
+	if err == bh.ErrNotFound {
+		return nil, errors.WithStack(NewNotFoundError("pub key id"))
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	if len(accounts) == 0 {
-		return nil, errors.WithStack(NewNotFoundError("pub key id"))
-	}
-
-	return &accounts[0].PubKeyID, nil
+	return &account.PubKeyID, nil
 }
 
 func (s *Storage) GetPublicKeyByStateID(stateID uint32) (*models.PublicKey, error) {

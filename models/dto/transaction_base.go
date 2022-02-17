@@ -7,29 +7,29 @@ import (
 )
 
 type TransactionBase struct {
-	Hash         common.Hash
-	TxType       txtype.TransactionType
-	FromStateID  uint32
-	Amount       models.Uint256
-	Fee          models.Uint256
-	Nonce        models.Uint256
-	Signature    models.Signature
-	ReceiveTime  *models.Timestamp
-	CommitmentID *CommitmentID
-	ErrorMessage *string
+	Hash           common.Hash
+	TxType         txtype.TransactionType
+	FromStateID    uint32
+	Amount         models.Uint256
+	Fee            models.Uint256
+	Nonce          models.Uint256
+	Signature      models.Signature
+	ReceiveTime    *models.Timestamp
+	CommitmentSlot *models.CommitmentSlot
+	ErrorMessage   *string
 }
 
 func MakeTransactionBase(tx *models.TransactionBase) TransactionBase {
 	return TransactionBase{
-		Hash:         tx.Hash,
-		TxType:       tx.TxType,
-		FromStateID:  tx.FromStateID,
-		Amount:       tx.Amount,
-		Fee:          tx.Fee,
-		Nonce:        tx.Nonce,
-		Signature:    tx.Signature,
-		ReceiveTime:  tx.ReceiveTime,
-		CommitmentID: NewCommitmentID(tx.CommitmentID),
-		ErrorMessage: tx.ErrorMessage,
+		Hash:           tx.Hash,
+		TxType:         tx.TxType,
+		FromStateID:    tx.FromStateID,
+		Amount:         tx.Amount,
+		Fee:            tx.Fee,
+		Nonce:          tx.Nonce,
+		Signature:      tx.Signature,
+		ReceiveTime:    tx.ReceiveTime,
+		CommitmentSlot: tx.CommitmentSlot,
+		ErrorMessage:   tx.ErrorMessage,
 	}
 }

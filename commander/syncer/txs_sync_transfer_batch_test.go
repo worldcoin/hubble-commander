@@ -92,7 +92,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 
 		actualTx, err := s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
-		txs[i].CommitmentID = &commitment.ToTxCommitment().ID
+		txs[i].CommitmentSlot = models.NewCommitmentSlot(commitment.ToTxCommitment().ID, 0)
 		txs[i].Signature = models.Signature{}
 		s.Equal(txs[i], actualTx)
 	}
@@ -341,11 +341,35 @@ func (s *SyncTransferBatchTestSuite) checkBatchedTxs(pendingBatch *models.Batch,
 	s.NoError(err)
 	s.Len(failedTxs, 0)
 
-	txHashes, err := s.storage.GetTransactionHashesByBatchIDs(pendingBatch.ID)
+	slots, err := s.storage.GetTransactionIDsByBatchIDs(pendingBatch.ID)
 	s.NoError(err)
-	s.Contains(txHashes, txs[0].Hash)
-	s.Contains(txHashes, txs[1].Hash)
-	s.Contains(txHashes, txs[2].Hash)
+	s.Equal(len(slots), 3)
+
+	hashes := []common.Hash{txs[0].Hash, txs[1].Hash, txs[2].Hash}
+
+	batchedTxs, err := s.storage.GetTransactionsByCommitmentID(models.CommitmentID{
+		BatchID:      pendingBatch.ID,
+		IndexInBatch: 0,
+	})
+	s.NoError(err)
+	s.Equal(batchedTxs.Len(), 1)
+	s.Contains(hashes, batchedTxs.At(0).GetBase().Hash)
+
+	batchedTxs, err = s.storage.GetTransactionsByCommitmentID(models.CommitmentID{
+		BatchID:      pendingBatch.ID,
+		IndexInBatch: 1,
+	})
+	s.NoError(err)
+	s.Equal(batchedTxs.Len(), 1)
+	s.Contains(hashes, batchedTxs.At(0).GetBase().Hash)
+
+	batchedTxs, err = s.storage.GetTransactionsByCommitmentID(models.CommitmentID{
+		BatchID:      pendingBatch.ID,
+		IndexInBatch: 2,
+	})
+	s.NoError(err)
+	s.Equal(batchedTxs.Len(), 1)
+	s.Contains(hashes, batchedTxs.At(0).GetBase().Hash)
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {

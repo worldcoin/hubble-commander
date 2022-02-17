@@ -79,7 +79,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommi
 
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
 	s.NoError(err)
-	s.Nil(transfer.CommitmentID)
+	s.Nil(transfer.CommitmentSlot)
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches() {

@@ -60,7 +60,7 @@ func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieve() {
 
 func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMassMigration() {
 	includedMassMigration := massMigration
-	includedMassMigration.CommitmentID = &models.CommitmentID{
+	includedMassMigration.CommitmentSlot = &models.CommitmentSlot{
 		BatchID:      models.MakeUint256(3),
 		IndexInBatch: 1,
 	}
@@ -121,7 +121,7 @@ func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
 	for i := range txs {
 		tx, err := s.storage.GetMassMigration(txs[i].Hash)
 		s.NoError(err)
-		s.Equal(commitmentID, *tx.CommitmentID)
+		s.Equal(commitmentID, *tx.CommitmentSlot.CommitmentID())
 	}
 }
 

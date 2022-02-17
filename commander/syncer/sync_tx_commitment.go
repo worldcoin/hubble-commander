@@ -84,8 +84,13 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 		return nil
 	}
 
+	if txs.Len() > 255 {
+		panic("Commitments cannot have more than 255 transactions")
+	}
+
 	for i := 0; i < txs.Len(); i++ {
-		txs.At(i).GetBase().CommitmentID = commitmentID
+		txs.At(i).GetBase().CommitmentSlot = models.NewCommitmentSlot(*commitmentID, uint8(i))
+
 		hashTransfer, err := c.Syncer.HashTx(txs.At(i))
 		if err != nil {
 			return err

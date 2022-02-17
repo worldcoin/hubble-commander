@@ -172,7 +172,7 @@ func (s *GetPendingBatchesTestSuite) addPendingTransferBatch(tx *models.Transfer
 	err = s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	tx.CommitmentID = &commitment.ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(commitment.ID, 0)
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
@@ -202,7 +202,7 @@ func (s *GetPendingBatchesTestSuite) addPendingCT2Batch(tx *models.Create2Transf
 	err = s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	tx.CommitmentID = &commitment.ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(commitment.ID, 0)
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
@@ -271,7 +271,7 @@ func (s *GetPendingBatchesTestSuite) addCommitmentWithTx(commitment models.Commi
 	err := s.storage.AddCommitment(commitment)
 	s.NoError(err)
 
-	tx.GetBase().CommitmentID = &commitment.GetCommitmentBase().ID
+	tx.GetBase().CommitmentSlot = models.NewCommitmentSlot(commitment.GetCommitmentBase().ID, 0)
 
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)

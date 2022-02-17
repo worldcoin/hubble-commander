@@ -8,16 +8,16 @@ import (
 )
 
 type TransactionBase struct {
-	Hash         common.Hash
-	TxType       txtype.TransactionType
-	FromStateID  uint32
-	Amount       Uint256
-	Fee          Uint256
-	Nonce        Uint256
-	Signature    Signature
-	ReceiveTime  *Timestamp
-	CommitmentID *CommitmentID
-	ErrorMessage *string
+	Hash           common.Hash
+	TxType         txtype.TransactionType
+	FromStateID    uint32
+	Amount         Uint256
+	Fee            Uint256
+	Nonce          Uint256
+	Signature      Signature
+	ReceiveTime    *Timestamp
+	CommitmentSlot *CommitmentSlot
+	ErrorMessage   *string
 }
 
 func (t *TransactionBase) GetFromStateID() uint32 {

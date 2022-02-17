@@ -53,7 +53,7 @@ func (s *SyncMMBatchTestSuite) TestSyncBatch_SingleBatch() {
 	massMigration, err := s.storage.GetMassMigration(tx.Hash)
 	s.NoError(err)
 	massMigration.Signature = tx.Signature
-	tx.CommitmentID = &commitment.ToMMCommitment().ID
+	tx.CommitmentSlot = models.NewCommitmentSlot(commitment.ToMMCommitment().ID, 0)
 	s.Equal(tx, *massMigration)
 }
 

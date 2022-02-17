@@ -55,8 +55,8 @@ func (t *PendingTx) ToBase() *models.TransactionBase {
 		ReceiveTime: t.ReceiveTime,
 
 		// These are set for BatchedTx, PendingTx are defined by not having these
-		CommitmentID: nil,
-		ErrorMessage: nil,
+		CommitmentSlot: nil,
+		ErrorMessage:   nil,
 	}
 }
 

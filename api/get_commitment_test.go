@@ -110,13 +110,13 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 	}
 
 	s.transfer = testutils.MakeTransfer(1, 2, 0, 100)
-	s.transfer.CommitmentID = &s.txCommitment.ID
+	s.transfer.CommitmentSlot = models.NewCommitmentSlot(s.txCommitment.ID, 0)
 
 	s.create2transfer = testutils.MakeCreate2Transfer(1, ref.Uint32(2), 0, 100, &models.PublicKey{1, 2, 3})
-	s.create2transfer.CommitmentID = &s.txCommitment.ID
+	s.create2transfer.CommitmentSlot = models.NewCommitmentSlot(s.txCommitment.ID, 0)
 
 	s.massMigration = testutils.MakeMassMigration(1, 2, 0, 100)
-	s.massMigration.CommitmentID = &s.mmCommitment.ID
+	s.massMigration.CommitmentSlot = models.NewCommitmentSlot(s.mmCommitment.ID, 0)
 
 	s.commitmentNotFoundAPIErr = &APIError{
 		Code:    20000,
