@@ -37,12 +37,7 @@ func (p *txPool) ReadTxs(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case tx := <-p.TxChan:
-			//TODO: introduce nonce cache or pass storage to AddOrReplace
-			stateLeaf, err := p.storage.StateTree.Leaf(tx.GetFromStateID())
-			if err != nil {
-				return err
-			}
-			err = p.mempool.AddOrReplace(tx, stateLeaf.Nonce.Uint64())
+			err := p.mempool.AddOrReplace(p.storage, tx)
 			if err == ErrTxReplacementFailed {
 				continue
 			}

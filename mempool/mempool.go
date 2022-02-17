@@ -82,51 +82,53 @@ func NewMempool(storage *st.Storage) (*Mempool, error) {
 		buckets: map[uint32]*txBucket{},
 	}
 
-	mempool.initTxs(txs)
-	err = mempool.initBuckets(storage)
+	err = mempool.initBuckets(storage, txs)
 	if err != nil {
 		return nil, err
 	}
+	mempool.sortTxs()
 
 	return mempool, nil
 }
 
-func (m *Mempool) initTxs(txs models.GenericTransactionArray) {
+func (m *Mempool) initBuckets(storage *st.Storage, txs models.GenericTransactionArray) error {
 	for i := 0; i < txs.Len(); i++ {
 		tx := txs.At(i)
 
-		bucket := m.getOrInitBucket(tx.GetFromStateID(), 0)
-		bucket.txs = append(bucket.txs, tx)
-	}
-}
-
-func (m *Mempool) initBuckets(storage *st.Storage) error {
-	for stateID, bucket := range m.buckets {
-		stateLeaf, err := storage.StateTree.Leaf(stateID)
+		bucket, err := m.getOrInitBucket(storage, tx.GetFromStateID())
 		if err != nil {
 			return err
 		}
+		bucket.txs = append(bucket.txs, tx)
+	}
+	return nil
+}
 
-		bucket.nonce = stateLeaf.Nonce.Uint64()
+func (m *Mempool) sortTxs() {
+	for _, bucket := range m.buckets {
 		sort.Slice(bucket.txs, func(i, j int) bool {
 			txA := bucket.txs[i].GetBase()
 			txB := bucket.txs[j].GetBase()
 			return txA.Nonce.Cmp(&txB.Nonce) < 0
 		})
 	}
-	return nil
 }
 
-func (m *Mempool) getOrInitBucket(stateID uint32, currentNonce uint64) *txBucket {
+func (m *Mempool) getOrInitBucket(storage *st.Storage, stateID uint32) (*txBucket, error) {
 	bucket, ok := m.buckets[stateID]
 	if !ok {
+		stateLeaf, err := storage.StateTree.Leaf(stateID)
+		if err != nil {
+			return nil, err
+		}
+
 		bucket = &txBucket{
 			txs:   make([]models.GenericTransaction, 0, 1),
-			nonce: currentNonce,
+			nonce: stateLeaf.Nonce.Uint64(),
 		}
 		m.buckets[stateID] = bucket
 	}
-	return bucket
+	return bucket, nil
 }
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
@@ -185,8 +187,11 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	return bucket
 }
 
-func (m *Mempool) AddOrReplace(newTx models.GenericTransaction, senderNonce uint64) error {
-	bucket := m.getOrInitBucket(newTx.GetFromStateID(), senderNonce)
+func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) error {
+	bucket, err := m.getOrInitBucket(storage, newTx.GetFromStateID())
+	if err != nil {
+		return err
+	}
 	return bucket.addOrReplace(newTx)
 }
 

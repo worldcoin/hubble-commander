@@ -173,7 +173,7 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesEmptyBuckets() {
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	tx := s.newTransfer(0, 14)
-	err := s.mempool.AddOrReplace(tx, 10)
+	err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
 	bucket := s.mempool.buckets[0]
@@ -183,7 +183,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 
 func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList() {
 	tx := s.newTransfer(0, 12)
-	err := s.mempool.AddOrReplace(tx, 10)
+	err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
 	bucket := s.mempool.buckets[0]
@@ -193,7 +193,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_InsertsNewTxInTheMiddleOfBucketList(
 func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	tx := s.newTransfer(0, 11)
 	tx.Fee = models.MakeUint256(20)
-	err := s.mempool.AddOrReplace(tx, 10)
+	err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
 	bucket := s.mempool.buckets[0]
@@ -202,7 +202,7 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 
 func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	tx := s.newTransfer(0, 11)
-	err := s.mempool.AddOrReplace(tx, 10)
+	err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.ErrorIs(err, ErrTxReplacementFailed)
 }
 
