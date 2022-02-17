@@ -61,6 +61,10 @@ func (p *txPool) UpdateMempool() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	if len(p.incomingTxs) == 0 {
+		return nil
+	}
+
 	for _, tx := range p.incomingTxs {
 		err := p.addOrReplaceTx(tx)
 		if err != nil {
