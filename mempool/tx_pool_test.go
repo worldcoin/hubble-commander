@@ -2,7 +2,9 @@ package mempool
 
 import (
 	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -16,7 +18,7 @@ type TxPoolTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	storage *st.TestStorage
-	txPool  TxPool
+	txPool  *txPool
 }
 
 func (s *TxPoolTestSuite) SetupSuite() {
@@ -37,7 +39,7 @@ func (s *TxPoolTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxPoolTestSuite) TestReadTxs() {
+func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	_, err := s.storage.StateTree.Set(0, &models.UserState{
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
@@ -46,15 +48,34 @@ func (s *TxPoolTestSuite) TestReadTxs() {
 	})
 	s.NoError(err)
 
+	wg := sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err = s.txPool.ReadTxs(ctx)
+		s.NoError(err)
+	}()
+
 	for i := 0; i < 5; i++ {
 		s.txPool.Send(s.newTransfer(0, uint64(i)))
 	}
 
-	err = s.txPool.ReadTxs(context.Background())
+	s.Eventually(func() bool {
+		s.txPool.mutex.Lock()
+		defer s.txPool.mutex.Unlock()
+		return len(s.txPool.incomingTxs) == 5
+	}, 1*time.Second, 10*time.Millisecond)
+
+	err = s.txPool.UpdateMempool()
 	s.NoError(err)
 
 	receivedTxs := s.getAllTxs(0)
 	s.Len(receivedTxs, 5)
+
+	cancel()
+	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {

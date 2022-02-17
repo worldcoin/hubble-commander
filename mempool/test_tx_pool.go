@@ -18,6 +18,10 @@ func (p *testTxPool) ReadTxs(context.Context) error {
 	return nil
 }
 
+func (p *testTxPool) UpdateMempool() error {
+	return nil
+}
+
 func (p *testTxPool) Mempool() *Mempool {
 	return nil
 }
