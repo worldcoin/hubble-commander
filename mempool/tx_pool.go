@@ -62,24 +62,28 @@ func (p *txPool) UpdateMempool() error {
 	defer p.mutex.Unlock()
 
 	for _, tx := range p.incomingTxs {
-		//TODO: add failed tx to FailedTxs and remove replaced one from pending
-		prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
-		if errors.Is(err, ErrTxReplacementFailed) {
-			err = p.storage.SetTransactionError(getReplacementError(&tx.GetBase().Hash))
-			if err != nil {
-				return err
-			}
-			continue
-		}
+		err := p.addOrReplaceTx(tx)
 		if err != nil {
 			return err
-		}
-		if prevTxHash != nil {
-
 		}
 	}
 
 	p.incomingTxs = make([]models.GenericTransaction, 0)
+	return nil
+}
+
+func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
+	prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
+	if errors.Is(err, ErrTxReplacementFailed) {
+		return p.storage.SetTransactionError(getReplacementError(&tx.GetBase().Hash))
+	}
+	if err != nil {
+		return err
+	}
+
+	if prevTxHash != nil {
+		return p.storage.ReplacePendingTransaction(prevTxHash, tx)
+	}
 	return nil
 }
 
