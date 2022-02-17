@@ -67,6 +67,9 @@ func TestCommanderMigrationMode(t *testing.T) {
 	testWaitForBatchStatus(t, adminRPCClient, 1, batchstatus.Mined)
 
 	testStopMining(t, gethRPCClient)
+	defer func() {
+		testStartMining(t, gethRPCClient)
+	}()
 
 	testSendInvalidTx(t, adminRPCClient, 4, wallets)
 	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
