@@ -10,18 +10,10 @@ import (
 )
 
 func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
-	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
-	if len(txs) == 0 {
-		return c.Executor.NewExecuteTxsResult(0), nil
-	}
-
-	// move to TxsContext structure
-	heap := mempool.NewTxHeap(txs...)
-
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for tx := heap.Peek(); tx != nil; tx = heap.Peek() {
+	for tx := c.heap.Peek(); tx != nil; tx = c.heap.Peek() {
 		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
@@ -32,7 +24,7 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 		}
 		if txError != nil {
 			c.handleTxError(txMempool, returnStruct, tx, txError)
-			heap.Pop()
+			c.heap.Pop()
 			continue
 		}
 
@@ -41,7 +33,7 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			return nil, err
 		}
 
-		err = c.updateHeap(txMempool, heap, tx)
+		err = c.updateHeap(txMempool, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -61,17 +53,17 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 	return returnStruct, nil
 }
 
-func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, heap *mempool.TxHeap, tx models.GenericTransaction) error {
+func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, tx models.GenericTransaction) error {
 	nextTx, err := txMempool.GetNextExecutableTx(txtype.TransactionType(c.BatchType), tx.GetFromStateID())
 	if err != nil {
 		return err
 	}
 	if nextTx != nil {
-		heap.Replace(nextTx)
+		c.heap.Replace(nextTx)
 		return nil
 	}
 
-	heap.Pop()
+	c.heap.Pop()
 	return nil
 }
 

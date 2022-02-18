@@ -19,6 +19,7 @@ type TxsContext struct {
 	BatchType       batchtype.BatchType
 	txErrorsToStore []models.TxError
 	mempool         *mempool.Mempool
+	heap            *mempool.TxHeap
 
 	// saved here because the configuration might be overridden depending on the set
 	// of currently pending transactions

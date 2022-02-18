@@ -82,7 +82,7 @@ func (s *ExecuteTransfersTestSuite) TearDownTest() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -94,7 +94,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -105,7 +105,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidTransfers(13)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -121,7 +121,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(1)...)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -135,7 +135,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	_, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -148,7 +148,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -156,19 +156,17 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	s.Len(executeTxsResult.AppliedTxs(), 1)
 }
 
-func (s *ExecuteTransfersTestSuite) newMempool(txs models.GenericTransactionArray) *mempool.TxMempool {
-	s.txsCtx.mempool = newMempool(s.Assertions, s.storage, txs)
-	_, txMempool := s.txsCtx.mempool.BeginTransaction()
+func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
+	err := txsCtx.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	pool, err := mempool.NewMempool(txsCtx.storage)
+	s.NoError(err)
+	txsCtx.mempool = pool
+	txsCtx.heap = txsCtx.newHeap()
+
+	_, txMempool := pool.BeginTransaction()
 	return txMempool
-}
-
-func newMempool(s *require.Assertions, storage *st.TestStorage, txs models.GenericTransactionArray) *mempool.Mempool {
-	err := storage.BatchAddTransaction(txs)
-	s.NoError(err)
-
-	pool, err := mempool.NewMempool(storage.Storage)
-	s.NoError(err)
-	return pool
 }
 
 // TODO: change GenerateInvalidTransfers FromStateID

@@ -3,6 +3,7 @@ package executor
 import (
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -20,10 +21,9 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
-	txQueue, err := c.queryPendingTxs()
-	if err != nil {
-		return nil, err
-	}
+	c.heap = c.newHeap()
+	txController, batchMempool := c.mempool.BeginTransaction()
+	defer txController.Rollback()
 
 	commitmentID, err := c.NextCommitmentID()
 	if err != nil {
@@ -37,7 +37,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		result, err = c.createCommitment(txQueue, commitmentID)
+		result, err = c.createCommitment(batchMempool, commitmentID)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
@@ -69,10 +69,11 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		return nil, err
 	}
 
+	txController.Commit()
 	return commitments, nil
 }
 
-func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
+func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
 	var commitment models.CommitmentWithTxs
@@ -89,7 +90,7 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 			return err
 		}
 
-		executeResult, err = c.executeTxsForCommitment(txQueue, feeReceiver)
+		executeResult, err = c.executeTxsForCommitment(batchMempool, feeReceiver)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			if uint32(commitmentID.IndexInBatch+1) <= c.minCommitmentsPerBatch {
 				return err // No need to revert the StateTree in this case as the DB tx will be rolled back anyway
@@ -128,20 +129,16 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeReceiver) (
+func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	pendingTxs := txQueue.PickTxsForCommitment()
+	//TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment
 
-	if pendingTxs.Len() < int(c.minTxsPerCommitment) {
-		return nil, ErrNotEnoughTxs
-	}
-
-	txController, txMempool := c.mempool.BeginTransaction()
+	txController, commitmentMempool := batchMempool.BeginTransaction()
 	defer txController.Rollback()
 
-	executeTxsResult, err := c.ExecuteTxs(txMempool, feeReceiver)
+	executeTxsResult, err := c.ExecuteTxs(commitmentMempool, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -151,8 +148,6 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 	}
 
 	txController.Commit()
-
-	txQueue.RemoveFromQueue(executeTxsResult.AllTxs())
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
 
@@ -171,18 +166,15 @@ func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray)
 	}
 }
 
-func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
-	pendingTxs, err := c.storage.GetPendingTransactions(txtype.TransactionType(c.BatchType))
-	if err != nil {
-		return nil, err
-	}
+func (c *TxsContext) newHeap() *mempool.TxHeap {
+	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
 
-	c.setBatchMinimums(pendingTxs)
+	// TODO: change to accept []models.GenericTransactions, check that when executing return ErrNotEnoughTxs
+	//c.setBatchMinimums(models.MakeGenericArray(txs...))
 
-	if pendingTxs.Len() < int(c.minTxsPerCommitment*c.minCommitmentsPerBatch) {
-		return nil, errors.WithStack(ErrNotEnoughTxs)
-	}
-	return NewTxQueue(pendingTxs), nil
+	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment*c.minCommitmentsPerBatch
+	// If that's true then look for oldest tx
+	return mempool.NewTxHeap(txs...)
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {

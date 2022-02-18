@@ -5,7 +5,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/testutils"
@@ -33,7 +32,7 @@ func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -47,7 +46,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3)...)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -60,7 +59,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -74,7 +73,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(1)...)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -90,7 +89,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	_, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -105,7 +104,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
 	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
@@ -126,18 +125,12 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
-	txMempool := s.newMempool(generatedTransfers)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
-}
-
-func (s *ExecuteCreate2TransfersTestSuite) newMempool(txs models.GenericTransactionArray) *mempool.TxMempool {
-	s.txsCtx.mempool = newMempool(s.Assertions, s.storage, txs)
-	_, txMempool := s.txsCtx.mempool.BeginTransaction()
-	return txMempool
 }
 
 // TODO: change GenerateInvalidCreate2Transfers FromStateID

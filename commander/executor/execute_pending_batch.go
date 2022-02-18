@@ -40,6 +40,7 @@ func (c *TxsContext) ExecutePendingBatch(batch *models.PendingBatch) error {
 	return nil
 }
 
+// Idea: deduplicate this function and ExecuteTxs by extracting a struct which is a generalised "source" of transactions
 func (c *TxsContext) executePendingTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	if txs.Len() == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
