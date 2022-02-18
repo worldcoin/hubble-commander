@@ -138,7 +138,10 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 		return nil, ErrNotEnoughTxs
 	}
 
-	executeTxsResult, err := c.ExecuteTxs(pendingTxs, feeReceiver)
+	txController, txMempool := c.mempool.BeginTransaction()
+	defer txController.Rollback()
+
+	executeTxsResult, err := c.ExecuteTxs(txMempool, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +149,8 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 	if executeTxsResult.AppliedTxs().Len() < int(c.minTxsPerCommitment) {
 		return nil, ErrNotEnoughTxs
 	}
+
+	txController.Commit()
 
 	txQueue.RemoveFromQueue(executeTxsResult.AllTxs())
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil

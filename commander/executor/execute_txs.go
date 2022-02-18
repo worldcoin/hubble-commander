@@ -9,15 +9,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) ExecuteTxs(_ models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
 	if len(txs) == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
-
-	// pass txMempool to ExecuteTxs
-	txController, txMempool := c.mempool.BeginTransaction()
-	defer txController.Rollback()
 
 	// move to TxsContext structure
 	heap := mempool.NewTxHeap(txs...)
@@ -62,7 +58,6 @@ func (c *TxsContext) ExecuteTxs(_ models.GenericTransactionArray, feeReceiver *F
 		}
 	}
 
-	txController.Commit()
 	return returnStruct, nil
 }
 
