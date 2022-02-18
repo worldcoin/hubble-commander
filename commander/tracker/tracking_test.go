@@ -66,7 +66,7 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *TxsTrackingTestSuite) TestTrackSentTxs_ChannelBufferOverflowWithoutBlocking() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_TracksSubmittedTransfers() {
 	txs := make([]*types.Transaction, 20)
 	commitments := getCommitments(batchtype.Transfer)
 
