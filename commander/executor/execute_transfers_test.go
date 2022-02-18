@@ -157,16 +157,22 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 }
 
 func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
-	err := txsCtx.storage.BatchAddTransaction(txs)
-	s.NoError(err)
+	initMempool(s, txsCtx, txs)
+	txsCtx.heap = txsCtx.newHeap()
+
+	_, txMempool := txsCtx.mempool.BeginTransaction()
+	return txMempool
+}
+
+func initMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
+	if txs.Len() > 0 {
+		err := txsCtx.storage.BatchAddTransaction(txs)
+		s.NoError(err)
+	}
 
 	pool, err := mempool.NewMempool(txsCtx.storage)
 	s.NoError(err)
 	txsCtx.mempool = pool
-	txsCtx.heap = txsCtx.newHeap()
-
-	_, txMempool := pool.BeginTransaction()
-	return txMempool
 }
 
 // TODO: change GenerateInvalidTransfers FromStateID

@@ -169,10 +169,7 @@ func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray)
 func (c *TxsContext) newHeap() *mempool.TxHeap {
 	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
 
-	// TODO: change to accept []models.GenericTransactions, check that when executing return ErrNotEnoughTxs
-	//c.setBatchMinimums(models.MakeGenericArray(txs...))
-
-	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment*c.minCommitmentsPerBatch
+	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment*c.minCommitmentsPerBatch.
 	// If that's true then look for oldest tx
 	return mempool.NewTxHeap(txs...)
 }
