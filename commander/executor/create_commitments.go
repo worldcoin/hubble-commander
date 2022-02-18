@@ -33,7 +33,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	commitments := make([]models.CommitmentWithTxs, 0, c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
-	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); len(commitments) < int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
@@ -133,7 +133,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	//TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment
+	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment
 
 	txController, commitmentMempool := batchMempool.BeginTransaction()
 	defer txController.Rollback()
