@@ -119,8 +119,8 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Sent Txs", func() error { return c.startTrackingSentTxs() })
-	c.startWorker("Sending Requesting Txs", func() error { return c.startSendingRequestedTxs() })
+	c.startWorker("Tracking Sent Txs", func() error { return c.trackSentTxs() })
+	c.startWorker("Sending Requested Txs", func() error { return c.sendRequestedTxs() })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()

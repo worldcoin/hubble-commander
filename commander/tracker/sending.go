@@ -6,7 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 )
 
-func StartTxsRequestsSending(ctx context.Context, requestsChan <-chan *eth.TxSendingRequest) error {
+func SendRequestedTxs(ctx context.Context, requestsChan <-chan *eth.TxSendingRequest) error {
 	for {
 		select {
 		case <-ctx.Done():

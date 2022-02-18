@@ -10,12 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func StartTrackingSentTxs(ctx context.Context, client *eth.Client, sentTxsChan <-chan *types.Transaction) error {
+func TrackSentTxs(ctx context.Context, client *eth.Client, sentTxsChan <-chan *types.Transaction) error {
 	queue := newTxsQueue()
-	return startTrackingSentTxs(ctx, client, sentTxsChan, queue)
+	return trackSentTxs(ctx, client, sentTxsChan, queue)
 }
 
-func startTrackingSentTxs(
+func trackSentTxs(
 	ctx context.Context,
 	client *eth.Client,
 	sentTxsChan <-chan *types.Transaction,

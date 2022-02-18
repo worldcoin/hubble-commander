@@ -54,7 +54,7 @@ func (s *TxsTrackingTestSuite) startTxsTracking() {
 
 	s.wg.Add(1)
 	go func() {
-		err := startTrackingSentTxs(ctx, s.client.Client, s.txsChannels.SentTxs, s.txsQueue)
+		err := trackSentTxs(ctx, s.client.Client, s.txsChannels.SentTxs, s.txsQueue)
 		s.NoError(err)
 		s.wg.Done()
 	}()
@@ -66,7 +66,7 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *TxsTrackingTestSuite) TestStartTrackingSentTxs_ChannelBufferOverflowWithoutBlocking() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_ChannelBufferOverflowWithoutBlocking() {
 	txs := make([]*types.Transaction, 20)
 	commitments := getCommitments(batchtype.Transfer)
 

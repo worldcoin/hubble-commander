@@ -52,7 +52,7 @@ func (s *TxsSendingTestSuite) startTxsSending() {
 
 	s.wg.Add(1)
 	go func() {
-		err := StartTxsRequestsSending(ctx, s.txsChannels.Requests)
+		err := SendRequestedTxs(ctx, s.txsChannels.Requests)
 		s.NoError(err)
 		s.wg.Done()
 	}()
@@ -64,7 +64,7 @@ func (s *TxsSendingTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *TxsSendingTestSuite) TestStartTxsRequestsSending_SetsConsecutiveNoncesForTxsSentInSameTime() {
+func (s *TxsSendingTestSuite) TestSendRequestedTxs_SetsConsecutiveNoncesForTxsSentInSameTime() {
 	start := make(chan struct{})
 	waitGroup := sync.WaitGroup{}
 	resultTxs := make([]*types.Transaction, 2)
@@ -111,6 +111,6 @@ func getCommitments(batchType batchtype.BatchType) []models.CommitmentWithTxs {
 	}
 }
 
-func TestTxsTrackerTestSuite(t *testing.T) {
+func TestTxsSendingTestSuite(t *testing.T) {
 	suite.Run(t, new(TxsSendingTestSuite))
 }

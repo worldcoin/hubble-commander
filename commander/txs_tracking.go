@@ -4,10 +4,10 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/tracker"
 )
 
-func (c *Commander) startTrackingSentTxs() error {
-	return tracker.StartTrackingSentTxs(c.workersContext, c.client, c.txsTrackingChannels.SentTxs)
+func (c *Commander) trackSentTxs() error {
+	return tracker.TrackSentTxs(c.workersContext, c.client, c.txsTrackingChannels.SentTxs)
 }
 
-func (c *Commander) startSendingRequestedTxs() error {
-	return tracker.StartTxsRequestsSending(c.workersContext, c.txsTrackingChannels.Requests)
+func (c *Commander) sendRequestedTxs() error {
+	return tracker.SendRequestedTxs(c.workersContext, c.txsTrackingChannels.Requests)
 }
