@@ -33,7 +33,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.wg = sync.WaitGroup{}
 	s.txsChannels = &eth.TxsTrackingChannels{
 		SkipSendingRequestsThroughChannel: true,
-		SentTxs:                           make(chan *types.Transaction, 8),
+		SentTxs:                           make(chan *types.Transaction, 1),
 	}
 
 	var err error
@@ -67,7 +67,7 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_TracksSubmittedTransfers() {
-	txs := make([]*types.Transaction, 20)
+	txs := make([]*types.Transaction, 8)
 	commitments := getCommitments(batchtype.Transfer)
 
 	for i := 0; i < len(txs); i++ {
