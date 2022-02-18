@@ -48,7 +48,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.setupTestWithFailedTxs()
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig, wantTrackingError bool) {
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
 	s.cmd = NewCommander(s.cfg, nil)
 	// pass txs channels to testClient to use commander tracking worker
 	conf.TxsChannels = s.cmd.txsTrackingChannels
@@ -69,7 +69,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientCon
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
 	s.setAccountsAndChainState()
 
-	s.startWorkers(wantTrackingError)
+	s.startWorkers()
 	s.waitForLatestBlockSync()
 }
 
@@ -84,7 +84,7 @@ func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
 			StakeWithdrawalGasLimit:          &lowGasLimit,
 			DepositBatchSubmissionGasLimit:   &lowGasLimit,
 		},
-	}, true)
+	})
 }
 
 func (s *TxsTrackingTestSuite) TearDownTest() {
@@ -184,7 +184,7 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 	handler(txStorage, txsCtx)
 }
 
-func (s *TxsTrackingTestSuite) startWorkers(wantTrackingError bool) {
+func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Sending Requested Txs", func() error {
 		err := s.cmd.sendRequestedTxs()
 		s.NoError(err)
@@ -192,11 +192,7 @@ func (s *TxsTrackingTestSuite) startWorkers(wantTrackingError bool) {
 	})
 	s.cmd.startWorker("Test Tracking Sent Txs", func() error {
 		err := s.cmd.trackSentTxs()
-		if wantTrackingError {
-			s.Error(err)
-		} else {
-			s.NoError(err)
-		}
+		s.Error(err)
 		return err
 	})
 	s.cmd.startWorker("Test New Block Loop", func() error {
