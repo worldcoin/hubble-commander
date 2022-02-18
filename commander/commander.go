@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -50,6 +51,7 @@ type Commander struct {
 	invalidBatchID *models.Uint256
 
 	txsTrackingChannels *eth.TxsTrackingChannels
+	txsTracker          *tracker.Tracker
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -92,6 +94,8 @@ func (c *Commander) Start() (err error) {
 	if err != nil {
 		return err
 	}
+
+	c.txsTracker = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs)
 
 	err = c.addGenesisBatch()
 	if err != nil {

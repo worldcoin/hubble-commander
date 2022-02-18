@@ -5,39 +5,28 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
-func TrackSentTxs(ctx context.Context, client *eth.Client, sentTxsChan <-chan *types.Transaction) error {
-	queue := newTxsQueue()
-	return trackSentTxs(ctx, client, sentTxsChan, queue)
-}
-
-func trackSentTxs(
-	ctx context.Context,
-	client *eth.Client,
-	sentTxsChan <-chan *types.Transaction,
-	queue *txsQueue,
-) error {
+func (t *Tracker) TrackSentTxs(ctx context.Context) error {
 	wg := sync.WaitGroup{}
 	subCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	wg.Add(1)
-	go func(queue *txsQueue) {
-		startReadingChannel(subCtx, queue, sentTxsChan)
+	go func() {
+		t.startReadingChannel(subCtx)
 		wg.Done()
-	}(queue)
+	}()
 
 	errChan := make(chan error)
 	wg.Add(1)
-	go func(queue *txsQueue) {
-		err := startCheckingTxs(subCtx, queue, client)
+	go func() {
+		err := t.startCheckingTxs(subCtx)
 		errChan <- err
 		wg.Done()
-	}(queue)
+	}()
 
 	err := <-errChan
 	cancel()
@@ -45,39 +34,39 @@ func trackSentTxs(
 	return err
 }
 
-func startReadingChannel(ctx context.Context, queue *txsQueue, txsChan <-chan *types.Transaction) {
+func (t *Tracker) startReadingChannel(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case tx := <-txsChan:
-			queue.Add(tx)
+		case tx := <-t.txsChan:
+			t.addTx(tx)
 		}
 	}
 }
 
-func startCheckingTxs(ctx context.Context, queue *txsQueue, client *eth.Client) error {
+func (t *Tracker) startCheckingTxs(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
-			if queue.IsEmpty() {
+			if t.isEmptyTxsQueue() {
 				continue
 			}
-			tx := queue.First()
-			err := waitUntilTxMinedAndCheckForFail(client, tx)
+			tx := t.firstTx()
+			err := t.waitUntilTxMinedAndCheckForFail(tx)
 			if err != nil {
 				return err
 			}
 
-			queue.RemoveFirst()
+			t.removeFirstTx()
 		}
 	}
 }
 
-func waitUntilTxMinedAndCheckForFail(client *eth.Client, tx *types.Transaction) error {
-	receipt, err := client.WaitToBeMined(tx)
+func (t *Tracker) waitUntilTxMinedAndCheckForFail(tx *types.Transaction) error {
+	receipt, err := t.client.WaitToBeMined(tx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -85,6 +74,6 @@ func waitUntilTxMinedAndCheckForFail(client *eth.Client, tx *types.Transaction) 
 	if receipt.Status == 1 {
 		return nil
 	}
-	err = client.GetRevertMessage(tx, receipt)
+	err = t.client.GetRevertMessage(tx, receipt)
 	return fmt.Errorf("%w tx_hash=%s", err, tx.Hash().String())
 }

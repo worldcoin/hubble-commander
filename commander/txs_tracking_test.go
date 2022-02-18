@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -58,6 +59,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientCon
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs)
 
 	err := s.cmd.addGenesisBatch()
 	s.NoError(err)

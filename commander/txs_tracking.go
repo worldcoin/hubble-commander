@@ -5,7 +5,7 @@ import (
 )
 
 func (c *Commander) trackSentTxs() error {
-	return tracker.TrackSentTxs(c.workersContext, c.client, c.txsTrackingChannels.SentTxs)
+	return c.txsTracker.TrackSentTxs(c.workersContext)
 }
 
 func (c *Commander) sendRequestedTxs() error {

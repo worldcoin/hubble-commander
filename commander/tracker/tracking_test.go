@@ -22,7 +22,7 @@ type TxsTrackingTestSuite struct {
 	txsChannels       *eth.TxsTrackingChannels
 	wg                sync.WaitGroup
 	cancelTxsTracking context.CancelFunc
-	txsQueue          *txsQueue
+	tracker           *Tracker
 }
 
 func (s *TxsTrackingTestSuite) SetupSuite() {
@@ -44,7 +44,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 		},
 	)
 	s.NoError(err)
-	s.txsQueue = newTxsQueue()
+	s.tracker = NewTracker(s.client.Client, s.txsChannels.SentTxs)
 	s.startTxsTracking()
 }
 
@@ -54,7 +54,7 @@ func (s *TxsTrackingTestSuite) startTxsTracking() {
 
 	s.wg.Add(1)
 	go func() {
-		err := trackSentTxs(ctx, s.client.Client, s.txsChannels.SentTxs, s.txsQueue)
+		err := s.tracker.TrackSentTxs(ctx)
 		s.NoError(err)
 		s.wg.Done()
 	}()
@@ -81,7 +81,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_ChannelBufferOverflowWithoutBloc
 	}
 
 	s.Eventually(func() bool {
-		return s.txsQueue.IsEmpty()
+		return s.tracker.isEmptyTxsQueue()
 	}, time.Second, time.Millisecond*300)
 }
 
