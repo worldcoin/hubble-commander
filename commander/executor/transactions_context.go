@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -17,6 +18,7 @@ type TxsContext struct {
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
 	txErrorsToStore []models.TxError
+	mempool         *mempool.Mempool
 
 	// saved here because the configuration might be overridden depending on the set
 	// of currently pending transactions

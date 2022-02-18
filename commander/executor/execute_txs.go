@@ -2,35 +2,50 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
-	if txs.Len() == 0 {
+func (c *TxsContext) ExecuteTxs(_ models.GenericTransactionArray, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+	if len(txs) == 0 {
 		return c.Executor.NewExecuteTxsResult(0), nil
 	}
+
+	// pass txMempool to ExecuteTxs
+	txController, txMempool := c.mempool.BeginTransaction()
+	defer txController.Rollback()
+
+	// move to TxsContext structure
+	heap := mempool.NewTxHeap(txs...)
 
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for i := 0; i < txs.Len(); i++ {
+	for tx := heap.Peek(); tx != nil; tx = heap.Peek() {
 		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
 
-		tx := txs.At(i)
 		applyResult, txError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
 		if appError != nil {
 			return nil, appError
 		}
 		if txError != nil {
-			c.handleTxError(returnStruct, tx, txError)
+			c.handleTxError(txMempool, returnStruct, tx, txError)
+			heap.Pop()
 			continue
 		}
 
 		err := c.Executor.AddPendingAccount(applyResult)
+		if err != nil {
+			return nil, err
+		}
+
+		err = c.updateHeap(txMempool, heap, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -47,13 +62,32 @@ func (c *TxsContext) ExecuteTxs(txs models.GenericTransactionArray, feeReceiver 
 		}
 	}
 
+	txController.Commit()
 	return returnStruct, nil
 }
 
-func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, heap *mempool.TxHeap, tx models.GenericTransaction) error {
+	nextTx, err := txMempool.GetNextExecutableTx(txtype.TransactionType(c.BatchType), tx.GetFromStateID())
+	if err != nil {
+		return err
+	}
+	if nextTx != nil {
+		heap.Replace(nextTx)
+		return nil
+	}
+
+	heap.Pop()
+	return nil
+}
+
+func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
-		result.AddSkippedTx(tx)
 		return
+	}
+	removeErr := txMempool.RemoveFailedTx(tx.GetFromStateID())
+	if removeErr != nil {
+		// shouldn't happen
+		panic(removeErr)
 	}
 
 	log.WithField("tx_hash", tx.GetBase().Hash.String()).
