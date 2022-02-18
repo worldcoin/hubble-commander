@@ -132,7 +132,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitment
 	}
 
 	transfers = append(transfers, highNonceTransfers...)
-	initMempool(s.Assertions, s.txsCtx, transfers)
+	s.initMempool(transfers)
 
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -241,7 +241,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 	nonceTooHighTx := &txs[4]
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
 
-	initMempool(s.Assertions, s.txsCtx, validTxs.AppendOne(nonceTooHighTx))
+	s.initMempool(validTxs.AppendOne(nonceTooHighTx))
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -262,19 +262,14 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 
 func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) models.TransferArray {
 	txs := testutils.GenerateValidTransfers(transfersAmount)
-	initMempool(s.Assertions, s.txsCtx, txs)
+	s.initMempool(txs)
 	return txs
-}
-
-func (s *CreateCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
-	err := s.storage.BatchAddTransfer(transfers)
-	s.NoError(err)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThanRequired() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{validTransfer, invalidTransfer})
+	s.initMempool(models.TransferArray{validTransfer, invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
@@ -295,7 +290,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkips
 		twoSecondsAgo := time.Now().UTC().Add(time.Duration(-2) * time.Second)
 		validTransfer.ReceiveTime = models.NewTimestamp(twoSecondsAgo)
 	}
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{validTransfer})
+	s.initMempool(models.TransferArray{validTransfer})
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -310,7 +305,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{validTransfer, invalidTransfer})
+	s.initMempool(models.TransferArray{validTransfer, invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
@@ -322,7 +317,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	s.AcceptNewConfig()
 
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{invalidTransfer})
+	s.initMempool(models.TransferArray{invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
@@ -336,7 +331,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWhenNotNecessary() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{validTransfer, invalidTransfer})
+	s.initMempool(models.TransferArray{validTransfer, invalidTransfer})
 
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
@@ -372,7 +367,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 		context.Background(),
 		batchtype.Transfer,
 	)
-	initMempool(s.Assertions, tempTxsCtx, validTransfers[:2])
+	s.initMempool(validTransfers[:2])
 
 	commitments, err := tempTxsCtx.CreateCommitments()
 	s.NoError(err)
@@ -389,7 +384,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.cfg.MinCommitmentsPerBatch = 1
 	s.AcceptNewConfig()
 
-	initMempool(s.Assertions, s.txsCtx, validTransfers.AppendOne(&invalidTransfer))
+	s.initMempool(validTransfers.AppendOne(&invalidTransfer))
 
 	commitments, err = s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -415,7 +410,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
 	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
 
-	initMempool(s.Assertions, s.txsCtx, models.TransferArray{transfer, higherFeeTransfer})
+	s.initMempool(models.TransferArray{transfer, higherFeeTransfer})
 
 	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
 
@@ -437,19 +432,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentID)
 }
 
-func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
-	hash, err := encoder.HashTransfer(transfer)
-	s.NoError(err)
-	transfer.Hash = *hash
-
-	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
-	s.NoError(err)
-	signature, err := wallet.Sign(encodedTransfer)
-	s.NoError(err)
-	transfer.Signature = *signature.ModelsSignature()
-
-	err = s.storage.AddTransaction(transfer)
-	s.NoError(err)
+func (s *CreateCommitmentsTestSuite) initMempool(txs models.GenericTransactionArray) {
+	initMempool(s.Assertions, s.txsCtx, txs)
 }
 
 func (s *CreateCommitmentsTestSuite) addUserStates() {
