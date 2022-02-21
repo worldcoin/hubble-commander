@@ -35,12 +35,11 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		TransactionCount:               a.storage.GetTransactionCount(),
 	}
 
-	// TODO this ignores the fact that other nodes can put new accounts in arbitrary state leaves; to be revisited in the future
-	accountCount, err := a.storage.StateTree.NextAvailableStateID()
+	accountCount, err := a.storage.StateTree.LeavesCount()
 	if err != nil {
 		return nil, err
 	}
-	networkInfo.AccountCount = *accountCount
+	networkInfo.AccountCount = accountCount
 
 	latestBatch, err := a.storage.GetLatestSubmittedBatch()
 	if err != nil && !storage.IsNotFoundError(err) {

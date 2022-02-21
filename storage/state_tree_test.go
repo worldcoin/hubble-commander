@@ -365,6 +365,20 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.Equal(node.DataHash, witness[31])
 }
 
+func (s *StateTreeTestSuite) TestLeavesCount_UpdateCountAfterAddingNewLeaves() {
+	s.setStateLeaves(0, 2, 4, 8, 9)
+
+	count, err := s.storage.StateTree.LeavesCount()
+	s.NoError(err)
+	s.EqualValues(5, count)
+}
+
+func (s *StateTreeTestSuite) TestLeavesCount_NoLeaves() {
+	count, err := s.storage.StateTree.LeavesCount()
+	s.NoError(err)
+	s.EqualValues(0, count)
+}
+
 func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{

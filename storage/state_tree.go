@@ -61,6 +61,11 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 	return leaf, err
 }
 
+func (s *StateTree) LeavesCount() (uint32, error) {
+	count, err := s.database.Badger.Count(&stored.StateLeaf{}, nil)
+	return uint32(count), err
+}
+
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	return s.NextVacantSubtree(0)
 }
