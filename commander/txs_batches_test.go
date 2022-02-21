@@ -362,20 +362,22 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 100, s.wallets[0].PublicKey())
 	s.submitInvalidBatchInTx(&tx, func(storage *st.Storage, commitment *models.TxCommitmentWithTxs) {
 		// Fix post state root
-		_, err := storage.StateTree.Set(3, &models.UserState{
+		_, err = storage.StateTree.Set(3, &models.UserState{
 			PubKeyID: 1234,
 			TokenID:  models.MakeUint256(0),
 			Balance:  tx.Amount,
 			Nonce:    models.MakeUint256(0),
 		})
 		s.NoError(err)
-		root, err := storage.StateTree.Root()
+		var root *common.Hash
+		root, err = storage.StateTree.Root()
 		s.NoError(err)
 		commitment.PostStateRoot = *root
 
 		// Replace toStateID and toPubKeyID in C2T
 		tx.ToStateID = ref.Uint32(3)
-		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&tx, 1234)
+		var encodedTx []byte
+		encodedTx, err = encoder.EncodeCreate2TransferForCommitment(&tx, 1234)
 		s.NoError(err)
 		commitment.Transactions = encodedTx
 	})
