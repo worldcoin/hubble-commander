@@ -367,7 +367,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 		context.Background(),
 		batchtype.Transfer,
 	)
-	s.initMempool(validTransfers[:2])
+	initMempool(s.Assertions, tempTxsCtx, validTransfers[:2])
 
 	commitments, err := tempTxsCtx.CreateCommitments()
 	s.NoError(err)
