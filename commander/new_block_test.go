@@ -178,7 +178,8 @@ func (s *NewBlockLoopTestSuite) runInTransaction(handler func(*st.Storage, *exec
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 	handler(txStorage, txsCtx)
 }
 

@@ -301,7 +301,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MaxTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 2
-	s.txsCtx = NewTestTxsContext(s.executionCtx, batchtype.Transfer)
+	s.AcceptNewConfig()
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)

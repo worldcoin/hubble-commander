@@ -52,7 +52,8 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd.storage = s.storage.Storage
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -350,8 +351,10 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
 	// Change batch type used in TxsContext
+	var err error
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
+	s.NoError(err)
 
 	// Register public keys added to the account tree for signature disputes to work
 	s.registerAccounts([]uint32{0, 1})
@@ -534,7 +537,9 @@ func (s *TxsBatchesTestSuite) beginTransaction() (*db.TxController, *st.Storage,
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	return txController, txStorage, executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	s.NoError(err)
+	return txController, txStorage, txsCtx
 }
 
 func submitInvalidTxsBatch(

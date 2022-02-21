@@ -180,7 +180,8 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchType)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchType)
+	s.NoError(err)
 	handler(txStorage, txsCtx)
 }
 

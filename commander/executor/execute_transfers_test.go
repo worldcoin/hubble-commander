@@ -39,7 +39,8 @@ func (s *ExecuteTransfersTestSuite) SetupTest() {
 	setInitialUserStates(s.Assertions, s.storage.Storage)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
@@ -93,7 +94,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(3)...)
+	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
@@ -165,14 +166,17 @@ func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTra
 }
 
 func initMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
-	if txs.Len() > 0 {
-		err := txsCtx.storage.BatchAddTransaction(txs)
-		s.NoError(err)
+	if txs.Len() == 0 {
+		return
 	}
 
-	pool, err := mempool.NewMempool(txsCtx.storage)
+	err := txsCtx.storage.BatchAddTransaction(txs)
 	s.NoError(err)
-	txsCtx.Mempool = pool
+
+	for i := 0; i < txs.Len(); i++ {
+		_, err = txsCtx.Mempool.AddOrReplace(txsCtx.storage, txs.At(i))
+		s.NoError(err)
+	}
 }
 
 // TODO: change GenerateInvalidTransfers FromStateID

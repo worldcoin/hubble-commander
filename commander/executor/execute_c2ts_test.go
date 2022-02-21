@@ -45,7 +45,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(3)...)
+	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)

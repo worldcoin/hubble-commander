@@ -38,7 +38,8 @@ func (s *ExecutePendingTxBatchTestSuite) SetupTest() {
 	setInitialUserStates(s.Assertions, s.storage.Storage)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	s.pendingBatch = models.PendingBatch{
 		ID:              models.MakeUint256(1),

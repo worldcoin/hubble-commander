@@ -140,7 +140,8 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
+	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)

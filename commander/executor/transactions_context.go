@@ -36,18 +36,23 @@ func NewTxsContext(
 	batchType batchtype.BatchType,
 ) *TxsContext {
 	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
-	return newTxsContext(executionCtx, batchType)
+	return newTxsContext(executionCtx, nil, batchType)
 }
 
-func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
-	return newTxsContext(executionCtx, batchType)
+func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) (*TxsContext, error) {
+	pool, err := mempool.NewMempool(executionCtx.storage)
+	if err != nil {
+		return nil, err
+	}
+	return newTxsContext(executionCtx, pool, batchType), nil
 }
 
-func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) *TxsContext {
+func newTxsContext(executionCtx *ExecutionContext, pool *mempool.Mempool, batchType batchtype.BatchType) *TxsContext {
 	return &TxsContext{
 		ExecutionContext:       executionCtx,
 		Executor:               NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
 		BatchType:              batchType,
+		Mempool:                pool,
 		txErrorsToStore:        make([]models.TxError, 0),
 		minTxsPerCommitment:    executionCtx.cfg.MinTxsPerCommitment,
 		minCommitmentsPerBatch: executionCtx.cfg.MinCommitmentsPerBatch,

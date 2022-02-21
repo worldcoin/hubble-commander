@@ -133,7 +133,8 @@ func (s *SyncStakeWithdrawalsTestSuite) runInTransaction(handler func(*st.Storag
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 	handler(txStorage, txsCtx)
 }
 
