@@ -35,7 +35,7 @@ func (s *C2TCommitmentsTestSuite) SetupTest() {
 
 func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 	transfers := testutils.GenerateValidCreate2Transfers(2)
-	s.addCreate2Transfers(transfers)
+	s.initMempool(transfers)
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -52,7 +52,7 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 
 func (s *C2TCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	transfers := testutils.GenerateValidCreate2Transfers(1)
-	s.addCreate2Transfers(transfers)
+	s.initMempool(transfers)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
 	commitments, err := s.txsCtx.CreateCommitments()
@@ -131,6 +131,10 @@ func (s *C2TCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64)
 		registeredAccounts = append(registeredAccounts, accounts...)
 	}
 	return registeredAccounts
+}
+
+func (s *C2TCommitmentsTestSuite) initMempool(txs models.GenericTransactionArray) {
+	initMempool(s.Assertions, s.txsCtx, txs)
 }
 
 func TestC2TCommitmentsTestSuite(t *testing.T) {
