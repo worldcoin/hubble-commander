@@ -9,7 +9,12 @@ type TxSendingRequest struct {
 	contract     *bind.BoundContract
 	input        []byte
 	opts         *bind.TransactOpts
-	resultTxChan chan *types.Transaction
+	resultTxChan chan SendResponse
+}
+
+type SendResponse struct {
+	Transaction *types.Transaction
+	Error       error
 }
 
 type TxsTrackingChannels struct {
@@ -52,18 +57,22 @@ func packAndRequest(
 	var tx *types.Transaction
 	if txsChannels.SkipSendingRequestsThroughChannel {
 		tx, err = contract.BoundContract.RawTransact(opts, input)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		responseChan := make(chan *types.Transaction, 1)
+		responseChan := make(chan SendResponse, 1)
 		txsChannels.Requests <- &TxSendingRequest{
 			contract:     contract.BoundContract,
 			input:        input,
 			opts:         opts,
 			resultTxChan: responseChan,
 		}
-		tx = <-responseChan
-	}
-	if err != nil {
-		return nil, err
+		response := <-responseChan
+		if response.Error != nil {
+			return nil, response.Error
+		}
+		tx = response.Transaction
 	}
 	if !txsChannels.SkipSentTxsChannel {
 		txsChannels.SentTxs <- tx
@@ -73,9 +82,9 @@ func packAndRequest(
 
 func (c *TxSendingRequest) Send() error {
 	tx, err := c.contract.RawTransact(c.opts, c.input)
-	if err != nil {
-		return err
+	c.resultTxChan <- SendResponse{
+		Transaction: tx,
+		Error:       err,
 	}
-	c.resultTxChan <- tx
-	return nil
+	return err
 }
