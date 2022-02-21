@@ -93,7 +93,7 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) (int, error) {
 }
 
 func (c *Commander) syncPendingBatch(batch *models.PendingBatch) (err error) {
-	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, context.Background(), batch.Type)
+	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), context.Background(), batch.Type)
 	defer ctx.Rollback(&err)
 
 	err = ctx.ExecutePendingBatch(batch)

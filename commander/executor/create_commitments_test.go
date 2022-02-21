@@ -364,6 +364,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 		s.txsCtx.client,
 		s.cfg,
 		metrics.NewCommanderMetrics(),
+		s.txsCtx.Mempool,
 		context.Background(),
 		batchtype.Transfer,
 	)

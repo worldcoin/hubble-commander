@@ -32,11 +32,12 @@ func NewTxsContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	commanderMetrics *metrics.CommanderMetrics,
+	pool *mempool.Mempool,
 	ctx context.Context,
 	batchType batchtype.BatchType,
 ) *TxsContext {
 	executionCtx := NewExecutionContext(storage, client, cfg, commanderMetrics, ctx)
-	return newTxsContext(executionCtx, nil, batchType)
+	return newTxsContext(executionCtx, pool, batchType)
 }
 
 func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) (*TxsContext, error) {

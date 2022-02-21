@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -24,6 +25,7 @@ type MMBatchesTestSuite struct {
 	cmd     *Commander
 	client  *eth.TestClient
 	storage *st.TestStorage
+	pool    *mempool.Mempool
 	cfg     *config.Config
 }
 
@@ -43,6 +45,9 @@ func (s *MMBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+
+	s.pool, err = mempool.NewMempool(s.storage.Storage)
+	s.NoError(err)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -164,6 +169,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 		s.client.Client,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
+		s.pool,
 		context.Background(),
 		batchtype.MassMigration,
 	)

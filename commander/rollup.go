@@ -87,7 +87,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	// 	 return err
 	// }
 
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), ctx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
