@@ -12,6 +12,8 @@ func (t *Tracker) SendRequestedTxs(ctx context.Context) error {
 		case request := <-t.requestsChan:
 			err := request.Send()
 			if err != nil {
+				// nolint:gocritic
+				// close(t.requestsChan)
 				return err
 			}
 		}
