@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -58,6 +59,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientCon
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs, conf.TxsChannels.Requests)
 
 	err := s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -93,12 +95,12 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_TransferTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_TransferTransaction() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_Create2TransfersTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
 	transfer := testutils.MakeCreate2Transfer(
 		0,
 		ref.Uint32(1),
@@ -109,18 +111,18 @@ func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_Create2TransfersTransact
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_MassMigrationTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_MassMigrationTransaction() {
 	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
 	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_BatchAccountRegistrationTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransaction() {
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_WithdrawStake() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_WithdrawStake() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
@@ -128,7 +130,7 @@ func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_WithdrawStake() {
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestStartSentTxsTracking_SubmitDepositBatch() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
 	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
@@ -183,20 +185,20 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 }
 
 func (s *TxsTrackingTestSuite) startWorkers() {
-	s.cmd.startWorker("Test Txs Requests Sending", func() error {
-		err := s.cmd.startSendingRequestedTxs()
+	s.cmd.startWorker("Test Sending Requested Txs", func() error {
+		err := s.cmd.txsTracker.SendRequestedTxs(s.cmd.workersContext)
 		s.NoError(err)
-		return nil
+		return err
 	})
-	s.cmd.startWorker("Test Failed Txs Tracking", func() error {
-		err := s.cmd.startTrackingSentTxs()
-		s.NoError(err)
-		return nil
+	s.cmd.startWorker("Test Tracking Sent Txs", func() error {
+		err := s.cmd.txsTracker.TrackSentTxs(s.cmd.workersContext)
+		s.Error(err)
+		return err
 	})
 	s.cmd.startWorker("Test New Block Loop", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
-		return nil
+		return err
 	})
 }
 

@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/api"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
@@ -50,6 +51,7 @@ type Commander struct {
 	invalidBatchID *models.Uint256
 
 	txsTrackingChannels *eth.TxsTrackingChannels
+	txsTracker          *tracker.Tracker
 }
 
 func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
@@ -93,6 +95,8 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
+	c.txsTracker = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
+
 	err = c.addGenesisBatch()
 	if err != nil {
 		return err
@@ -119,8 +123,8 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Sent Txs", func() error { return c.startTrackingSentTxs() })
-	c.startWorker("Sending Requesting Txs", func() error { return c.startSendingRequestedTxs() })
+	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
+	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()

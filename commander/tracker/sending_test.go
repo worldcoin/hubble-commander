@@ -15,23 +15,25 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TxsTrackerTestSuite struct {
+type TxsSendingTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client           *eth.TestClient
 	txsChannels      *eth.TxsTrackingChannels
 	wg               sync.WaitGroup
 	cancelTxsSending context.CancelFunc
+	tracker          *Tracker
 }
 
-func (s *TxsTrackerTestSuite) SetupSuite() {
+func (s *TxsSendingTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *TxsTrackerTestSuite) SetupTest() {
+func (s *TxsSendingTestSuite) SetupTest() {
+	s.wg = sync.WaitGroup{}
 	s.txsChannels = &eth.TxsTrackingChannels{
-		Requests: make(chan *eth.TxSendingRequest, 32),
-		SentTxs:  make(chan *types.Transaction, 32),
+		Requests: make(chan *eth.TxSendingRequest, 8),
+		SentTxs:  make(chan *types.Transaction, 8),
 	}
 
 	var err error
@@ -42,27 +44,29 @@ func (s *TxsTrackerTestSuite) SetupTest() {
 		},
 	)
 	s.NoError(err)
+	s.tracker = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
 	s.startTxsSending()
 }
 
-func (s *TxsTrackerTestSuite) startTxsSending() {
-	s.wg = sync.WaitGroup{}
+func (s *TxsSendingTestSuite) startTxsSending() {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancelTxsSending = cancel
 
+	s.wg.Add(1)
 	go func() {
-		err := StartTxsRequestsSending(ctx, s.txsChannels.Requests)
+		err := s.tracker.SendRequestedTxs(ctx)
 		s.NoError(err)
+		s.wg.Done()
 	}()
 }
 
-func (s *TxsTrackerTestSuite) TearDownTest() {
+func (s *TxsSendingTestSuite) TearDownTest() {
 	s.cancelTxsSending()
 	s.wg.Wait()
 	s.client.Close()
 }
 
-func (s *TxsTrackerTestSuite) TestStartTxsRequestsSending_SetsConsecutiveNoncesForTxsSentInSameTime() {
+func (s *TxsSendingTestSuite) TestSendRequestedTxs_SetsConsecutiveNoncesForTxsSentInSameTime() {
 	start := make(chan struct{})
 	waitGroup := sync.WaitGroup{}
 	resultTxs := make([]*types.Transaction, 2)
@@ -109,6 +113,6 @@ func getCommitments(batchType batchtype.BatchType) []models.CommitmentWithTxs {
 	}
 }
 
-func TestTxsTrackerTestSuite(t *testing.T) {
-	suite.Run(t, new(TxsTrackerTestSuite))
+func TestTxsSendingTestSuite(t *testing.T) {
+	suite.Run(t, new(TxsSendingTestSuite))
 }
