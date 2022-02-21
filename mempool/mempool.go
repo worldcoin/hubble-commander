@@ -43,9 +43,6 @@ type TxController struct {
 	rolledBack bool
 }
 
-type Iterator struct {
-}
-
 func (c *TxController) Commit() {
 	if c.rolledBack {
 		return
