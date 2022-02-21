@@ -23,6 +23,7 @@ type someMempool interface {
 
 type Mempool struct {
 	buckets map[uint32]*txBucket
+	txCount int
 }
 
 type TxMempool struct {
@@ -84,6 +85,7 @@ func NewMempool(storage *st.Storage) (*Mempool, error) {
 
 	mempool := &Mempool{
 		buckets: map[uint32]*txBucket{},
+		txCount: txs.Len(),
 	}
 
 	err = mempool.initBuckets(storage, txs)
@@ -207,7 +209,15 @@ func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransact
 	if err != nil {
 		return nil, err
 	}
-	return bucket.addOrReplace(newTx)
+	prevTxHash, err := bucket.addOrReplace(newTx)
+	if err != nil {
+		return nil, err
+	}
+	if prevTxHash != nil {
+		return prevTxHash, nil
+	}
+	m.txCount++
+	return nil, nil
 }
 
 func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
@@ -221,7 +231,7 @@ func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (*common.Hash, 
 			return b.replace(i, newTx)
 		}
 
-		if newTxNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
+		if newTxNonce.Cmp(&tx.GetBase().Nonce) < 0 {
 			b.insertAt(i, newTx)
 			return nil, nil
 		}
@@ -267,6 +277,10 @@ func (m *Mempool) setBucket(stateID uint32, bucket *txBucket) {
 	} else {
 		m.buckets[stateID] = bucket
 	}
+}
+
+func (m *Mempool) TxCount() int {
+	return m.txCount
 }
 
 func (b txBucket) Copy() *txBucket {

@@ -202,6 +202,10 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_BucketDoesNotExist() {
 	s.ErrorIs(err, ErrNonexistentBucket)
 }
 
+// func (s *MempoolTestSuite) TestRemoveFailedTx_UpdatesTxCount() {
+//
+// }
+
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	tx := s.newTransfer(0, 14)
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
@@ -239,6 +243,27 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.ErrorIs(err, ErrTxReplacementFailed)
 	s.Nil(prevTxHash)
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_IncrementsTxCountOnInsertion() {
+	tx := s.newTransfer(0, 14)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(11, s.mempool.TxCount())
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_DoesNotIncrementTxCountOnReplacement() {
+	tx := s.newTransfer(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(10, s.mempool.TxCount())
+}
+
+func (s *MempoolTestSuite) TestTxCount() {
+	s.Equal(10, s.mempool.TxCount())
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
