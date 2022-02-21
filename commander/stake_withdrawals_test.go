@@ -33,7 +33,7 @@ func (s *StakeWithdrawalsTestSuite) SetupTest() {
 	// finalize instantly
 	s.testClient, err = eth.NewConfiguredTestClient(&rollup.DeploymentConfig{
 		Params: rollup.Params{BlocksToFinalise: models.NewUint256(0)},
-	}, &eth.ClientConfig{})
+	}, &eth.TestClientConfig{})
 
 	s.NoError(err)
 	s.cmd = &Commander{

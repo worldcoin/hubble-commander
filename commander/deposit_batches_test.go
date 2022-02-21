@@ -67,7 +67,7 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 		},
-	}, &eth.ClientConfig{})
+	}, &eth.TestClientConfig{})
 	require.NoError(t, err)
 
 	return client

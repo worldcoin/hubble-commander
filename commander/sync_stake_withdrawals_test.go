@@ -187,7 +187,7 @@ func newClientWithGenesisStateAndFastBlockFinalization(t *testing.T, storage *st
 			GenesisStateRoot: genesisRoot,
 			BlocksToFinalise: models.NewUint256(1),
 		},
-	}, &eth.ClientConfig{})
+	}, &eth.TestClientConfig{})
 	require.NoError(t, err)
 
 	return client

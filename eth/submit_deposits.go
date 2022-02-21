@@ -13,7 +13,7 @@ func (c *Client) SubmitDeposits(
 	previous *models.CommitmentInclusionProof,
 	proof *models.SubtreeVacancyProof,
 ) (*types.Transaction, error) {
-	transaction, err := c.rollup().
+	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).
 		SubmitDeposits(
@@ -24,7 +24,7 @@ func (c *Client) SubmitDeposits(
 	if err != nil {
 		return nil, err
 	}
-	return transaction, nil
+	return tx, nil
 }
 
 func (c *Client) SubmitDepositsAndWait(

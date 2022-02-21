@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +18,7 @@ type AccountManager struct {
 	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit uint64
 	mineTimeout                      time.Duration
-	txsHashesChan                    chan<- common.Hash
+	txsChannels                      *TxsTrackingChannels
 }
 
 //goland:noinspection GoDeprecation
@@ -36,8 +37,17 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 		mineTimeout:                      params.MineTimeout,
-		txsHashesChan:                    params.TxsHashesChan,
+		txsChannels:                      params.TxsChannels,
 	}, nil
+}
+
+func (a *AccountManager) packAndRequest(
+	contract *Contract,
+	opts *bind.TransactOpts,
+	method string,
+	data ...interface{},
+) (*types.Transaction, error) {
+	return packAndRequest(a.txsChannels, contract, opts, method, data...)
 }
 
 type AccountManagerParams struct {
@@ -45,5 +55,5 @@ type AccountManagerParams struct {
 	AccountRegistryAddress           common.Address
 	BatchAccountRegistrationGasLimit uint64
 	MineTimeout                      time.Duration
-	TxsHashesChan                    chan<- common.Hash
+	TxsChannels                      *TxsTrackingChannels
 }
