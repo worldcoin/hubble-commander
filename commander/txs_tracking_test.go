@@ -158,6 +158,8 @@ func (s *TxsTrackingTestSuite) submitBatchInTransaction(
 	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
+		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
+		s.NoError(err)
 
 		batchData, err := txsCtx.CreateCommitments()
 		s.NoError(err)

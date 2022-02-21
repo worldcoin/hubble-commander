@@ -487,6 +487,8 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *models.Batch {
 	err := s.cmd.storage.AddTransaction(tx)
 	s.NoError(err)
+	_, err = s.txsCtx.Mempool.AddOrReplace(s.cmd.storage, tx)
+	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
@@ -552,6 +554,8 @@ func submitInvalidTxsBatch(
 	modifier func(storage *st.Storage, commitment *models.TxCommitmentWithTxs),
 ) *models.Batch {
 	err := storage.AddTransaction(tx)
+	s.NoError(err)
+	_, err = txsCtx.Mempool.AddOrReplace(storage, tx)
 	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)

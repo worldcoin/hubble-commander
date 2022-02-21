@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -63,6 +64,7 @@ func (s *MigrateTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txPool = mempool.NewTestTxPool()
 
 	setStateLeaves(s.T(), s.storage.Storage)
 

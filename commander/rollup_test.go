@@ -40,6 +40,9 @@ func (s *RollupTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 
+	txPool, err := mempool.NewTxPool(s.testStorage.Storage)
+	s.NoError(err)
+
 	s.commander = &Commander{
 		cfg: &config.Config{
 			Rollup: &config.RollupConfig{
@@ -52,7 +55,7 @@ func (s *RollupTestSuite) SetupTest() {
 		storage: s.testStorage.Storage,
 		client:  s.testClient.Client,
 		metrics: metrics.NewCommanderMetrics(),
-		txPool:  mempool.NewTestTxPool(),
+		txPool:  txPool,
 	}
 
 	domain, err := s.testClient.GetDomain()
@@ -74,10 +77,7 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RollbacksStateOnRollupErrorBut
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	s.setTxHashAndSign(&s.wallets[1], &invalidTransfer)
 
-	err := s.testStorage.AddTransaction(&validTransfer)
-	s.NoError(err)
-	err = s.testStorage.AddTransaction(&invalidTransfer)
-	s.NoError(err)
+	s.addTxs(models.TransferArray{validTransfer, invalidTransfer})
 
 	preStateRoot, err := s.testStorage.StateTree.Root()
 	s.NoError(err)
@@ -102,11 +102,10 @@ func (s *RollupTestSuite) TestRollupLoopIteration_RerunIterationWhenNotEnoughDep
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
 
-	err := s.testStorage.AddTransaction(&validTransfer)
-	s.NoError(err)
+	s.addTxs(models.MakeGenericArray(&validTransfer))
 
 	currentBatchType := batchtype.Deposit
-	err = s.commander.rollupLoopIteration(context.Background(), &currentBatchType)
+	err := s.commander.rollupLoopIteration(context.Background(), &currentBatchType)
 	s.NoError(err)
 
 	batches, err := s.commander.storage.GetBatchesInRange(nil, nil)
@@ -123,11 +122,10 @@ func (s *RollupTestSuite) TestRollupLoopIteration_SavesTxErrors() {
 	invalidTransfer := testutils.MakeTransfer(0, 2, 0, 100)
 	s.setTxHashAndSign(&s.wallets[0], &validTransfer)
 
-	err := s.testStorage.BatchAddTransfer([]models.Transfer{validTransfer, invalidTransfer})
-	s.NoError(err)
+	s.addTxs(models.TransferArray{validTransfer, invalidTransfer})
 
 	currentBatchType := batchtype.Transfer
-	err = s.commander.rollupLoopIteration(context.Background(), &currentBatchType)
+	err := s.commander.rollupLoopIteration(context.Background(), &currentBatchType)
 	s.NoError(err)
 
 	transfer, err := s.commander.storage.GetTransfer(invalidTransfer.Hash)
@@ -173,6 +171,16 @@ func (s *RollupTestSuite) addUserStates() {
 		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)
+}
+
+func (s *RollupTestSuite) addTxs(txs models.GenericTransactionArray) {
+	err := s.testStorage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	for i := 0; i < txs.Len(); i++ {
+		_, err = s.commander.txPool.Mempool().AddOrReplace(s.testStorage.Storage, txs.At(i))
+		s.NoError(err)
+	}
 }
 
 func TestRollupTestSuite(t *testing.T) {

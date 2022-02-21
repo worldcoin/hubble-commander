@@ -160,6 +160,8 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 	s.runInTransaction(func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
+		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
+		s.NoError(err)
 
 		commitments, err := txsCtx.CreateCommitments()
 		s.NoError(err)

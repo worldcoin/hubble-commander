@@ -146,8 +146,7 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.Commi
 }
 
 func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
-	err := s.storage.AddTransaction(tx)
-	s.NoError(err)
+	s.addTx(tx)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
@@ -157,4 +156,11 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	s.Len(commitments, 1)
 
 	return pendingBatch, commitments
+}
+
+func (s *syncTestSuite) addTx(tx models.GenericTransaction) {
+	err := s.storage.AddTransaction(tx)
+	s.NoError(err)
+	_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
 }
