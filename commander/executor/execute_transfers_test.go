@@ -158,14 +158,14 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 }
 
 func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
-	initMempool(s, txsCtx, txs)
+	initTxs(s, txsCtx, txs)
 	txsCtx.heap = txsCtx.newHeap()
 
 	_, txMempool := txsCtx.Mempool.BeginTransaction()
 	return txMempool
 }
 
-func initMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
+func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
 	if txs.Len() == 0 {
 		return
 	}

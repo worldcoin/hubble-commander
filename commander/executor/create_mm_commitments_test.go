@@ -39,7 +39,7 @@ func (s *MMCommitmentsTestSuite) SetupTest() {
 
 func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
-	initMempool(s.Assertions, s.txsCtx, massMigrations)
+	initTxs(s.Assertions, s.txsCtx, massMigrations)
 
 	withdrawRoot := s.generateWithdrawRoot(massMigrations)
 
