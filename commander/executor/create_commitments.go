@@ -22,7 +22,7 @@ type FeeReceiver struct {
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	c.heap = c.newHeap()
-	txController, batchMempool := c.mempool.BeginTransaction()
+	txController, batchMempool := c.Mempool.BeginTransaction()
 	defer txController.Rollback()
 
 	commitmentID, err := c.NextCommitmentID()
@@ -168,7 +168,7 @@ func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray)
 }
 
 func (c *TxsContext) newHeap() *mempool.TxHeap {
-	txs := c.mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+	txs := c.Mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
 
 	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment*c.minCommitmentsPerBatch.
 	// If that's true then look for oldest tx

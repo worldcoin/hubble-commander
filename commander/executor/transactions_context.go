@@ -17,9 +17,9 @@ type TxsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
-	txErrorsToStore []models.TxError
-	mempool         *mempool.Mempool
+	Mempool         *mempool.Mempool
 	heap            *mempool.TxHeap
+	txErrorsToStore []models.TxError
 
 	// saved here because the configuration might be overridden depending on the set
 	// of currently pending transactions

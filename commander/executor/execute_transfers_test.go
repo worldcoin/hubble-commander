@@ -160,7 +160,7 @@ func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTra
 	initMempool(s, txsCtx, txs)
 	txsCtx.heap = txsCtx.newHeap()
 
-	_, txMempool := txsCtx.mempool.BeginTransaction()
+	_, txMempool := txsCtx.Mempool.BeginTransaction()
 	return txMempool
 }
 
@@ -172,7 +172,7 @@ func initMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTr
 
 	pool, err := mempool.NewMempool(txsCtx.storage)
 	s.NoError(err)
-	txsCtx.mempool = pool
+	txsCtx.Mempool = pool
 }
 
 // TODO: change GenerateInvalidTransfers FromStateID
