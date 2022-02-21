@@ -1,6 +1,6 @@
 # Tracker
 
-### SendRequestedTxs
+### Tracker.SendRequestedTxs
 Receives transaction requests and sends them in order to avoid incorrect nonce.
 
 ### Tracker.TrackSentTxs

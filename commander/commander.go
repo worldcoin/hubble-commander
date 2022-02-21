@@ -95,7 +95,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txsTracker = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs)
+	c.txsTracker = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
 
 	err = c.addGenesisBatch()
 	if err != nil {
@@ -123,8 +123,8 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Sent Txs", func() error { return c.trackSentTxs() })
-	c.startWorker("Sending Requested Txs", func() error { return c.sendRequestedTxs() })
+	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
+	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 
 	go c.handleWorkerError()

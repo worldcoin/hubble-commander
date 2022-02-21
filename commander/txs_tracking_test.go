@@ -59,7 +59,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientCon
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs)
+	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs, conf.TxsChannels.Requests)
 
 	err := s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -186,12 +186,12 @@ func (s *TxsTrackingTestSuite) runInTransaction(
 
 func (s *TxsTrackingTestSuite) startWorkers() {
 	s.cmd.startWorker("Test Sending Requested Txs", func() error {
-		err := s.cmd.sendRequestedTxs()
+		err := s.cmd.txsTracker.SendRequestedTxs(s.cmd.workersContext)
 		s.NoError(err)
 		return err
 	})
 	s.cmd.startWorker("Test Tracking Sent Txs", func() error {
-		err := s.cmd.trackSentTxs()
+		err := s.cmd.txsTracker.TrackSentTxs(s.cmd.workersContext)
 		s.Error(err)
 		return err
 	})

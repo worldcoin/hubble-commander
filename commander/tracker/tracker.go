@@ -11,15 +11,17 @@ type Tracker struct {
 	txs   []*types.Transaction
 	mutex sync.RWMutex
 
-	client  *eth.Client
-	txsChan <-chan *types.Transaction
+	client       *eth.Client
+	txsChan      <-chan *types.Transaction
+	requestsChan <-chan *eth.TxSendingRequest
 }
 
-func NewTracker(client *eth.Client, txsChan <-chan *types.Transaction) *Tracker {
+func NewTracker(client *eth.Client, txsChan <-chan *types.Transaction, requestsChan <-chan *eth.TxSendingRequest) *Tracker {
 	return &Tracker{
-		client:  client,
-		txsChan: txsChan,
-		txs:     make([]*types.Transaction, 0),
+		txs:          make([]*types.Transaction, 0),
+		client:       client,
+		txsChan:      txsChan,
+		requestsChan: requestsChan,
 	}
 }
 

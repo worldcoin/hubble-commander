@@ -2,16 +2,14 @@ package tracker
 
 import (
 	"context"
-
-	"github.com/Worldcoin/hubble-commander/eth"
 )
 
-func SendRequestedTxs(ctx context.Context, requestsChan <-chan *eth.TxSendingRequest) error {
+func (t *Tracker) SendRequestedTxs(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case request := <-requestsChan:
+		case request := <-t.requestsChan:
 			err := request.Send()
 			if err != nil {
 				return err

@@ -22,6 +22,7 @@ type TxsSendingTestSuite struct {
 	txsChannels      *eth.TxsTrackingChannels
 	wg               sync.WaitGroup
 	cancelTxsSending context.CancelFunc
+	tracker          *Tracker
 }
 
 func (s *TxsSendingTestSuite) SetupSuite() {
@@ -43,6 +44,7 @@ func (s *TxsSendingTestSuite) SetupTest() {
 		},
 	)
 	s.NoError(err)
+	s.tracker = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
 	s.startTxsSending()
 }
 
@@ -52,7 +54,7 @@ func (s *TxsSendingTestSuite) startTxsSending() {
 
 	s.wg.Add(1)
 	go func() {
-		err := SendRequestedTxs(ctx, s.txsChannels.Requests)
+		err := s.tracker.SendRequestedTxs(ctx)
 		s.NoError(err)
 		s.wg.Done()
 	}()
