@@ -286,6 +286,16 @@ func (s *MempoolTestSuite) TestTxCount() {
 	s.Equal(10, s.mempool.TxCount())
 }
 
+func (s *MempoolTestSuite) TestForEach() {
+	counter := 0
+	err := s.mempool.ForEach(func(tx models.GenericTransaction) (IterationControl, error) {
+		counter++
+		return Continue, nil
+	})
+	s.NoError(err)
+	s.Equal(10, counter)
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }

@@ -11,6 +11,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+type (
+	IterationControl  bool
+	IterationCallback func(tx models.GenericTransaction) (IterationControl, error)
+)
+
+const (
+	Continue IterationControl = true
+	Finish   IterationControl = false
+)
+
 const unsetTxCount = -1
 
 var (
@@ -39,6 +49,9 @@ type TxController struct {
 	underlying someMempool
 	tx         *TxMempool
 	rolledBack bool
+}
+
+type Iterator struct {
 }
 
 func (c *TxController) Commit() {
@@ -307,6 +320,21 @@ func (m *Mempool) setTxCount(count int) {
 
 func (m *Mempool) TxCount() int {
 	return m.txCount
+}
+
+func (m *Mempool) ForEach(callback IterationCallback) error {
+	for _, bucket := range m.buckets {
+		for _, tx := range bucket.txs {
+			control, err := callback(tx)
+			if err != nil {
+				return err
+			}
+			if control == Finish {
+				return nil
+			}
+		}
+	}
+	return nil
 }
 
 func (b txBucket) Copy() *txBucket {
