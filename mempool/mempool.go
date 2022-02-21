@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const unsetTxCount = -1
+
 var (
 	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
@@ -19,6 +21,8 @@ var (
 type someMempool interface {
 	getBucket(stateID uint32) *txBucket
 	setBucket(stateID uint32, bucket *txBucket)
+	getTxCount() int
+	setTxCount(count int)
 }
 
 type Mempool struct {
@@ -44,6 +48,7 @@ func (c *TxController) Commit() {
 	for stateID, bucket := range c.tx.buckets {
 		c.underlying.setBucket(stateID, bucket)
 	}
+	c.underlying.setTxCount(c.tx.getTxCount())
 }
 
 func (c *TxController) Rollback() {
@@ -68,6 +73,7 @@ func beginTransaction(m someMempool) (*TxController, *TxMempool) {
 		underlying: m,
 		Mempool: Mempool{
 			buckets: map[uint32]*txBucket{},
+			txCount: unsetTxCount,
 		},
 	}
 	txController := &TxController{
@@ -184,6 +190,7 @@ func (m *TxMempool) removeTx(stateID uint32) (*txBucket, error) {
 		return nil, errors.WithStack(ErrNonexistentBucket)
 	}
 	bucket.txs = bucket.txs[1:]
+	m.setTxCount(m.getTxCount() - 1)
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
 		return nil, nil
@@ -202,6 +209,13 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 		m.buckets[stateID] = bucket
 	}
 	return bucket
+}
+
+func (m *TxMempool) getTxCount() int {
+	if m.txCount == unsetTxCount {
+		m.txCount = m.underlying.getTxCount()
+	}
+	return m.txCount
 }
 
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
@@ -267,6 +281,10 @@ func (m *TxMempool) setBucket(stateID uint32, bucket *txBucket) {
 	m.buckets[stateID] = bucket
 }
 
+func (m *TxMempool) setTxCount(count int) {
+	m.txCount = count
+}
+
 func (m *Mempool) getBucket(stateID uint32) *txBucket {
 	return m.buckets[stateID]
 }
@@ -277,6 +295,14 @@ func (m *Mempool) setBucket(stateID uint32, bucket *txBucket) {
 	} else {
 		m.buckets[stateID] = bucket
 	}
+}
+
+func (m *Mempool) getTxCount() int {
+	return m.txCount
+}
+
+func (m *Mempool) setTxCount(count int) {
+	m.txCount = count
 }
 
 func (m *Mempool) TxCount() int {

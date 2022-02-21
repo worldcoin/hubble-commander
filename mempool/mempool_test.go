@@ -163,6 +163,18 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_BucketDoesNotExist() {
 	s.Nil(tx)
 }
 
+func (s *MempoolTestSuite) TestGetNextExecutableTx_DecrementsTxCount() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
+
+	s.Equal(9, txMempool.TxCount())
+
+	txController.Commit()
+	s.Equal(9, s.mempool.TxCount())
+}
+
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
 	_, txMempool := s.mempool.BeginTransaction()
 
@@ -202,9 +214,17 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_BucketDoesNotExist() {
 	s.ErrorIs(err, ErrNonexistentBucket)
 }
 
-// func (s *MempoolTestSuite) TestRemoveFailedTx_UpdatesTxCount() {
-//
-// }
+func (s *MempoolTestSuite) TestRemoveFailedTx_DecrementsTxCount() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	err := txMempool.RemoveFailedTx(0)
+	s.NoError(err)
+
+	s.Equal(9, txMempool.TxCount())
+
+	txController.Commit()
+	s.Equal(9, s.mempool.TxCount())
+}
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	tx := s.newTransfer(0, 14)
