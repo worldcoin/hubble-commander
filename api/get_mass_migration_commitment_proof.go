@@ -58,13 +58,13 @@ func (a *API) unsafeGetMassMigrationCommitmentProof(commitmentID models.Commitme
 		return nil, errors.WithStack(err)
 	}
 
-	unsortedMassMigrations, err := a.storage.GetMassMigrationsByCommitmentID(commitmentID)
+	unsortedTransactions, err := a.storage.GetTransactionsByCommitmentID(commitmentID)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	// TODO remove when new primary key for transactions with transaction index is implement
-	txQueue := executor.NewTxQueue(models.MassMigrationArray(unsortedMassMigrations))
+	txQueue := executor.NewTxQueue(unsortedTransactions)
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
 
 	serializedMassMigrations, err := encoder.SerializeMassMigrations(massMigrations)

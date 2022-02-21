@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -129,15 +130,40 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	err = s.storage.AddTransaction(&mm)
 	s.NoError(err)
 
-	count, err := s.storage.GetTransactionCount()
+	storageCount, err := s.storage.getTransactionCount()
 	s.NoError(err)
-	s.Equal(3, *count)
+	s.EqualValues(3, *storageCount)
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(3, count)
+
+	err = s.storage.MarkTransactionsAsPending([]common.Hash{transferInCommitment.Hash})
+	s.NoError(err)
+	storageCount, err = s.storage.getTransactionCount()
+	s.NoError(err)
+	s.EqualValues(2, *storageCount)
+	count = s.storage.GetTransactionCount()
+	s.EqualValues(2, count)
+
+	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{transferInCommitment}, &commitmentInBatch.ID)
+	s.NoError(err)
+	storageCount, err = s.storage.getTransactionCount()
+	s.NoError(err)
+	s.EqualValues(3, *storageCount)
+	count = s.storage.GetTransactionCount()
+	s.EqualValues(3, count)
+}
+
+func (s *StoredTransactionTestSuite) TestGetTransactionCount_IncrementsTxCountOnStorageCopy() {
+	transactionStorageCopy := s.storage.TransactionStorage.copyWithNewDatabase(s.storage.database)
+	transactionStorageCopy.incrementTransactionCount()
+
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(1, count)
 }
 
 func (s *StoredTransactionTestSuite) TestGetTransactionCount_NoTransactions() {
-	count, err := s.storage.GetTransactionCount()
-	s.NoError(err)
-	s.Equal(0, *count)
+	count := s.storage.GetTransactionCount()
+	s.EqualValues(0, count)
 }
 
 func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs() {
@@ -171,6 +197,155 @@ func (s *StoredTransactionTestSuite) TestGetTransactionHashesByBatchIDs_NoTransa
 	hashes, err := s.storage.GetTransactionHashesByBatchIDs(models.MakeUint256(2))
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(hashes)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Transfers() {
+	transactions := s.populateTransactions()
+	transfers := transactions.ToTransferArray()
+
+	res, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Len(res, 2)
+
+	transferArray := res.ToTransferArray()
+	s.Contains(transferArray, transfers[0])
+	s.Contains(transferArray, transfers[1])
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoTransfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_Create2Transfers() {
+	transactions := s.populateTransactions()
+	create2transfers := transactions.ToCreate2TransferArray()
+
+	res, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
+	s.NoError(err)
+	s.Len(res, 2)
+
+	c2tArray := res.ToCreate2TransferArray()
+	s.Contains(c2tArray, create2transfers[0])
+	s.Contains(c2tArray, create2transfers[1])
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoCreate2Transfers() {
+	txs, err := s.storage.GetPendingTransactions(txtype.Create2Transfer)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_MassMigrations() {
+	transactions := s.populateTransactions()
+	massMigrations := transactions.ToMassMigrationArray()
+
+	res, err := s.storage.GetPendingTransactions(txtype.MassMigration)
+	s.NoError(err)
+	s.Len(res, 2)
+
+	mmArray := res.ToMassMigrationArray()
+	s.Contains(mmArray, massMigrations[0])
+	s.Contains(mmArray, massMigrations[1])
+}
+
+func (s *StoredTransactionTestSuite) TestGetPendingTransactions_NoMassMigrations() {
+	txs, err := s.storage.GetPendingTransactions(txtype.MassMigration)
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
+	txs := s.populateTransactions()
+	expectedTxs := make([]models.GenericTransaction, 0, 6)
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		base := tx.GetBase()
+		if base.CommitmentID == nil && base.ErrorMessage == nil {
+			expectedTxs = append(expectedTxs, tx)
+		}
+	}
+
+	res, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Len(res, 6)
+	for _, expectedTx := range expectedTxs {
+		s.Contains(res, expectedTx)
+	}
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransactions() {
+	txs, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
+	txs := s.populateTransactions()
+	expectedTxs := make([]models.GenericTransaction, 0, 3)
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		if tx.GetBase().ErrorMessage != nil {
+			expectedTxs = append(expectedTxs, tx)
+		}
+	}
+
+	res, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(res, 3)
+	for _, expectedTx := range expectedTxs {
+		s.Contains(res, expectedTx)
+	}
+}
+
+func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions() {
+	txs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(txs, 0)
+}
+
+func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransactionArray {
+	transfers := make([]models.Transfer, 4)
+	for i := range transfers {
+		transfers[i] = transfer
+		transfers[i].Hash = utils.RandomHash()
+	}
+	transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(1)}
+	transfers[3].ErrorMessage = ref.String("A very boring error message")
+
+	err := s.storage.BatchAddTransfer(transfers)
+	s.NoError(err)
+
+	create2Transfers := make([]models.Create2Transfer, 4)
+	for i := range create2Transfers {
+		create2Transfers[i] = create2Transfer
+		create2Transfers[i].Hash = utils.RandomHash()
+	}
+
+	create2Transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(2)}
+	create2Transfers[3].ErrorMessage = ref.String("A very boring error message")
+
+	err = s.storage.BatchAddCreate2Transfer(create2Transfers)
+	s.NoError(err)
+
+	massMigrations := make([]models.MassMigration, 4)
+	for i := range massMigrations {
+		massMigrations[i] = massMigration
+		massMigrations[i].Hash = utils.RandomHash()
+	}
+	massMigrations[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
+	massMigrations[3].ErrorMessage = ref.String("A very boring error message")
+
+	err = s.storage.BatchAddMassMigration(massMigrations)
+	s.NoError(err)
+
+	var result models.GenericTransactionArray
+	result = models.MakeGenericArray()
+	result = result.Append(models.MakeTransferArray(transfers...))
+	result = result.Append(models.MakeCreate2TransferArray(create2Transfers...))
+	result = result.Append(models.MakeMassMigrationArray(massMigrations...))
+	return result
 }
 
 func (s *StoredTransactionTestSuite) addTransfersInCommitment(batchID *models.Uint256, transfers []models.Transfer) {

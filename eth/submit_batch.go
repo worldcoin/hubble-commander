@@ -97,10 +97,11 @@ func (c *Client) submitBatchAndWait(submit SubmitBatchFunc) (batch *models.Batch
 }
 
 func (c *Client) handleNewBatchEvent(event *rollup.RollupNewBatch) (*models.Batch, error) {
-	batch, err := c.GetBatch(models.NewUint256FromBig(*event.BatchID))
+	contractBatch, err := c.GetContractBatch(models.NewUint256FromBig(*event.BatchID))
 	if err != nil {
 		return nil, err
 	}
+	batch := contractBatch.ToModelBatch()
 	batch.AccountTreeRoot = ref.Hash(common.BytesToHash(event.AccountRoot[:]))
 	return batch, nil
 }

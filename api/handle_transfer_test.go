@@ -1,14 +1,19 @@
 package api
 
 import (
+	"context"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -82,6 +87,7 @@ func (s *SendTransferTestSuite) SetupTest() {
 		storage:                 s.storage.Storage,
 		client:                  eth.DomainOnlyTestClient,
 		commanderMetrics:        metrics.NewCommanderMetrics(),
+		txPool:                  mempool.NewTestTxPool(),
 		isAcceptingTransactions: true,
 	}
 
@@ -264,6 +270,39 @@ func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() 
 	s.api.isAcceptingTransactions = false
 	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrSendTxMethodDisabled, err)
+}
+
+func (s *SendTransferTestSuite) TestSendTransaction_SendsTxToTxPool() {
+	txPool, err := mempool.NewTxPool(s.storage.Storage)
+	s.NoError(err)
+	s.api.txPool = txPool
+
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	s.NoError(err)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err = s.api.txPool.ReadTxs(ctx)
+		s.NoError(err)
+	}()
+
+	var txs []models.GenericTransaction
+	s.Eventually(func() bool {
+		err = s.api.txPool.UpdateMempool()
+		s.NoError(err)
+
+		txs = txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+		return len(txs) == 1
+	}, 1*time.Second, 10*time.Millisecond)
+
+	s.Equal(*hash, txs[0].GetBase().Hash)
+
+	cancel()
+	wg.Wait()
 }
 
 func TestSendTransferTestSuite(t *testing.T) {

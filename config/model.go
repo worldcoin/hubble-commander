@@ -45,6 +45,7 @@ type DeployerBootstrapConfig struct {
 
 type CommanderBootstrapConfig struct {
 	Prune            bool
+	Migrate          bool
 	BootstrapNodeURL *string
 	ChainSpecPath    *string
 }

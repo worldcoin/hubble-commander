@@ -9,6 +9,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +29,16 @@ func TestStartApiServer(t *testing.T) {
 
 	cfg := config.APIConfig{Version: "v0123"}
 	commanderMetrics := metrics.NewCommanderMetrics()
-	server, err := getAPIServer(&cfg, nil, eth.DomainOnlyTestClient, commanderMetrics, false, func(enable bool) {})
+	server, err := getAPIServer(
+		&cfg,
+		nil,
+		eth.DomainOnlyTestClient,
+		commanderMetrics,
+		mempool.NewTestTxPool(),
+		false,
+		func(enable bool) {},
+		func() bool { return false },
+	)
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()

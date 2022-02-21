@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -50,6 +51,7 @@ func (s *SendCreate2TransferTestSuite) SetupTest() {
 		storage:                 s.storage.Storage,
 		client:                  eth.DomainOnlyTestClient,
 		commanderMetrics:        metrics.NewCommanderMetrics(),
+		txPool:                  mempool.NewTestTxPool(),
 		isAcceptingTransactions: true,
 	}
 

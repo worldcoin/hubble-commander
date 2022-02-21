@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -18,13 +19,16 @@ import (
 
 type TransactionStorage struct {
 	database *Database
+
+	batchedTxsCount *uint64
 }
 
 type dbOperation func(txStorage *TransactionStorage) error
 
 func NewTransactionStorage(database *Database) *TransactionStorage {
 	return &TransactionStorage{
-		database: database,
+		database:        database,
+		batchedTxsCount: ref.Uint64(0),
 	}
 }
 
@@ -96,6 +100,7 @@ func (s *TransactionStorage) unsafeMarkTransactionAsPending(txHash *common.Hash)
 	err := s.getAndDelete(*txHash, &batchedTx)
 	if err == nil {
 		pendingTx = batchedTx.PendingTx
+		s.decrementTransactionCount()
 	} else {
 		var failedTx stored.FailedTx
 		err = s.getAndDelete(*txHash, &failedTx)
@@ -151,14 +156,25 @@ func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) er
 
 	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
-		err = fmt.Errorf("storing %d tx error(s) failed during database transaction #%d because of: %w", errorsCount, dbTxsCount, err)
-		return errors.WithStack(err)
+		return errors.Wrapf(err, "storing %d tx error(s) failed during database transaction #%d", errorsCount, dbTxsCount)
 	}
 	log.Debugf("Stored %d tx error(s) in %d database transaction(s)", errorsCount, dbTxsCount)
 	return nil
 }
 
-func (s *Storage) GetTransactionCount() (count *int, err error) {
+func (s *TransactionStorage) GetTransactionCount() uint64 {
+	return atomic.LoadUint64(s.batchedTxsCount)
+}
+
+func (s *TransactionStorage) incrementTransactionCount() {
+	atomic.AddUint64(s.batchedTxsCount, 1)
+}
+
+func (s *TransactionStorage) decrementTransactionCount() {
+	atomic.AddUint64(s.batchedTxsCount, ^uint64(0))
+}
+
+func (s *Storage) getTransactionCount() (count *uint64, err error) {
 	err = s.ExecuteInTransaction(TxOptions{ReadOnly: true}, func(txStorage *Storage) error {
 		count, err = txStorage.unsafeGetTransactionCount()
 		return err
@@ -169,10 +185,10 @@ func (s *Storage) GetTransactionCount() (count *int, err error) {
 	return count, nil
 }
 
-func (s *Storage) unsafeGetTransactionCount() (*int, error) {
+func (s *Storage) unsafeGetTransactionCount() (*uint64, error) {
 	latestBatch, err := s.GetLatestSubmittedBatch()
 	if IsNotFoundError(err) {
-		return ref.Int(0), nil
+		return ref.Uint64(0), nil
 	}
 	if err != nil {
 		return nil, err
@@ -185,7 +201,12 @@ func (s *Storage) unsafeGetTransactionCount() (*int, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ref.Int(int(count)), nil
+	return ref.Uint64(count), nil
+}
+
+func (s *Storage) initBatchedTxsCounter() (err error) {
+	s.batchedTxsCount, err = s.getTransactionCount()
+	return err
 }
 
 func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.Uint256) ([]common.Hash, error) {
@@ -240,6 +261,36 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 	return models.MakeGenericArray(txs...), nil
 }
 
+func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericTransactionArray, error) {
+	var pendingTxs []stored.PendingTx
+	err := s.database.Badger.Find(&pendingTxs, &bh.Query{})
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]models.GenericTransaction, len(pendingTxs))
+	for i := range pendingTxs {
+		txs[i] = pendingTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(txs...), nil
+}
+
+func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericTransactionArray, error) {
+	var failedTxs []stored.FailedTx
+	err := s.database.Badger.Find(&failedTxs, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	txs := make([]models.GenericTransaction, len(failedTxs))
+	for i := range failedTxs {
+		txs[i] = failedTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(txs...), nil
+}
+
 func (s *TransactionStorage) MarkTransactionsAsIncluded(
 	txs models.GenericTransactionArray,
 	commitmentID *models.CommitmentID,
@@ -269,6 +320,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 			if err != nil {
 				return err
 			}
+			s.incrementTransactionCount()
 		}
 		return nil
 	})

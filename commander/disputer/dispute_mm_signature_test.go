@@ -50,7 +50,7 @@ func (s *DisputeMMSignatureTestSuite) TestDisputeSignature_ValidBatch() {
 
 	err = s.disputeSignature(remoteBatches[0].ToDecodedTxBatch(), models.MassMigrationArray{massMigration})
 	s.NoError(err)
-	_, err = s.client.GetBatch(&remoteBatches[0].GetBase().ID)
+	_, err = s.client.GetContractBatch(&remoteBatches[0].GetBase().ID)
 	s.NoError(err)
 }
 

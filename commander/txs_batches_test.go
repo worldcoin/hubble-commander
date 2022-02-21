@@ -12,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/result"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -154,10 +155,10 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 	s.Equal(expectedTx, *transfer)
 
 	// Previously stored tx moved back to mempool
-	pendingTransfers, err := s.cmd.storage.GetPendingTransfers()
+	pendingTransfers, err := s.cmd.storage.GetPendingTransactions(txtype.Transfer)
 	s.NoError(err)
 	s.Len(pendingTransfers, 1)
-	s.Equal(localTx, pendingTransfers[0])
+	s.Equal(localTx, *pendingTransfers.ToTransferArray().At(0).ToTransfer())
 }
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() {
@@ -571,7 +572,7 @@ func (s *TxsBatchesTestSuite) setTransferHashAndSign(txs ...*models.Transfer) {
 }
 
 func checkBatchAfterDispute(s *require.Assertions, cmd *Commander, batchID models.Uint256) {
-	_, err := cmd.client.GetBatch(&batchID)
+	_, err := cmd.client.GetContractBatch(&batchID)
 	s.Error(err)
 	s.Equal(eth.MsgInvalidBatchID, err.Error())
 

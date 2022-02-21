@@ -40,6 +40,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 		return nil, err
 	}
 
+	a.txPool.Send(massMigration)
 	a.countAcceptedTx(massMigration.TxType)
 	return &massMigration.Hash, nil
 }

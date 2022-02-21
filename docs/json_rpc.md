@@ -12,6 +12,17 @@ Example result:
 "0.5.0"
 ```
 
+### `hubble_getStatus()`
+
+Returns the status of commander. Statuses:
+
+- `READY`
+- `MIGRATING`
+
+```json
+"READY"
+```
+
 ### `hubble_getNetworkInfo()`
 
 This returns a number of datapoints about the current state of the system:
@@ -872,6 +883,7 @@ Returns pending batches that haven't been mined yet, see below.
         "ID": "1",
         "Type": "TRANSFER",
         "TransactionHash": "0x7c24f82171937322d49b382ec79d6fb40bc10086694d805a399b92c061b17e0d",
+        "PrevStateRoot": "0xd410805014ad1013a74342380d54fde1e59896030c0679cda2de56544cd2541f",
         "Commitments": [
             {
                 "Commitment": {
@@ -1051,11 +1063,57 @@ Returns pending batches that haven't been mined yet, see below.
 ]
 ```
 
+### `admin_getPendingTransactions()`
+
+Returns pending transactions that haven't been included in batch yet, see below.
+
+```json
+[
+    {
+        "Hash": "0x3b98cb3f5c10647a80c753108ef14f44b4edebf096fe21fa49c7b578f4069ae0",
+        "TxType": "CREATE2TRANSFER",
+        "FromStateID": 2,
+        "Amount": "50",
+        "Fee": "1",
+        "Nonce": "0",
+        "Signature": "0x0f94ee2c5207b2f0ce4627a7083c1ea9619faeb83d4ae458677b479520cdc7b70032531aca0e42cf1ddc5b2f2e40c15bd78d7fbbb5b385d59b5c9855bb83e1cc",
+        "ReceiveTime": 1643970131,
+        "CommitmentID": null,
+        "ErrorMessage": null,
+        "ToStateID": null,
+        "ToPublicKey": "0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc"
+    }
+]
+```
+
+### `admin_getFailedTransactions()`
+
+Returns all failed transactions.
+
+```json
+[
+    {
+        "Hash": "0x25c3b159f42a82dc8277a662b90a079a61c569bff8784e8ebd51bfd610792901",
+        "TxType": "TRANSFER",
+        "FromStateID": 1,
+        "Amount": "50",
+        "Fee": "1",
+        "Nonce": "0",
+        "Signature": "0x191e0510f1657c01c22b65c3548806ba2bd19faa721c61516bf49cbb787e120a2b416731ac80dd38a561bba25aac89c6474a37bce42f3b213d135c920221d810",
+        "ReceiveTime": 1643977662,
+        "CommitmentID": null,
+        "ErrorMessage": "receiver state ID does not exist",
+        "ToStateID": 100
+    }
+]
+```
+
 ### `admin_configure(configureParams)`
 
 Can be used to enable/disable:
- - Accepting new transactions by `hubble_sendTransaction`.
- - Creating and submitting new transaction batches.
+
+- Accepting new transactions by `hubble_sendTransaction`.
+- Creating and submitting new transaction batches.
 
 # API usage
 

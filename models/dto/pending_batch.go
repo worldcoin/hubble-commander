@@ -10,10 +10,13 @@ type PendingBatch struct {
 	ID              models.Uint256
 	Type            batchtype.BatchType
 	TransactionHash common.Hash
+	PrevStateRoot   common.Hash
 	Commitments     []PendingCommitment
 }
 
 type PendingCommitment struct {
 	models.Commitment
-	Transactions interface{}
+
+	// We're using type from models, because commander is only consumer of API returning that type
+	Transactions models.GenericTransactionArray
 }

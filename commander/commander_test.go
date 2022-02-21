@@ -5,8 +5,11 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -24,8 +27,7 @@ func (s *CommanderTestSuite) SetupSuite() {
 
 func (s *CommanderTestSuite) SetupTest() {
 	cfg := config.GetTestConfig()
-	err := db.PruneDatabase(cfg.Badger)
-	s.NoError(err)
+	cfg.Bootstrap.Prune = true
 	blockchain, err := GetChainConnection(cfg.Ethereum)
 	s.NoError(err)
 	s.prepareContracts(cfg, blockchain)
@@ -59,6 +61,37 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 
 	err = s.cmd.Stop()
 	s.NoError(err)
+}
+
+func (s *CommanderTestSuite) TestStart_CreatesMempool() {
+	tx := s.addTransaction()
+
+	err := s.cmd.Start()
+	s.NoError(err)
+
+	txs := s.cmd.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+	s.Len(txs, 1)
+	s.Equal(tx, txs[0])
+
+	err = s.cmd.Stop()
+	s.NoError(err)
+}
+
+func (s *CommanderTestSuite) addTransaction() *models.Transfer {
+	storage, err := st.NewStorage(s.cmd.cfg)
+	s.NoError(err)
+
+	defer func() {
+		s.cmd.cfg.Bootstrap.Prune = false
+		err = storage.Close()
+		s.NoError(err)
+	}()
+
+	tx := testutils.NewTransfer(0, 1, 0, 10)
+	err = storage.AddTransaction(tx)
+	s.NoError(err)
+
+	return tx
 }
 
 func (s *CommanderTestSuite) prepareContracts(cfg *config.Config, blockchain chain.Connection) {

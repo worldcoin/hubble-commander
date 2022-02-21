@@ -128,43 +128,6 @@ func (s *Create2TransferTestSuite) TestGetCreate2Transfer_NonexistentTransaction
 	s.Nil(res)
 }
 
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID() {
-	transfer1 := create2Transfer
-	transfer1.CommitmentID = &txCommitment.ID
-	err := s.storage.AddTransaction(&transfer1)
-	s.NoError(err)
-
-	otherCommitmentID := txCommitment.ID
-	otherCommitmentID.IndexInBatch += 1
-	transfer2 := create2Transfer
-	transfer2.Hash = utils.RandomHash()
-	transfer2.CommitmentID = &otherCommitmentID
-	err = s.storage.AddTransaction(&transfer2)
-	s.NoError(err)
-
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 1)
-	s.Equal(transfer1, transfers[0])
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoTransactions() {
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
-func (s *Create2TransferTestSuite) TestGetCreate2TransfersByCommitmentID_NoCreate2TransfersButSomeTransfers() {
-	transferCopy := transfer
-	transferCopy.CommitmentID = &txCommitment.ID
-	err := s.storage.AddTransaction(&transferCopy)
-	s.NoError(err)
-
-	transfers, err := s.storage.GetCreate2TransfersByCommitmentID(txCommitment.ID)
-	s.NoError(err)
-	s.Len(transfers, 0)
-}
-
 func TestCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(Create2TransferTestSuite))
 }

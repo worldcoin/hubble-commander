@@ -49,6 +49,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 		ID:              models.MakeUint256(1),
 		Type:            batchtype.Create2Transfer,
 		TransactionHash: utils.RandomHash(),
+		PrevStateRoot:   utils.NewRandomHash(),
 	}
 
 	s.batches = []models.Batch{
@@ -56,6 +57,7 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 			ID:                models.MakeUint256(1),
 			Type:              batchtype.Transfer,
 			TransactionHash:   utils.RandomHash(),
+			PrevStateRoot:     utils.NewRandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
 			MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
@@ -64,11 +66,13 @@ func (s *GetPendingBatchesTestSuite) SetupTest() {
 			ID:              models.MakeUint256(2),
 			Type:            batchtype.Create2Transfer,
 			TransactionHash: utils.RandomHash(),
+			PrevStateRoot:   utils.NewRandomHash(),
 		},
 		{
 			ID:              models.MakeUint256(3),
 			Type:            batchtype.MassMigration,
 			TransactionHash: utils.RandomHash(),
+			PrevStateRoot:   utils.NewRandomHash(),
 		},
 	}
 }
@@ -90,6 +94,7 @@ func (s *GetPendingBatchesTestSuite) TestGetPendingBatches_DifferentBatchTypes()
 		s.Equal(expected[i].ID, batches[i].ID)
 		s.Equal(expected[i].Type, batches[i].Type)
 		s.Equal(expected[i].TransactionHash, batches[i].TransactionHash)
+		s.Equal(*expected[i].PrevStateRoot, batches[i].PrevStateRoot)
 	}
 }
 
@@ -171,7 +176,7 @@ func (s *GetPendingBatchesTestSuite) addPendingTransferBatch(tx *models.Transfer
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	return newPendingBatch(&batch, commitment, []models.Transfer{*tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingCT2Batch(tx *models.Create2Transfer) *dto.PendingBatch {
@@ -201,7 +206,7 @@ func (s *GetPendingBatchesTestSuite) addPendingCT2Batch(tx *models.Create2Transf
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
 
-	return newPendingBatch(&batch, commitment, []models.Create2Transfer{*tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingMMBatch() *dto.PendingBatch {
@@ -233,7 +238,7 @@ func (s *GetPendingBatchesTestSuite) addPendingMMBatch() *dto.PendingBatch {
 	tx := testutils.MakeMassMigration(0, 1, 0, 100)
 	s.addCommitmentWithTx(commitment, &tx)
 
-	return newPendingBatch(&batch, commitment, []models.MassMigration{tx})
+	return newPendingBatch(&batch, commitment, models.MakeGenericArray(&tx))
 }
 
 func (s *GetPendingBatchesTestSuite) addPendingDepositBatch() *dto.PendingBatch {
@@ -272,11 +277,12 @@ func (s *GetPendingBatchesTestSuite) addCommitmentWithTx(commitment models.Commi
 	s.NoError(err)
 }
 
-func newPendingBatch(batch *models.Batch, commitment models.Commitment, txs interface{}) *dto.PendingBatch {
+func newPendingBatch(batch *models.Batch, commitment models.Commitment, txs models.GenericTransactionArray) *dto.PendingBatch {
 	return &dto.PendingBatch{
 		ID:              batch.ID,
 		Type:            batch.Type,
 		TransactionHash: batch.TransactionHash,
+		PrevStateRoot:   *batch.PrevStateRoot,
 		Commitments: []dto.PendingCommitment{
 			{
 				Commitment:   commitment,

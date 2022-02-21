@@ -18,5 +18,7 @@ services:
       - --dev.period=1
       - --http
       - --http.addr=0.0.0.0
+      - --http.api=eth,miner
       - --ws
       - --ws.addr=0.0.0.0
+      - --ws.api=eth,miner

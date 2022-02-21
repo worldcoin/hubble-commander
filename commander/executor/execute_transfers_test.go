@@ -7,7 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/storage"
+	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +16,7 @@ import (
 type ExecuteTransfersTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage     *storage.TestStorage
+	storage     *st.TestStorage
 	cfg         *config.RollupConfig
 	txsCtx      *TxsContext
 	feeReceiver *FeeReceiver
@@ -28,13 +28,25 @@ func (s *ExecuteTransfersTestSuite) SetupSuite() {
 
 func (s *ExecuteTransfersTestSuite) SetupTest() {
 	var err error
-	s.storage, err = storage.NewTestStorage()
+	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	s.cfg = &config.RollupConfig{
 		FeeReceiverPubKeyID: 3,
 		MaxTxsPerCommitment: 6,
 	}
 
+	setInitialUserStates(s.Assertions, s.storage.Storage)
+
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
+	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
+
+	s.feeReceiver = &FeeReceiver{
+		StateID: 3,
+		TokenID: models.MakeUint256(1),
+	}
+}
+
+func setInitialUserStates(s *require.Assertions, storage *st.Storage) {
 	senderState := models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(1),
@@ -54,20 +66,12 @@ func (s *ExecuteTransfersTestSuite) SetupTest() {
 		Nonce:    models.MakeUint256(0),
 	}
 
-	_, err = s.storage.StateTree.Set(1, &senderState)
+	_, err := storage.StateTree.Set(1, &senderState)
 	s.NoError(err)
-	_, err = s.storage.StateTree.Set(2, &receiverState)
+	_, err = storage.StateTree.Set(2, &receiverState)
 	s.NoError(err)
-	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
+	_, err = storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
-
-	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
-
-	s.feeReceiver = &FeeReceiver{
-		StateID: 3,
-		TokenID: models.MakeUint256(1),
-	}
 }
 
 func (s *ExecuteTransfersTestSuite) TearDownTest() {

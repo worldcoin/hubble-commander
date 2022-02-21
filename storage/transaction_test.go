@@ -152,98 +152,75 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
-func (s *TransactionTestSuite) populatePendingTransactions() models.GenericTransactionArray {
-	transfers := make([]models.Transfer, 4)
-	for i := range transfers {
-		transfers[i] = transfer
-		transfers[i].Hash = utils.RandomHash()
-	}
-	transfers[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
-	transfers[3].ErrorMessage = ref.String("A very boring error message")
-
-	err := s.storage.BatchAddTransfer(transfers)
+func (s *TransactionTestSuite) TestReplacePendingTransaction() {
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
-	commitment := &models.TxCommitment{
-		CommitmentBase: models.CommitmentBase{
-			Type: batchtype.Transfer,
-		},
-	}
-	err = s.storage.AddCommitment(commitment)
+	updatedTx := transfer
+	updatedTx.Hash = utils.RandomHash()
+	err = s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
 	s.NoError(err)
 
-	create2Transfer2 := create2Transfer
-	create2Transfer2.Hash = utils.RandomHash()
-	create2Transfer3 := create2Transfer
-	create2Transfer3.Hash = utils.RandomHash()
-	create2Transfer3.CommitmentID = &commitment.ID
-	create2Transfer4 := create2Transfer
-	create2Transfer4.Hash = utils.RandomHash()
-	create2Transfer4.ErrorMessage = ref.String("A very boring error message")
+	_, err = s.storage.GetTransfer(transfer.Hash)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 
-	create2transfers := []models.Create2Transfer{
-		create2Transfer,
-		create2Transfer2,
-		create2Transfer3,
-		create2Transfer4,
-	}
-
-	err = s.storage.BatchAddCreate2Transfer(create2transfers)
+	tx, err := s.storage.GetTransfer(updatedTx.Hash)
 	s.NoError(err)
-
-	massMigrations := make([]models.MassMigration, 4)
-	for i := range massMigrations {
-		massMigrations[i] = massMigration
-		massMigrations[i].Hash = utils.RandomHash()
-	}
-	massMigrations[2].CommitmentID = &models.CommitmentID{BatchID: models.MakeUint256(3)}
-	massMigrations[3].ErrorMessage = ref.String("A very boring error message")
-
-	err = s.storage.BatchAddMassMigration(massMigrations)
-	s.NoError(err)
-
-	var result models.GenericTransactionArray
-	result = models.MakeGenericArray()
-	result = result.Append(models.MakeCreate2TransferArray(create2transfers...))
-	result = result.Append(models.MakeMassMigrationArray(massMigrations...))
-	result = result.Append(models.MakeTransferArray(transfers...))
-	return result
+	s.Equal(updatedTx, *tx)
 }
 
-func (s *TransactionTestSuite) TestGetPendingTransactions_GetCreate2Transfers() {
-	transactions := s.populatePendingTransactions()
-	create2transfers := transactions.ToCreate2TransferArray()
-
-	res, err := s.storage.GetPendingCreate2Transfers()
-	s.NoError(err)
-
-	s.Len(res, 2)
-	s.Contains(res, create2transfers[0])
-	s.Contains(res, create2transfers[1])
+func (s *TransactionTestSuite) TestReplacePendingTransaction_NoPendingTransaction() {
+	updatedTx := transfer
+	updatedTx.Hash = utils.RandomHash()
+	err := s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 
-func (s *TransactionTestSuite) TestGetPendingTransactions_GetMassMigrations() {
-	transactions := s.populatePendingTransactions()
-	massMigrations := transactions.ToMassMigrationArray()
-
-	res, err := s.storage.GetPendingMassMigrations()
+func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
+	transfer1 := transfer
+	transfer1.CommitmentID = &txCommitment.ID
+	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
-	s.Len(res, 2)
-	s.Contains(res, massMigrations[0])
-	s.Contains(res, massMigrations[1])
+	otherCommitmentID := txCommitment.ID
+	otherCommitmentID.IndexInBatch += 1
+	transfer2 := create2Transfer
+	transfer2.Hash = utils.RandomHash()
+	transfer2.CommitmentID = &otherCommitmentID
+	err = s.storage.AddTransaction(&transfer2)
+	s.NoError(err)
+
+	transfers, err := s.storage.GetTransactionsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 1)
+	s.Equal(transfers.At(0), &transfer1)
 }
 
-func (s *TransactionTestSuite) TestGetPendingTransactions_GetTransfers() {
-	transactions := s.populatePendingTransactions()
-	transfers := transactions.ToTransferArray()
+func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions() {
+	transfers, err := s.storage.GetTransactionsByCommitmentID(txCommitment.ID)
+	s.NoError(err)
+	s.Len(transfers, 0)
+}
 
-	res, err := s.storage.GetPendingTransfers()
+func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
+	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
-	s.Len(res, 2)
-	s.Contains(res, transfers[0])
-	s.Contains(res, transfers[1])
+	txBeforeUpsert, err := s.storage.GetTransfer(transfer.Hash)
+	s.NoError(err)
+	s.Nil(txBeforeUpsert.CommitmentID)
+
+	txBeforeUpsert.CommitmentID = &models.CommitmentID{
+		BatchID:      models.MakeUint256(1),
+		IndexInBatch: 0,
+	}
+
+	err = s.storage.BatchUpsertTransaction(models.GenericArray{txBeforeUpsert})
+	s.NoError(err)
+
+	txAfterUpsert, err := s.storage.GetTransfer(txBeforeUpsert.Hash)
+	s.NoError(err)
+	s.Equal(txBeforeUpsert, txAfterUpsert)
 }
 
 func TestTransactionTestSuite(t *testing.T) {

@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/dgraph-io/badger/v3"
 	bh "github.com/timshannon/badgerhold/v4"
@@ -158,18 +156,4 @@ func (d *Database) BeginTransaction(update bool) (*TxController, *Database) {
 
 func (d *Database) Prune() error {
 	return d.store.Badger().DropAll()
-}
-
-func PruneDatabase(cfg *config.BadgerConfig) error {
-	database, err := NewDatabase(cfg)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		closeErr := database.Close()
-		if closeErr != nil {
-			err = fmt.Errorf("close caused by: %w, failed with: %v", err, closeErr)
-		}
-	}()
-	return database.Prune()
 }

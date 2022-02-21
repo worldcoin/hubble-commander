@@ -3,10 +3,8 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *TransactionStorage) BatchAddCreate2Transfer(txs []models.Create2Transfer) error {
@@ -23,35 +21,6 @@ func (s *TransactionStorage) GetCreate2Transfer(hash common.Hash) (*models.Creat
 	}
 	transfer := tx.ToCreate2Transfer()
 	return transfer, nil
-}
-
-func (s *TransactionStorage) GetPendingCreate2Transfers() (txs models.Create2TransferArray, err error) {
-	genericTxs, err := s.GetPendingTransactions(txtype.Create2Transfer)
-	if err != nil {
-		return nil, err
-	}
-	return genericTxs.ToCreate2TransferArray(), nil
-}
-
-func (s *TransactionStorage) GetCreate2TransfersByCommitmentID(id models.CommitmentID) ([]models.Create2Transfer, error) {
-	batchedTxs := make([]stored.BatchedTx, 0, 32)
-
-	query := bh.Where("CommitmentID").Eq(id).Index("CommitmentID")
-	// We're not using `.And("TxType").Eq(txtype.Create2Transfer)` here because of inefficiency in BH implementation
-
-	err := s.database.Badger.Find(&batchedTxs, query)
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]models.Create2Transfer, 0, len(batchedTxs))
-	for i := range batchedTxs {
-		if batchedTxs[i].TxType == txtype.Create2Transfer {
-			txs = append(txs, *batchedTxs[i].ToCreate2Transfer())
-		}
-	}
-
-	return txs, nil
 }
 
 func (s *TransactionStorage) MarkCreate2TransfersAsIncluded(txs []models.Create2Transfer, commitmentID *models.CommitmentID) error {

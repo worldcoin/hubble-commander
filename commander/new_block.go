@@ -43,34 +43,46 @@ func (c *Commander) newBlockLoop() error {
 				continue
 			}
 
-			err = c.syncAndManageRollbacks()
+			err = c.newBlockLoopIteration(currentBlock)
 			if errors.Is(err, ErrIncompleteBlockRangeSync) {
 				return nil
-			}
-			if errors.Is(err, ErrRollbackInProgress) {
-				continue
-			}
-			if errors.Is(err, chain.ErrWaitToBeMinedTimedOut) {
-				// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
-				continue
 			}
 			if err != nil {
 				return err
 			}
-
-			err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			isProposer, err := c.client.IsActiveProposer()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			c.manageRollupLoop(isProposer)
 		}
 	}
+}
+
+func (c *Commander) newBlockLoopIteration(currentBlock *types.Header) error {
+	err := c.syncAndManageRollbacks()
+	if errors.Is(err, ErrRollbackInProgress) {
+		return nil
+	}
+	if errors.Is(err, chain.ErrWaitToBeMinedTimedOut) {
+		// Can happen for dispute or keepRollingBack transactions, continue the loop to retry if necessary
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	err = c.withdrawRemainingStakes(currentBlock.Number.Uint64())
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if c.isMigrating() {
+		return c.migrate()
+	}
+
+	isProposer, err := c.client.IsActiveProposer()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	c.manageRollupLoop(isProposer)
+	return nil
 }
 
 func (c *Commander) syncAndManageRollbacks() error {

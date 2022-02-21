@@ -32,6 +32,7 @@ func GetConfig() *Config {
 		Metrics: getMetricsConfig(),
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
+			Migrate:          getBool("bootstrap.migrate", false),
 			BootstrapNodeURL: getStringOrNil("bootstrap.node_url"),
 			ChainSpecPath:    getStringOrNil("bootstrap.chain_spec_path"),
 		},
@@ -81,6 +82,7 @@ func GetTestConfig() *Config {
 		},
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            false,
+			Migrate:          false,
 			BootstrapNodeURL: nil,
 			ChainSpecPath:    nil,
 		},
