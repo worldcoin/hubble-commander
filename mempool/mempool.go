@@ -11,15 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type (
-	IterationControl  bool
-	IterationCallback func(tx models.GenericTransaction) (IterationControl, error)
-)
-
-const (
-	Continue IterationControl = true
-	Finish   IterationControl = false
-)
+type IterationCallback func(tx models.GenericTransaction) error
 
 const unsetTxCount = -1
 
@@ -325,16 +317,17 @@ func (m *Mempool) TxCount() int {
 func (m *Mempool) ForEach(callback IterationCallback) error {
 	for _, bucket := range m.buckets {
 		for _, tx := range bucket.txs {
-			control, err := callback(tx)
+			err := callback(tx)
 			if err != nil {
 				return err
-			}
-			if control == Finish {
-				return nil
 			}
 		}
 	}
 	return nil
+}
+
+func (m *TxMempool) ForEach(_ IterationCallback) error {
+	panic("ForEach should only be called on Mempool")
 }
 
 func (b txBucket) Copy() *txBucket {

@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -286,14 +287,17 @@ func (s *MempoolTestSuite) TestTxCount() {
 	s.Equal(10, s.mempool.TxCount())
 }
 
-func (s *MempoolTestSuite) TestForEach() {
-	counter := 0
-	err := s.mempool.ForEach(func(tx models.GenericTransaction) (IterationControl, error) {
-		counter++
-		return Continue, nil
+func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransaction() {
+	seen := make(map[common.Hash]bool)
+	err := s.mempool.ForEach(func(tx models.GenericTransaction) error {
+		seen[tx.GetBase().Hash] = true
+		return nil
 	})
 	s.NoError(err)
-	s.Equal(10, counter)
+	s.Equal(10, len(seen))
+	for _, tx := range s.txs {
+		s.True(seen[tx.GetBase().Hash])
+	}
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
