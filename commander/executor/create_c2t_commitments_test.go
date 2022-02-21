@@ -140,8 +140,3 @@ func (s *C2TCommitmentsTestSuite) initMempool(txs models.GenericTransactionArray
 func TestC2TCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(C2TCommitmentsTestSuite))
 }
-
-func (s *C2TCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
-	err := s.storage.BatchAddCreate2Transfer(transfers)
-	s.NoError(err)
-}

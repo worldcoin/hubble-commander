@@ -123,8 +123,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
 }
 
 func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
-	err := s.txsCtx.storage.AddTransaction(tx)
-	s.NoError(err)
+	initMempool(s.Assertions, s.txsCtx, models.TransferArray{*tx})
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
