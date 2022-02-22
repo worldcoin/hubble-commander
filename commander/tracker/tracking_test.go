@@ -32,8 +32,8 @@ func (s *TxsTrackingTestSuite) SetupSuite() {
 func (s *TxsTrackingTestSuite) SetupTest() {
 	s.wg = sync.WaitGroup{}
 	s.txsChannels = &eth.TxsTrackingChannels{
-		SkipSendingRequestsThroughChannel: true,
-		SentTxs:                           make(chan *types.Transaction, 1),
+		SentTxs:  make(chan *types.Transaction, 1),
+		Requests: make(chan *eth.TxSendingRequest, 8),
 	}
 
 	var err error
@@ -55,6 +55,13 @@ func (s *TxsTrackingTestSuite) startTxsTracking() {
 	s.wg.Add(1)
 	go func() {
 		err := s.tracker.TrackSentTxs(ctx)
+		s.NoError(err)
+		s.wg.Done()
+	}()
+
+	s.wg.Add(1)
+	go func() {
+		err := s.tracker.SendRequestedTxs(ctx)
 		s.NoError(err)
 		s.wg.Done()
 	}()
