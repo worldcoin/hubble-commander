@@ -211,6 +211,31 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	return bucket
 }
 
+func (m *Mempool) RemoveFailedTxs(txs []models.GenericTransaction) error {
+	for _, tx := range txs {
+		bucket := m.getBucket(tx.GetFromStateID())
+		if bucket == nil {
+			return errors.WithStack(ErrNonexistentBucket)
+		}
+		m.removeTxByHash(bucket, tx)
+	}
+	return nil
+}
+
+func (m *Mempool) removeTxByHash(bucket *txBucket, tx models.GenericTransaction) {
+	txBase := tx.GetBase()
+	for i := range bucket.txs {
+		if bucket.txs[i].GetBase().Hash == txBase.Hash {
+			bucket.removeAt(i)
+			if len(bucket.txs) == 0 {
+				delete(m.buckets, txBase.FromStateID)
+			}
+			// TODO: decrease txCount
+			return
+		}
+	}
+}
+
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
 	bucket, err := m.getOrInitBucket(storage, newTx.GetFromStateID())
 	if err != nil {
@@ -268,6 +293,14 @@ func (b *txBucket) insertAt(index int, tx models.GenericTransaction) {
 
 	b.txs = append(b.txs[:index+1], b.txs[index:]...)
 	b.txs[index] = tx
+}
+
+func (b *txBucket) removeAt(index int) {
+	if len(b.txs) == index {
+		b.txs = b.txs[:index-1]
+		return
+	}
+	b.txs = append(b.txs[:index], b.txs[index+1:]...)
 }
 
 func (m *TxMempool) setBucket(stateID uint32, bucket *txBucket) {
