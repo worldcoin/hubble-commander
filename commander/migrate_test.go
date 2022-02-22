@@ -2,6 +2,7 @@ package commander
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/mempool"
@@ -161,14 +162,16 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_AddsPendingTransactionsToMem
 	s.NoError(err)
 	s.cmd.txPool = txPool
 
+	s.cmd.workersWaitGroup.Add(1)
 	go func() {
 		err = s.cmd.txPool.ReadTxs(s.cmd.workersContext)
 		s.NoError(err)
+		s.cmd.workersWaitGroup.Done()
 	}()
 
 	expectedTxs := models.GenericArray{
 		testutils.NewTransfer(0, 1, 0, 100),
-		testutils.NewTransfer(0, 1, 1, 110),
+		testutils.NewTransfer(1, 2, 0, 110),
 	}
 
 	hubble := new(MockHubble)
@@ -179,25 +182,13 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_AddsPendingTransactionsToMem
 	err = s.cmd.migrateCommanderData(hubble)
 	s.NoError(err)
 
-	err = s.cmd.txPool.UpdateMempool()
-	s.NoError(err)
-
-	s.Equal(expectedTxs, s.getAllMempoolTxs(0))
-}
-
-func (s *MigrateTestSuite) getAllMempoolTxs(stateID uint32) models.GenericArray {
-	txs := s.cmd.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
-
-	_, txMempool := s.cmd.txPool.Mempool().BeginTransaction()
-	for {
-		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+	s.Eventually(func() bool {
+		err = s.cmd.txPool.UpdateMempool()
 		s.NoError(err)
-		if tx == nil {
-			break
-		}
-		txs = append(txs, tx)
-	}
-	return txs
+
+		txs := txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+		return len(txs) == 2
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
