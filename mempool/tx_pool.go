@@ -14,6 +14,7 @@ type TxPool interface {
 	Send(tx models.GenericTransaction)
 	ReadTxs(ctx context.Context) error
 	UpdateMempool() error
+	RemoveFailedTxs(txErrors []models.TxError) error
 	Mempool() *Mempool
 }
 
@@ -97,6 +98,15 @@ func (p *txPool) Send(tx models.GenericTransaction) {
 
 func (p *txPool) Mempool() *Mempool {
 	return p.mempool
+}
+
+func (p *txPool) RemoveFailedTxs(txErrors []models.TxError) error {
+	err := p.storage.SetTransactionErrors(txErrors...)
+	if err != nil {
+		return err
+	}
+
+	return p.mempool.RemoveFailedTxs(txErrors)
 }
 
 func getReplacementError(txHash *common.Hash) models.TxError {

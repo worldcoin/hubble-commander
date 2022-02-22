@@ -119,6 +119,31 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	wg.Wait()
 }
 
+func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAsFailed() {
+	txs := []models.GenericTransaction{
+		s.newTransfer(0, 10),
+		s.newTransfer(1, 10),
+		s.newTransfer(2, 10),
+	}
+	for _, tx := range txs {
+		err := s.storage.AddTransaction(tx)
+		s.NoError(err)
+		s.txPool.addIncomingTx(tx)
+	}
+
+	err := s.txPool.UpdateMempool()
+	s.NoError(err)
+
+	err = s.txPool.RemoveFailedTxs(txsToTxErrors(txs...))
+	s.NoError(err)
+
+	failedTxs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(failedTxs, 3)
+
+	s.NotContains(s.txPool.mempool.buckets, 0)
+}
+
 func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc) {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
