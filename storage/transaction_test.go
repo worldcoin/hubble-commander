@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 type TransactionTestSuite struct {
@@ -241,6 +242,15 @@ func (s *TransactionTestSuite) TestAddFailedTransactions_NoTransactions() {
 	arr := models.MakeTransferArray()
 	err := s.storage.AddFailedTransactions(arr)
 	s.NoError(err)
+}
+
+func (s *TransactionTestSuite) TestAddFailedTransactions_TransactionWithError() {
+	arr := models.MakeTransferArray(transfer)
+	err := s.storage.AddFailedTransactions(arr)
+	s.NoError(err)
+
+	err = s.storage.AddFailedTransactions(arr)
+	s.ErrorIs(err, bh.ErrKeyExists)
 }
 
 func TestTransactionTestSuite(t *testing.T) {
