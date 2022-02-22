@@ -9,7 +9,7 @@ type TxSendingRequest struct {
 	contract     *bind.BoundContract
 	input        []byte
 	opts         *bind.TransactOpts
-	resultTxChan chan SendResponse
+	ResultTxChan chan SendResponse
 }
 
 type SendResponse struct {
@@ -66,7 +66,7 @@ func packAndRequest(
 			contract:     contract.BoundContract,
 			input:        input,
 			opts:         opts,
-			resultTxChan: responseChan,
+			ResultTxChan: responseChan,
 		}
 		response := <-responseChan
 		if response.Error != nil {
@@ -82,7 +82,7 @@ func packAndRequest(
 
 func (c *TxSendingRequest) Send() error {
 	tx, err := c.contract.RawTransact(c.opts, c.input)
-	c.resultTxChan <- SendResponse{
+	c.ResultTxChan <- SendResponse{
 		Transaction: tx,
 		Error:       err,
 	}
