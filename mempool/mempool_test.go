@@ -301,8 +301,7 @@ func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransactio
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesTxs() {
-	err := s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[5], s.txs[8]))
-	s.NoError(err)
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[5], s.txs[8]))
 
 	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
 	s.Equal(s.mempool.buckets[1].txs, s.txs[3:5])
@@ -311,16 +310,14 @@ func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesTxs() {
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesEmptyBuckets() {
-	err := s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[5:7]...))
-	s.NoError(err)
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[5:7]...))
 
 	s.NotContains(s.mempool.buckets, uint32(2))
 }
 
-func (s *MempoolTestSuite) TestRemoveFailedTxs_BucketDoesNotExist() {
+func (s *MempoolTestSuite) TestRemoveFailedTxs_OmitsEmptyBuckets() {
 	tx := s.newTransfer(20, 1)
-	err := s.mempool.RemoveFailedTxs(txsToTxErrors(tx))
-	s.ErrorIs(err, ErrNonexistentBucket)
+	s.mempool.RemoveFailedTxs(txsToTxErrors(tx))
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {

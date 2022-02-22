@@ -101,12 +101,16 @@ func (p *txPool) Mempool() *Mempool {
 }
 
 func (p *txPool) RemoveFailedTxs(txErrors []models.TxError) error {
+	if len(txErrors) == 0 {
+		return nil
+	}
 	err := p.storage.SetTransactionErrors(txErrors...)
 	if err != nil {
 		return err
 	}
 
-	return p.mempool.RemoveFailedTxs(txErrors)
+	p.mempool.RemoveFailedTxs(txErrors)
+	return nil
 }
 
 func getReplacementError(txHash *common.Hash) models.TxError {

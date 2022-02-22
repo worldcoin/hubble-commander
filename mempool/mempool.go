@@ -211,15 +211,14 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	return bucket
 }
 
-func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) error {
+func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) {
 	for i := range txErrors {
 		bucket := m.getBucket(txErrors[i].SenderStateID)
 		if bucket == nil {
-			return errors.WithStack(ErrNonexistentBucket)
+			continue
 		}
 		m.removeTxByHash(bucket, &txErrors[i])
 	}
-	return nil
 }
 
 func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
