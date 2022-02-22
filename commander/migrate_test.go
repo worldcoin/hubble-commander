@@ -156,6 +156,50 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
 	}
 }
 
+func (s *MigrateTestSuite) TestMigrateCommanderData_AddsPendingTransactionsToMempool() {
+	txPool, err := mempool.NewTxPool(s.storage.Storage)
+	s.NoError(err)
+	s.cmd.txPool = txPool
+
+	go func() {
+		err = s.cmd.txPool.ReadTxs(s.cmd.workersContext)
+		s.NoError(err)
+	}()
+
+	expectedTxs := models.GenericArray{
+		testutils.NewTransfer(0, 1, 0, 100),
+		testutils.NewTransfer(0, 1, 1, 110),
+	}
+
+	hubble := new(MockHubble)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(expectedTxs, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
+
+	err = s.cmd.migrateCommanderData(hubble)
+	s.NoError(err)
+
+	err = s.cmd.txPool.UpdateMempool()
+	s.NoError(err)
+
+	s.Equal(expectedTxs, s.getAllMempoolTxs(0))
+}
+
+func (s *MigrateTestSuite) getAllMempoolTxs(stateID uint32) models.GenericArray {
+	txs := s.cmd.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+
+	_, txMempool := s.cmd.txPool.Mempool().BeginTransaction()
+	for {
+		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+		s.NoError(err)
+		if tx == nil {
+			break
+		}
+		txs = append(txs, tx)
+	}
+	return txs
+}
+
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
 	return dto.PendingBatch{
 		ID:              models.MakeUint256(batchID),

@@ -54,12 +54,23 @@ func (c *Commander) syncPendingTxs(hubble client.Hubble) (int, error) {
 		return 0, err
 	}
 
-	err = c.storage.AddPendingTransactions(txs)
+	err = c.addPendingTxs(txs)
 	if err != nil {
 		return 0, err
 	}
 
 	return txs.Len(), nil
+}
+
+func (c *Commander) addPendingTxs(txs models.GenericTransactionArray) error {
+	err := c.storage.AddPendingTransactions(txs)
+	if err != nil {
+		return err
+	}
+	for i := 0; i < txs.Len(); i++ {
+		c.txPool.Send(txs.At(i))
+	}
+	return nil
 }
 
 func (c *Commander) syncFailedTxs(hubble client.Hubble) (int, error) {
