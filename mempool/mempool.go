@@ -211,24 +211,23 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 	return bucket
 }
 
-func (m *Mempool) RemoveFailedTxs(txs []models.GenericTransaction) error {
-	for _, tx := range txs {
-		bucket := m.getBucket(tx.GetFromStateID())
+func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) error {
+	for i := range txErrors {
+		bucket := m.getBucket(txErrors[i].SenderStateID)
 		if bucket == nil {
 			return errors.WithStack(ErrNonexistentBucket)
 		}
-		m.removeTxByHash(bucket, tx)
+		m.removeTxByHash(bucket, &txErrors[i])
 	}
 	return nil
 }
 
-func (m *Mempool) removeTxByHash(bucket *txBucket, tx models.GenericTransaction) {
-	txBase := tx.GetBase()
+func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
 	for i := range bucket.txs {
-		if bucket.txs[i].GetBase().Hash == txBase.Hash {
+		if bucket.txs[i].GetBase().Hash == txError.TxHash {
 			bucket.removeAt(i)
 			if len(bucket.txs) == 0 {
-				delete(m.buckets, txBase.FromStateID)
+				delete(m.buckets, txError.SenderStateID)
 			}
 			// TODO: decrease txCount
 			return
