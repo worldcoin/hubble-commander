@@ -13,8 +13,6 @@ import (
 
 type IterationCallback func(tx models.GenericTransaction) error
 
-const unsetTxCount = -1
-
 var (
 	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
@@ -75,7 +73,7 @@ func beginTransaction(m someMempool) (*TxController, *TxMempool) {
 		underlying: m,
 		Mempool: Mempool{
 			buckets: map[uint32]*txBucket{},
-			txCount: unsetTxCount,
+			txCount: m.getTxCount(),
 		},
 	}
 	txController := &TxController{
@@ -192,7 +190,7 @@ func (m *TxMempool) removeTx(stateID uint32) (*txBucket, error) {
 		return nil, errors.WithStack(ErrNonexistentBucket)
 	}
 	bucket.txs = bucket.txs[1:]
-	m.setTxCount(m.getTxCount() - 1)
+	m.txCount--
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
 		return nil, nil
@@ -211,13 +209,6 @@ func (m *TxMempool) getBucket(stateID uint32) *txBucket {
 		m.buckets[stateID] = bucket
 	}
 	return bucket
-}
-
-func (m *TxMempool) getTxCount() int {
-	if m.txCount == unsetTxCount {
-		m.txCount = m.underlying.getTxCount()
-	}
-	return m.txCount
 }
 
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
