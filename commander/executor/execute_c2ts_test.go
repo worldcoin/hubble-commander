@@ -83,8 +83,13 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	s.Len(result.AddedPubKeyIDs(), 3)
 	s.Len(result.PendingAccounts(), 1)
 	s.Len(s.txsCtx.txErrorsToStore, 1)
-	s.Equal(generatedTransfers[3].Hash, s.txsCtx.txErrorsToStore[0].TxHash)
-	s.Equal(applier.ErrBalanceTooLow.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
+
+	expectedTxError := models.TxError{
+		TxHash:        generatedTransfers[3].Hash,
+		SenderStateID: generatedTransfers[3].FromStateID,
+		ErrorMessage:  applier.ErrBalanceTooLow.Error(),
+	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {

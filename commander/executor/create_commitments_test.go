@@ -322,10 +322,14 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughCommitments)
-
 	s.Len(s.txsCtx.txErrorsToStore, 1)
-	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].TxHash)
-	s.Equal(applier.ErrNonexistentReceiver.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
+
+	expectedTxError := models.TxError{
+		TxHash:        invalidTransfer.Hash,
+		SenderStateID: invalidTransfer.FromStateID,
+		ErrorMessage:  applier.ErrNonexistentReceiver.Error(),
+	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWhenNotNecessary() {
@@ -419,9 +423,12 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 	s.NoError(err)
 
 	s.Len(s.txsCtx.txErrorsToStore, 1)
-	txErr := s.txsCtx.txErrorsToStore[0]
-	s.Equal(transfer.Hash, txErr.TxHash)
-	s.Equal(applier.ErrNonceTooLow.Error(), txErr.ErrorMessage)
+	expectedTxError := models.TxError{
+		TxHash:        transfer.Hash,
+		SenderStateID: transfer.FromStateID,
+		ErrorMessage:  applier.ErrNonceTooLow.Error(),
+	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 
 	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
 	s.NoError(err)

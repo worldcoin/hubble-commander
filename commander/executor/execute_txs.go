@@ -81,7 +81,8 @@ func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteT
 		Errorf("%s failed: %s", tx.Type().String(), err)
 	result.AddInvalidTx(tx)
 	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{
-		TxHash:       tx.GetBase().Hash,
-		ErrorMessage: err.Error(),
+		TxHash:        tx.GetBase().Hash,
+		SenderStateID: tx.GetFromStateID(),
+		ErrorMessage:  err.Error(),
 	})
 }
