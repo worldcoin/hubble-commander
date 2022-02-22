@@ -223,6 +223,26 @@ func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
 	s.Equal(txBeforeUpsert, txAfterUpsert)
 }
 
+func (s *TransactionTestSuite) TestAddPendingTransactions_AddTxs() {
+	txs := models.MakeGenericArray(
+		transfer.ToTransfer(),
+		massMigration.ToMassMigration(),
+		create2Transfer.ToCreate2Transfer(),
+	)
+	err := s.storage.AddPendingTransactions(txs)
+	s.NoError(err)
+
+	gotTxs, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Equal(txs.Len(), gotTxs.Len())
+}
+
+func (s *TransactionTestSuite) TestAddFailedTransactions_NoTransactions() {
+	arr := models.MakeTransferArray()
+	err := s.storage.AddFailedTransactions(arr)
+	s.NoError(err)
+}
+
 func TestTransactionTestSuite(t *testing.T) {
 	suite.Run(t, new(TransactionTestSuite))
 }
