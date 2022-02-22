@@ -65,8 +65,8 @@ func NewCommander(cfg *config.Config, blockchain chain.Connection) *Commander {
 		blockchain:     blockchain,
 		metrics:        metrics.NewCommanderMetrics(),
 		txsTrackingChannels: &eth.TxsTrackingChannels{
-			Requests: make(chan *eth.TxSendingRequest, 32),
-			SentTxs:  make(chan *types.Transaction, 32),
+			Requests: make(chan *eth.TxSendingRequest, 1024),
+			SentTxs:  make(chan *types.Transaction, 1024),
 		},
 	}
 }
