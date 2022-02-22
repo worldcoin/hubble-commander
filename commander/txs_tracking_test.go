@@ -2,7 +2,6 @@ package commander
 
 import (
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -73,7 +72,6 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(cfg *eth.ClientConfig) 
 	s.setAccountsAndChainState()
 
 	s.startWorkers()
-	s.waitForLatestBlockSync()
 }
 
 func (s *TxsTrackingTestSuite) TearDownTest() {
@@ -198,22 +196,6 @@ func (s *TxsTrackingTestSuite) startWorkers() {
 		s.Error(err)
 		return err
 	})
-	s.cmd.startWorker("Test New Block Loop", func() error {
-		err := s.cmd.newBlockLoop()
-		s.NoError(err)
-		return err
-	})
-}
-
-func (s *TxsTrackingTestSuite) waitForLatestBlockSync() {
-	latestBlockNumber, err := s.client.GetLatestBlockNumber()
-	s.NoError(err)
-
-	s.Eventually(func() bool {
-		syncedBlock, err := s.cmd.storage.GetSyncedBlock()
-		s.NoError(err)
-		return *syncedBlock >= *latestBlockNumber
-	}, 2*time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
 func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
