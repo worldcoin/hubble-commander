@@ -158,6 +158,7 @@ func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchTy
 	s.NoError(err)
 
 	batch, _, err := txsCtx.CreateAndSubmitBatch()
+	s.NoError(err)
 	s.client.Backend.Commit()
 	return batch
 }
