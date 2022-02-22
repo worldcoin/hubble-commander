@@ -119,7 +119,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
-	return c.storage.SetTransactionErrors(rollupCtx.GetErrorsToStore()...)
+	return c.txPool.RemoveFailedTxs(rollupCtx.GetErrorsToStore())
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -146,7 +146,7 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 		return err
 	}
 
-	return c.storage.SetTransactionErrors(errorsToStore...)
+	return c.txPool.RemoveFailedTxs(errorsToStore)
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {
