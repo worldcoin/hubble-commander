@@ -59,6 +59,11 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	pendingStakeWithdrawalStorage := NewPendingStakeWithdrawalStorage(database)
 
+	stateTree, err := NewStateTree(database)
+	if err != nil {
+		return nil, err
+	}
+
 	storage := &Storage{
 		BatchStorage:                  batchStorage,
 		CommitmentStorage:             commitmentStorage,
@@ -67,7 +72,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 		ChainStateStorage:             chainStateStorage,
 		RegisteredTokenStorage:        registeredTokenStorage,
 		RegisteredSpokeStorage:        registeredSpokeStorage,
-		StateTree:                     NewStateTree(database),
+		StateTree:                     stateTree,
 		AccountTree:                   accountTree,
 		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
 		database:                      database,

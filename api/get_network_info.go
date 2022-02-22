@@ -33,13 +33,8 @@ func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
 		Rollup:                         a.client.ChainState.Rollup,
 		BlockNumber:                    a.storage.GetLatestBlockNumber(),
 		TransactionCount:               a.storage.GetTransactionCount(),
+		AccountCount:                   a.storage.StateTree.LeavesCount(),
 	}
-
-	accountCount, err := a.storage.StateTree.LeavesCount()
-	if err != nil {
-		return nil, err
-	}
-	networkInfo.AccountCount = accountCount
 
 	latestBatch, err := a.storage.GetLatestSubmittedBatch()
 	if err != nil && !storage.IsNotFoundError(err) {
