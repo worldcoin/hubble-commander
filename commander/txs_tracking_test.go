@@ -84,7 +84,7 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_TransferTransaction() {
 	s.setupTestWithClientConfig(&eth.ClientConfig{TransferBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
-	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
+	s.submitBatch(&transfer, batchtype.Transfer)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
@@ -96,13 +96,13 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
 		50,
 		&models.PublicKey{2, 3, 4},
 	)
-	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
+	s.submitBatch(&transfer, batchtype.Create2Transfer)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_MassMigrationTransaction() {
 	s.setupTestWithClientConfig(&eth.ClientConfig{MMBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
-	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
+	s.submitBatch(&massMigration, batchtype.MassMigration)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransaction() {
@@ -115,7 +115,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransact
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_WithdrawStake() {
 	s.setupTestWithClientConfig(&eth.ClientConfig{StakeWithdrawalGasLimit: ref.Uint64(lowGasLimit)})
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
-	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
+	batch := s.submitBatch(&transfer, batchtype.Transfer)
 
 	_, err := s.client.Client.WithdrawStake(&batch.ID)
 	s.NoError(err)
@@ -147,42 +147,19 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_ClosesTxsChannelOnEthTxError() {
 		50,
 		&models.PublicKey{2, 3, 4},
 	)
-	s.PanicsWithError("send on closed channel", func() {
-		s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
-	})
+	s.submitBatch(&transfer, batchtype.Create2Transfer)
 }
 
-func (s *TxsTrackingTestSuite) submitBatchInTransaction(
-	tx models.GenericTransaction,
-	batchType batchtype.BatchType,
-) (batch *models.Batch) {
-	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
-		err := txStorage.AddTransaction(tx)
-		s.NoError(err)
-
-		batchData, err := txsCtx.CreateCommitments()
-		s.NoError(err)
-		s.Len(batchData, 1)
-
-		batch, err = txsCtx.NewPendingBatch(batchType)
-		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, batchData)
-		s.NoError(err)
-		s.client.GetBackend().Commit()
-	})
-	return batch
-}
-
-func (s *TxsTrackingTestSuite) runInTransaction(
-	batchType batchtype.BatchType,
-	handler func(*st.Storage, *executor.TxsContext),
-) {
-	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
-	defer txController.Rollback(nil)
-
-	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
+func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchType batchtype.BatchType) *models.Batch {
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	txsCtx := executor.NewTestTxsContext(executionCtx, batchType)
-	handler(txStorage, txsCtx)
+
+	err := s.storage.AddTransaction(tx)
+	s.NoError(err)
+
+	batch, _, err := txsCtx.CreateAndSubmitBatch()
+	s.client.Backend.Commit()
+	return batch
 }
 
 func (s *TxsTrackingTestSuite) startWorkers() {
