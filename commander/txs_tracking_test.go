@@ -1,7 +1,6 @@
 package commander
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -20,6 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
+
+const lowGasLimit = 40_000
 
 type TxsTrackingTestSuite struct {
 	*require.Assertions
@@ -45,21 +46,23 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	s.setupTestWithFailedTxs()
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(cfg *eth.ClientConfig) {
 	s.cmd = NewCommander(s.cfg, nil)
 	// pass txs channels to testClient to use commander tracking worker
-	conf.TxsChannels = s.cmd.txsTrackingChannels
+	clientCfg := &eth.TestClientConfig{
+		ClientConfig: *cfg,
+		TxsChannels:  s.cmd.txsTrackingChannels,
+	}
 
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, conf)
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, clientCfg)
 
 	setStateLeaves(s.T(), s.storage.Storage)
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs, conf.TxsChannels.Requests)
+	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, clientCfg.TxsChannels.SentTxs, clientCfg.TxsChannels.Requests)
 
 	err := s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -73,34 +76,21 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientCon
 	s.waitForLatestBlockSync()
 }
 
-func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
-	lowGasLimit := uint64(40_000)
-	s.setupTestWithClientConfig(&eth.TestClientConfig{
-		ClientConfig: eth.ClientConfig{
-			TransferBatchSubmissionGasLimit:  &lowGasLimit,
-			C2TBatchSubmissionGasLimit:       &lowGasLimit,
-			MMBatchSubmissionGasLimit:        &lowGasLimit,
-			BatchAccountRegistrationGasLimit: &lowGasLimit,
-			StakeWithdrawalGasLimit:          &lowGasLimit,
-			DepositBatchSubmissionGasLimit:   &lowGasLimit,
-		},
-	})
-}
-
 func (s *TxsTrackingTestSuite) TearDownTest() {
-	s.waitForWorkersCancellation()
-	stopCommander(s.cmd)
+	s.cmd.workersWaitGroup.Wait()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_TransferTransaction() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{TransferBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{C2TBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	transfer := testutils.MakeCreate2Transfer(
 		0,
 		ref.Uint32(1),
@@ -112,17 +102,20 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_MassMigrationTransaction() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{MMBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
 	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransaction() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{BatchAccountRegistrationGasLimit: ref.Uint64(lowGasLimit)})
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_WithdrawStake() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{StakeWithdrawalGasLimit: ref.Uint64(lowGasLimit)})
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
 
@@ -131,6 +124,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_WithdrawStake() {
 }
 
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{DepositBatchSubmissionGasLimit: ref.Uint64(lowGasLimit)})
 	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
 		ID:       models.MakeUint256(1),
 		Root:     utils.RandomHash(),
@@ -142,13 +136,6 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
 
 	_, _, err = depositsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
-}
-
-func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
-	s.Eventually(func() bool {
-		err := s.cmd.workersContext.Err()
-		return err == context.Canceled
-	}, time.Second, time.Millisecond*300)
 }
 
 func (s *TxsTrackingTestSuite) submitBatchInTransaction(
@@ -210,7 +197,7 @@ func (s *TxsTrackingTestSuite) waitForLatestBlockSync() {
 		syncedBlock, err := s.cmd.storage.GetSyncedBlock()
 		s.NoError(err)
 		return *syncedBlock >= *latestBlockNumber
-	}, time.Hour, 100*time.Millisecond, "timeout when waiting for latest block sync")
+	}, 2*time.Second, 100*time.Millisecond, "timeout when waiting for latest block sync")
 }
 
 func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
