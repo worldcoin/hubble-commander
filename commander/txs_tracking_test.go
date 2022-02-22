@@ -136,6 +136,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
 	s.NoError(err)
 }
 
+// TODO improve this test
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_ClosesTxsChannelOnEthTxError() {
 	s.setupTestWithClientConfig(&eth.ClientConfig{
 		BatchAccountRegistrationGasLimit: ref.Uint64(lowGasLimit),
