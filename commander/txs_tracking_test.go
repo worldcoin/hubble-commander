@@ -138,6 +138,22 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
 	s.NoError(err)
 }
 
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_ClosesTxsChannelOnEthTxError() {
+	s.setupTestWithClientConfig(&eth.ClientConfig{
+		BatchAccountRegistrationGasLimit: ref.Uint64(lowGasLimit),
+	})
+	transfer := testutils.MakeCreate2Transfer(
+		0,
+		ref.Uint32(1),
+		0,
+		50,
+		&models.PublicKey{2, 3, 4},
+	)
+	s.PanicsWithError("send on closed channel", func() {
+		s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
+	})
+}
+
 func (s *TxsTrackingTestSuite) submitBatchInTransaction(
 	tx models.GenericTransaction,
 	batchType batchtype.BatchType,
