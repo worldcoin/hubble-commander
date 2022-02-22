@@ -368,14 +368,27 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 func (s *StateTreeTestSuite) TestLeavesCount_UpdateCountAfterAddingNewLeaves() {
 	s.setStateLeaves(0, 2, 4, 8, 9)
 
-	count, err := s.storage.StateTree.LeavesCount()
-	s.NoError(err)
+	count := s.storage.StateTree.LeavesCount()
+	s.EqualValues(5, count)
+
+	s.setStateLeaves(4, 8)
+	count = s.storage.StateTree.LeavesCount()
 	s.EqualValues(5, count)
 }
 
+func (s *StateTreeTestSuite) TestLeavesCount_TheSameCountAfterUpdatingLeaves() {
+	s.setStateLeaves(0, 1)
+
+	count := s.storage.StateTree.LeavesCount()
+	s.EqualValues(2, count)
+
+	s.setStateLeaves(0, 1)
+	count = s.storage.StateTree.LeavesCount()
+	s.EqualValues(2, count)
+}
+
 func (s *StateTreeTestSuite) TestLeavesCount_NoLeaves() {
-	count, err := s.storage.StateTree.LeavesCount()
-	s.NoError(err)
+	count := s.storage.StateTree.LeavesCount()
 	s.EqualValues(0, count)
 }
 
