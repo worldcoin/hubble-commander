@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
+	"github.com/Worldcoin/hubble-commander/commander/tracker"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -44,88 +45,103 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
-	lowGasLimit := uint64(30_000)
+	s.setupTestWithFailedTxs()
+}
 
-	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, &eth.ClientConfig{
-		TransferBatchSubmissionGasLimit:  &lowGasLimit,
-		C2TBatchSubmissionGasLimit:       &lowGasLimit,
-		MMBatchSubmissionGasLimit:        &lowGasLimit,
-		BatchAccountRegistrationGasLimit: &lowGasLimit,
-	})
+func (s *TxsTrackingTestSuite) setupTestWithClientConfig(conf *eth.TestClientConfig) {
+	s.cmd = NewCommander(s.cfg, nil)
+	// pass txs channels to testClient to use commander tracking worker
+	conf.TxsChannels = s.cmd.txsTrackingChannels
+
+	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, conf)
+
+	setStateLeaves(s.T(), s.storage.Storage)
+	s.cmd.client = s.client.Client
+	s.cmd.blockchain = s.client.Blockchain
+	s.cmd.storage = s.storage.Storage
+	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, conf.TxsChannels.SentTxs, conf.TxsChannels.Requests)
+
+	err := s.cmd.addGenesisBatch()
+	s.NoError(err)
 
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 	s.wallets = testutils.GenerateWallets(s.Assertions, domain, 2)
-
-	setStateLeaves(s.T(), s.storage.Storage)
-	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
-	s.cmd.client = s.client.Client
-	s.cmd.storage = s.storage.Storage
-	s.cmd.txsHashesChan = s.client.TxsHashesChan
-
-	err = s.cmd.addGenesisBatch()
-	s.NoError(err)
-
 	s.setAccountsAndChainState()
 
 	s.startWorkers()
 	s.waitForLatestBlockSync()
 }
 
+func (s *TxsTrackingTestSuite) setupTestWithFailedTxs() {
+	lowGasLimit := uint64(40_000)
+	s.setupTestWithClientConfig(&eth.TestClientConfig{
+		ClientConfig: eth.ClientConfig{
+			TransferBatchSubmissionGasLimit:  &lowGasLimit,
+			C2TBatchSubmissionGasLimit:       &lowGasLimit,
+			MMBatchSubmissionGasLimit:        &lowGasLimit,
+			BatchAccountRegistrationGasLimit: &lowGasLimit,
+			StakeWithdrawalGasLimit:          &lowGasLimit,
+			DepositBatchSubmissionGasLimit:   &lowGasLimit,
+		},
+	})
+}
+
 func (s *TxsTrackingTestSuite) TearDownTest() {
+	s.waitForWorkersCancellation()
 	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedTransferTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_TransferTransaction() {
 	transfer := testutils.MakeTransfer(0, 1, 0, 400)
 	s.submitBatchInTransaction(&transfer, batchtype.Transfer)
-
-	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedCreate2TransfersTransaction() {
-	transfer := testutils.MakeCreate2Transfer(0, ref.Uint32(1), 0, 50, &models.PublicKey{2, 3, 4})
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_Create2TransfersTransaction() {
+	transfer := testutils.MakeCreate2Transfer(
+		0,
+		ref.Uint32(1),
+		0,
+		50,
+		&models.PublicKey{2, 3, 4},
+	)
 	s.submitBatchInTransaction(&transfer, batchtype.Create2Transfer)
-
-	s.waitForWorkersCancellation()
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedMassMigrationTransaction() {
-	commitment := models.MMCommitmentWithTxs{
-		MMCommitment: models.MMCommitment{
-			CommitmentBase: models.CommitmentBase{
-				ID: models.CommitmentID{
-					BatchID:      models.MakeUint256(1),
-					IndexInBatch: 0,
-				},
-				Type: batchtype.MassMigration,
-			},
-			Meta: &models.MassMigrationMeta{
-				SpokeID:     1,
-				TokenID:     models.MakeUint256(0),
-				Amount:      models.MakeUint256(50),
-				FeeReceiver: 0,
-			},
-			WithdrawRoot: utils.RandomHash(),
-		},
-	}
-
-	_, err := s.client.Client.SubmitMassMigrationsBatch(models.NewUint256(1),
-		[]models.CommitmentWithTxs{&commitment})
-	s.NoError(err)
-
-	s.waitForWorkersCancellation()
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_MassMigrationTransaction() {
+	massMigration := testutils.MakeMassMigration(0, 2, 0, 50)
+	s.submitBatchInTransaction(&massMigration, batchtype.MassMigration)
 }
 
-func (s *TxsTrackingTestSuite) TestTxsTracking_FailedBatchAccountRegistrationTransaction() {
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransaction() {
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
 	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
 	s.NoError(err)
+}
 
-	s.waitForWorkersCancellation()
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_WithdrawStake() {
+	transfer := testutils.MakeTransfer(0, 1, 0, 400)
+	batch := s.submitBatchInTransaction(&transfer, batchtype.Transfer)
+
+	_, err := s.client.Client.WithdrawStake(&batch.ID)
+	s.NoError(err)
+}
+
+func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
+	err := s.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
+		ID:       models.MakeUint256(1),
+		Root:     utils.RandomHash(),
+		Deposits: testutils.GetFourDeposits(),
+	})
+	s.NoError(err)
+	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
+	depositsCtx := executor.NewTestDepositsContext(executionCtx)
+
+	_, _, err = depositsCtx.CreateAndSubmitBatch()
+	s.NoError(err)
 }
 
 func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
@@ -135,7 +151,10 @@ func (s *TxsTrackingTestSuite) waitForWorkersCancellation() {
 	}, time.Second, time.Millisecond*300)
 }
 
-func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransaction, batchType batchtype.BatchType) {
+func (s *TxsTrackingTestSuite) submitBatchInTransaction(
+	tx models.GenericTransaction,
+	batchType batchtype.BatchType,
+) (batch *models.Batch) {
 	s.runInTransaction(batchType, func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
@@ -144,15 +163,19 @@ func (s *TxsTrackingTestSuite) submitBatchInTransaction(tx models.GenericTransac
 		s.NoError(err)
 		s.Len(batchData, 1)
 
-		batch, err := txsCtx.NewPendingBatch(batchType)
+		batch, err = txsCtx.NewPendingBatch(batchType)
 		s.NoError(err)
 		err = txsCtx.SubmitBatch(batch, batchData)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 	})
+	return batch
 }
 
-func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, handler func(*st.Storage, *executor.TxsContext)) {
+func (s *TxsTrackingTestSuite) runInTransaction(
+	batchType batchtype.BatchType,
+	handler func(*st.Storage, *executor.TxsContext),
+) {
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 	defer txController.Rollback(nil)
 
@@ -162,15 +185,20 @@ func (s *TxsTrackingTestSuite) runInTransaction(batchType batchtype.BatchType, h
 }
 
 func (s *TxsTrackingTestSuite) startWorkers() {
-	s.cmd.startWorker("Test Txs Tracking", func() error {
-		err := s.cmd.txsTracking(s.cmd.txsHashesChan)
+	s.cmd.startWorker("Test Sending Requested Txs", func() error {
+		err := s.cmd.txsTracker.SendRequestedTxs(s.cmd.workersContext)
 		s.NoError(err)
-		return nil
+		return err
+	})
+	s.cmd.startWorker("Test Tracking Sent Txs", func() error {
+		err := s.cmd.txsTracker.TrackSentTxs(s.cmd.workersContext)
+		s.Error(err)
+		return err
 	})
 	s.cmd.startWorker("Test New Block Loop", func() error {
 		err := s.cmd.newBlockLoop()
 		s.NoError(err)
-		return nil
+		return err
 	})
 }
 
@@ -190,7 +218,7 @@ func (s *TxsTrackingTestSuite) setAccountsAndChainState() {
 	setAccountLeaves(s.T(), s.storage.Storage, s.wallets)
 }
 
-func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf *eth.ClientConfig) *eth.TestClient {
+func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestStorage, conf *eth.TestClientConfig) *eth.TestClient {
 	setStateLeaves(t, storage.Storage)
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)

@@ -21,6 +21,5 @@ func (c *Client) WithdrawStake(batchID *models.Uint256) (*types.Transaction, err
 	if err != nil {
 		return nil, err
 	}
-	c.txsHashesChan <- tx.Hash()
 	return tx, nil
 }

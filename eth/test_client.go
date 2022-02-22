@@ -13,7 +13,13 @@ type TestClient struct {
 	*Client
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
-	TxsHashesChan       chan common.Hash
+
+	TxsChannels *TxsTrackingChannels
+}
+
+type TestClientConfig struct {
+	TxsChannels *TxsTrackingChannels
+	ClientConfig
 }
 
 var (
@@ -23,10 +29,10 @@ var (
 // NewTestClient Sets up a TestClient backed by automining simulator.
 // Remember to call Close() at the end of the test
 func NewTestClient() (*TestClient, error) {
-	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &ClientConfig{})
+	return NewConfiguredTestClient(&rollup.DeploymentConfig{}, &TestClientConfig{})
 }
 
-func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConfig) (*TestClient, error) {
+func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClientConfig) (*TestClient, error) {
 	sim, err := simulator.NewAutominingSimulator()
 	if err != nil {
 		return nil, err
@@ -36,7 +42,14 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 	if err != nil {
 		return nil, err
 	}
-	txsHashesChan := make(chan common.Hash, 32)
+
+	startTxsSending := clientCfg.TxsChannels == nil
+	if startTxsSending {
+		clientCfg.TxsChannels = &TxsTrackingChannels{
+			SkipSendingRequestsThroughChannel: true,
+			SkipSentTxsChannel:                true,
+		}
+	}
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
 		ChainState: models.ChainState{
@@ -55,8 +68,8 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		TokenRegistry:   contracts.TokenRegistry,
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
-		ClientConfig:    *clientCfg,
-		TxsHashesChan:   txsHashesChan,
+		ClientConfig:    clientCfg.ClientConfig,
+		TxsChannels:     clientCfg.TxsChannels,
 	})
 	if err != nil {
 		return nil, err
@@ -66,6 +79,6 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *ClientConf
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		TxsHashesChan:       txsHashesChan,
+		TxsChannels:         clientCfg.TxsChannels,
 	}, nil
 }
