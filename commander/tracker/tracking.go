@@ -38,7 +38,6 @@ func (t *Tracker) startReadingChannel(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			close(t.txsChan)
 			return
 		case tx := <-t.txsChan:
 			t.addTx(tx)

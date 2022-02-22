@@ -25,10 +25,11 @@ func (t *Tracker) sendRequestedTxs(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case request := <-t.requestsChan:
-			err := request.Send()
+			tx, err := request.Send()
 			if err != nil {
 				return err
 			}
+			t.txsChan <- tx
 		}
 	}
 }
