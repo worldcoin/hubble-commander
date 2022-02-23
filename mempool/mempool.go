@@ -228,7 +228,7 @@ func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
 			if len(bucket.txs) == 0 {
 				delete(m.buckets, txError.SenderStateID)
 			}
-			// TODO: decrease txCount
+			m.txCount--
 			return
 		}
 	}
