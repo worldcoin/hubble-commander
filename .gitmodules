@@ -1,4 +1,4 @@
 [submodule "hubble-contracts"]
 	path = hubble-contracts
 	url = git@github.com:Worldcoin/hubble-contracts.git
-	branch = fork-master
+	branch = michal/poa-chooser
