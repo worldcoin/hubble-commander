@@ -51,7 +51,7 @@ func (s *FindOldestTxTimeTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *FindOldestTxTimeTestSuite) TestFindOldestTransactionTime_EmptyArray() {
+func (s *FindOldestTxTimeTestSuite) TestFindOldestTransactionTime_EmptyMempool() {
 	oldest := s.txsCtx.findOldestTransactionTime()
 	s.Nil(oldest)
 }

@@ -11,9 +11,7 @@ func (c *TxsContext) findOldestTransactionTime() (oldestTime *models.Timestamp) 
 			return nil
 		}
 		if (oldestTime == nil) || txTime.Before(*oldestTime) {
-			if (oldestTime == nil) || txTime.Before(*oldestTime) {
-				oldestTime = txTime
-			}
+			oldestTime = txTime
 		}
 		return nil
 	})
