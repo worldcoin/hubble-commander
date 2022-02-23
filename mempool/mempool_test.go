@@ -317,7 +317,8 @@ func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesEmptyBuckets() {
 
 func (s *MempoolTestSuite) TestRemoveFailedTxs_OmitsEmptyBuckets() {
 	tx := s.newTransfer(20, 1)
-	s.mempool.RemoveFailedTxs(txsToTxErrors(tx))
+	s.mempool.RemoveFailedTxs(txsToTxErrors(tx, s.txs[2]))
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
