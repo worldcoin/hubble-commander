@@ -89,6 +89,61 @@ func (b *rollupSessionBuilder) SubmitDeposits(
 	return b.packAndRequest(true, "submitDeposits", batchID, previous, vacant)
 }
 
+func (b *rollupSessionBuilder) DisputeSignatureTransfer(
+	batchID *big.Int,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureTransfer", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeSignatureCreate2Transfer(
+	batchID *big.Int,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProofWithReceiver,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureCreate2Transfer", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeSignatureMassMigration(
+	batchID *big.Int,
+	target rollup.TypesMMCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureMassMigration", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionTransfer(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionTransfer", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionCreate2Transfer(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionCreate2Transfer", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionMassMigration(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesMMCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionMassMigration", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) KeepRollingBack() (*types.Transaction, error) {
+	return b.packAndRequest(false, "keepRollingBack")
+}
+
 type accountRegistrySessionBuilder struct {
 	accountregistry.AccountRegistrySession
 	contract       Contract
