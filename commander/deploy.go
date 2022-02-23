@@ -49,7 +49,7 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	chooserAddress, _, err := deployer.DeployProofOfBurn(blockchain, cfg.Ethereum.MineTimeout)
+	chooserAddress, _, err := deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout)
 	if err != nil {
 		return nil, err
 	}
