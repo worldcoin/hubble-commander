@@ -33,7 +33,7 @@ func (s *SyncTransfersTestSuite) TestSyncTxs_InvalidTransfer() {
 	input := &SyncedTransfers{
 		txs: testutils.GenerateValidTransfers(2),
 	}
-	input.txs = append(input.txs, testutils.GenerateInvalidTransfers(2)...)
+	input.txs = append(input.txs, testutils.GenerateInvalidTransfers(1, 2)...)
 
 	syncedTxs, _, err := s.syncCtx.SyncTxs(input, s.feeReceiverStateID)
 	s.Nil(syncedTxs)

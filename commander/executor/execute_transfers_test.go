@@ -94,7 +94,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(1)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
@@ -121,7 +121,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
-	generatedTransfers = append(generatedTransfers, generateInvalidTransfers(1)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
@@ -183,15 +183,6 @@ func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransa
 		_, err = txsCtx.Mempool.AddOrReplace(txsCtx.storage, txs.At(i))
 		s.NoError(err)
 	}
-}
-
-// TODO: change GenerateInvalidTransfers FromStateID
-func generateInvalidTransfers(transfersAmount uint64) []models.Transfer {
-	txs := testutils.GenerateInvalidTransfers(transfersAmount)
-	for i := range txs {
-		txs[i].FromStateID = 3
-	}
-	return txs
 }
 
 func TestExecuteTransfersTestSuite(t *testing.T) {

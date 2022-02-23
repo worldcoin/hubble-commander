@@ -84,15 +84,15 @@ func GenerateValidCreate2Transfers(transfersAmount uint32) models.Create2Transfe
 	return transfers
 }
 
-func GenerateInvalidCreate2Transfers(transfersAmount uint64) models.Create2TransferArray {
+func GenerateInvalidCreate2Transfers(from uint32, transfersAmount uint64) models.Create2TransferArray {
 	transfers := make(models.Create2TransferArray, 0, transfersAmount)
 	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Create2Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Create2Transfer,
-				FromStateID: 1,
-				Amount:      models.MakeUint256(1),
+				FromStateID: from,
+				Amount:      models.MakeUint256(1_000_000),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),
 			},
@@ -123,14 +123,14 @@ func GenerateValidTransfers(transfersAmount uint32) models.TransferArray {
 	return transfers
 }
 
-func GenerateInvalidTransfers(transfersAmount uint64) []models.Transfer {
+func GenerateInvalidTransfers(from uint32, transfersAmount uint64) []models.Transfer {
 	transfers := make([]models.Transfer, 0, transfersAmount)
 	for i := uint64(0); i < transfersAmount; i++ {
 		transfer := models.Transfer{
 			TransactionBase: models.TransactionBase{
 				Hash:        utils.RandomHash(),
 				TxType:      txtype.Transfer,
-				FromStateID: 1,
+				FromStateID: from,
 				Amount:      models.MakeUint256(1_000_000),
 				Fee:         models.MakeUint256(1),
 				Nonce:       models.MakeUint256(0),

@@ -45,7 +45,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(1)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
@@ -72,7 +72,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
-	generatedTransfers = append(generatedTransfers, generateInvalidCreate2Transfers(1)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
 	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
@@ -136,16 +136,6 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() 
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
-}
-
-// TODO: change GenerateInvalidCreate2Transfers FromStateID
-func generateInvalidCreate2Transfers(transfersAmount uint64) []models.Create2Transfer {
-	txs := testutils.GenerateInvalidCreate2Transfers(transfersAmount)
-	for i := range txs {
-		txs[i].FromStateID = 3
-		txs[i].Amount = models.MakeUint256(1_000_000)
-	}
-	return txs
 }
 
 func TestExecuteCreate2TransfersTestSuite(t *testing.T) {
