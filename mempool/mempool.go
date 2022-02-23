@@ -294,8 +294,8 @@ func (b *txBucket) insertAt(index int, tx models.GenericTransaction) {
 }
 
 func (b *txBucket) removeAt(index int) {
-	if len(b.txs) == index {
-		b.txs = b.txs[:index-1]
+	if index == len(b.txs)-1 {
+		b.txs = b.txs[:index]
 		return
 	}
 	b.txs = append(b.txs[:index], b.txs[index+1:]...)
