@@ -97,7 +97,10 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txsTracker = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
+	c.txsTracker, err = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
+	if err != nil {
+		return err
+	}
 
 	err = c.addGenesisBatch()
 	if err != nil {

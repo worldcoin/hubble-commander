@@ -1,6 +1,8 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -8,7 +10,7 @@ import (
 type TxSendingRequest struct {
 	contract     *bind.BoundContract
 	input        []byte
-	opts         *bind.TransactOpts
+	opts         bind.TransactOpts
 	ResultTxChan chan SendResponse
 }
 
@@ -61,15 +63,16 @@ func packAndRequest(
 	txsChannels.Requests <- &TxSendingRequest{
 		contract:     contract.BoundContract,
 		input:        input,
-		opts:         opts,
+		opts:         *opts,
 		ResultTxChan: responseChan,
 	}
 	response := <-responseChan
 	return response.Transaction, response.Error
 }
 
-func (c *TxSendingRequest) Send() (*types.Transaction, error) {
-	tx, err := c.contract.RawTransact(c.opts, c.input)
+func (c *TxSendingRequest) Send(nonce uint64) (*types.Transaction, error) {
+	c.opts.Nonce = big.NewInt(int64(nonce))
+	tx, err := c.contract.RawTransact(&c.opts, c.input)
 	c.ResultTxChan <- SendResponse{
 		Transaction: tx,
 		Error:       err,

@@ -57,13 +57,15 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(cfg *eth.ClientConfig) 
 
 	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, clientCfg)
 
+	var err error
 	setStateLeaves(s.T(), s.storage.Storage)
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker = tracker.NewTracker(s.client.Client, clientCfg.TxsChannels.SentTxs, clientCfg.TxsChannels.Requests)
+	s.cmd.txsTracker, err = tracker.NewTracker(s.client.Client, clientCfg.TxsChannels.SentTxs, clientCfg.TxsChannels.Requests)
+	s.NoError(err)
 
-	err := s.cmd.addGenesisBatch()
+	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
 
 	domain, err := s.client.GetDomain()
