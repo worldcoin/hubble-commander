@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -158,8 +157,6 @@ func (s *CreateCommitmentsTestSuite) invalidateTransfers(transfers []models.Tran
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThereAreNotEnoughPendingTransfers() {
-	s.T().Skip("not implemented") // TODO unskip, consider combining ErrNotEnoughTxs and ErrNotEnoughCommitments
-
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
@@ -277,8 +274,6 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkipsMinCommitmentsCheck() {
-	s.T().Skip("not implemented") // TODO unskip
-
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MaxTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 2
@@ -402,42 +397,22 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionReplacement() {
-	s.T().Skip("not implemented") // TODO unskip
-
 	// Mine the transaction with higher fee in case there are two txs from the same sender with the same nonce
 	s.cfg.MinTxsPerCommitment = 1
 	s.AcceptNewConfig()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 100)
-	transfer.Hash = common.BytesToHash([]byte{1})
-
-	higherFeeTransfer := transfer
-	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
+	higherFeeTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
 
 	s.initTxs(models.TransferArray{transfer, higherFeeTransfer})
 
-	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
-
 	_, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
 
-	s.Len(s.txsCtx.txErrorsToStore, 1)
-	expectedTxError := models.TxError{
-		TxHash:        transfer.Hash,
-		SenderStateID: transfer.FromStateID,
-		ErrorMessage:  applier.ErrNonceTooLow.Error(),
-	}
-	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
-
 	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
 	s.NoError(err)
-
-	expectedCommitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 0,
-	}
-	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentID)
+	s.Equal(models.MakeUint256(1), minedHigherFeeTransfer.CommitmentID.BatchID)
 }
 
 func (s *CreateCommitmentsTestSuite) initTxs(txs models.GenericTransactionArray) {
