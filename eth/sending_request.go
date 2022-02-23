@@ -27,13 +27,6 @@ type TxsTrackingChannels struct {
 	SkipChannelSending bool
 }
 
-type packAndRequestFunc func(
-	contract *Contract,
-	opts *bind.TransactOpts,
-	method string,
-	data ...interface{},
-) (*types.Transaction, error)
-
 func (c *Client) packAndRequest(
 	contract *Contract,
 	opts *bind.TransactOpts,
