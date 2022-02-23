@@ -2,6 +2,7 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/contracts/chooser"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // IsActiveProposer checks if the current wallet is the active batch proposer.
@@ -16,7 +17,9 @@ func (c *Client) IsActiveProposer() (bool, error) {
 		return false, err
 	}
 
-	currentProposer, err := chooserContract.GetProposer(nil)
+	currentProposer, err := chooserContract.GetProposer(&bind.CallOpts{
+		From: c.Blockchain.GetAccount().From,
+	})
 	if err != nil {
 		return false, err
 	}
