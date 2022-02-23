@@ -8,10 +8,11 @@ import (
 )
 
 type TxSendingRequest struct {
-	contract     *bind.BoundContract
-	input        []byte
-	opts         bind.TransactOpts
-	ResultTxChan chan SendResponse
+	contract      *bind.BoundContract
+	input         []byte
+	opts          bind.TransactOpts
+	ShouldTrackTx bool
+	ResultTxChan  chan SendResponse
 }
 
 type SendResponse struct {
@@ -30,16 +31,18 @@ type TxsTrackingChannels struct {
 func (c *Client) packAndRequest(
 	contract *Contract,
 	opts *bind.TransactOpts,
+	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
-	return packAndRequest(c.txsChannels, contract, opts, method, data...)
+	return packAndRequest(c.txsChannels, contract, opts, shouldTrackTx, method, data...)
 }
 
 func packAndRequest(
 	txsChannels *TxsTrackingChannels,
 	contract *Contract,
 	opts *bind.TransactOpts,
+	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
@@ -54,10 +57,11 @@ func packAndRequest(
 
 	responseChan := make(chan SendResponse, 1)
 	txsChannels.Requests <- &TxSendingRequest{
-		contract:     contract.BoundContract,
-		input:        input,
-		opts:         *opts,
-		ResultTxChan: responseChan,
+		contract:      contract.BoundContract,
+		input:         input,
+		opts:          *opts,
+		ShouldTrackTx: shouldTrackTx,
+		ResultTxChan:  responseChan,
 	}
 	response := <-responseChan
 	return response.Transaction, response.Error

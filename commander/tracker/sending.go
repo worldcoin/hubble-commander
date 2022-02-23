@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var errChannelClosed = fmt.Errorf("channel closed")
@@ -26,20 +25,21 @@ func (t *Tracker) sendRequestedTxs(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case request := <-t.requestsChan:
-			tx, err := t.sendTx(request)
-			if err != nil {
+			if err := t.sendTx(request); err != nil {
 				return err
 			}
-			t.txsChan <- tx
 		}
 	}
 }
 
-func (t *Tracker) sendTx(request *eth.TxSendingRequest) (*types.Transaction, error) {
+func (t *Tracker) sendTx(request *eth.TxSendingRequest) error {
 	tx, err := request.Send(t.nonce)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	t.nonce++
-	return tx, nil
+	if request.ShouldTrackTx {
+		t.txsChan <- tx
+	}
+	return nil
 }
