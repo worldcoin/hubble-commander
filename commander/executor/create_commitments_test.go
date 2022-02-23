@@ -270,7 +270,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkipsMinCommitmentsCheck() {
@@ -304,7 +304,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOfInvalidTransactions() {
@@ -316,7 +316,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 	s.Len(s.txsCtx.txErrorsToStore, 1)
 
 	expectedTxError := models.TxError{
@@ -337,7 +337,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWh
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)

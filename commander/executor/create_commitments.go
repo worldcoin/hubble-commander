@@ -58,7 +58,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	}
 
 	if len(commitments) < int(c.minCommitmentsPerBatch) {
-		return nil, errors.WithStack(ErrNotEnoughCommitments)
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
 	select {
