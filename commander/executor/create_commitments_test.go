@@ -189,7 +189,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {

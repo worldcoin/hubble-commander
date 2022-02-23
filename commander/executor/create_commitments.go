@@ -21,7 +21,10 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
-	c.heap = c.newHeap()
+	err := c.newHeap()
+	if err != nil {
+		return nil, err
+	}
 	txController, batchMempool := c.Mempool.BeginTransaction()
 	defer txController.Rollback()
 
@@ -133,7 +136,9 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment
+	if c.Mempool.TxCount() < int(c.minTxsPerCommitment) {
+		return nil, errors.WithStack(ErrNotEnoughTxs)
+	}
 
 	txController, commitmentMempool := batchMempool.BeginTransaction()
 	defer txController.Rollback()
@@ -151,28 +156,34 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
 
-// nolint:unused // TODO reimplement
-func (c *TxsContext) setBatchMinimums() {
-	oldestTxnTime := c.findOldestTransactionTime()
-	if oldestTxnTime == nil {
-		return
+func (c *TxsContext) verifyTxsCount() error {
+	if c.Mempool.TxCount() >= int(c.cfg.MinCommitmentsPerBatch*c.cfg.MinTxsPerCommitment) {
+		return nil
 	}
 
-	oldestTxnDelay := time.Since(oldestTxnTime.Time)
+	oldestTxnTime := c.findOldestTransactionTime()
+	if oldestTxnTime == nil {
+		return errors.WithStack(ErrNotEnoughTxs)
+	}
 
-	if oldestTxnDelay > c.cfg.MaxTxnDelay {
+	if time.Since(oldestTxnTime.Time) > c.cfg.MaxTxnDelay {
 		log.Debug("Creating a batch because a transaction is older than MaxTxnDelay")
 		c.minTxsPerCommitment = 1
 		c.minCommitmentsPerBatch = 1
+		return nil
 	}
+	return errors.WithStack(ErrNotEnoughTxs)
 }
 
-func (c *TxsContext) newHeap() *mempool.TxHeap {
-	txs := c.Mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+func (c *TxsContext) newHeap() error {
+	err := c.verifyTxsCount()
+	if err != nil {
+		return err
+	}
 
-	// TODO: add Mempool.TxCount() method and return ErrNotEnoughTxs if it is smaller than c.minTxsPerCommitment*c.minCommitmentsPerBatch.
-	// If that's true then look for oldest tx
-	return mempool.NewTxHeap(txs...)
+	txs := c.Mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+	c.heap = mempool.NewTxHeap(txs...)
+	return nil
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
