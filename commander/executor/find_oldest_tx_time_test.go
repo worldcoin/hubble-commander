@@ -4,64 +4,85 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestFindOldestTransactionTime_EmptyArray(t *testing.T) {
-	array := models.MakeTransferArray()
-	oldest := findOldestTransactionTime(array)
-	require.Nil(t, oldest)
+type FindOldestTxTimeTestSuite struct {
+	*require.Assertions
+	suite.Suite
+	storage *st.TestStorage
+	txsCtx  *TxsContext
 }
 
-func TestFindOldestTransactionTime_NoTxHasTime(t *testing.T) {
-	tx := models.Transfer{
-		TransactionBase: models.TransactionBase{
-			TxType:      txtype.Transfer,
-			FromStateID: 0,
-			Amount:      models.MakeUint256(400),
-			Fee:         models.MakeUint256(100),
-			Nonce:       models.MakeUint256(0),
-		},
-		ToStateID: 1,
+func (s *FindOldestTxTimeTestSuite) SetupSuite() {
+	s.Assertions = require.New(s.T())
+}
+
+func (s *FindOldestTxTimeTestSuite) SetupTest() {
+	var err error
+	s.storage, err = st.NewTestStorage()
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(0, &models.UserState{
+		PubKeyID: 0,
+		TokenID:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(600),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	cfg := &config.RollupConfig{
+		MinTxsPerCommitment:    1,
+		MinCommitmentsPerBatch: 1,
 	}
-	array := models.MakeTransferArray(tx)
-
-	oldest := findOldestTransactionTime(array)
-	require.Nil(t, oldest)
+	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, cfg)
+	s.txsCtx, err = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 }
 
-func TestFindOldestTransactionTime_FindsOldestTime(t *testing.T) {
+func (s *FindOldestTxTimeTestSuite) TearDownTest() {
+	err := s.storage.Teardown()
+	s.NoError(err)
+}
+
+func (s *FindOldestTxTimeTestSuite) TestFindOldestTransactionTime_EmptyArray() {
+	oldest := s.txsCtx.findOldestTransactionTime()
+	s.Nil(oldest)
+}
+
+func (s *FindOldestTxTimeTestSuite) TestFindOldestTransactionTime_NoTxHasTime() {
+	txs := models.TransferArray{testutils.MakeTransfer(0, 1, 0, 400)}
+	initTxs(s.Assertions, s.txsCtx, txs)
+
+	oldest := s.txsCtx.findOldestTransactionTime()
+	s.Nil(oldest)
+}
+
+func (s *FindOldestTxTimeTestSuite) TestFindOldestTransactionTime_FindsOldestTime() {
 	oneSecondAgo := time.Now().Add(-time.Second)
 	twoSecondAgo := time.Now().Add(-2 * time.Second)
+	initTxs(s.Assertions, s.txsCtx, s.newTxsWithReceiveTime(oneSecondAgo, twoSecondAgo))
 
-	txs := []models.Transfer{
-		{
-			TransactionBase: models.TransactionBase{
-				TxType:      txtype.Transfer,
-				FromStateID: 0,
-				Amount:      models.MakeUint256(400),
-				Fee:         models.MakeUint256(100),
-				Nonce:       models.MakeUint256(0),
-				ReceiveTime: models.NewTimestamp(oneSecondAgo),
-			},
-			ToStateID: 1,
-		},
-		{
-			TransactionBase: models.TransactionBase{
-				TxType:      txtype.Transfer,
-				FromStateID: 0,
-				Amount:      models.MakeUint256(400),
-				Fee:         models.MakeUint256(100),
-				Nonce:       models.MakeUint256(0),
-				ReceiveTime: models.NewTimestamp(twoSecondAgo),
-			},
-			ToStateID: 1,
-		},
+	oldest := s.txsCtx.findOldestTransactionTime()
+	s.Equal(twoSecondAgo, oldest.Time)
+}
+
+func (s *FindOldestTxTimeTestSuite) newTxsWithReceiveTime(receiveTimes ...time.Time) models.TransferArray {
+	txs := make(models.TransferArray, 0, len(receiveTimes))
+	for i := range receiveTimes {
+		tx := testutils.MakeTransfer(0, 1, uint64(i), 100)
+		tx.ReceiveTime = models.NewTimestamp(receiveTimes[i])
+		txs = append(txs, tx)
 	}
-	array := models.MakeTransferArray(txs...)
+	return txs
+}
 
-	oldest := findOldestTransactionTime(array)
-	require.Equal(t, twoSecondAgo, oldest.Time)
+func TestFindOldestTxTimeTestSuite(t *testing.T) {
+	suite.Run(t, new(FindOldestTxTimeTestSuite))
 }

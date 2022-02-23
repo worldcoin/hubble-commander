@@ -152,8 +152,8 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 }
 
 // nolint:unused // TODO reimplement
-func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray) {
-	oldestTxnTime := findOldestTransactionTime(pendingTxs)
+func (c *TxsContext) setBatchMinimums() {
+	oldestTxnTime := c.findOldestTransactionTime()
 	if oldestTxnTime == nil {
 		return
 	}

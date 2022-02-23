@@ -1,20 +1,21 @@
 package executor
 
-import "github.com/Worldcoin/hubble-commander/models"
+import (
+	"github.com/Worldcoin/hubble-commander/models"
+)
 
-func findOldestTransactionTime(array models.GenericTransactionArray) *models.Timestamp {
-	var oldestTime *models.Timestamp
-
-	for i := 0; i < array.Len(); i++ {
-		txnTime := array.At(i).GetBase().ReceiveTime
-		if txnTime == nil {
-			continue
+func (c *TxsContext) findOldestTransactionTime() (oldestTime *models.Timestamp) {
+	_ = c.Mempool.ForEach(func(tx models.GenericTransaction) error {
+		txTime := tx.GetBase().ReceiveTime
+		if txTime == nil {
+			return nil
 		}
-
-		if (oldestTime == nil) || txnTime.Before(*oldestTime) {
-			oldestTime = txnTime
+		if (oldestTime == nil) || txTime.Before(*oldestTime) {
+			if (oldestTime == nil) || txTime.Before(*oldestTime) {
+				oldestTime = txTime
+			}
 		}
-	}
-
+		return nil
+	})
 	return oldestTime
 }
