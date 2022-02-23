@@ -69,12 +69,11 @@ func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, tx models.GenericT
 
 func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
-		return
+		panic("got ErrNonceTooHigh in ExecuteTxs; this should never happen")
 	}
 	removeErr := txMempool.RemoveFailedTx(tx.GetFromStateID())
 	if removeErr != nil {
-		// shouldn't happen
-		panic(removeErr)
+		panic(removeErr) // should never happen
 	}
 
 	log.WithField("tx_hash", tx.GetBase().Hash.String()).
