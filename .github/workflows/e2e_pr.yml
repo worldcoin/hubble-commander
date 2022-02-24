@@ -35,7 +35,7 @@ jobs:
       - name: Run E2E tests
         run: |
           make setup-geth > /dev/null &
-          ./utils/fundAccount.sh
+          ./e2e/geth-data/fundSecondAccount.sh
           go test -v -race -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
       - name: Cleanup
         # Cleanup this folder because it confuses codecov
@@ -71,7 +71,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          ./utils/fundAccount.sh
+          ./e2e/geth-data/fundSecondAccount.sh
           go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
 
   e2e-benchmarks-2:
@@ -96,7 +96,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          ./utils/fundAccount.sh
+          ./e2e/geth-data/fundSecondAccount.sh
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
 
   e2e-benchmarks-3:
@@ -121,5 +121,5 @@ jobs:
       - name: Run benchmarks
         run: |
           make setup-geth > /dev/null &
-          ./utils/fundAccount.sh
+          ./e2e/geth-data/fundSecondAccount.sh
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
