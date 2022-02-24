@@ -37,7 +37,7 @@ def generate_subdir(subdir, artifact, name):
 
 os.system('rm -rf contracts')
 
-generate('contracts/test/POB.sol/ProofOfBurn.json', 'ProofOfBurn')
+generate('contracts/test/ProofOfAuthority.sol/ProofOfAuthority.json', 'ProofOfAuthority')
 generate('contracts/proposers/Chooser.sol/Chooser.json', 'Chooser')
 generate('contracts/TokenRegistry.sol/TokenRegistry.json', 'TokenRegistry')
 generate('contracts/SpokeRegistry.sol/SpokeRegistry.json', 'SpokeRegistry')
