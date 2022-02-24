@@ -244,7 +244,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 	stateLeaves := make([]stored.StateLeaf, 0, 1)
 	err := s.database.Badger.Find(
 		&stateLeaves,
-		bh.Where("PubKeyID").Eq(pubKeyID).Index("PubKeyID"),
+		bh.Where("PubKeyID").Eq(pubKeyID).Index("PubKeyID").And("TokenID").Eq(tokenID),
 	)
 	if err != nil {
 		return nil, err
@@ -253,13 +253,7 @@ func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 
-	for i := range stateLeaves {
-		if stateLeaves[i].TokenID.Eq(&tokenID) {
-			return stateLeaves[i].ToModelsStateLeaf(), nil
-		}
-	}
-
-	return nil, errors.WithStack(NewNotFoundError("state leaf"))
+	return stateLeaves[0].ToModelsStateLeaf(), nil
 }
 
 func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, error) {
