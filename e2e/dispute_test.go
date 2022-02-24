@@ -55,7 +55,7 @@ func TestCommanderDispute(t *testing.T) {
 	senderWallet := wallets[1]
 	receiverWallet := wallets[len(wallets)-1]
 
-	ethClient := newEthClient(t, cmd.Client())
+	ethClient := newEthClient(t, cmd.Client(), setup.EthClientPrivateKey)
 
 	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
@@ -413,7 +413,7 @@ func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *typ
 	require.NoError(t, err)
 }
 
-func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
+func newEthClient(t *testing.T, client jsonrpc.RPCClient, privateKey string) *eth.Client {
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	require.NoError(t, err)
@@ -430,7 +430,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	}
 
 	cfg := config.GetConfig()
-	cfg.Ethereum.PrivateKey = setup.EthClientPrivateKey
+	cfg.Ethereum.PrivateKey = privateKey
 	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
