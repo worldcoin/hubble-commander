@@ -1,6 +1,7 @@
 #bootstrap:
 #  genesis_path: genesis.yaml
-#  blocks_to_finalise: 40320         # 7 * 24 * 60 * 4
+#  blocks_to_finalise: 40320 # 7 * 24 * 60 * 4
+#  chooser_address:          # empty by default - deploy chooser
 #
 #ethereum:
 #  rpc_url: ws://localhost:8546
