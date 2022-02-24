@@ -157,7 +157,7 @@ Use the following config to make commander scripts connect to the local node:
 ```shell
 HUBBLE_ETHEREUM_RPC_URL=ws://localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
-HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+HUBBLE_ETHEREUM_PRIVATE_KEYS=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 ```
 
 Deploy smart contracts:
@@ -177,7 +177,7 @@ Create `.env.docker` file and set necessary env variables:
 ```shell
 HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546
 HUBBLE_ETHEREUM_CHAIN_ID=1337
-HUBBLE_ETHEREUM_PRIVATE_KEY=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
+HUBBLE_ETHEREUM_PRIVATE_KEYS=ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82
 ```
 
 Create `chain-spec` directory with:
@@ -261,7 +261,7 @@ docker run --rm -ti \
     -e HUBBLE_LOG_LEVEL=debug -e HUBBLE_LOG_FORMAT=text \
     -e HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546 \
     -e HUBBLE_ETHEREUM_CHAIN_ID=1337 \
-    -e HUBBLE_ETHEREUM_PRIVATE_KEY=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
+    -e HUBBLE_ETHEREUM_PRIVATE_KEYS=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
     -v $(pwd)/genesis.yaml:/genesis.yaml:ro \
     -v $(pwd)/chain-spec.yaml:/chain-spec.yaml:rw \
     hubble deploy
@@ -274,7 +274,7 @@ docker run --rm -ti -p 8080:8080 \
     -e HUBBLE_LOG_LEVEL=debug -e HUBBLE_LOG_FORMAT=text \
     -e HUBBLE_ETHEREUM_RPC_URL=ws://docker.for.mac.localhost:8546 \
     -e HUBBLE_ETHEREUM_CHAIN_ID=1337 \
-    -e HUBBLE_ETHEREUM_PRIVATE_KEY=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
+    -e HUBBLE_ETHEREUM_PRIVATE_KEYS=c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4 \
     -e HUBBLE_API_AUTHENTICATION_KEY=89ca4560ec5925f271359196972d762d \
     -e HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH=/chain-spec.yaml \
     -v $(pwd)/chain-spec.yaml:/chain-spec.yaml:ro \

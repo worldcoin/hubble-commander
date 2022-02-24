@@ -64,7 +64,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 			Env: []string{
 				getEnvVarMapping("HUBBLE_ETHEREUM_RPC_URL"),
 				getEnvVarMapping("HUBBLE_ETHEREUM_CHAIN_ID"),
-				getEnvVarMapping("HUBBLE_ETHEREUM_PRIVATE_KEY"),
+				getEnvVarMapping("HUBBLE_ETHEREUM_PRIVATE_KEYS"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT"),
 				getEnvVarMapping("HUBBLE_ROLLUP_MAX_TXS_PER_COMMITMENT"),
 				"HUBBLE_API_PORT=8080",

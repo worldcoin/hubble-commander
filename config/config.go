@@ -175,13 +175,13 @@ func getEthereumConfig() *EthereumConfig {
 		return &EthereumConfig{
 			RPCURL:      "simulator",
 			ChainID:     SimulatorChainID,
-			PrivateKeys: getStringSlice("ethereum.private_key", []string{"ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"}),
+			PrivateKeys: getStringSlice("ethereum.private_keys", []string{"ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82"}),
 		}
 	}
 	return &EthereumConfig{
 		RPCURL:      *rpcURL,
 		ChainID:     getUint64OrPanic("ethereum.chain_id"),
-		PrivateKeys: getStringSliceOrPanic("ethereum.private_key"),
+		PrivateKeys: getStringSliceOrPanic("ethereum.private_keys"),
 		MineTimeout: getDuration("ethereum.mine_timeout", DefaultEthereumMineTimeout),
 	}
 }
