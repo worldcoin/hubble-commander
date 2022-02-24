@@ -12,6 +12,8 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+const EthClientPrivateKey = "c216d5eef9c83c9d6f4629fff79e8e90d73b4beb9921de18f974f0d2c6d4e9b0"
+
 type InProcessCommander struct {
 	client     jsonrpc.RPCClient
 	commander  *commander.Commander
@@ -29,6 +31,7 @@ func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerC
 
 	if deployerConfig == nil {
 		deployerConfig = config.GetDeployerTestConfig()
+		deployerConfig.Ethereum.PrivateKeys = append(deployerConfig.Ethereum.PrivateKeys, EthClientPrivateKey)
 	}
 
 	return CreateInProcessCommander(commanderConfig, deployerConfig)

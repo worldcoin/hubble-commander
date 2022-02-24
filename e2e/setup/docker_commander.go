@@ -134,6 +134,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 
 func deployContractsAndStoreChainSpec() error {
 	deployerCfg := config.GetDeployerTestConfig()
+	deployerCfg.Ethereum.PrivateKeys = append(deployerCfg.Ethereum.PrivateKeys, EthClientPrivateKey)
 
 	blockchain, err := commander.GetChainConnection(deployerCfg.Ethereum)
 	if err != nil {

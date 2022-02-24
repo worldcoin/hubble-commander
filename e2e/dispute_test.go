@@ -430,6 +430,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	}
 
 	cfg := config.GetConfig()
+	cfg.Ethereum.PrivateKeys[0] = setup.EthClientPrivateKey
 	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 

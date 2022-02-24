@@ -10,6 +10,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +52,12 @@ func deployContractsAndSetupGenesisState(
 	blockchain chain.Connection,
 	cfg *config.DeployerConfig,
 ) (*models.ChainState, error) {
-	chooserAddress, _, err := deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout)
+	proposers, err := privateKeysToAddresses(cfg.Ethereum.PrivateKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	chooserAddress, _, err := deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout, proposers)
 	if err != nil {
 		return nil, err
 	}
@@ -120,4 +128,16 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	return chainState, nil
+}
+
+func privateKeysToAddresses(privateKeys []string) ([]common.Address, error) {
+	addresses := make([]common.Address, 0, len(privateKeys))
+	for i := range privateKeys {
+		key, err := crypto.HexToECDSA(privateKeys[i])
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		addresses = append(addresses, crypto.PubkeyToAddress(key.PublicKey))
+	}
+	return addresses, nil
 }
