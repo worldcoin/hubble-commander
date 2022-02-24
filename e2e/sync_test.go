@@ -50,7 +50,7 @@ func TestCommanderSync(t *testing.T) {
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
 
-	submitBatchesAndWait(t, activeCommander, senderWallet, wallets)
+	submitBatchesAndWait(t, activeCommander, senderWallet, wallets, cfg.Ethereum.PrivateKey)
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
@@ -97,11 +97,17 @@ func TestCommanderSync(t *testing.T) {
 	testGetBatches(t, passiveCommander.Client(), 5)
 }
 
-func submitBatchesAndWait(t *testing.T, activeCommander *setup.InProcessCommander, senderWallet bls.Wallet, wallets []bls.Wallet) {
+func submitBatchesAndWait(
+	t *testing.T,
+	activeCommander *setup.InProcessCommander,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	commanderPrivateKey string,
+) {
 	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
 	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
-	testSubmitDepositBatchAndWait(t, activeCommander.Client(), 4)
+	testSubmitDepositBatchAndWait(t, activeCommander.Client(), commanderPrivateKey, 4)
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)
