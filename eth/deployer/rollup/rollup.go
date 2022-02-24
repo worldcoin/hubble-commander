@@ -388,7 +388,7 @@ func fillWithDefaults(params *Params) {
 
 func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout time.Duration) error {
 	if dependencies.Chooser == nil {
-		proofOfAuthorityAddress, _, err := deployer.DeployProofOfAuthority(c, mineTimeout)
+		proofOfAuthorityAddress, _, err := deployer.DeployProofOfAuthority(c, mineTimeout, []common.Address{c.GetAccount().From})
 		if err != nil {
 			return err
 		}

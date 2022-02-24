@@ -54,7 +54,7 @@ func deployContractsAndSetupGenesisState(
 	if cfg.Bootstrap.Chooser != nil {
 		chooserAddress = cfg.Bootstrap.Chooser
 	} else {
-		chooserAddress, _, err = deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout)
+		chooserAddress, _, err = deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout, []common.Address{blockchain.GetAccount().From})
 		if err != nil {
 			return nil, err
 		}

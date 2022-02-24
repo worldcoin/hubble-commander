@@ -10,9 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DeployProofOfAuthority(c chain.Connection, mineTimeout time.Duration) (*common.Address, *proofofauthority.ProofOfAuthority, error) {
+func DeployProofOfAuthority(
+	c chain.Connection,
+	mineTimeout time.Duration,
+	proposers []common.Address,
+) (*common.Address, *proofofauthority.ProofOfAuthority, error) {
 	log.Println("Deploying ProofOfAuthority")
-	poaAddress, tx, poa, err := proofofauthority.DeployProofOfAuthority(c.GetAccount(), c.GetBackend(), []common.Address{c.GetAccount().From})
+	poaAddress, tx, poa, err := proofofauthority.DeployProofOfAuthority(c.GetAccount(), c.GetBackend(), proposers)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}

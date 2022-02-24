@@ -8,9 +8,14 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
+
+const EthClientPrivateKey = "c216d5eef9c83c9d6f4629fff79e8e90d73b4beb9921de18f974f0d2c6d4e9b0"
 
 type InProcessCommander struct {
 	client     jsonrpc.RPCClient
@@ -45,19 +50,12 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 	client := jsonrpc.NewClient(endpoint)
 
 	if deployerConfig != nil {
-		file, err := os.CreateTemp("", "in_process_commander")
+		err = deployChooser(blockchain, deployerConfig)
 		if err != nil {
 			return nil, err
 		}
 
-		chainSpecPath := file.Name()
-		commanderConfig.Bootstrap.ChainSpecPath = &chainSpecPath
-		chainSpec, err := commander.Deploy(deployerConfig, blockchain)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.WriteFile(*commanderConfig.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		commanderConfig.Bootstrap.ChainSpecPath, err = deployRemainingContracts(blockchain, deployerConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -111,4 +109,46 @@ func (e *InProcessCommander) Restart() error {
 
 func (e *InProcessCommander) Client() jsonrpc.RPCClient {
 	return e.client
+}
+
+func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerConfig) error {
+	e2eAccountAddress, err := privateKeyToAddress(EthClientPrivateKey)
+	if err != nil {
+		return err
+	}
+	poaAddress, _, err := deployer.DeployProofOfAuthority(blockchain, deployerConfig.Ethereum.MineTimeout, []common.Address{blockchain.GetAccount().From, *e2eAccountAddress})
+	if err != nil {
+		return err
+	}
+	deployerConfig.Bootstrap.Chooser = poaAddress
+	return nil
+}
+
+func deployRemainingContracts(blockchain chain.Connection, deployerConfig *config.DeployerConfig) (*string, error) {
+	file, err := os.CreateTemp("", "in_process_commander")
+	if err != nil {
+		return nil, err
+	}
+
+	chainSpecPath := file.Name()
+	chainSpec, err := commander.Deploy(deployerConfig, blockchain)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.WriteFile(chainSpecPath, []byte(*chainSpec), 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chainSpecPath, nil
+}
+
+func privateKeyToAddress(privateKey string) (*common.Address, error) {
+	key, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	address := crypto.PubkeyToAddress(key.PublicKey)
+	return &address, nil
 }
