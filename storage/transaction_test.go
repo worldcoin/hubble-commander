@@ -294,10 +294,34 @@ func (s *TransactionTestSuite) TestSetTransactionErrors() {
 	s.Equal(mmError.ErrorMessage, *storedMM.ErrorMessage)
 }
 
-func (s *TransactionTestSuite) TestMarkTransactionsAsPending() {
+func (s *TransactionTestSuite) TestMarkTransactionsAsPending_BatchedTxs() {
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transfer
+		txs[i].Hash = utils.RandomHash()
+		txs[i].CommitmentID = &models.CommitmentID{
+			BatchID:      models.MakeUint256(5),
+			IndexInBatch: 3,
+		}
+		err := s.storage.AddTransaction(&txs[i])
+		s.NoError(err)
+	}
+
+	err := s.storage.MarkTransactionsAsPending([]common.Hash{txs[0].Hash, txs[1].Hash})
+	s.NoError(err)
+
+	for i := range txs {
+		tx, err := s.storage.GetTransfer(txs[i].Hash)
+		s.NoError(err)
+		s.Nil(tx.CommitmentID)
+	}
+}
+
+func (s *TransactionTestSuite) TestMarkTransactionsAsPending_FailedTxs() {
+	txs := make([]models.Transfer, 2)
+	for i := 0; i < len(txs); i++ {
+		txs[i] = transfer
+		txs[i].ErrorMessage = ref.String("error message")
 		txs[i].Hash = utils.RandomHash()
 		txs[i].CommitmentID = &models.CommitmentID{
 			BatchID:      models.MakeUint256(5),
