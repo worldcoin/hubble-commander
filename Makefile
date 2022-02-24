@@ -20,6 +20,7 @@ build: clean compile
 
 start-geth-locally:
 	rm -rf e2e/geth-data/geth
+	./utils/fundAccount.sh &
 	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws --http.api "eth,miner" --ws.api "eth,miner"
 
 setup-geth:
