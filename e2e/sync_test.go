@@ -97,7 +97,13 @@ func TestCommanderSync(t *testing.T) {
 	testGetBatches(t, passiveCommander.Client(), 5)
 }
 
-func submitBatchesAndWait(t *testing.T, activeCommander *setup.InProcessCommander, senderWallet bls.Wallet, wallets []bls.Wallet, commanderPrivateKey string) {
+func submitBatchesAndWait(
+	t *testing.T,
+	activeCommander *setup.InProcessCommander,
+	senderWallet bls.Wallet,
+	wallets []bls.Wallet,
+	commanderPrivateKey string,
+) {
 	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
 	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)

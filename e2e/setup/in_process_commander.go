@@ -116,7 +116,11 @@ func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerC
 	if err != nil {
 		return err
 	}
-	poaAddress, _, err := deployer.DeployProofOfAuthority(blockchain, deployerConfig.Ethereum.MineTimeout, []common.Address{blockchain.GetAccount().From, *e2eAccountAddress})
+	poaAddress, _, err := deployer.DeployProofOfAuthority(
+		blockchain,
+		deployerConfig.Ethereum.MineTimeout,
+		[]common.Address{blockchain.GetAccount().From, *e2eAccountAddress},
+	)
 	if err != nil {
 		return err
 	}
