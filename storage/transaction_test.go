@@ -341,6 +341,11 @@ func (s *TransactionTestSuite) TestMarkTransactionsAsPending_FailedTxs() {
 	}
 }
 
+func (s *TransactionTestSuite) TestMarkTransactionsAsPending_NotFound() {
+	err := s.storage.MarkTransactionsAsPending([]common.Hash{utils.RandomHash()})
+	s.Error(err)
+}
+
 func (s *TransactionTestSuite) TestGetTransactionCount() {
 	batch := &models.Batch{
 		ID:                models.MakeUint256(0),
