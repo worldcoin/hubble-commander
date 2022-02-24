@@ -10,7 +10,7 @@ import (
 func GetChainConnection(cfg *config.EthereumConfig) (chain.Connection, error) {
 	if cfg.RPCURL == "simulator" {
 		return simulator.NewConfiguredSimulator(simulator.Config{
-			FirstAccountPrivateKey: ref.String(cfg.PrivateKey),
+			FirstAccountPrivateKey: ref.String(cfg.PrivateKeys[0]),
 			AutomineEnabled:        ref.Bool(true),
 		})
 	}

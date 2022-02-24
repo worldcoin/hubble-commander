@@ -98,7 +98,7 @@ func getWithdrawManager(t *testing.T, client jsonrpc.RPCClient, cfg *config.Conf
 func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
 	chainID := big.NewInt(0).SetUint64(cfg.Ethereum.ChainID)
 
-	privateKey, err := crypto.HexToECDSA(cfg.Ethereum.PrivateKey)
+	privateKey, err := crypto.HexToECDSA(cfg.Ethereum.PrivateKeys[0])
 	require.NoError(t, err)
 
 	account, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)

@@ -82,7 +82,7 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 	cfg.Badger.Path += "_passive"
 	cfg.Bootstrap.ChainSpecPath = nil
 	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
-	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
+	cfg.Ethereum.PrivateKeys = []string{"ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"}
 	passiveCommander, err := setup.CreateInProcessCommander(cfg, nil)
 	s.NoError(err)
 	err = passiveCommander.Start()

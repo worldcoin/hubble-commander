@@ -29,6 +29,19 @@ func getStringOrPanic(key string) string {
 	return value
 }
 
+func getStringSlice(key string, fallback []string) []string {
+	viper.SetDefault(key, fallback)
+	return viper.GetStringSlice(key)
+}
+
+func getStringSliceOrPanic(key string) []string {
+	value := viper.GetStringSlice(key)
+	if len(value) == 0 {
+		log.Panicf("%s config not specified", key)
+	}
+	return value
+}
+
 func getUint32(key string, fallback uint32) uint32 {
 	viper.SetDefault(key, fallback)
 	return viper.GetUint32(key)
