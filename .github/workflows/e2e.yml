@@ -34,8 +34,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run E2E tests
         run: |
-          make setup-geth > /dev/null &
-          ./e2e/geth-data/fundSecondAccount.sh
+          make setup-geth
           go test -v -tags e2e ./e2e
   e2e-benchmarks-1:
     name: Run E2E benchmarks (Transfers and C2Ts)
@@ -58,8 +57,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
-          ./e2e/geth-data/fundSecondAccount.sh
+          make setup-geth
           go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
   e2e-benchmarks-2:
     name: Run E2E benchmarks (Mixed transactions)
@@ -82,8 +80,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
-          ./e2e/geth-data/fundSecondAccount.sh
+          make setup-geth
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
   e2e-benchmarks-3:
     name: Run E2E benchmarks (Syncing)
@@ -106,8 +103,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
-          ./e2e/geth-data/fundSecondAccount.sh
+          make setup-geth
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench
 
   build-image:
