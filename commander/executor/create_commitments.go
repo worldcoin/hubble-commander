@@ -3,6 +3,7 @@ package executor
 import (
 	"time"
 
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -20,10 +21,12 @@ type FeeReceiver struct {
 }
 
 func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
-	txQueue, err := c.queryPendingTxs()
+	err := c.newHeap()
 	if err != nil {
 		return nil, err
 	}
+	txController, batchMempool := c.Mempool.BeginTransaction()
+	defer txController.Rollback()
 
 	commitmentID, err := c.NextCommitmentID()
 	if err != nil {
@@ -33,11 +36,11 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	commitments := make([]models.CommitmentWithTxs, 0, c.cfg.MaxCommitmentsPerBatch)
 	pendingAccounts := make([]models.AccountLeaf, 0)
 
-	for i := uint8(0); len(commitments) != int(c.cfg.MaxCommitmentsPerBatch); i++ {
+	for i := uint8(0); len(commitments) < int(c.cfg.MaxCommitmentsPerBatch); i++ {
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		result, err = c.createCommitment(txQueue, commitmentID)
+		result, err = c.createCommitment(batchMempool, commitmentID)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
@@ -55,7 +58,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	}
 
 	if len(commitments) < int(c.minCommitmentsPerBatch) {
-		return nil, errors.WithStack(ErrNotEnoughCommitments)
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
 	select {
@@ -69,10 +72,11 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 		return nil, err
 	}
 
+	txController.Commit()
 	return commitments, nil
 }
 
-func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.CommitmentID) (
+func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmentID *models.CommitmentID) (
 	CreateCommitmentResult, error,
 ) {
 	var commitment models.CommitmentWithTxs
@@ -89,7 +93,7 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 			return err
 		}
 
-		executeResult, err = c.executeTxsForCommitment(txQueue, feeReceiver)
+		executeResult, err = c.executeTxsForCommitment(batchMempool, feeReceiver)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			if uint32(commitmentID.IndexInBatch+1) <= c.minCommitmentsPerBatch {
 				return err // No need to revert the StateTree in this case as the DB tx will be rolled back anyway
@@ -128,17 +132,18 @@ func (c *TxsContext) createCommitment(txQueue *TxQueue, commitmentID *models.Com
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeReceiver) (
+func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	pendingTxs := txQueue.PickTxsForCommitment()
-
-	if pendingTxs.Len() < int(c.minTxsPerCommitment) {
-		return nil, ErrNotEnoughTxs
+	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
+		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
-	executeTxsResult, err := c.ExecuteTxs(pendingTxs, feeReceiver)
+	txController, commitmentMempool := batchMempool.BeginTransaction()
+	defer txController.Rollback()
+
+	executeTxsResult, err := c.ExecuteTxs(commitmentMempool, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
@@ -147,37 +152,38 @@ func (c *TxsContext) executeTxsForCommitment(txQueue *TxQueue, feeReceiver *FeeR
 		return nil, ErrNotEnoughTxs
 	}
 
-	txQueue.RemoveFromQueue(executeTxsResult.AllTxs())
+	txController.Commit()
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
 
-func (c *TxsContext) setBatchMinimums(pendingTxs models.GenericTransactionArray) {
-	oldestTxnTime := findOldestTransactionTime(pendingTxs)
-	if oldestTxnTime == nil {
-		return
+func (c *TxsContext) verifyTxsCount() error {
+	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) >= int(c.cfg.MinCommitmentsPerBatch*c.cfg.MinTxsPerCommitment) {
+		return nil
 	}
 
-	oldestTxnDelay := time.Since(oldestTxnTime.Time)
+	oldestTxnTime := c.findOldestTransactionTime()
+	if oldestTxnTime == nil {
+		return errors.WithStack(ErrNotEnoughTxs)
+	}
 
-	if oldestTxnDelay > c.cfg.MaxTxnDelay {
+	if time.Since(oldestTxnTime.Time) > c.cfg.MaxTxnDelay {
 		log.Debug("Creating a batch because a transaction is older than MaxTxnDelay")
 		c.minTxsPerCommitment = 1
 		c.minCommitmentsPerBatch = 1
+		return nil
 	}
+	return errors.WithStack(ErrNotEnoughTxs)
 }
 
-func (c *TxsContext) queryPendingTxs() (*TxQueue, error) {
-	pendingTxs, err := c.storage.GetPendingTransactions(txtype.TransactionType(c.BatchType))
+func (c *TxsContext) newHeap() error {
+	err := c.verifyTxsCount()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	c.setBatchMinimums(pendingTxs)
-
-	if pendingTxs.Len() < int(c.minTxsPerCommitment*c.minCommitmentsPerBatch) {
-		return nil, errors.WithStack(ErrNotEnoughTxs)
-	}
-	return NewTxQueue(pendingTxs), nil
+	txs := c.Mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+	c.heap = mempool.NewTxHeap(txs...)
+	return nil
 }
 
 func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {

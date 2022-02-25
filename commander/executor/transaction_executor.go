@@ -61,7 +61,6 @@ func (e *TransferExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult
 	return &ExecuteTransfersResult{
 		appliedTxs: make(models.TransferArray, 0, capacity),
 		invalidTxs: make(models.TransferArray, 0),
-		skippedTxs: make(models.TransferArray, 0),
 	}
 }
 
@@ -149,7 +148,6 @@ func (e *C2TExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsResult {
 	return &ExecuteC2TResult{
 		appliedTxs:      make(models.Create2TransferArray, 0, capacity),
 		invalidTxs:      make(models.Create2TransferArray, 0),
-		skippedTxs:      make(models.Create2TransferArray, 0),
 		addedPubKeyIDs:  make([]uint32, 0, capacity),
 		pendingAccounts: make([]models.AccountLeaf, 0, capacity),
 	}
@@ -245,7 +243,6 @@ func (e *MassMigrationExecutor) NewExecuteTxsResult(capacity uint32) ExecuteTxsR
 	return &ExecuteMassMigrationsResult{
 		appliedTxs: make(models.MassMigrationArray, 0, capacity),
 		invalidTxs: make(models.MassMigrationArray, 0),
-		skippedTxs: make(models.MassMigrationArray, 0),
 	}
 }
 

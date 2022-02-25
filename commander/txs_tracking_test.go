@@ -155,9 +155,12 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_ClosesTxsChannelOnEthTxError() {
 
 func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchType batchtype.BatchType) *models.Batch {
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchType)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchType)
+	s.NoError(err)
 
-	err := s.storage.AddTransaction(tx)
+	err = s.storage.AddTransaction(tx)
+	s.NoError(err)
+	_, err = txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
 	batch, _, err := txsCtx.CreateAndSubmitBatch()

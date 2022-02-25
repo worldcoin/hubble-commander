@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -140,7 +141,8 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.MassMigration)
+	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
@@ -158,11 +160,15 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 }
 
 func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
+	pool, err := mempool.NewMempool(storage)
+	s.NoError(err)
+
 	txsCtx := executor.NewTxsContext(
 		storage,
 		s.client.Client,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
+		pool,
 		context.Background(),
 		batchtype.MassMigration,
 	)

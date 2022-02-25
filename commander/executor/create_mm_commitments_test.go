@@ -39,7 +39,7 @@ func (s *MMCommitmentsTestSuite) SetupTest() {
 
 func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWithdrawRoot() {
 	massMigrations := testutils.GenerateValidMassMigrations(2)
-	s.addMassMigrations(massMigrations)
+	initTxs(s.Assertions, s.txsCtx, massMigrations)
 
 	withdrawRoot := s.generateWithdrawRoot(massMigrations)
 
@@ -62,11 +62,6 @@ func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWith
 
 func TestMMCommitmentsTestSuite(t *testing.T) {
 	suite.Run(t, new(MMCommitmentsTestSuite))
-}
-
-func (s *MMCommitmentsTestSuite) addMassMigrations(massMigrations []models.MassMigration) {
-	err := s.storage.BatchAddMassMigration(massMigrations)
-	s.NoError(err)
 }
 
 func (s *MMCommitmentsTestSuite) generateWithdrawRoot(massMigrations []models.MassMigration) common.Hash {

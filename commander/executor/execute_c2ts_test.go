@@ -32,8 +32,9 @@ func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -44,21 +45,23 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
-	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 2)
-	s.Len(transfers.InvalidTxs(), 3)
+	s.Len(transfers.InvalidTxs(), 1)
 	s.Len(transfers.AddedPubKeyIDs(), 2)
 	s.Len(transfers.PendingAccounts(), 1)
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 6)
@@ -69,32 +72,31 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
-	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(2)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	for i := range generatedTransfers {
-		err := s.storage.AddTransaction(&generatedTransfers[i])
-		s.NoError(err)
-	}
-
-	result, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(result.AppliedTxs(), 3)
-	s.Len(result.InvalidTxs(), 2)
+	s.Len(result.InvalidTxs(), 1)
 	s.Len(result.AddedPubKeyIDs(), 3)
 	s.Len(result.PendingAccounts(), 1)
-	s.Len(s.txsCtx.txErrorsToStore, 2)
+	s.Len(s.txsCtx.txErrorsToStore, 1)
 
-	for i := 0; i < result.InvalidTxs().Len(); i++ {
-		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].TxHash)
-		s.Equal(applier.ErrNonceTooLow.Error(), s.txsCtx.txErrorsToStore[i].ErrorMessage)
+	expectedTxError := models.TxError{
+		TxHash:        generatedTransfers[3].Hash,
+		SenderStateID: generatedTransfers[3].FromStateID,
+		ErrorMessage:  applier.ErrBalanceTooLow.Error(),
 	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
 
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	_, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	_, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -107,8 +109,9 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 	generatedTransfers[0].ToPublicKey = models.PublicKey{1, 1, 1}
 	generatedTransfers[1].ToPublicKey = models.PublicKey{2, 2, 2}
 	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -127,13 +130,12 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
-	s.Len(executeTxsResult.SkippedTxs(), 1)
-	s.Equal(*executeTxsResult.SkippedTxs().At(0).ToCreate2Transfer(), generatedTransfers[1])
 }
 
 func TestExecuteCreate2TransfersTestSuite(t *testing.T) {

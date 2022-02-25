@@ -133,7 +133,9 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
+
 	invalidTransfer := testutils.MakeTransfer(0, 1, 0, 100)
 	submitInvalidTxsBatch(s.Assertions, txStorage, txsCtx, &invalidTransfer, func(_ *st.Storage, commitment *models.TxCommitmentWithTxs) {
 		commitment.Transactions = append(commitment.Transactions, commitment.Transactions...)

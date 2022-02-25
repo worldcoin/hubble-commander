@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -77,8 +76,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitme
 	s.cfg.MinCommitmentsPerBatch = 1
 	s.AcceptNewConfig()
 
-	transfers := testutils.GenerateValidTransfers(1)
-	s.addTransfers(transfers)
+	transfers := s.preparePendingTransfers(1)
 
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -96,8 +94,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitme
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPerCommitment() {
-	transfers := testutils.GenerateValidTransfers(3)
-	s.addTransfers(transfers)
+	transfers := s.preparePendingTransfers(3)
 
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -134,7 +131,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitment
 	}
 
 	transfers = append(transfers, highNonceTransfers...)
-	s.addTransfers(transfers)
+	s.initTxs(transfers)
 
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
@@ -163,6 +160,8 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
+	s.preparePendingTransfers(0)
+
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
@@ -183,20 +182,11 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 	}
 	s.AcceptNewConfig()
 
-	transfers := testutils.GenerateValidTransfers(2)
-	s.addTransfers(transfers)
-
-	preRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
+	s.preparePendingTransfers(2)
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
-
-	postRoot, err := s.txsCtx.storage.StateTree.Root()
-	s.NoError(err)
-
-	s.Equal(preRoot, postRoot)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitment() {
@@ -228,8 +218,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsMan
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
-	transfers := testutils.GenerateValidTransfers(4)
-	s.addTransfers(transfers)
+	transfers := s.preparePendingTransfers(4)
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -249,9 +238,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 	nonceTooHighTx := &txs[4]
 	nonceTooHighTx.Nonce = models.MakeUint256(21)
 
-	s.addTransfers(validTxs)
-	err := s.storage.AddTransaction(nonceTooHighTx)
-	s.NoError(err)
+	s.initTxs(validTxs.AppendOne(nonceTooHighTx))
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -270,25 +257,20 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 	s.Nil(tx.ErrorMessage)
 }
 
-func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) {
-	transfers := testutils.GenerateValidTransfers(transfersAmount)
-	s.addTransfers(transfers)
-}
-
-func (s *CreateCommitmentsTestSuite) addTransfers(transfers []models.Transfer) {
-	err := s.storage.BatchAddTransfer(transfers)
-	s.NoError(err)
+func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) models.TransferArray {
+	txs := testutils.GenerateValidTransfers(transfersAmount)
+	s.initTxs(txs)
+	return txs
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThanRequired() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkipsMinCommitmentsCheck() {
@@ -303,7 +285,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkips
 		twoSecondsAgo := time.Now().UTC().Add(time.Duration(-2) * time.Second)
 		validTransfer.ReceiveTime = models.NewTimestamp(twoSecondsAgo)
 	}
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
+	s.initTxs(models.TransferArray{validTransfer})
 
 	batchData, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -314,16 +296,15 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	s.cfg.MinTxsPerCommitment = 1
 	s.cfg.MaxTxsPerCommitment = 1
 	s.cfg.MinCommitmentsPerBatch = 2
-	s.txsCtx = NewTestTxsContext(s.executionCtx, batchtype.Transfer)
+	s.AcceptNewConfig()
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOfInvalidTransactions() {
@@ -331,29 +312,32 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	s.AcceptNewConfig()
 
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
-	s.hashSignAndAddTransfer(&s.wallets[0], &invalidTransfer)
+	s.initTxs(models.TransferArray{invalidTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
-
+	s.ErrorIs(err, ErrNotEnoughTxs)
 	s.Len(s.txsCtx.txErrorsToStore, 1)
-	s.Equal(invalidTransfer.Hash, s.txsCtx.txErrorsToStore[0].TxHash)
-	s.Equal(applier.ErrNonexistentReceiver.Error(), s.txsCtx.txErrorsToStore[0].ErrorMessage)
+
+	expectedTxError := models.TxError{
+		TxHash:        invalidTransfer.Hash,
+		SenderStateID: invalidTransfer.FromStateID,
+		ErrorMessage:  applier.ErrNonexistentReceiver.Error(),
+	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWhenNotNecessary() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfer)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
 
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.Nil(commitments)
-	s.ErrorIs(err, ErrNotEnoughCommitments)
+	s.ErrorIs(err, ErrNotEnoughTxs)
 
 	postStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
@@ -362,7 +346,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWh
 }
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNecessary() {
-	validTransfers := []models.Transfer{
+	validTransfers := models.TransferArray{
 		testutils.MakeTransfer(1, 2, 0, 100),
 		testutils.MakeTransfer(1, 2, 1, 100),
 		testutils.MakeTransfer(1, 2, 2, 100),
@@ -374,17 +358,17 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.cfg.MinCommitmentsPerBatch = 1
 	s.AcceptNewConfig()
 
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[0])
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[1])
-
 	tempTxsCtx := NewTxsContext(
 		s.txsCtx.storage,
 		s.txsCtx.client,
 		s.cfg,
 		metrics.NewCommanderMetrics(),
+		s.txsCtx.Mempool,
 		context.Background(),
 		batchtype.Transfer,
 	)
+	initTxs(s.Assertions, tempTxsCtx, validTransfers[:2])
+
 	commitments, err := tempTxsCtx.CreateCommitments()
 	s.NoError(err)
 	s.Len(commitments, 1)
@@ -400,8 +384,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	s.cfg.MinCommitmentsPerBatch = 1
 	s.AcceptNewConfig()
 
-	s.hashSignAndAddTransfer(&s.wallets[0], &validTransfers[2])
-	s.hashSignAndAddTransfer(&s.wallets[1], &invalidTransfer)
+	s.initTxs(validTransfers.AppendOne(&invalidTransfer))
 
 	commitments, err = s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -419,49 +402,21 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 	s.AcceptNewConfig()
 
 	transfer := testutils.MakeTransfer(1, 2, 0, 100)
-	transfer.Hash = common.BytesToHash([]byte{1})
-	err := s.storage.AddTransaction(&transfer)
-	s.NoError(err)
-
-	higherFeeTransfer := transfer
-	higherFeeTransfer.Hash = common.BytesToHash([]byte{2})
+	higherFeeTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	higherFeeTransfer.Fee = *transfer.Fee.MulN(2)
-	err = s.storage.AddTransaction(&higherFeeTransfer)
+
+	s.initTxs(models.TransferArray{transfer, higherFeeTransfer})
+
+	_, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
-
-	s.Less(transfer.Hash.String(), higherFeeTransfer.Hash.String())
-
-	_, err = s.txsCtx.CreateCommitments()
-	s.NoError(err)
-
-	s.Len(s.txsCtx.txErrorsToStore, 1)
-	txErr := s.txsCtx.txErrorsToStore[0]
-	s.Equal(transfer.Hash, txErr.TxHash)
-	s.Equal(applier.ErrNonceTooLow.Error(), txErr.ErrorMessage)
 
 	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)
 	s.NoError(err)
-
-	expectedCommitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 0,
-	}
-	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentID)
+	s.Equal(models.MakeUint256(1), minedHigherFeeTransfer.CommitmentID.BatchID)
 }
 
-func (s *CreateCommitmentsTestSuite) hashSignAndAddTransfer(wallet *bls.Wallet, transfer *models.Transfer) {
-	hash, err := encoder.HashTransfer(transfer)
-	s.NoError(err)
-	transfer.Hash = *hash
-
-	encodedTransfer, err := encoder.EncodeTransferForSigning(transfer)
-	s.NoError(err)
-	signature, err := wallet.Sign(encodedTransfer)
-	s.NoError(err)
-	transfer.Signature = *signature.ModelsSignature()
-
-	err = s.storage.AddTransaction(transfer)
-	s.NoError(err)
+func (s *CreateCommitmentsTestSuite) initTxs(txs models.GenericTransactionArray) {
+	initTxs(s.Assertions, s.txsCtx, txs)
 }
 
 func (s *CreateCommitmentsTestSuite) addUserStates() {

@@ -49,8 +49,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 	}
 	s.setTxHashAndSign(txs...)
 	for i := range txs {
-		err := s.storage.AddTransaction(txs[i])
-		s.NoError(err)
+		s.addTx(txs[i])
 	}
 
 	commitments, err := s.txsCtx.CreateCommitments()

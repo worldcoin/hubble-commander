@@ -71,9 +71,9 @@ func TestCommanderMigrationMode(t *testing.T) {
 		testStartMining(t, gethRPCClient)
 	}()
 
-	testSendInvalidTx(t, adminRPCClient, 4, wallets)
+	testSendInvalidTx(t, adminRPCClient, 8, wallets, 1)
 	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
-	testSendInvalidTx(t, adminRPCClient, 5, wallets)
+	testSendInvalidTx(t, adminRPCClient, 0, wallets, 2)
 
 	testWaitForBatchStatus(t, adminRPCClient, 2, batchstatus.Submitted)
 
@@ -177,9 +177,9 @@ func testSendValidTxs(t *testing.T, client jsonrpc.RPCClient, startingNonce, txs
 	}
 }
 
-func testSendInvalidTx(t *testing.T, client jsonrpc.RPCClient, nonce uint64, wallets []bls.Wallet) {
-	transfer, err := api.SignTransfer(&wallets[1], dto.Transfer{
-		FromStateID: ref.Uint32(1),
+func testSendInvalidTx(t *testing.T, client jsonrpc.RPCClient, nonce uint64, wallets []bls.Wallet, fromStateID uint32) {
+	transfer, err := api.SignTransfer(&wallets[fromStateID], dto.Transfer{
+		FromStateID: ref.Uint32(fromStateID),
 		ToStateID:   ref.Uint32(999),
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),

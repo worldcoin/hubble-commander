@@ -54,12 +54,23 @@ func (c *Commander) syncPendingTxs(hubble client.Hubble) (int, error) {
 		return 0, err
 	}
 
-	err = c.storage.AddPendingTransactions(txs)
+	err = c.addPendingTxs(txs)
 	if err != nil {
 		return 0, err
 	}
 
 	return txs.Len(), nil
+}
+
+func (c *Commander) addPendingTxs(txs models.GenericTransactionArray) error {
+	err := c.storage.AddPendingTransactions(txs)
+	if err != nil {
+		return err
+	}
+	for i := 0; i < txs.Len(); i++ {
+		c.txPool.Send(txs.At(i))
+	}
+	return nil
 }
 
 func (c *Commander) syncFailedTxs(hubble client.Hubble) (int, error) {
@@ -93,7 +104,7 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) (int, error) {
 }
 
 func (c *Commander) syncPendingBatch(batch *models.PendingBatch) (err error) {
-	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, context.Background(), batch.Type)
+	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), context.Background(), batch.Type)
 	defer ctx.Rollback(&err)
 
 	err = ctx.ExecutePendingBatch(batch)

@@ -317,12 +317,51 @@ func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransactio
 	}
 }
 
+func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesTxs() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[5], s.txs[8]))
+
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+	s.Equal(s.mempool.buckets[1].txs, s.txs[3:5])
+	s.Equal(s.mempool.buckets[2].txs, s.txs[6:7])
+	s.Equal(s.mempool.buckets[3].txs, []models.GenericTransaction{s.txs[7], s.txs[9]})
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesEmptyBuckets() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[5:7]...))
+
+	s.NotContains(s.mempool.buckets, uint32(2))
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_OmitsEmptyBuckets() {
+	tx := s.newTransfer(20, 1)
+	s.mempool.RemoveFailedTxs(txsToTxErrors(tx, s.txs[2]))
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_DecrementsTxCounts() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[7]))
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }
 
 func (s *MempoolTestSuite) newC2T(from uint32, nonce uint64) *models.Create2Transfer {
 	return testutils.NewCreate2Transfer(from, ref.Uint32(1), nonce, 100, nil)
+}
+
+func txsToTxErrors(txs ...models.GenericTransaction) []models.TxError {
+	txErrors := make([]models.TxError, 0, len(txs))
+	for _, tx := range txs {
+		txErrors = append(txErrors, models.TxError{
+			TxHash:        tx.GetBase().Hash,
+			SenderStateID: tx.GetFromStateID(),
+			ErrorMessage:  "some error",
+		})
+	}
+	return txErrors
 }
 
 func setUserStates(s *require.Assertions, stateTree *st.StateTree, nonces map[uint32]uint64) {

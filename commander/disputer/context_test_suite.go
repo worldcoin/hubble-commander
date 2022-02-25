@@ -115,8 +115,11 @@ func (s *testSuiteWithContexts) newContexts(
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) {
+	var err error
 	executionCtx := executor.NewTestExecutionContext(storage, s.client.Client, s.cfg)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchType)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchType)
+	s.NoError(err)
+
 	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, txtype.TransactionType(batchType))
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
@@ -133,12 +136,21 @@ func (s *testSuiteWithContexts) rollback() {
 }
 
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
-	err := s.disputeCtx.storage.AddTransaction(tx)
-	s.NoError(err)
+	s.addTxs(models.MakeGenericArray(tx))
 
 	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch()
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
 	return pendingBatch
+}
+
+func (s *testSuiteWithContexts) addTxs(txs models.GenericTransactionArray) {
+	err := s.disputeCtx.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	for i := 0; i < txs.Len(); i++ {
+		_, err = s.txsCtx.Mempool.AddOrReplace(s.disputeCtx.storage, txs.At(i))
+		s.NoError(err)
+	}
 }

@@ -115,6 +115,8 @@ func (s *SyncStakeWithdrawalsTestSuite) submitTransferBatchInTransaction(tx *mod
 	s.runInTransaction(func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
+		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
+		s.NoError(err)
 
 		batchData, err := txsCtx.CreateCommitments()
 		s.NoError(err)
@@ -133,7 +135,8 @@ func (s *SyncStakeWithdrawalsTestSuite) runInTransaction(handler func(*st.Storag
 	defer txController.Rollback(nil)
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	txsCtx := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 	handler(txStorage, txsCtx)
 }
 

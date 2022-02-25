@@ -35,7 +35,7 @@ func (s *C2TCommitmentsTestSuite) SetupTest() {
 
 func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 	transfers := testutils.GenerateValidCreate2Transfers(2)
-	s.addCreate2Transfers(transfers)
+	s.initTxs(transfers)
 
 	commitments, err := s.txsCtx.CreateCommitments()
 	s.NoError(err)
@@ -52,7 +52,7 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 
 func (s *C2TCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	transfers := testutils.GenerateValidCreate2Transfers(1)
-	s.addCreate2Transfers(transfers)
+	s.initTxs(transfers)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
 	commitments, err := s.txsCtx.CreateCommitments()
@@ -133,11 +133,10 @@ func (s *C2TCommitmentsTestSuite) getRegisteredAccounts(startBlockNumber uint64)
 	return registeredAccounts
 }
 
-func TestC2TCommitmentsTestSuite(t *testing.T) {
-	suite.Run(t, new(C2TCommitmentsTestSuite))
+func (s *C2TCommitmentsTestSuite) initTxs(txs models.GenericTransactionArray) {
+	initTxs(s.Assertions, s.txsCtx, txs)
 }
 
-func (s *C2TCommitmentsTestSuite) addCreate2Transfers(transfers []models.Create2Transfer) {
-	err := s.storage.BatchAddCreate2Transfer(transfers)
-	s.NoError(err)
+func TestC2TCommitmentsTestSuite(t *testing.T) {
+	suite.Run(t, new(C2TCommitmentsTestSuite))
 }

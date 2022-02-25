@@ -122,7 +122,8 @@ func (s *syncTestSuite) recreateDatabase() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	s.NoError(err)
 	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
 
 	s.seedDB(s.wallets)
@@ -145,8 +146,7 @@ func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.Commi
 }
 
 func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch, []models.CommitmentWithTxs) {
-	err := s.storage.AddTransaction(tx)
-	s.NoError(err)
+	s.addTx(tx)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
@@ -156,4 +156,11 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	s.Len(commitments, 1)
 
 	return pendingBatch, commitments
+}
+
+func (s *syncTestSuite) addTx(tx models.GenericTransaction) {
+	err := s.storage.AddTransaction(tx)
+	s.NoError(err)
+	_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
 }

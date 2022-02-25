@@ -3,6 +3,7 @@ package executor
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -37,7 +38,8 @@ func (s *ExecutePendingTxBatchTestSuite) SetupTest() {
 	setInitialUserStates(s.Assertions, s.storage.Storage)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	s.pendingBatch = models.PendingBatch{
 		ID:              models.MakeUint256(1),
@@ -128,7 +130,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_ErrorsOnFailure
 	s.pendingBatch.Commitments[0].Transactions = models.TransferArray{tx}
 
 	err := s.txsCtx.ExecutePendingBatch(&s.pendingBatch)
-	s.ErrorIs(err, errInvalidPendingBatchTxs)
+	s.ErrorIs(err, applier.ErrNonceTooHigh)
 }
 
 func TestExecutePendingTxBatchTestSuite(t *testing.T) {
