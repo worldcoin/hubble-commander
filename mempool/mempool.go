@@ -307,7 +307,7 @@ func (m *Mempool) setTxCounts(counts *txCounts) {
 }
 
 func (m *Mempool) changeTxCount(txType txtype.TransactionType, diff int) {
-	m.txCounts[txType] = m.txCounts[txType] + diff
+	m.txCounts[txType] += diff
 }
 
 func (m *Mempool) TxCount(txType txtype.TransactionType) int {
