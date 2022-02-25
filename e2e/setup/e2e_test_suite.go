@@ -44,16 +44,16 @@ func (s *E2ETestSuite) SetupSuite() {
 	s.QueueDepositGasLimit = 600_000
 }
 
-func (s *E2ETestSuite) SetupTestEnvironment(cfg *config.Config) {
+func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deployerConfig *config.DeployerConfig) {
 	var err error
 
-	if cfg == nil {
-		cfg = config.GetConfig()
+	if commanderCfg == nil {
+		commanderCfg = config.GetConfig()
 	}
 
-	s.Cfg = cfg
+	s.Cfg = commanderCfg
 
-	s.Commander, err = NewConfiguredCommanderFromEnv(cfg, nil)
+	s.Commander, err = NewConfiguredCommanderFromEnv(commanderCfg, deployerConfig)
 	s.NoError(err)
 	err = s.Commander.Start()
 	s.NoError(err)
@@ -187,7 +187,7 @@ func (s *E2ETestSuite) SubmitDepositBatchAndWait(targetPubKeyID, tokenID *models
 	batchID, err := s.ETHClient.Rollup.NextBatchID(nil)
 	s.NoError(err)
 
-	fullDepositBatchCount := s.calculateDepositsCountForFullBatch()
+	fullDepositBatchCount := s.CalculateDepositsCountForFullBatch()
 	parsedDepositAmount := models.NewUint256FromBig(*utils.ParseEther(depositAmount))
 
 	txs := make([]types.Transaction, 0, fullDepositBatchCount)

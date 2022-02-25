@@ -31,7 +31,7 @@ func (s *CoreCommanderE2ETestSuite) SetupTest() {
 	cfg.Rollup.MinCommitmentsPerBatch = 1
 	cfg.Rollup.MaxTxnDelay = 2 * time.Second
 
-	s.SetupTestEnvironment(cfg)
+	s.SetupTestEnvironment(cfg, nil)
 }
 
 func (s *CoreCommanderE2ETestSuite) TestCommander() {

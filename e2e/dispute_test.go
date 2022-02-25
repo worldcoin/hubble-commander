@@ -25,7 +25,7 @@ func (s *DisputesE2ETestSuite) SetupTest() {
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
 
-	s.SetupTestEnvironment(cfg)
+	s.SetupTestEnvironment(cfg, nil)
 }
 
 func (s *DisputesE2ETestSuite) TestDisputes() {

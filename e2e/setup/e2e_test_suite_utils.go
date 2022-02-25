@@ -69,7 +69,7 @@ func (s *E2ETestSuite) newEthClient() *eth.Client {
 	return ethClient
 }
 
-func (s *E2ETestSuite) calculateDepositsCountForFullBatch() int {
+func (s *E2ETestSuite) CalculateDepositsCountForFullBatch() int {
 	subtreeDepth, err := s.ETHClient.GetMaxSubtreeDepthParam()
 	s.NoError(err)
 	depositsCount := 1 << *subtreeDepth
