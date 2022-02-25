@@ -4,7 +4,7 @@
 package e2e
 
 import (
-	testing "testing"
+	"testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
