@@ -57,6 +57,17 @@ func (s *BatchTestSuite) TestAddBatch_AddAndRetrieve() {
 	s.EqualValues(140, actualUnixTime)
 }
 
+func (s *BatchTestSuite) TestAddBatch_EmptyPrevStateRoot() {
+	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		AccountTreeRoot: utils.NewRandomHash(),
+	}
+	err := s.storage.AddBatch(batch)
+	s.ErrorIs(err, ErrPrevStateRootIsEmpty)
+}
+
 func (s *BatchTestSuite) TestUpdateBatch() {
 	pendingBatch := &models.Batch{
 		ID:              models.MakeUint256(124),
@@ -94,6 +105,17 @@ func (s *BatchTestSuite) TestUpdateBatch_NonexistentBatch() {
 	}
 	err := s.storage.UpdateBatch(batch)
 	s.ErrorIs(err, NewNotFoundError("batch"))
+}
+
+func (s *BatchTestSuite) TestUpdateBatch_EmptyPrevStateRoot() {
+	batch := &models.Batch{
+		ID:              models.MakeUint256(1),
+		TransactionHash: utils.RandomHash(),
+		Hash:            utils.NewRandomHash(),
+		AccountTreeRoot: utils.NewRandomHash(),
+	}
+	err := s.storage.UpdateBatch(batch)
+	s.ErrorIs(err, ErrPrevStateRootIsEmpty)
 }
 
 func (s *BatchTestSuite) TestGetBatch() {
