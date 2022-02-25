@@ -9,10 +9,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
+	"gopkg.in/yaml.v2"
 )
 
 const EthClientPrivateKey = "c216d5eef9c83c9d6f4629fff79e8e90d73b4beb9921de18f974f0d2c6d4e9b0"
@@ -22,6 +24,7 @@ type InProcessCommander struct {
 	commander  *commander.Commander
 	cfg        *config.Config
 	blockchain chain.Connection
+	chainSpec  *models.ChainSpec
 }
 
 func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
@@ -45,28 +48,36 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 		return nil, err
 	}
 
-	cmd := commander.NewCommander(commanderConfig, blockchain)
 	endpoint := fmt.Sprintf("http://localhost:%s", commanderConfig.API.Port)
-	client := jsonrpc.NewClient(endpoint)
+	inProcessCommander := &InProcessCommander{
+		client:     jsonrpc.NewClient(endpoint),
+		commander:  commander.NewCommander(commanderConfig, blockchain),
+		cfg:        commanderConfig,
+		blockchain: blockchain,
+	}
 
 	if deployerConfig != nil {
-		err = deployChooser(blockchain, deployerConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		commanderConfig.Bootstrap.ChainSpecPath, err = deployRemainingContracts(blockchain, deployerConfig)
+		err = inProcessCommander.deployContracts(deployerConfig)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &InProcessCommander{
-		client:     client,
-		commander:  cmd,
-		cfg:        commanderConfig,
-		blockchain: blockchain,
-	}, nil
+	return inProcessCommander, nil
+}
+
+func (e *InProcessCommander) deployContracts(deployerConfig *config.DeployerConfig) error {
+	err := deployChooser(e.blockchain, deployerConfig)
+	if err != nil {
+		return err
+	}
+
+	e.chainSpec, e.cfg.Bootstrap.ChainSpecPath, err = deployRemainingContracts(e.blockchain, deployerConfig)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *InProcessCommander) Start() error {
@@ -111,6 +122,10 @@ func (e *InProcessCommander) Client() jsonrpc.RPCClient {
 	return e.client
 }
 
+func (e *InProcessCommander) ChainSpec() *models.ChainSpec {
+	return e.chainSpec
+}
+
 func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerConfig) error {
 	e2eAccountAddress, err := privateKeyToAddress(EthClientPrivateKey)
 	if err != nil {
@@ -128,24 +143,30 @@ func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerC
 	return nil
 }
 
-func deployRemainingContracts(blockchain chain.Connection, deployerConfig *config.DeployerConfig) (*string, error) {
+func deployRemainingContracts(blockchain chain.Connection, deployerConfig *config.DeployerConfig) (*models.ChainSpec, *string, error) {
 	file, err := os.CreateTemp("", "in_process_commander")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	chainSpecPath := file.Name()
-	chainSpec, err := commander.Deploy(deployerConfig, blockchain)
+	chainSpecStr, err := commander.Deploy(deployerConfig, blockchain)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	err = os.WriteFile(chainSpecPath, []byte(*chainSpec), 0600)
+	err = os.WriteFile(chainSpecPath, []byte(*chainSpecStr), 0600)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &chainSpecPath, nil
+	var chainSpec models.ChainSpec
+	err = yaml.Unmarshal([]byte(*chainSpecStr), &chainSpec)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &chainSpec, &chainSpecPath, nil
 }
 
 func privateKeyToAddress(privateKey string) (*common.Address, error) {
