@@ -9,6 +9,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -19,12 +20,14 @@ import (
 	"github.com/docker/go-connections/nat"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
+	"gopkg.in/yaml.v2"
 )
 
 type DockerCommander struct {
 	cli         *docker.Client
 	containerID string
 	client      jsonrpc.RPCClient
+	chainSpec   *models.ChainSpec
 }
 
 type StartOptions struct {
@@ -50,8 +53,9 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		networkMode = "bridge"
 	}
 
+	var chainSpec *models.ChainSpec
 	if opts.DeployContracts {
-		err = deployContractsAndStoreChainSpec()
+		chainSpec, err = deployContractsAndStoreChainSpec()
 		if err != nil {
 			return nil, err
 		}
@@ -110,6 +114,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 		cli:         cli,
 		containerID: containerID,
 		client:      client,
+		chainSpec:   chainSpec,
 	}
 
 	stream, err := cli.ContainerAttach(context.Background(), containerID, types.ContainerAttachOptions{
@@ -132,21 +137,32 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 	return cmd, nil
 }
 
-func deployContractsAndStoreChainSpec() error {
+func deployContractsAndStoreChainSpec() (*models.ChainSpec, error) {
 	deployerCfg := config.GetDeployerTestConfig()
 
 	blockchain, err := commander.GetChainConnection(deployerCfg.Ethereum)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	chainSpec, err := commander.Deploy(deployerCfg, blockchain)
+	chainSpecStr, err := commander.Deploy(deployerCfg, blockchain)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	chainSpecPath := path.Join(".", "e2e-chain-spec", "chain-spec.yaml")
-	return utils.StoreChainSpec(chainSpecPath, *chainSpec)
+	err = utils.StoreChainSpec(chainSpecPath, *chainSpecStr)
+	if err != nil {
+		return nil, err
+	}
+
+	var chainSpec models.ChainSpec
+	err = yaml.Unmarshal([]byte(*chainSpecStr), &chainSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chainSpec, nil
 }
 
 func (c *DockerCommander) Client() jsonrpc.RPCClient {
@@ -187,6 +203,10 @@ func (c *DockerCommander) Start() error {
 	}
 
 	return nil
+}
+
+func (c *DockerCommander) ChainSpec() *models.ChainSpec {
+	return c.chainSpec
 }
 
 func (c *DockerCommander) IsHealthy() (bool, error) {

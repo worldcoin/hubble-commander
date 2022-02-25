@@ -66,20 +66,6 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 	return inProcessCommander, nil
 }
 
-func (e *InProcessCommander) deployContracts(deployerConfig *config.DeployerConfig) error {
-	err := deployChooser(e.blockchain, deployerConfig)
-	if err != nil {
-		return err
-	}
-
-	e.chainSpec, e.cfg.Bootstrap.ChainSpecPath, err = deployRemainingContracts(e.blockchain, deployerConfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (e *InProcessCommander) Start() error {
 	err := e.commander.Start()
 	if err != nil {
@@ -141,6 +127,16 @@ func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerC
 	}
 	deployerConfig.Bootstrap.Chooser = poaAddress
 	return nil
+}
+
+func (e *InProcessCommander) deployContracts(deployerConfig *config.DeployerConfig) error {
+	err := deployChooser(e.blockchain, deployerConfig)
+	if err != nil {
+		return err
+	}
+
+	e.chainSpec, e.cfg.Bootstrap.ChainSpecPath, err = deployRemainingContracts(e.blockchain, deployerConfig)
+	return err
 }
 
 func deployRemainingContracts(blockchain chain.Connection, deployerConfig *config.DeployerConfig) (*models.ChainSpec, *string, error) {
