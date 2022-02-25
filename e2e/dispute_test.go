@@ -450,8 +450,7 @@ func newEthClient(t *testing.T, cmd setup.Commander, privateKey string) *eth.Cli
 	require.NoError(t, err)
 
 	txsChannels := &eth.TxsTrackingChannels{
-		SkipSentTxsChannel:                true,
-		SkipSendingRequestsThroughChannel: true,
+		SkipChannelSending: true,
 	}
 
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{

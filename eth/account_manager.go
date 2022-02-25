@@ -44,10 +44,11 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 func (a *AccountManager) packAndRequest(
 	contract *Contract,
 	opts *bind.TransactOpts,
+	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
-	return packAndRequest(a.txsChannels, contract, opts, method, data...)
+	return packAndRequest(a.txsChannels, contract, opts, shouldTrackTx, method, data...)
 }
 
 type AccountManagerParams struct {
