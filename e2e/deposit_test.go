@@ -4,7 +4,7 @@
 package e2e
 
 import (
-	"testing"
+	testing "testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
@@ -23,18 +23,18 @@ import (
 
 const queueDepositGasLimit = 600_000
 
-func testSubmitDepositBatchAndWait(t *testing.T, cmd setup.Commander, commanderPrivateKey string, batchID uint64) {
-	makeDeposits(t, cmd, commanderPrivateKey)
+func testSubmitDepositBatchAndWait(
+	t *testing.T,
+	cmd setup.Commander,
+	ethClient *eth.Client,
+	token *models.RegisteredToken,
+	batchID uint64,
+) {
+	makeDeposits(t, ethClient, token)
 	waitForBatch(t, cmd.Client(), models.MakeUint256(batchID))
 }
 
-func makeDeposits(t *testing.T, cmd setup.Commander, commanderPrivateKey string) {
-	ethClient := newEthClient(t, cmd, setup.EthClientPrivateKey)
-	commanderClient := newEthClient(t, cmd, commanderPrivateKey)
-
-	token, tokenContract := getDeployedToken(t, ethClient)
-	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
-	approveTokens(t, tokenContract, ethClient)
+func makeDeposits(t *testing.T, ethClient *eth.Client, token *models.RegisteredToken) {
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
 	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()

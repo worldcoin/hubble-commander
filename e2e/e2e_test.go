@@ -33,6 +33,13 @@ func TestCommander(t *testing.T) {
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
 	require.NoError(t, err)
+
+	commanderClient := newEthClient(t, commander, cfg.Ethereum.PrivateKey)
+	ethClient := newEthClient(t, commander, setup.EthClientPrivateKey)
+	token, tokenContract := getDeployedToken(t, ethClient)
+	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
+	approveTokens(t, tokenContract, ethClient)
+
 	err = commander.Start()
 	require.NoError(t, err)
 	defer func() {
@@ -66,7 +73,7 @@ func TestCommander(t *testing.T) {
 
 	testMaxBatchDelay(t, commander.Client(), senderWallet, 96)
 
-	testSubmitDepositBatchAndWait(t, commander, cfg.Ethereum.PrivateKey, 5)
+	testSubmitDepositBatchAndWait(t, commander, ethClient, token, 5)
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet,
 		32*3+1,
