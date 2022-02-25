@@ -175,16 +175,15 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_DepositBatch() {
 }
 
 func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
-	root, err := s.storage.Storage.StateTree.Root()
 	genesisBatch := models.Batch{
 		ID:                models.MakeUint256(0),
 		Type:              batchtype.Genesis,
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
-		PrevStateRoot:     root,
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
-	err = s.storage.AddBatch(&genesisBatch)
+	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)
 
 	result, err := s.api.GetBatchByHash(*genesisBatch.Hash)
