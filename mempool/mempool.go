@@ -115,7 +115,7 @@ func (m *Mempool) initBucketsAndTxCounts(storage *st.Storage, txs models.Generic
 		}
 		bucket.txs = append(bucket.txs, tx)
 
-		m.txCounts[tx.Type()] = m.txCounts[tx.Type()] + 1 // TODO extract
+		m.changeTxCount(tx.Type(), +1)
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func (m *TxMempool) removeTx(stateID uint32) (*txBucket, error) {
 	}
 	removedTx := bucket.txs[0]
 	bucket.txs = bucket.txs[1:]
-	m.txCounts[removedTx.Type()] = m.txCounts[removedTx.Type()] - 1 // TODO extract
+	m.changeTxCount(removedTx.Type(), -1)
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
 		return nil, nil
@@ -221,23 +221,29 @@ func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransact
 	if err != nil {
 		return nil, err
 	}
-	prevTxHash, err := bucket.addOrReplace(newTx)
+	previousTx, err := bucket.addOrReplace(newTx)
 	if err != nil {
 		return nil, err
 	}
-	if prevTxHash != nil {
-		return prevTxHash, nil
+	if previousTx == nil {
+		// Transaction was added
+		m.changeTxCount(newTx.Type(), +1)
+		return nil, nil
 	}
-	m.txCounts[newTx.Type()] = m.txCounts[newTx.Type()] + 1 // TODO extract
-	// todo increment one and decrement the other
-	return nil, nil
+
+	// Transaction was replaced
+	if previousTx.Type() != newTx.Type() {
+		m.changeTxCount(previousTx.Type(), -1)
+		m.changeTxCount(newTx.Type(), +1)
+	}
+	return &previousTx.GetBase().Hash, nil
 }
 
 func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
 	panic("AddOrReplace should only be called on Mempool")
 }
 
-func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (*common.Hash, error) {
+func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (previousTx models.GenericTransaction, err error) {
 	newTxNonce := &newTx.GetBase().Nonce
 	for i, tx := range b.txs {
 		if newTxNonce.Eq(&tx.GetBase().Nonce) {
@@ -253,13 +259,13 @@ func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (*common.Hash, 
 	return nil, nil
 }
 
-func (b *txBucket) replace(index int, newTx models.GenericTransaction) (*common.Hash, error) {
-	previousTx := b.txs[index]
+func (b *txBucket) replace(index int, newTx models.GenericTransaction) (previousTx models.GenericTransaction, err error) {
+	previousTx = b.txs[index]
 	if !replaceCondition(previousTx, newTx) {
 		return nil, errors.WithStack(ErrTxReplacementFailed)
 	}
 	b.txs[index] = newTx
-	return &previousTx.GetBase().Hash, nil
+	return previousTx, nil
 }
 
 func replaceCondition(previousTx, newTx models.GenericTransaction) bool {
@@ -298,6 +304,10 @@ func (m *Mempool) getTxCounts() *txCounts {
 
 func (m *Mempool) setTxCounts(counts *txCounts) {
 	m.txCounts = *counts
+}
+
+func (m *Mempool) changeTxCount(txType txtype.TransactionType, diff int) {
+	m.txCounts[txType] = m.txCounts[txType] + diff
 }
 
 func (m *Mempool) TxCount(txType txtype.TransactionType) int {

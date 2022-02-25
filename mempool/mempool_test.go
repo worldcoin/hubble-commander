@@ -276,15 +276,27 @@ func (s *MempoolTestSuite) TestAddOrReplace_IncrementsTxCountOnInsertion() {
 	s.NoError(err)
 
 	s.Equal(9, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
-func (s *MempoolTestSuite) TestAddOrReplace_DoesNotIncrementTxCountOnReplacement() {
+func (s *MempoolTestSuite) TestAddOrReplace_DoesNotChangeTxCountOnReplacementWithTheSameType() {
 	tx := s.newTransfer(0, 11)
 	tx.Fee = models.MakeUint256(20)
 	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
 	s.Equal(8, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_ChangesTxCountsOnReplacementWithDifferentType() {
+	tx := s.newC2T(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(3, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestTxCount_ReturnsCountForGivenTxType() {
