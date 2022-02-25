@@ -49,6 +49,7 @@ func (s *GetCommitmentProofTestSuite) SetupTest() {
 		FinalisationBlock: ref.Uint32(113),
 		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
 
 	s.txCommitment = commitment

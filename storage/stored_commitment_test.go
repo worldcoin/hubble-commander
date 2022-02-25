@@ -102,6 +102,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1234),
+			PrevStateRoot:     utils.NewRandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(5),
@@ -109,6 +110,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2345),
+			PrevStateRoot:     utils.NewRandomHash(),
 		},
 	}
 	for i := range batches {
@@ -160,6 +162,7 @@ func (s *StoredCommitmentTestSuite) addRandomBatch() models.Uint256 {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)

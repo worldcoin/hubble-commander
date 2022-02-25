@@ -95,6 +95,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -157,6 +158,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     utils.NewRandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
