@@ -228,12 +228,13 @@ func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) {
 
 func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
 	for i := range bucket.txs {
-		if bucket.txs[i].GetBase().Hash == txError.TxHash {
+		txBase := bucket.txs[i].GetBase()
+		if txBase.Hash == txError.TxHash {
 			bucket.removeAt(i)
 			if len(bucket.txs) == 0 {
 				delete(m.buckets, txError.SenderStateID)
 			}
-			m.txCount--
+			m.changeTxCount(txBase.TxType, -1)
 			return
 		}
 	}

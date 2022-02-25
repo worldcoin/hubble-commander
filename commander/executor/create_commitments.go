@@ -136,7 +136,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	if c.Mempool.TxCount() < int(c.minTxsPerCommitment) {
+	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
@@ -157,7 +157,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 }
 
 func (c *TxsContext) verifyTxsCount() error {
-	if c.Mempool.TxCount() >= int(c.cfg.MinCommitmentsPerBatch*c.cfg.MinTxsPerCommitment) {
+	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) >= int(c.cfg.MinCommitmentsPerBatch*c.cfg.MinTxsPerCommitment) {
 		return nil
 	}
 

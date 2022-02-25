@@ -338,9 +338,10 @@ func (s *MempoolTestSuite) TestRemoveFailedTxs_OmitsEmptyBuckets() {
 	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
 }
 
-func (s *MempoolTestSuite) TestRemoveFailedTxs_DecrementsTxCount() {
-	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2]))
-	s.Equal(9, s.mempool.TxCount())
+func (s *MempoolTestSuite) TestRemoveFailedTxs_DecrementsTxCounts() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[7]))
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
