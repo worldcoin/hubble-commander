@@ -1,3 +1,4 @@
+// nolint: gocritic
 package eth
 
 import (
@@ -83,7 +84,7 @@ func (b *rollupSessionBuilder) SubmitMassMigration(
 
 func (b *rollupSessionBuilder) SubmitDeposits(
 	batchID *big.Int,
-	previous rollup.TypesCommitmentInclusionProof, //nolint:gocritic
+	previous rollup.TypesCommitmentInclusionProof,
 	vacant rollup.TypesSubtreeVacancyProof,
 ) (*types.Transaction, error) {
 	return b.packAndRequest(true, "submitDeposits", batchID, previous, vacant)
@@ -176,7 +177,6 @@ func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRe
 	return b
 }
 
-// nolint: gocritic
 func (b *accountRegistrySessionBuilder) RegisterBatch(pubkeys [16][4]*big.Int) (*types.Transaction, error) {
 	return b.packAndRequest(true, "registerBatch", pubkeys)
 }
