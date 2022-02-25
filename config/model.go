@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,6 +42,7 @@ type DeployerConfig struct {
 type DeployerBootstrapConfig struct {
 	GenesisAccounts  []models.GenesisAccount `json:"-"`
 	BlocksToFinalise uint32
+	Chooser          *common.Address
 }
 
 type CommanderBootstrapConfig struct {

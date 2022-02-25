@@ -14,16 +14,13 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/withdrawmanager"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -40,6 +37,13 @@ func TestWithdrawProcess(t *testing.T) {
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(commanderConfig, deployerConfig)
 	require.NoError(t, err)
+
+	commanderClient := newEthClient(t, commander, commanderConfig.Ethereum.PrivateKey)
+	ethClient := newEthClient(t, commander, setup.EthClientPrivateKey)
+	token, tokenContract := getDeployedToken(t, ethClient)
+	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
+	approveTokens(t, tokenContract, ethClient)
+
 	err = commander.Start()
 	require.NoError(t, err)
 	defer func() {
@@ -53,19 +57,12 @@ func TestWithdrawProcess(t *testing.T) {
 
 	senderWallet := wallets[1]
 
-	ethClient := newEthClient(t, commander.Client())
-	withdrawManager, withdrawManagerAddress := getWithdrawManager(t, commander.Client(), commanderConfig)
-	transactor := getTransactor(t, commanderConfig)
-
-	token, tokenContract := getDeployedToken(t, ethClient)
-	approveToken(t, ethClient, token.Contract)
-
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
 	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
 
 	userStatesBeforeDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
-	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, transactor.From, fullDepositBatchCount)
+	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, fullDepositBatchCount)
 
 	userStatesAfterDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
 
@@ -74,39 +71,28 @@ func TestWithdrawProcess(t *testing.T) {
 
 	targetMassMigrationHash := testSubmitWithdrawBatch(t, commander.Client(), senderWallet, newUserStates[0].StateID)
 
-	testProcessWithdrawCommitment(t, commander.Client(), ethClient, transactor, withdrawManager, withdrawManagerAddress, tokenContract)
+	withdrawManager, withdrawManagerAddress := getWithdrawManager(t, commander.Client(), ethClient)
+	testProcessWithdrawCommitment(t, commander.Client(), ethClient, withdrawManager, withdrawManagerAddress, tokenContract)
 
-	testClaimTokens(t, commander.Client(), ethClient, transactor, withdrawManager, tokenContract, senderWallet, targetMassMigrationHash)
+	testClaimTokens(t, commander.Client(), ethClient, withdrawManager, tokenContract, senderWallet, targetMassMigrationHash)
 }
 
-func getWithdrawManager(t *testing.T, client jsonrpc.RPCClient, cfg *config.Config) (*withdrawmanager.WithdrawManager, common.Address) {
+func transferTokens(t *testing.T, tokenContract *customtoken.TestCustomToken, commanderClient *eth.Client, recipient common.Address) {
+	tx, err := tokenContract.Transfer(commanderClient.Blockchain.GetAccount(), recipient, utils.ParseEther("1000"))
+	require.NoError(t, err)
+	_, err = commanderClient.WaitToBeMined(tx)
+	require.NoError(t, err)
+}
+
+func getWithdrawManager(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) (*withdrawmanager.WithdrawManager, common.Address) {
 	var info dto.NetworkInfo
 	err := client.CallFor(&info, "hubble_getNetworkInfo")
 	require.NoError(t, err)
 
-	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
-	require.NoError(t, err)
-
-	backend := blockchain.GetBackend()
-
-	withdrawManager, err := withdrawmanager.NewWithdrawManager(info.WithdrawManager, backend)
+	withdrawManager, err := withdrawmanager.NewWithdrawManager(info.WithdrawManager, ethClient.Blockchain.GetBackend())
 	require.NoError(t, err)
 
 	return withdrawManager, info.WithdrawManager
-}
-
-func getTransactor(t *testing.T, cfg *config.Config) *bind.TransactOpts {
-	chainID := big.NewInt(0).SetUint64(cfg.Ethereum.ChainID)
-
-	privateKey, err := crypto.HexToECDSA(cfg.Ethereum.PrivateKey)
-	require.NoError(t, err)
-
-	account, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	require.NoError(t, err)
-
-	account.GasLimit = 1_000_000
-
-	return account
 }
 
 func getSenderUserStates(t *testing.T, client jsonrpc.RPCClient, senderPublicKey *models.PublicKey) []dto.UserStateWithID {
@@ -151,19 +137,22 @@ func makeFullDepositBatch(
 	ethClient *eth.Client,
 	depositAmount, tokenID *models.Uint256,
 	token *customtoken.TestCustomToken,
-	senderEthAddress common.Address,
 	depositsNeeded int,
 ) {
 	expectedBalanceDifference := *depositAmount.MulN(uint64(depositsNeeded))
-	testDoActionAndAssertTokenBalanceDifference(t, token, senderEthAddress, expectedBalanceDifference, func() {
+	testDoActionAndAssertTokenBalanceDifference(t, token, ethClient.Blockchain.GetAccount().From, expectedBalanceDifference, func() {
 		txs := make([]types.Transaction, 0, depositsNeeded)
 		for i := 0; i < depositsNeeded; i++ {
 			tx, err := ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), depositAmount, tokenID)
 			require.NoError(t, err)
 			txs = append(txs, *tx)
 		}
-		_, err := ethClient.WaitForMultipleTxs(txs...)
+		receipt, err := ethClient.WaitForMultipleTxs(txs...)
 		require.NoError(t, err)
+
+		for i := range receipt {
+			require.EqualValues(t, 1, receipt[i].Status)
+		}
 
 		waitForBatch(t, client, models.MakeUint256(1))
 	})
@@ -280,11 +269,13 @@ func testProcessWithdrawCommitment(
 	t *testing.T,
 	client jsonrpc.RPCClient,
 	ethClient *eth.Client,
-	transactor *bind.TransactOpts,
 	withdrawManager *withdrawmanager.WithdrawManager,
 	withdrawManagerAddress common.Address,
 	token *customtoken.TestCustomToken,
 ) {
+	transactor := ethClient.Blockchain.GetAccount()
+	transactor.GasLimit = 1_000_000
+
 	commitmentID := &models.CommitmentID{
 		BatchID:      models.MakeUint256(2),
 		IndexInBatch: 0,
@@ -343,12 +334,14 @@ func testClaimTokens(
 	t *testing.T,
 	client jsonrpc.RPCClient,
 	ethClient *eth.Client,
-	transactor *bind.TransactOpts,
 	withdrawManager *withdrawmanager.WithdrawManager,
 	token *customtoken.TestCustomToken,
 	sender bls.Wallet,
 	transactionHash common.Hash,
 ) {
+	transactor := ethClient.Blockchain.GetAccount()
+	transactor.GasLimit = 1_000_000
+
 	commitmentID := models.CommitmentID{
 		BatchID:      models.MakeUint256(2),
 		IndexInBatch: 0,

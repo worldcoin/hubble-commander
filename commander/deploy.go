@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -48,10 +49,19 @@ func deployContractsAndSetupGenesisState(
 	storage *st.Storage,
 	blockchain chain.Connection,
 	cfg *config.DeployerConfig,
-) (*models.ChainState, error) {
-	chooserAddress, _, err := deployer.DeployProofOfAuthority(blockchain, cfg.Ethereum.MineTimeout)
-	if err != nil {
-		return nil, err
+) (chainState *models.ChainState, err error) {
+	var chooserAddress *common.Address
+	if cfg.Bootstrap.Chooser != nil {
+		chooserAddress = cfg.Bootstrap.Chooser
+	} else {
+		chooserAddress, _, err = deployer.DeployProofOfAuthority(
+			blockchain,
+			cfg.Ethereum.MineTimeout,
+			[]common.Address{blockchain.GetAccount().From},
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
@@ -106,7 +116,7 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
-	chainState := &models.ChainState{
+	chainState = &models.ChainState{
 		ChainID:                        blockchain.GetChainID(),
 		AccountRegistry:                *accountRegistryAddress,
 		AccountRegistryDeploymentBlock: *accountRegistryDeploymentBlock,

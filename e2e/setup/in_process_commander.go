@@ -2,12 +2,12 @@ package setup
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/commander"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -17,6 +17,7 @@ type InProcessCommander struct {
 	commander  *commander.Commander
 	cfg        *config.Config
 	blockchain chain.Connection
+	chainSpec  *models.ChainSpec
 }
 
 func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
@@ -40,35 +41,22 @@ func CreateInProcessCommander(commanderConfig *config.Config, deployerConfig *co
 		return nil, err
 	}
 
-	cmd := commander.NewCommander(commanderConfig, blockchain)
 	endpoint := fmt.Sprintf("http://localhost:%s", commanderConfig.API.Port)
-	client := jsonrpc.NewClient(endpoint)
+	inProcessCmd := &InProcessCommander{
+		client:     jsonrpc.NewClient(endpoint),
+		commander:  commander.NewCommander(commanderConfig, blockchain),
+		cfg:        commanderConfig,
+		blockchain: blockchain,
+	}
 
 	if deployerConfig != nil {
-		file, err := os.CreateTemp("", "in_process_commander")
-		if err != nil {
-			return nil, err
-		}
-
-		chainSpecPath := file.Name()
-		commanderConfig.Bootstrap.ChainSpecPath = &chainSpecPath
-		chainSpec, err := commander.Deploy(deployerConfig, blockchain)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.WriteFile(*commanderConfig.Bootstrap.ChainSpecPath, []byte(*chainSpec), 0600)
+		inProcessCmd.chainSpec, inProcessCmd.cfg.Bootstrap.ChainSpecPath, err = deployContracts(inProcessCmd.blockchain, deployerConfig)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &InProcessCommander{
-		client:     client,
-		commander:  cmd,
-		cfg:        commanderConfig,
-		blockchain: blockchain,
-	}, nil
+	return inProcessCmd, nil
 }
 
 func (e *InProcessCommander) Start() error {
@@ -111,4 +99,11 @@ func (e *InProcessCommander) Restart() error {
 
 func (e *InProcessCommander) Client() jsonrpc.RPCClient {
 	return e.client
+}
+
+func (e *InProcessCommander) ChainSpec() *models.ChainSpec {
+	if e.chainSpec == nil {
+		panic("call ChainSpec() on commander that deployed contracts")
+	}
+	return e.chainSpec
 }
