@@ -138,6 +138,7 @@ func StartDockerCommander(opts StartOptions) (*DockerCommander, error) {
 }
 
 func deployContractsAndStoreChainSpec() (*models.ChainSpec, error) {
+	//TODO: deploy custom chooser contract
 	deployerCfg := config.GetDeployerTestConfig()
 
 	blockchain, err := commander.GetChainConnection(deployerCfg.Ethereum)

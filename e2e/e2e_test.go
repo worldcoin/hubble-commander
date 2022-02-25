@@ -66,7 +66,7 @@ func TestCommander(t *testing.T) {
 
 	testMaxBatchDelay(t, commander.Client(), senderWallet, 96)
 
-	testSubmitDepositBatchAndWait(t, commander.Client(), cfg.Ethereum.PrivateKey, 5)
+	testSubmitDepositBatchAndWait(t, commander, cfg.Ethereum.PrivateKey, 5)
 
 	testSenderStateAfterTransfers(t, commander.Client(), senderWallet,
 		32*3+1,

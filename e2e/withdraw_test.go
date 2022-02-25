@@ -50,8 +50,8 @@ func TestWithdrawProcess(t *testing.T) {
 
 	senderWallet := wallets[1]
 
-	commanderClient := newEthClient(t, commander.Client(), commanderConfig.Ethereum.PrivateKey)
-	ethClient := newEthClient(t, commander.Client(), setup.EthClientPrivateKey)
+	commanderClient := newEthClient(t, commander, commanderConfig.Ethereum.PrivateKey)
+	ethClient := newEthClient(t, commander, setup.EthClientPrivateKey)
 	token, tokenContract := getDeployedToken(t, ethClient)
 	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
 	approveTokens(t, tokenContract, ethClient)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ybbus/jsonrpc/v2"
 )
 
@@ -32,4 +33,8 @@ func (e *LocalCommander) Restart() error {
 
 func (e *LocalCommander) Client() jsonrpc.RPCClient {
 	return e.client
+}
+
+func (e *LocalCommander) ChainSpec() *models.ChainSpec {
+	panic("ChainSpec() unimplemented on LocalCommander")
 }

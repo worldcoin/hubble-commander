@@ -107,7 +107,7 @@ func submitBatchesAndWait(
 	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
 	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
-	testSubmitDepositBatchAndWait(t, activeCommander.Client(), commanderPrivateKey, 4)
+	testSubmitDepositBatchAndWait(t, activeCommander, commanderPrivateKey, 4)
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)

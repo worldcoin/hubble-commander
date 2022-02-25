@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/pkg/errors"
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -15,6 +16,7 @@ type Commander interface {
 	Stop() error
 	Restart() error
 	Client() jsonrpc.RPCClient
+	ChainSpec() *models.ChainSpec
 }
 
 func NewConfiguredCommanderFromEnv(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (Commander, error) {
