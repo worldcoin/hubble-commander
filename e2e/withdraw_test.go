@@ -37,6 +37,13 @@ func TestWithdrawProcess(t *testing.T) {
 
 	commander, err := setup.NewConfiguredCommanderFromEnv(commanderConfig, deployerConfig)
 	require.NoError(t, err)
+
+	commanderClient := newEthClient(t, commander, commanderConfig.Ethereum.PrivateKey)
+	ethClient := newEthClient(t, commander, setup.EthClientPrivateKey)
+	token, tokenContract := getDeployedToken(t, ethClient)
+	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
+	approveTokens(t, tokenContract, ethClient)
+
 	err = commander.Start()
 	require.NoError(t, err)
 	defer func() {
@@ -49,12 +56,6 @@ func TestWithdrawProcess(t *testing.T) {
 	require.NoError(t, err)
 
 	senderWallet := wallets[1]
-
-	commanderClient := newEthClient(t, commander.Client(), commanderConfig.Ethereum.PrivateKey)
-	ethClient := newEthClient(t, commander.Client(), setup.EthClientPrivateKey)
-	token, tokenContract := getDeployedToken(t, ethClient)
-	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
-	approveTokens(t, tokenContract, ethClient)
 
 	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
 	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)

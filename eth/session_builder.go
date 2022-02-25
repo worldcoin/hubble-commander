@@ -1,3 +1,4 @@
+// nolint: gocritic
 package eth
 
 import (
@@ -12,10 +13,28 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+type packAndRequestFunc func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error)
+
 type rollupSessionBuilder struct {
 	rollup.RollupSession
 	contract       Contract
 	packAndRequest packAndRequestFunc
+}
+
+func (c *Client) rollup() *rollupSessionBuilder {
+	builder := rollupSessionBuilder{
+		RollupSession: rollup.RollupSession{
+			Contract:     c.Rollup.Rollup,
+			TransactOpts: *c.Blockchain.GetAccount(),
+		},
+		contract: c.Rollup.Contract,
+	}
+
+	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
+		return c.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+	}
+
+	return &builder
 }
 
 func (b *rollupSessionBuilder) WithValue(value *models.Uint256) *rollupSessionBuilder {
@@ -29,7 +48,7 @@ func (b *rollupSessionBuilder) WithGasLimit(gasLimit uint64) *rollupSessionBuild
 }
 
 func (b *rollupSessionBuilder) WithdrawStake(batchID *big.Int) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "withdrawStake", batchID)
+	return b.packAndRequest(true, "withdrawStake", batchID)
 }
 
 func (b *rollupSessionBuilder) SubmitTransfer(
@@ -39,7 +58,7 @@ func (b *rollupSessionBuilder) SubmitTransfer(
 	feeReceivers []*big.Int,
 	txss [][]byte,
 ) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitTransfer", batchID, stateRoots, signatures, feeReceivers, txss)
+	return b.packAndRequest(true, "submitTransfer", batchID, stateRoots, signatures, feeReceivers, txss)
 }
 
 func (b *rollupSessionBuilder) SubmitCreate2Transfer(
@@ -49,7 +68,7 @@ func (b *rollupSessionBuilder) SubmitCreate2Transfer(
 	feeReceivers []*big.Int,
 	txss [][]byte,
 ) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitCreate2Transfer", batchID, stateRoots, signatures, feeReceivers, txss)
+	return b.packAndRequest(true, "submitCreate2Transfer", batchID, stateRoots, signatures, feeReceivers, txss)
 }
 
 func (b *rollupSessionBuilder) SubmitMassMigration(
@@ -60,26 +79,70 @@ func (b *rollupSessionBuilder) SubmitMassMigration(
 	withdrawRoots [][32]byte,
 	txss [][]byte,
 ) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitMassMigration", batchID, stateRoots, signatures, meta, withdrawRoots, txss)
+	return b.packAndRequest(true, "submitMassMigration", batchID, stateRoots, signatures, meta, withdrawRoots, txss)
 }
 
 func (b *rollupSessionBuilder) SubmitDeposits(
 	batchID *big.Int,
-	previous rollup.TypesCommitmentInclusionProof, //nolint:gocritic
+	previous rollup.TypesCommitmentInclusionProof,
 	vacant rollup.TypesSubtreeVacancyProof,
 ) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "submitDeposits", batchID, previous, vacant)
+	return b.packAndRequest(true, "submitDeposits", batchID, previous, vacant)
 }
 
-func (c *Client) rollup() *rollupSessionBuilder {
-	return &rollupSessionBuilder{
-		RollupSession: rollup.RollupSession{
-			Contract:     c.Rollup.Rollup,
-			TransactOpts: *c.Blockchain.GetAccount(),
-		},
-		contract:       c.Rollup.Contract,
-		packAndRequest: c.packAndRequest,
-	}
+func (b *rollupSessionBuilder) DisputeSignatureTransfer(
+	batchID *big.Int,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureTransfer", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeSignatureCreate2Transfer(
+	batchID *big.Int,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProofWithReceiver,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureCreate2Transfer", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeSignatureMassMigration(
+	batchID *big.Int,
+	target rollup.TypesMMCommitmentInclusionProof,
+	signatureProof rollup.TypesSignatureProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeSignatureMassMigration", batchID, target, signatureProof)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionTransfer(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionTransfer", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionCreate2Transfer(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesTransferCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionCreate2Transfer", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) DisputeTransitionMassMigration(
+	batchID *big.Int,
+	previous rollup.TypesCommitmentInclusionProof,
+	target rollup.TypesMMCommitmentInclusionProof,
+	proofs []rollup.TypesStateMerkleProof,
+) (*types.Transaction, error) {
+	return b.packAndRequest(false, "disputeTransitionMassMigration", batchID, previous, target, proofs)
+}
+
+func (b *rollupSessionBuilder) KeepRollingBack() (*types.Transaction, error) {
+	return b.packAndRequest(false, "keepRollingBack")
 }
 
 type accountRegistrySessionBuilder struct {
@@ -89,14 +152,19 @@ type accountRegistrySessionBuilder struct {
 }
 
 func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
-	return &accountRegistrySessionBuilder{
+	builder := accountRegistrySessionBuilder{
 		AccountRegistrySession: accountregistry.AccountRegistrySession{
 			Contract:     a.AccountRegistry.AccountRegistry,
 			TransactOpts: *a.Blockchain.GetAccount(),
 		},
-		contract:       a.AccountRegistry.Contract,
-		packAndRequest: a.packAndRequest,
+		contract: a.AccountRegistry.Contract,
 	}
+
+	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
+		return a.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+	}
+
+	return &builder
 }
 
 func (b *accountRegistrySessionBuilder) WithValue(value *models.Uint256) *accountRegistrySessionBuilder {
@@ -109,9 +177,8 @@ func (b *accountRegistrySessionBuilder) WithGasLimit(gasLimit uint64) *accountRe
 	return b
 }
 
-//nolint: gocritic
 func (b *accountRegistrySessionBuilder) RegisterBatch(pubkeys [16][4]*big.Int) (*types.Transaction, error) {
-	return b.packAndRequest(&b.contract, &b.TransactOpts, "registerBatch", pubkeys)
+	return b.packAndRequest(true, "registerBatch", pubkeys)
 }
 
 type depositManagerSessionBuilder struct {

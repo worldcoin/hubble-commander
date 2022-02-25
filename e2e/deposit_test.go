@@ -23,18 +23,20 @@ import (
 
 const queueDepositGasLimit = 600_000
 
-func testSubmitDepositBatchAndWait(t *testing.T, client jsonrpc.RPCClient, commanderPrivateKey string, batchID uint64) {
-	makeDeposits(t, client, commanderPrivateKey)
-	waitForBatch(t, client, models.MakeUint256(batchID))
+func testSubmitDepositBatchAndWait(
+	t *testing.T,
+	cmd setup.Commander,
+	ethClient *eth.Client,
+	token *models.RegisteredToken,
+	batchID uint64,
+) {
+	// wait for previous batch to be mined
+	waitForBatch(t, cmd.Client(), models.MakeUint256(batchID-1))
+	makeDeposits(t, ethClient, token)
+	waitForBatch(t, cmd.Client(), models.MakeUint256(batchID))
 }
 
-func makeDeposits(t *testing.T, client jsonrpc.RPCClient, commanderPrivateKey string) {
-	ethClient := newEthClient(t, client, setup.EthClientPrivateKey)
-	commanderClient := newEthClient(t, client, commanderPrivateKey)
-
-	token, tokenContract := getDeployedToken(t, ethClient)
-	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
-	approveTokens(t, tokenContract, ethClient)
+func makeDeposits(t *testing.T, ethClient *eth.Client, token *models.RegisteredToken) {
 	amount := models.NewUint256FromBig(*utils.ParseEther("10"))
 
 	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()

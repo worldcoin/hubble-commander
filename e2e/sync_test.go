@@ -11,6 +11,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
+	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +34,12 @@ func TestCommanderSync(t *testing.T) {
 	activeCommander, err := setup.DeployAndCreateInProcessCommander(cfg, nil)
 	require.NoError(t, err)
 
+	commanderClient := newEthClient(t, activeCommander, cfg.Ethereum.PrivateKey)
+	ethClient := newEthClient(t, activeCommander, setup.EthClientPrivateKey)
+	token, tokenContract := getDeployedToken(t, ethClient)
+	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
+	approveTokens(t, tokenContract, ethClient)
+
 	err = activeCommander.Start()
 	require.NoError(t, err)
 	defer func() {
@@ -50,7 +58,7 @@ func TestCommanderSync(t *testing.T) {
 	testGetVersion(t, activeCommander.Client())
 	testGetUserStates(t, activeCommander.Client(), senderWallet)
 
-	submitBatchesAndWait(t, activeCommander, senderWallet, wallets, cfg.Ethereum.PrivateKey)
+	submitBatchesAndWait(t, activeCommander, senderWallet, wallets, ethClient, token)
 
 	cfg.Bootstrap.Prune = true
 	cfg.API.Port = "5002"
@@ -102,12 +110,13 @@ func submitBatchesAndWait(
 	activeCommander *setup.InProcessCommander,
 	senderWallet bls.Wallet,
 	wallets []bls.Wallet,
-	commanderPrivateKey string,
+	ethClient *eth.Client,
+	token *models.RegisteredToken,
 ) {
 	firstTransferHash := testSubmitTransferBatch(t, activeCommander.Client(), senderWallet, 0)
 	firstC2THash := testSubmitC2TBatch(t, activeCommander.Client(), senderWallet, wallets, wallets[len(wallets)-32].PublicKey(), 32)
 	firstMMHash := testSubmitMassMigrationBatch(t, activeCommander.Client(), senderWallet, 64)
-	testSubmitDepositBatchAndWait(t, activeCommander.Client(), commanderPrivateKey, 4)
+	testSubmitDepositBatchAndWait(t, activeCommander, ethClient, token, 4)
 
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstTransferHash)
 	waitForTxToBeIncludedInBatch(t, activeCommander.Client(), firstC2THash)
