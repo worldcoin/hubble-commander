@@ -109,6 +109,9 @@ func (e *InProcessCommander) Client() jsonrpc.RPCClient {
 }
 
 func (e *InProcessCommander) ChainSpec() *models.ChainSpec {
+	if e.chainSpec == nil {
+		panic("call ChainSpec() on commander that deployed contracts")
+	}
 	return e.chainSpec
 }
 

@@ -207,6 +207,9 @@ func (c *DockerCommander) Start() error {
 }
 
 func (c *DockerCommander) ChainSpec() *models.ChainSpec {
+	if c.chainSpec == nil {
+		panic("call ChainSpec() on commander that deployed contracts")
+	}
 	return c.chainSpec
 }
 
