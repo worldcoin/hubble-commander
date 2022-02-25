@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+type IterationCallback func(tx models.GenericTransaction) error
+
 var (
 	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
@@ -19,10 +21,13 @@ var (
 type someMempool interface {
 	getBucket(stateID uint32) *txBucket
 	setBucket(stateID uint32, bucket *txBucket)
+	getTxCount() int
+	setTxCount(count int)
 }
 
 type Mempool struct {
 	buckets map[uint32]*txBucket
+	txCount int
 }
 
 type TxMempool struct {
@@ -43,6 +48,7 @@ func (c *TxController) Commit() {
 	for stateID, bucket := range c.tx.buckets {
 		c.underlying.setBucket(stateID, bucket)
 	}
+	c.underlying.setTxCount(c.tx.getTxCount())
 }
 
 func (c *TxController) Rollback() {
@@ -67,6 +73,7 @@ func beginTransaction(m someMempool) (*TxController, *TxMempool) {
 		underlying: m,
 		Mempool: Mempool{
 			buckets: map[uint32]*txBucket{},
+			txCount: m.getTxCount(),
 		},
 	}
 	txController := &TxController{
@@ -84,6 +91,7 @@ func NewMempool(storage *st.Storage) (*Mempool, error) {
 
 	mempool := &Mempool{
 		buckets: map[uint32]*txBucket{},
+		txCount: txs.Len(),
 	}
 
 	err = mempool.initBuckets(storage, txs)
@@ -182,6 +190,7 @@ func (m *TxMempool) removeTx(stateID uint32) (*txBucket, error) {
 		return nil, errors.WithStack(ErrNonexistentBucket)
 	}
 	bucket.txs = bucket.txs[1:]
+	m.txCount--
 	if len(bucket.txs) == 0 {
 		m.setBucket(stateID, nil)
 		return nil, nil
@@ -207,7 +216,15 @@ func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransact
 	if err != nil {
 		return nil, err
 	}
-	return bucket.addOrReplace(newTx)
+	prevTxHash, err := bucket.addOrReplace(newTx)
+	if err != nil {
+		return nil, err
+	}
+	if prevTxHash != nil {
+		return prevTxHash, nil
+	}
+	m.txCount++
+	return nil, nil
 }
 
 func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
@@ -221,7 +238,7 @@ func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (*common.Hash, 
 			return b.replace(i, newTx)
 		}
 
-		if newTxNonce.Cmp(&b.txs[i].GetBase().Nonce) < 0 {
+		if newTxNonce.Cmp(&tx.GetBase().Nonce) < 0 {
 			b.insertAt(i, newTx)
 			return nil, nil
 		}
@@ -257,6 +274,10 @@ func (m *TxMempool) setBucket(stateID uint32, bucket *txBucket) {
 	m.buckets[stateID] = bucket
 }
 
+func (m *TxMempool) setTxCount(count int) {
+	m.txCount = count
+}
+
 func (m *Mempool) getBucket(stateID uint32) *txBucket {
 	return m.buckets[stateID]
 }
@@ -267,6 +288,34 @@ func (m *Mempool) setBucket(stateID uint32, bucket *txBucket) {
 	} else {
 		m.buckets[stateID] = bucket
 	}
+}
+
+func (m *Mempool) getTxCount() int {
+	return m.txCount
+}
+
+func (m *Mempool) setTxCount(count int) {
+	m.txCount = count
+}
+
+func (m *Mempool) TxCount() int {
+	return m.txCount
+}
+
+func (m *Mempool) ForEach(callback IterationCallback) error {
+	for _, bucket := range m.buckets {
+		for _, tx := range bucket.txs {
+			err := callback(tx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *TxMempool) ForEach(_ IterationCallback) error {
+	panic("ForEach should only be called on Mempool")
 }
 
 func (b txBucket) Copy() *txBucket {

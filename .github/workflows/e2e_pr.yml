@@ -34,7 +34,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run E2E tests
         run: |
-          make setup-geth > /dev/null &
+          make setup-geth
           go test -v -race -coverprofile=coverage.out -covermode=atomic -tags e2e ./e2e
       - name: Cleanup
         # Cleanup this folder because it confuses codecov
@@ -69,7 +69,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
+          make setup-geth
           go test -v -tags e2e -run "BenchmarkTransactionsSuite/(?:TestBenchTransfersCommander|TestBenchCreate2TransfersCommander|TestBenchMassMigrationsCommander)" ./e2e/bench
 
   e2e-benchmarks-2:
@@ -93,7 +93,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
+          make setup-geth
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchMixedCommander ./e2e/bench
 
   e2e-benchmarks-3:
@@ -117,5 +117,5 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run benchmarks
         run: |
-          make setup-geth > /dev/null &
+          make setup-geth
           go test -v -tags e2e -run BenchmarkTransactionsSuite/TestBenchSyncCommander ./e2e/bench

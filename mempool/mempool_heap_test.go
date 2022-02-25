@@ -63,6 +63,7 @@ func (s *MempoolHeapTestSuite) TearDownTest() {
 func (s *MempoolHeapTestSuite) Test_MempoolAndHeapRealUsage() {
 	mempool, err := NewMempool(s.storage.Storage)
 	s.NoError(err)
+	s.Equal(9, mempool.TxCount())
 
 	txs := mempool.GetExecutableTxs(txtype.Transfer)
 	heap := NewTxHeap(txs...)
@@ -72,6 +73,7 @@ func (s *MempoolHeapTestSuite) Test_MempoolAndHeapRealUsage() {
 	txController.Commit()
 
 	s.Equal(0, heap.Size())
+	s.Equal(6, mempool.TxCount())
 	s.NotContains(mempool.buckets, 2)
 
 	s.Equal([]models.GenericTransaction{s.txs[1], s.txs[2]}, mempool.buckets[0].txs)

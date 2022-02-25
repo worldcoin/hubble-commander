@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -163,6 +164,18 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_BucketDoesNotExist() {
 	s.Nil(tx)
 }
 
+func (s *MempoolTestSuite) TestGetNextExecutableTx_DecrementsTxCount() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
+	s.NoError(err)
+
+	s.Equal(9, txMempool.TxCount())
+
+	txController.Commit()
+	s.Equal(9, s.mempool.TxCount())
+}
+
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
 	_, txMempool := s.mempool.BeginTransaction()
 
@@ -202,6 +215,18 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_BucketDoesNotExist() {
 	s.ErrorIs(err, ErrNonexistentBucket)
 }
 
+func (s *MempoolTestSuite) TestRemoveFailedTx_DecrementsTxCount() {
+	txController, txMempool := s.mempool.BeginTransaction()
+
+	err := txMempool.RemoveFailedTx(0)
+	s.NoError(err)
+
+	s.Equal(9, txMempool.TxCount())
+
+	txController.Commit()
+	s.Equal(9, s.mempool.TxCount())
+}
+
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
 	tx := s.newTransfer(0, 14)
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
@@ -239,6 +264,40 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.ErrorIs(err, ErrTxReplacementFailed)
 	s.Nil(prevTxHash)
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_IncrementsTxCountOnInsertion() {
+	tx := s.newTransfer(0, 14)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(11, s.mempool.TxCount())
+}
+
+func (s *MempoolTestSuite) TestAddOrReplace_DoesNotIncrementTxCountOnReplacement() {
+	tx := s.newTransfer(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(10, s.mempool.TxCount())
+}
+
+func (s *MempoolTestSuite) TestTxCount() {
+	s.Equal(10, s.mempool.TxCount())
+}
+
+func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransaction() {
+	seen := make(map[common.Hash]bool)
+	err := s.mempool.ForEach(func(tx models.GenericTransaction) error {
+		seen[tx.GetBase().Hash] = true
+		return nil
+	})
+	s.NoError(err)
+	s.Equal(10, len(seen))
+	for _, tx := range s.txs {
+		s.True(seen[tx.GetBase().Hash])
+	}
 }
 
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {

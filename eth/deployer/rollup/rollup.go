@@ -10,7 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/libs/estimator"
 	"github.com/Worldcoin/hubble-commander/contracts/massmigration"
-	"github.com/Worldcoin/hubble-commander/contracts/proofofburn"
+	"github.com/Worldcoin/hubble-commander/contracts/proofofauthority"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
@@ -61,7 +61,7 @@ type Dependencies struct {
 
 type RollupContracts struct {
 	Config                 DeploymentConfig
-	Chooser                *proofofburn.ProofOfBurn
+	Chooser                *proofofauthority.ProofOfAuthority
 	AccountRegistry        *accountregistry.AccountRegistry
 	AccountRegistryAddress common.Address
 	TokenRegistry          *tokenregistry.TokenRegistry
@@ -299,7 +299,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, err
 	}
 
-	proofOfBurn, err := proofofburn.NewProofOfBurn(*cfg.Chooser, c.GetBackend())
+	proofOfAuthority, err := proofofauthority.NewProofOfAuthority(*cfg.Chooser, c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -311,7 +311,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 
 	return &RollupContracts{
 		Config:                 *cfg,
-		Chooser:                proofOfBurn,
+		Chooser:                proofOfAuthority,
 		AccountRegistry:        accountRegistry,
 		AccountRegistryAddress: *cfg.AccountRegistry,
 		TokenRegistry:          tokenRegistry,
@@ -388,11 +388,11 @@ func fillWithDefaults(params *Params) {
 
 func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout time.Duration) error {
 	if dependencies.Chooser == nil {
-		proofOfBurnAddress, _, err := deployer.DeployProofOfBurn(c, mineTimeout)
+		proofOfAuthorityAddress, _, err := deployer.DeployProofOfAuthority(c, mineTimeout, []common.Address{c.GetAccount().From})
 		if err != nil {
 			return err
 		}
-		dependencies.Chooser = proofOfBurnAddress
+		dependencies.Chooser = proofOfAuthorityAddress
 	}
 	if dependencies.AccountRegistry == nil {
 		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout)

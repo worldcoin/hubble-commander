@@ -20,11 +20,13 @@ build: clean compile
 
 start-geth-locally:
 	rm -rf e2e/geth-data/geth
+	./e2e/geth-data/fundSecondAccount.sh &
 	geth --datadir e2e/geth-data --dev --dev.period 1 --http --ws --http.api "eth,miner" --ws.api "eth,miner"
 
 setup-geth:
 	rm -rf e2e/geth-data/geth
-	docker-compose up geth
+	docker-compose up -d geth
+	./e2e/geth-data/fundSecondAccount.sh docker
 
 update-contracts:
 	git submodule update --remote
