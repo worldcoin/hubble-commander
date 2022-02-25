@@ -30,6 +30,8 @@ func testSubmitDepositBatchAndWait(
 	token *models.RegisteredToken,
 	batchID uint64,
 ) {
+	// wait for previous batch to be mined
+	waitForBatch(t, cmd.Client(), models.MakeUint256(batchID-1))
 	makeDeposits(t, ethClient, token)
 	waitForBatch(t, cmd.Client(), models.MakeUint256(batchID))
 }
