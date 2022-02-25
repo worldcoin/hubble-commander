@@ -46,8 +46,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 	startTxsSending := clientCfg.TxsChannels == nil
 	if startTxsSending {
 		clientCfg.TxsChannels = &TxsTrackingChannels{
-			SkipSendingRequestsThroughChannel: true,
-			SkipSentTxsChannel:                true,
+			SkipChannelSending: true,
 		}
 	}
 

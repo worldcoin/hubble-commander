@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -27,6 +28,15 @@ func getStringOrPanic(key string) string {
 		log.Panicf("%s config not specified", key)
 	}
 	return value
+}
+
+func getAddressOrNil(key string) *common.Address {
+	strAddress := getStringOrNil(key)
+	if strAddress == nil {
+		return nil
+	}
+	address := common.HexToAddress(*strAddress)
+	return &address
 }
 
 func getUint32(key string, fallback uint32) uint32 {

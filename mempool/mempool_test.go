@@ -170,10 +170,12 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_DecrementsTxCount() {
 	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
 	s.NoError(err)
 
-	s.Equal(9, txMempool.TxCount())
+	s.Equal(7, txMempool.TxCount(txtype.Transfer))
+	s.Equal(2, txMempool.TxCount(txtype.Create2Transfer))
 
 	txController.Commit()
-	s.Equal(9, s.mempool.TxCount())
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
@@ -221,10 +223,12 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_DecrementsTxCount() {
 	err := txMempool.RemoveFailedTx(0)
 	s.NoError(err)
 
-	s.Equal(9, txMempool.TxCount())
+	s.Equal(7, txMempool.TxCount(txtype.Transfer))
+	s.Equal(2, txMempool.TxCount(txtype.Create2Transfer))
 
 	txController.Commit()
-	s.Equal(9, s.mempool.TxCount())
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
@@ -271,20 +275,33 @@ func (s *MempoolTestSuite) TestAddOrReplace_IncrementsTxCountOnInsertion() {
 	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
-	s.Equal(11, s.mempool.TxCount())
+	s.Equal(9, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
-func (s *MempoolTestSuite) TestAddOrReplace_DoesNotIncrementTxCountOnReplacement() {
+func (s *MempoolTestSuite) TestAddOrReplace_DoesNotChangeTxCountOnReplacementWithTheSameType() {
 	tx := s.newTransfer(0, 11)
 	tx.Fee = models.MakeUint256(20)
 	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
-	s.Equal(10, s.mempool.TxCount())
+	s.Equal(8, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
-func (s *MempoolTestSuite) TestTxCount() {
-	s.Equal(10, s.mempool.TxCount())
+func (s *MempoolTestSuite) TestAddOrReplace_ChangesTxCountsOnReplacementWithDifferentType() {
+	tx := s.newC2T(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(3, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
+func (s *MempoolTestSuite) TestTxCount_ReturnsCountForGivenTxType() {
+	s.Equal(8, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransaction() {

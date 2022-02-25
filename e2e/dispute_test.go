@@ -55,7 +55,7 @@ func TestCommanderDispute(t *testing.T) {
 	senderWallet := wallets[1]
 	receiverWallet := wallets[len(wallets)-1]
 
-	ethClient := newEthClient(t, cmd.Client())
+	ethClient := newEthClient(t, cmd, setup.EthClientPrivateKey)
 
 	testDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	testDisputeSignatureC2T(t, cmd.Client(), ethClient, receiverWallet)
@@ -413,23 +413,22 @@ func waitForSubmittedBatch(t *testing.T, ethClient *eth.Client, transaction *typ
 	require.NoError(t, err)
 }
 
-func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
-	var info dto.NetworkInfo
-	err := client.CallFor(&info, "hubble_getNetworkInfo")
-	require.NoError(t, err)
-
+func newEthClient(t *testing.T, cmd setup.Commander, privateKey string) *eth.Client {
+	chainSpec := cmd.ChainSpec()
 	chainState := models.ChainState{
-		ChainID:                        info.ChainID,
-		AccountRegistry:                info.AccountRegistry,
-		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
-		TokenRegistry:                  info.TokenRegistry,
-		SpokeRegistry:                  info.SpokeRegistry,
-		DepositManager:                 info.DepositManager,
-		WithdrawManager:                info.WithdrawManager,
-		Rollup:                         info.Rollup,
+		ChainID:                        chainSpec.ChainID,
+		AccountRegistry:                chainSpec.AccountRegistry,
+		AccountRegistryDeploymentBlock: chainSpec.AccountRegistryDeploymentBlock,
+		TokenRegistry:                  chainSpec.TokenRegistry,
+		SpokeRegistry:                  chainSpec.SpokeRegistry,
+		DepositManager:                 chainSpec.DepositManager,
+		WithdrawManager:                chainSpec.WithdrawManager,
+		Rollup:                         chainSpec.Rollup,
+		GenesisAccounts:                chainSpec.GenesisAccounts,
 	}
 
 	cfg := config.GetConfig()
+	cfg.Ethereum.PrivateKey = privateKey
 	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	require.NoError(t, err)
 
@@ -451,8 +450,7 @@ func newEthClient(t *testing.T, client jsonrpc.RPCClient) *eth.Client {
 	require.NoError(t, err)
 
 	txsChannels := &eth.TxsTrackingChannels{
-		SkipSentTxsChannel:                true,
-		SkipSendingRequestsThroughChannel: true,
+		SkipChannelSending: true,
 	}
 
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{

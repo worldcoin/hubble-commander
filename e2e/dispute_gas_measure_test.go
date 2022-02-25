@@ -42,7 +42,7 @@ func TestMeasureDisputeGasUsage(t *testing.T) {
 
 	senderWallet := wallets[1]
 
-	ethClient := newEthClient(t, cmd.Client())
+	ethClient := newEthClient(t, cmd, setup.EthClientPrivateKey)
 
 	measureDisputeSignatureTransfer(t, cmd.Client(), ethClient)
 	measureDisputeSignatureC2T(t, cmd.Client(), ethClient, wallets)
