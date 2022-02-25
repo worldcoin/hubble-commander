@@ -29,7 +29,7 @@ func (s *BatchStorage) copyWithNewDatabase(database *Database) *BatchStorage {
 
 func (s *BatchStorage) AddBatch(batch *models.Batch) error {
 	if batch.PrevStateRoot == nil {
-		return errors.New("PrevStateRoot is required field")
+		return ErrPrevStateRootIsEmpty
 	}
 	return s.database.Badger.Insert(batch.ID, *stored.NewBatchFromModelsBatch(batch))
 }
@@ -48,7 +48,7 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 
 func (s *BatchStorage) UpdateBatch(batch *models.Batch) error {
 	if batch.PrevStateRoot == nil {
-		return errors.New("PrevStateRoot is required field")
+		return ErrPrevStateRootIsEmpty
 	}
 	err := s.database.Badger.Update(batch.ID, *stored.NewBatchFromModelsBatch(batch))
 	if err == bh.ErrNotFound {
