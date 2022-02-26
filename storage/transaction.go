@@ -110,7 +110,7 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		return s.unsafeAddTransaction(tx)
+		return txStorage.unsafeAddTransaction(tx)
 	})
 }
 
@@ -187,14 +187,14 @@ func (s *TransactionStorage) checkNoTx(hash *common.Hash, result interface{}) er
 
 func (s *TransactionStorage) ReplacePendingTransaction(hash *common.Hash, newTx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		err := s.database.Badger.Delete(*hash, &stored.PendingTx{})
+		err := txStorage.database.Badger.Delete(*hash, &stored.PendingTx{})
 		if errors.Is(err, bh.ErrNotFound) {
 			return errors.WithStack(NewNotFoundError("transaction"))
 		}
 		if err != nil {
 			return err
 		}
-		return s.database.Badger.Insert(newTx.GetBase().Hash, *stored.NewPendingTx(newTx))
+		return txStorage.database.Badger.Insert(newTx.GetBase().Hash, *stored.NewPendingTx(newTx))
 	})
 }
 
@@ -223,7 +223,7 @@ func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactio
 		for i := 0; i < txs.Len(); i++ {
 			err := txStorage.AddTransaction(txs.At(i))
 			if errors.Is(err, bh.ErrKeyExists) {
-				err = s.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
+				err = txStorage.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
 				if err != nil {
 					return err
 				}
