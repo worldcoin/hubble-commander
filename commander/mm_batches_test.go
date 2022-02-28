@@ -160,7 +160,7 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 }
 
 func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
-	pool, err := mempool.NewMempool(storage)
+	pool, err := mempool.NewTxPool(storage)
 	s.NoError(err)
 
 	txsCtx := executor.NewTxsContext(
@@ -168,7 +168,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 		s.client.Client,
 		s.cfg.Rollup,
 		metrics.NewCommanderMetrics(),
-		pool,
+		pool.Mempool(),
 		context.Background(),
 		batchtype.MassMigration,
 	)

@@ -41,11 +41,11 @@ func NewTxsContext(
 }
 
 func NewTestTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType) (*TxsContext, error) {
-	pool, err := mempool.NewMempool(executionCtx.storage)
+	pool, err := mempool.NewTxPool(executionCtx.storage)
 	if err != nil {
 		return nil, err
 	}
-	return newTxsContext(executionCtx, pool, batchType), nil
+	return newTxsContext(executionCtx, pool.Mempool(), batchType), nil
 }
 
 func newTxsContext(executionCtx *ExecutionContext, pool *mempool.Mempool, batchType batchtype.BatchType) *TxsContext {
