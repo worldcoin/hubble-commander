@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -118,8 +119,43 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	s.Equal(newTx, mempoolTxs[0])
 }
 
-func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTransactionsWithTooLowNonces() {
+func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTxsWithTooLowNonces() {
+	badTxs := []models.GenericTransaction{
+		s.newTransfer(0, 10),
+		s.newTransfer(1, 10),
+	}
+	goodTx := s.newTransfer(5, 10)
+	txs := []models.GenericTransaction{
+		badTxs[0],
+		goodTx,
+		badTxs[1],
+	}
 
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
+
+	for _, tx := range txs {
+		err := s.storage.AddTransaction(tx)
+		s.NoError(err)
+		s.txPool.Send(tx)
+	}
+
+	s.waitForTxsToBeRead(3)
+
+	err := s.txPool.UpdateMempool()
+	s.NoError(err)
+
+	mempoolTxs := s.getAllTxs(0)
+	s.Len(mempoolTxs, 1)
+	s.Equal(goodTx, mempoolTxs[0])
+
+	failedTxs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(failedTxs, 2)
+	for _, badTx := range badTxs {
+		badTx.GetBase().ErrorMessage = ref.String(ErrTxNonceTooLow.Error())
+		s.Contains(failedTxs, badTx)
+	}
 }
 
 func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAsFailed() {

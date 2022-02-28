@@ -81,6 +81,10 @@ func (p *txPool) UpdateMempool() error {
 func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
 	txHash := &tx.GetBase().Hash
 	prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
+	if errors.Is(err, ErrTxNonceTooLow) {
+		log.WithField("txHash", *txHash).Errorf("Mempool: %s failed: %s", tx.Type().String(), err)
+		return p.storage.SetTransactionError(getNonceError(txHash))
+	}
 	if errors.Is(err, ErrTxReplacementFailed) {
 		log.WithField("txHash", *txHash).Debug("Mempool: transaction replacement failed")
 		return p.storage.SetTransactionError(getReplacementError(txHash))
@@ -128,5 +132,12 @@ func getReplacementError(txHash *common.Hash) models.TxError {
 	return models.TxError{
 		TxHash:       *txHash,
 		ErrorMessage: ErrTxReplacementFailed.Error(),
+	}
+}
+
+func getNonceError(txHash *common.Hash) models.TxError {
+	return models.TxError{
+		TxHash:       *txHash,
+		ErrorMessage: ErrTxNonceTooLow.Error(),
 	}
 }
