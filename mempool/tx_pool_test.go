@@ -48,7 +48,8 @@ func (s *TxPoolTestSuite) TearDownTest() {
 }
 
 func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
 	for i := 5; i < 10; i++ {
 		s.txPool.Send(s.newTransfer(uint64(i), 10))
@@ -61,9 +62,6 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 
 	receivedTxs := s.getAllTxs(0)
 	s.Len(receivedTxs, 5)
-
-	cancel()
-	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
@@ -72,7 +70,8 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 	err := s.storage.AddTransaction(replacementTx)
 	s.NoError(err)
 
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
 	s.txPool.Send(tx)
 	s.txPool.Send(replacementTx)
@@ -91,9 +90,6 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 	mempoolTxs := s.getAllTxs(0)
 	s.Len(mempoolTxs, 1)
 	s.Equal(tx, mempoolTxs[0])
-
-	cancel()
-	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
@@ -103,7 +99,8 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	err := s.storage.AddTransaction(previousTx)
 	s.NoError(err)
 
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
 	s.txPool.Send(previousTx)
 	s.txPool.Send(newTx)
@@ -119,9 +116,6 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	mempoolTxs := s.getAllTxs(0)
 	s.Len(mempoolTxs, 1)
 	s.Equal(newTx, mempoolTxs[0])
-
-	cancel()
-	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTransactionsWithTooLowNonces() {
@@ -153,7 +147,7 @@ func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAs
 	s.NotContains(s.txPool.mempool.buckets, 0)
 }
 
-func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc) {
+func (s *TxPoolTestSuite) startReadingTxs() (stopReadingTxs func()) {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -163,7 +157,10 @@ func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc
 		err := s.txPool.ReadTxs(ctx)
 		s.NoError(err)
 	}()
-	return wg, cancel
+	return func() {
+		cancel()
+		wg.Wait()
+	}
 }
 
 func (s *TxPoolTestSuite) waitForTxsToBeRead(expectedTxsLength int) {
