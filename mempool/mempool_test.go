@@ -398,7 +398,7 @@ func setUserStates(s *require.Assertions, stateTree *st.StateTree, nonces map[ui
 	for stateID, nonce := range nonces {
 		_, err := stateTree.Set(stateID, &models.UserState{
 			PubKeyID: 0,
-			TokenID:  models.MakeUint256(uint64(stateID)),
+			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(1000),
 			Nonce:    models.MakeUint256(nonce),
 		})
