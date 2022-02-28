@@ -10,10 +10,8 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -38,7 +36,7 @@ func (s *BenchmarkTransactionsSuite) SetupTest() {
 		MaxConcurrentWorkers:  4,
 	})
 
-	unregisteredWallets, err := setup.CreateUnregisteredWalletsForBenchmark(s.benchConfig.TxCount, s.domain)
+	unregisteredWallets, err := setup.CreateUnregisteredWalletsForBenchmark(s.benchConfig.TxCount, s.Domain)
 	s.NoError(err)
 
 	s.unregisteredWallets = unregisteredWallets
@@ -74,38 +72,27 @@ func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
 }
 
 func (s *BenchmarkTransactionsSuite) benchSyncing() {
-	cfg := config.GetConfig()
-
-	cfg.Bootstrap.Prune = true
-	cfg.API.Port = "5002"
-	cfg.Metrics.Port = "2002"
-	cfg.Badger.Path += "_passive"
-	cfg.Bootstrap.ChainSpecPath = nil
-	cfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
-	cfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
-	passiveCommander, err := setup.CreateInProcessCommander(cfg, nil)
-	s.NoError(err)
-	err = passiveCommander.Start()
+	passiveCommander := s.preparePassiveCommander()
+	err := passiveCommander.Start()
 	s.NoError(err)
 	defer func() {
 		s.NoError(passiveCommander.Stop())
 	}()
 
 	// Observe commander syncing
-	var networkInfo dto.NetworkInfo
-	err = s.commander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
-	s.NoError(err)
+	networkInfo := s.GetNetworkInfo()
+
+	// Further calls are only done to the passive commander
+	s.RPCClient = passiveCommander.Client()
 
 	latestBatch := networkInfo.LatestBatch.Uint64()
 	startTime := time.Now()
 	lastSyncedBatch := uint64(0)
 	for lastSyncedBatch < latestBatch {
-		var networkInfo dto.NetworkInfo
-		err = passiveCommander.Client().CallFor(&networkInfo, "hubble_getNetworkInfo")
-		s.NoError(err)
+		passiveCommanderNetworkInfo := s.GetNetworkInfo()
 		newBatch := uint64(0)
-		if networkInfo.LatestBatch != nil {
-			newBatch = networkInfo.LatestBatch.Uint64()
+		if passiveCommanderNetworkInfo.LatestBatch != nil {
+			newBatch = passiveCommanderNetworkInfo.LatestBatch.Uint64()
 		}
 
 		if newBatch == lastSyncedBatch {
@@ -113,7 +100,7 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 		}
 		lastSyncedBatch = newBatch
 
-		txCount := networkInfo.TransactionCount
+		txCount := passiveCommanderNetworkInfo.TransactionCount
 
 		fmt.Printf(
 			"Transfers synced: %d, throughput: %f tx/s, batches synced: %d/%d\n",
@@ -123,6 +110,21 @@ func (s *BenchmarkTransactionsSuite) benchSyncing() {
 			latestBatch,
 		)
 	}
+}
+
+func (s *BenchmarkTransactionsSuite) preparePassiveCommander() *setup.InProcessCommander {
+	newCommanderCfg := *s.Cfg
+	newCommanderCfg.Bootstrap.Prune = true
+	newCommanderCfg.API.Port = "5555"
+	newCommanderCfg.Metrics.Port = "2222"
+	newCommanderCfg.Badger.Path += "_passive"
+	newCommanderCfg.Bootstrap.ChainSpecPath = nil
+	newCommanderCfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
+	newCommanderCfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
+	passiveCommander, err := setup.CreateInProcessCommander(&newCommanderCfg, nil)
+	s.NoError(err)
+
+	return passiveCommander
 }
 
 func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distribution TxTypeDistribution) {
@@ -141,15 +143,15 @@ func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distributi
 				to = s.stateIds[randomInt(len(s.stateIds))]
 			}
 
-			lastTxHash = s.sendTransfer(senderWallet, senderStateID, to, nonce)
+			lastTxHash = s.sendTransferFromCustomWallet(senderWallet, senderStateID, to, nonce)
 		case txtype.Create2Transfer:
 			// Pick random unregistered receiver pubkey
 			to := s.unregisteredWallets[unregisteredWalletsIndex].PublicKey()
 			unregisteredWalletsIndex++
 
-			lastTxHash = s.sendC2T(senderWallet, senderStateID, to, nonce)
+			lastTxHash = s.sendC2TFromCustomWallet(senderWallet, senderStateID, to, nonce)
 		case txtype.MassMigration:
-			lastTxHash = s.sendMassMigration(senderWallet, senderStateID, nonce)
+			lastTxHash = s.sendMMFromCustomWallet(senderWallet, senderStateID, nonce)
 		}
 
 		return lastTxHash

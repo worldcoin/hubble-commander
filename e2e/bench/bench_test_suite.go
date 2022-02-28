@@ -9,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/e2e"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -17,7 +16,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type BenchmarkConfig struct {
@@ -35,15 +33,11 @@ type BenchmarkConfig struct {
 }
 
 type benchmarkTestSuite struct {
-	*require.Assertions
-	suite.Suite
+	setup.E2ETestSuite
 
 	benchConfig BenchmarkConfig
 
-	commander setup.Commander
-	domain    bls.Domain
-	wallets   []bls.Wallet
-	stateIds  []uint32
+	stateIds []uint32
 
 	startTime time.Time
 	waitGroup sync.WaitGroup
@@ -60,7 +54,15 @@ func (s *benchmarkTestSuite) SetupSuite() {
 }
 
 func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
-	s.SetupTestWithRollupConfig(benchmarkConfig, nil)
+	s.SetupTestEnvironment(nil, nil)
+
+	s.benchConfig = benchmarkConfig
+
+	s.stateIds = make([]uint32, 0)
+	s.waitGroup = sync.WaitGroup{}
+	s.txsSent = 0
+	s.txsQueued = 0
+	s.lastReportedTxCount = 0
 }
 
 func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.Config) {
@@ -72,13 +74,6 @@ func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig Benchmark
 	err = commander.Start()
 	s.NoError(err)
 
-	s.domain = e2e.GetDomain(s.T(), commander.Client())
-
-	wallets, err := setup.CreateWallets(s.domain)
-	s.NoError(err)
-
-	s.commander = commander
-	s.wallets = wallets
 	s.stateIds = make([]uint32, 0)
 	s.waitGroup = sync.WaitGroup{}
 	s.txsSent = 0
@@ -86,11 +81,7 @@ func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig Benchmark
 	s.lastReportedTxCount = 0
 }
 
-func (s *benchmarkTestSuite) TearDownTest() {
-	s.NoError(s.commander.Stop())
-}
-
-func (s *benchmarkTestSuite) sendTransfer(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendTransferFromCustomWallet(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
@@ -101,14 +92,14 @@ func (s *benchmarkTestSuite) sendTransfer(wallet bls.Wallet, from, to uint32, no
 	s.NoError(err)
 
 	var transferHash common.Hash
-	err = s.commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
+	err = s.RPCClient.CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
 	s.NoError(err)
 	s.NotNil(transferHash)
 
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.PublicKey, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendC2TFromCustomWallet(wallet bls.Wallet, from uint32, to *models.PublicKey, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignCreate2Transfer(&wallet, dto.Create2Transfer{
 		FromStateID: &from,
 		ToPublicKey: to,
@@ -119,14 +110,14 @@ func (s *benchmarkTestSuite) sendC2T(wallet bls.Wallet, from uint32, to *models.
 	s.NoError(err)
 
 	var transferHash common.Hash
-	err = s.commander.Client().CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
+	err = s.RPCClient.CallFor(&transferHash, "hubble_sendTransaction", []interface{}{*transfer})
 	s.NoError(err)
 	s.NotNil(transferHash)
 
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) sendMassMigration(wallet bls.Wallet, from uint32, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendMMFromCustomWallet(wallet bls.Wallet, from uint32, nonce models.Uint256) common.Hash {
 	massMigration, err := api.SignMassMigration(&wallet, dto.MassMigration{
 		FromStateID: &from,
 		SpokeID:     ref.Uint32(1),
@@ -137,7 +128,7 @@ func (s *benchmarkTestSuite) sendMassMigration(wallet bls.Wallet, from uint32, n
 	s.NoError(err)
 
 	var massMigrationHash common.Hash
-	err = s.commander.Client().CallFor(&massMigrationHash, "hubble_sendTransaction", []interface{}{*massMigration})
+	err = s.RPCClient.CallFor(&massMigrationHash, "hubble_sendTransaction", []interface{}{*massMigration})
 	s.NoError(err)
 	s.NotNil(massMigrationHash)
 
@@ -149,9 +140,9 @@ func (s *benchmarkTestSuite) sendTransactions(
 ) {
 	s.startTime = time.Now()
 
-	for _, wallet := range s.wallets {
+	for _, wallet := range s.Wallets {
 		var userStates []dto.UserStateWithID
-		err := s.commander.Client().CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
+		err := s.RPCClient.CallFor(&userStates, "hubble_getUserStates", []interface{}{wallet.PublicKey()})
 		if err != nil {
 			continue
 		}
@@ -209,11 +200,7 @@ func (s *benchmarkTestSuite) runForWallet(
 		continueChecking := true
 		for _, tx := range txsToWatch {
 			if continueChecking {
-				var receipt struct {
-					Status txstatus.TransactionStatus
-				}
-				err := s.commander.Client().CallFor(&receipt, "hubble_getTransaction", []interface{}{tx})
-				s.NoError(err)
+				receipt := s.GetTransaction(tx)
 
 				if receipt.Status != txstatus.Pending {
 					atomic.AddInt64(&s.txsSent, s.benchConfig.TxBatchSize)
