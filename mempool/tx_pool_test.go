@@ -61,7 +61,7 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	err := s.txPool.UpdateMempool()
 	s.NoError(err)
 
-	receivedTxs := s.getAllTxs(0)
+	receivedTxs := s.getAllTxs()
 	s.Len(receivedTxs, 5)
 }
 
@@ -88,7 +88,7 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 	s.Equal(replacementTx.Hash, txs.At(0).GetBase().Hash)
 	s.Equal(ErrTxReplacementFailed.Error(), *txs.At(0).GetBase().ErrorMessage)
 
-	mempoolTxs := s.getAllTxs(0)
+	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
 	s.Equal(tx, mempoolTxs[0])
 }
@@ -114,7 +114,7 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	_, err = s.storage.GetTransfer(previousTx.Hash)
 	s.True(st.IsNotFoundError(err))
 
-	mempoolTxs := s.getAllTxs(0)
+	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
 	s.Equal(newTx, mempoolTxs[0])
 }
@@ -145,7 +145,7 @@ func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTxsWithTooLowNonces() 
 	err := s.txPool.UpdateMempool()
 	s.NoError(err)
 
-	mempoolTxs := s.getAllTxs(0)
+	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
 	s.Equal(goodTx, mempoolTxs[0])
 
@@ -213,12 +213,12 @@ func (s *TxPoolTestSuite) newTransfer(nonce, fee uint64) *models.Transfer {
 	return tx
 }
 
-func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction {
+func (s *TxPoolTestSuite) getAllTxs() []models.GenericTransaction {
 	txs := s.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
 
 	_, txMempool := s.txPool.Mempool().BeginTransaction()
 	for {
-		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
 		s.NoError(err)
 		if tx == nil {
 			break
