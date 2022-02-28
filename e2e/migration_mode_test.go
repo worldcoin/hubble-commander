@@ -148,19 +148,7 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 
 	s.startMiningBlocks()
 
-	s.waitForMinedBatchAndValidate(2, 4)
-
-	s.waitForMinedBatchAndValidate(3, 8)
-
-	s.SendNTransactions(7, dto.Transfer{
-		FromStateID: ref.Uint32(0),
-		ToStateID:   ref.Uint32(1),
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
-	})
-
-	s.waitForMinedBatchAndValidate(4, 7)
+	s.testValidateMigratedCommanderFunctionalities()
 }
 
 func (s *MigrationModeE2ETestSuite) testValidateCommanderNotAcceptingTxs() {
@@ -178,6 +166,22 @@ func (s *MigrationModeE2ETestSuite) testValidateCommanderNotAcceptingTxs() {
 	err = s.RPCClient.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
 	s.True(errors.As(err, &rpcError))
 	s.Equal(10017, rpcError.Code)
+}
+
+func (s *MigrationModeE2ETestSuite) testValidateMigratedCommanderFunctionalities() {
+	s.waitForMinedBatchAndValidate(2, 4)
+
+	s.waitForMinedBatchAndValidate(3, 8)
+
+	s.SendNTransactions(7, dto.Transfer{
+		FromStateID: ref.Uint32(0),
+		ToStateID:   ref.Uint32(1),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+	})
+
+	s.waitForMinedBatchAndValidate(4, 7)
 }
 
 func (s *MigrationModeE2ETestSuite) createAdminRPCClient(cfg *config.Config) jsonrpc.RPCClient {

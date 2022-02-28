@@ -99,7 +99,12 @@ func (s *benchmarkTestSuite) sendTransferFromCustomWallet(wallet bls.Wallet, fro
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) sendC2TFromCustomWallet(wallet bls.Wallet, from uint32, to *models.PublicKey, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendC2TFromCustomWallet(
+	wallet bls.Wallet,
+	from uint32,
+	to *models.PublicKey,
+	nonce models.Uint256,
+) common.Hash {
 	transfer, err := api.SignCreate2Transfer(&wallet, dto.Create2Transfer{
 		FromStateID: &from,
 		ToPublicKey: to,

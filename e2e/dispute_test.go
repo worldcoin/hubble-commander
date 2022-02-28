@@ -58,10 +58,6 @@ func (s *DisputesE2ETestSuite) TestMeasureDisputesGasUsage() {
 	s.measureDisputeTransitionMM()
 }
 
-func TestDisputesE2ETestSuite(t *testing.T) {
-	suite.Run(t, new(DisputesE2ETestSuite))
-}
-
 func (s *DisputesE2ETestSuite) testDisputeSignatureTransfer() {
 	s.requireRollbackCompleted(func() {
 		s.sendNTransfersBatchWithInvalidSignature(1, 1)
@@ -197,4 +193,8 @@ func (s *DisputesE2ETestSuite) measureDisputeTransitionMM() {
 	})
 
 	s.requireBatchesCount(2)
+}
+
+func TestDisputesE2ETestSuite(t *testing.T) {
+	suite.Run(t, new(DisputesE2ETestSuite))
 }

@@ -70,11 +70,11 @@ func (s *WithdrawalsE2ETestSuite) TestWithdrawals() {
 func (s *WithdrawalsE2ETestSuite) makeDeposit() []dto.UserStateWithID {
 	fullDepositBatchCount := s.CalculateDepositsCountForFullBatch()
 
-	userStatesBeforeDeposit := s.GetUserStates(*s.senderWallet.PublicKey())
+	userStatesBeforeDeposit := s.GetUserStates(s.senderWallet.PublicKey())
 
 	s.makeFullDepositBatch(fullDepositBatchCount)
 
-	userStatesAfterDeposit := s.GetUserStates(*s.senderWallet.PublicKey())
+	userStatesAfterDeposit := s.GetUserStates(s.senderWallet.PublicKey())
 
 	newUserStates := s.userStatesDifference(userStatesAfterDeposit, userStatesBeforeDeposit)
 	s.Len(newUserStates, fullDepositBatchCount)
@@ -269,7 +269,9 @@ func (s *WithdrawalsE2ETestSuite) getMassMigrationCommitmentProof(commitmentID *
 	return &proof
 }
 
-func (s *WithdrawalsE2ETestSuite) massMigrationCommitmentProofToCalldata(proof *dto.MassMigrationCommitmentProof) withdrawmanager.TypesMMCommitmentInclusionProof {
+func (s *WithdrawalsE2ETestSuite) massMigrationCommitmentProofToCalldata(
+	proof *dto.MassMigrationCommitmentProof,
+) withdrawmanager.TypesMMCommitmentInclusionProof {
 	return withdrawmanager.TypesMMCommitmentInclusionProof{
 		Commitment: withdrawmanager.TypesMassMigrationCommitment{
 			StateRoot: utils.ByteSliceTo32ByteArray(proof.StateRoot.Bytes()),

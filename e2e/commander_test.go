@@ -38,7 +38,7 @@ func (s *CoreCommanderE2ETestSuite) TestCommander() {
 	s.testGetVersion()
 
 	// Public key of the wallet that has two different states registered to the same PubKeyID
-	testWalletPublicKey := *s.Wallets[1].PublicKey()
+	testWalletPublicKey := s.Wallets[1].PublicKey()
 
 	testUserState := s.testGetUserStates(testWalletPublicKey)
 	s.testGetPublicKeyMethods(testUserState, testWalletPublicKey)
@@ -50,7 +50,7 @@ func (s *CoreCommanderE2ETestSuite) TestCommander() {
 	s.testSubmitDepositBatchAndWait()
 
 	s.testUserStateAfterTransfers(
-		*s.Wallets[1].PublicKey(),
+		s.Wallets[1].PublicKey(),
 		1,
 		32*3+1,
 		-1*(32*100*3+100),
@@ -58,7 +58,7 @@ func (s *CoreCommanderE2ETestSuite) TestCommander() {
 
 	feeReceiverStateID := uint64(s.Cfg.Rollup.FeeReceiverPubKeyID)
 	s.testUserStateAfterTransfers(
-		*s.Wallets[feeReceiverStateID].PublicKey(),
+		s.Wallets[feeReceiverStateID].PublicKey(),
 		feeReceiverStateID,
 		0,
 		32*10*3+10,
@@ -72,6 +72,8 @@ func (s *CoreCommanderE2ETestSuite) TestCommander() {
 		batchtype.Transfer,
 		batchtype.Deposit,
 	})
+
+	s.testCommanderRestart(97)
 }
 
 func (s *CoreCommanderE2ETestSuite) TestSyncing() {
@@ -93,7 +95,7 @@ func (s *CoreCommanderE2ETestSuite) TestSyncing() {
 	s.waitForFullSync(activeCommanderNetworkInfo.LatestBatch)
 
 	s.testUserStateAfterTransfers(
-		*s.Wallets[1].PublicKey(),
+		s.Wallets[1].PublicKey(),
 		1,
 		32*3,
 		-1*(32*100*3),
@@ -101,7 +103,7 @@ func (s *CoreCommanderE2ETestSuite) TestSyncing() {
 
 	feeReceiverStateID := uint64(s.Cfg.Rollup.FeeReceiverPubKeyID)
 	s.testUserStateAfterTransfers(
-		*s.Wallets[feeReceiverStateID].PublicKey(),
+		s.Wallets[feeReceiverStateID].PublicKey(),
 		feeReceiverStateID,
 		0,
 		32*10*3,
@@ -123,7 +125,7 @@ func (s *CoreCommanderE2ETestSuite) testGetVersion() {
 	s.Equal(config.GetConfig().API.Version, version)
 }
 
-func (s *CoreCommanderE2ETestSuite) testGetUserStates(targetPublicKey models.PublicKey) *dto.UserStateWithID {
+func (s *CoreCommanderE2ETestSuite) testGetUserStates(targetPublicKey *models.PublicKey) *dto.UserStateWithID {
 	userStates := s.GetUserStates(targetPublicKey)
 	s.Len(userStates, 2)
 
@@ -135,15 +137,15 @@ func (s *CoreCommanderE2ETestSuite) testGetUserStates(targetPublicKey models.Pub
 	return &userStates[0]
 }
 
-func (s *CoreCommanderE2ETestSuite) testGetPublicKeyMethods(state *dto.UserStateWithID, targetPublicKey models.PublicKey) {
+func (s *CoreCommanderE2ETestSuite) testGetPublicKeyMethods(state *dto.UserStateWithID, targetPublicKey *models.PublicKey) {
 	var publicKey models.PublicKey
 	err := s.RPCClient.CallFor(&publicKey, "hubble_getPublicKeyByPubKeyID", []interface{}{state.PubKeyID})
 	s.NoError(err)
-	s.Equal(targetPublicKey, publicKey)
+	s.Equal(*targetPublicKey, publicKey)
 
 	err = s.RPCClient.CallFor(&publicKey, "hubble_getPublicKeyByStateID", []interface{}{state.StateID})
 	s.NoError(err)
-	s.Equal(targetPublicKey, publicKey)
+	s.Equal(*targetPublicKey, publicKey)
 }
 
 func (s *CoreCommanderE2ETestSuite) testSubmitTxBatchesAndWait() {
@@ -209,7 +211,11 @@ func (s *CoreCommanderE2ETestSuite) testMaxBatchDelay(startNonce uint64) {
 	}, 10*time.Second, testutils.TryInterval)
 }
 
-func (s *CoreCommanderE2ETestSuite) testUserStateAfterTransfers(targetPublicKey models.PublicKey, expectedStateID, expectedNonce uint64, expectedBalanceDifference int64) {
+func (s *CoreCommanderE2ETestSuite) testUserStateAfterTransfers(
+	targetPublicKey *models.PublicKey,
+	expectedStateID, expectedNonce uint64,
+	expectedBalanceDifference int64,
+) {
 	userStates := s.GetUserStates(targetPublicKey)
 	senderState := userStates[0]
 

@@ -109,7 +109,7 @@ func (s *E2ETestSuite) GetCommitment(commitmentID models.CommitmentID) dto.TxCom
 	return commitment
 }
 
-func (s *E2ETestSuite) GetUserStates(publicKey models.PublicKey) []dto.UserStateWithID {
+func (s *E2ETestSuite) GetUserStates(publicKey *models.PublicKey) []dto.UserStateWithID {
 	var userStates []dto.UserStateWithID
 	err := s.RPCClient.CallFor(&userStates, "hubble_getUserStates", []interface{}{publicKey})
 	s.NoError(err)
@@ -206,7 +206,8 @@ func (s *E2ETestSuite) SubmitDepositBatchAndWait(targetPubKeyID, tokenID *models
 
 	txs := make([]types.Transaction, 0, fullDepositBatchCount)
 	for i := 0; i < fullDepositBatchCount; i++ {
-		tx, err := s.ETHClient.QueueDeposit(s.QueueDepositGasLimit, targetPubKeyID, parsedDepositAmount, tokenID)
+		var tx *types.Transaction
+		tx, err = s.ETHClient.QueueDeposit(s.QueueDepositGasLimit, targetPubKeyID, parsedDepositAmount, tokenID)
 		s.NoError(err)
 		txs = append(txs, *tx)
 	}

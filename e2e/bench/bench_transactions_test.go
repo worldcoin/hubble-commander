@@ -118,7 +118,6 @@ func (s *BenchmarkTransactionsSuite) preparePassiveCommander() *setup.InProcessC
 	newCommanderCfg.API.Port = "5555"
 	newCommanderCfg.Metrics.Port = "2222"
 	newCommanderCfg.Badger.Path += "_passive"
-	newCommanderCfg.Bootstrap.ChainSpecPath = nil
 	newCommanderCfg.Bootstrap.BootstrapNodeURL = ref.String("http://localhost:8080")
 	newCommanderCfg.Ethereum.PrivateKey = "ab6919fd6ac00246bb78657e0696cf72058a4cb395133d074eabaddb83d8b00c"
 	passiveCommander, err := setup.CreateInProcessCommander(&newCommanderCfg, nil)

@@ -171,7 +171,11 @@ func (s *DisputesE2ETestSuite) registerAccounts() []uint32 {
 	return registeredPubKeyIDs
 }
 
-func (s *DisputesE2ETestSuite) encodeCreate2Transfers(transfer *models.Create2Transfer, registeredPubKeyIDs []uint32, startStateID uint32) []byte {
+func (s *DisputesE2ETestSuite) encodeCreate2Transfers(
+	transfer *models.Create2Transfer,
+	registeredPubKeyIDs []uint32,
+	startStateID uint32,
+) []byte {
 	encodedTransfers := make([]byte, 0, encoder.Create2TransferLength*len(registeredPubKeyIDs))
 	for i := range registeredPubKeyIDs {
 		transfer.ToStateID = ref.Uint32(startStateID + uint32(i))
