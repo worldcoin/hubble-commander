@@ -37,7 +37,7 @@ func (s *TxPoolTestSuite) SetupTest() {
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(100),
-		Nonce:    models.MakeUint256(0),
+		Nonce:    models.MakeUint256(5),
 	})
 	s.NoError(err)
 }
@@ -50,7 +50,7 @@ func (s *TxPoolTestSuite) TearDownTest() {
 func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	wg, cancel := s.startReadingTxs()
 
-	for i := 0; i < 5; i++ {
+	for i := 5; i < 10; i++ {
 		s.txPool.Send(s.newTransfer(uint64(i), 10))
 	}
 
@@ -67,8 +67,8 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
-	tx := s.newTransfer(0, 10)
-	replacementTx := s.newTransfer(0, 5)
+	tx := s.newTransfer(5, 10)
+	replacementTx := s.newTransfer(5, 5)
 	err := s.storage.AddTransaction(replacementTx)
 	s.NoError(err)
 
@@ -97,8 +97,8 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
-	previousTx := s.newTransfer(0, 5)
-	newTx := s.newTransfer(0, 10)
+	previousTx := s.newTransfer(5, 5)
+	newTx := s.newTransfer(5, 10)
 
 	err := s.storage.AddTransaction(previousTx)
 	s.NoError(err)
@@ -124,11 +124,15 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	wg.Wait()
 }
 
+func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTransactionsWithTooLowNonces() {
+
+}
+
 func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAsFailed() {
 	txs := []models.GenericTransaction{
-		s.newTransfer(0, 10),
-		s.newTransfer(1, 10),
-		s.newTransfer(2, 10),
+		s.newTransfer(5, 10),
+		s.newTransfer(6, 10),
+		s.newTransfer(7, 10),
 	}
 	for _, tx := range txs {
 		err := s.storage.AddTransaction(tx)
