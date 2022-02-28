@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -213,6 +214,28 @@ func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
 	txAfterUpsert, err := s.storage.GetTransfer(txBeforeUpsert.Hash)
 	s.NoError(err)
 	s.Equal(txBeforeUpsert, txAfterUpsert)
+}
+
+func (s *TransactionTestSuite) TestDeletePendingTransactions_DeletesTxs() {
+	txs := models.GenericArray{
+		testutils.NewTransfer(0, 1, 0, 100),
+		testutils.NewTransfer(1, 2, 1, 100),
+	}
+	err := s.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	err = s.storage.DeletePendingTransactions(txs[0].GetBase().Hash, txs[1].GetBase().Hash)
+	s.NoError(err)
+
+	for _, tx := range txs {
+		_, err = s.storage.GetTransfer(tx.GetBase().Hash)
+		s.ErrorIs(err, NewNotFoundError("transaction"))
+	}
+}
+
+func (s *TransactionTestSuite) TestDeletePendingTransactions_NoTransactions() {
+	err := s.storage.DeletePendingTransactions(transfer.Hash)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 
 func TestTransactionTestSuite(t *testing.T) {

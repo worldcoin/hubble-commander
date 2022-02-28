@@ -83,6 +83,11 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 	if txs.Len() == 0 {
 		return nil
 	}
+	// TODO-sync:
+	// remove from mempool
+	// remove from pending txs
+	// remove from failed txs
+	// add to batched txs
 
 	for i := 0; i < txs.Len(); i++ {
 		txs.At(i).GetBase().CommitmentID = commitmentID
