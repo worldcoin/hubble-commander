@@ -67,14 +67,15 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
-	newTx := s.newTransfer(0, 5)
-	err := s.storage.AddTransaction(newTx)
+	tx := s.newTransfer(0, 10)
+	replacementTx := s.newTransfer(0, 5)
+	err := s.storage.AddTransaction(replacementTx)
 	s.NoError(err)
 
 	wg, cancel := s.startReadingTxs()
 
-	s.txPool.Send(s.newTransfer(0, 10))
-	s.txPool.Send(newTx)
+	s.txPool.Send(tx)
+	s.txPool.Send(replacementTx)
 
 	s.waitForTxsToBeRead(2)
 
@@ -84,8 +85,12 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 	txs, err := s.storage.GetAllFailedTransactions()
 	s.NoError(err)
 	s.Len(txs, 1)
-	s.Equal(newTx.Hash, txs.At(0).GetBase().Hash)
+	s.Equal(replacementTx.Hash, txs.At(0).GetBase().Hash)
 	s.Equal(ErrTxReplacementFailed.Error(), *txs.At(0).GetBase().ErrorMessage)
+
+	mempoolTxs := s.getAllTxs(0)
+	s.Len(mempoolTxs, 1)
+	s.Equal(tx, mempoolTxs[0])
 
 	cancel()
 	wg.Wait()
@@ -111,9 +116,9 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	_, err = s.storage.GetTransfer(previousTx.Hash)
 	s.True(st.IsNotFoundError(err))
 
-	replacedTx, err := s.storage.GetTransfer(newTx.Hash)
-	s.NoError(err)
-	s.Equal(newTx, replacedTx)
+	mempoolTxs := s.getAllTxs(0)
+	s.Len(mempoolTxs, 1)
+	s.Equal(newTx, mempoolTxs[0])
 
 	cancel()
 	wg.Wait()
