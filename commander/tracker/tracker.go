@@ -17,7 +17,7 @@ type Tracker struct {
 	requestsChan chan *eth.TxSendingRequest
 }
 
-func NewTracker(client *eth.Client, txsChan chan *types.Transaction, requestsChan chan *eth.TxSendingRequest) (*Tracker, error) {
+func NewTracker(client *eth.Client, requestsChan chan *eth.TxSendingRequest) (*Tracker, error) {
 	nonce, err := client.GetNonce()
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func NewTracker(client *eth.Client, txsChan chan *types.Transaction, requestsCha
 		txs:          make([]*types.Transaction, 0),
 		nonce:        nonce,
 		client:       client,
-		txsChan:      txsChan,
+		txsChan:      make(chan *types.Transaction, 1024),
 		requestsChan: requestsChan,
 	}, nil
 }

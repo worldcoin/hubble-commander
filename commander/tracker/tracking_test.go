@@ -19,7 +19,7 @@ type TxsTrackingTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client            *eth.TestClient
-	txsChannels       *eth.TxsTrackingChannels
+	RequestsChan      chan *eth.TxSendingRequest
 	wg                sync.WaitGroup
 	cancelTxsTracking context.CancelFunc
 	tracker           *Tracker
@@ -31,20 +31,17 @@ func (s *TxsTrackingTestSuite) SetupSuite() {
 
 func (s *TxsTrackingTestSuite) SetupTest() {
 	s.wg = sync.WaitGroup{}
-	s.txsChannels = &eth.TxsTrackingChannels{
-		SentTxs:  make(chan *types.Transaction, 1),
-		Requests: make(chan *eth.TxSendingRequest, 8),
-	}
+	s.RequestsChan = make(chan *eth.TxSendingRequest, 8)
 
 	var err error
 	s.client, err = eth.NewConfiguredTestClient(
 		&rollup.DeploymentConfig{},
 		&eth.TestClientConfig{
-			TxsChannels: s.txsChannels,
+			RequestsChan: s.RequestsChan,
 		},
 	)
 	s.NoError(err)
-	s.tracker, err = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
+	s.tracker, err = NewTracker(s.client.Client, s.RequestsChan)
 	s.NoError(err)
 	s.startTxsTracking()
 }
@@ -85,7 +82,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_TracksSubmittedTransfers() {
 	}
 
 	for _, tx := range txs {
-		s.txsChannels.SentTxs <- tx
+		s.tracker.txsChan <- tx
 	}
 
 	s.Eventually(func() bool {

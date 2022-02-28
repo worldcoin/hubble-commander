@@ -19,7 +19,7 @@ type TxsSendingTestSuite struct {
 	*require.Assertions
 	suite.Suite
 	client           *eth.TestClient
-	txsChannels      *eth.TxsTrackingChannels
+	requestsChan     chan *eth.TxSendingRequest
 	wg               sync.WaitGroup
 	cancelTxsSending context.CancelFunc
 	tracker          *Tracker
@@ -31,20 +31,17 @@ func (s *TxsSendingTestSuite) SetupSuite() {
 
 func (s *TxsSendingTestSuite) SetupTest() {
 	s.wg = sync.WaitGroup{}
-	s.txsChannels = &eth.TxsTrackingChannels{
-		Requests: make(chan *eth.TxSendingRequest, 8),
-		SentTxs:  make(chan *types.Transaction, 8),
-	}
+	s.requestsChan = make(chan *eth.TxSendingRequest, 8)
 
 	var err error
 	s.client, err = eth.NewConfiguredTestClient(
 		&rollup.DeploymentConfig{},
 		&eth.TestClientConfig{
-			TxsChannels: s.txsChannels,
+			RequestsChan: s.requestsChan,
 		},
 	)
 	s.NoError(err)
-	s.tracker, err = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
+	s.tracker, err = NewTracker(s.client.Client, s.requestsChan)
 	s.NoError(err)
 	s.startTxsSending()
 }

@@ -14,11 +14,11 @@ type TestClient struct {
 	*simulator.Simulator
 	ExampleTokenAddress common.Address
 
-	TxsChannels *TxsTrackingChannels
+	RequestsChan chan *TxSendingRequest
 }
 
 type TestClientConfig struct {
-	TxsChannels *TxsTrackingChannels
+	RequestsChan chan *TxSendingRequest
 	ClientConfig
 }
 
@@ -43,11 +43,8 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		return nil, err
 	}
 
-	startTxsSending := clientCfg.TxsChannels == nil
-	if startTxsSending {
-		clientCfg.TxsChannels = &TxsTrackingChannels{
-			SkipChannelSending: true,
-		}
+	if clientCfg.RequestsChan == nil {
+		clientCfg.RequestsChan = make(chan *TxSendingRequest, 8)
 	}
 
 	client, err := NewClient(sim, metrics.NewCommanderMetrics(), &NewClientParams{
@@ -68,7 +65,7 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		SpokeRegistry:   contracts.SpokeRegistry,
 		DepositManager:  contracts.DepositManager,
 		ClientConfig:    clientCfg.ClientConfig,
-		TxsChannels:     clientCfg.TxsChannels,
+		RequestsChan:    clientCfg.RequestsChan,
 	})
 	if err != nil {
 		return nil, err
@@ -78,6 +75,6 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		Client:              client,
 		Simulator:           sim,
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
-		TxsChannels:         clientCfg.TxsChannels,
+		RequestsChan:        clientCfg.RequestsChan,
 	}, nil
 }

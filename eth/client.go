@@ -27,7 +27,7 @@ type NewClientParams struct {
 	TokenRegistry   *tokenregistry.TokenRegistry
 	SpokeRegistry   *spokeregistry.SpokeRegistry
 	DepositManager  *depositmanager.DepositManager
-	TxsChannels     *TxsTrackingChannels
+	RequestsChan    chan<- *TxSendingRequest
 	ClientConfig
 }
 
@@ -56,7 +56,7 @@ type Client struct {
 	blocksToFinalise       *int64
 	maxDepositSubtreeDepth *uint8
 	domain                 *bls.Domain
-	txsChannels            *TxsTrackingChannels
+	requestsChan           chan<- *TxSendingRequest
 
 	*AccountManager
 }
@@ -88,7 +88,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 		AccountRegistryAddress:           params.ChainState.AccountRegistry,
 		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
 		MineTimeout:                      *params.TxMineTimeout,
-		TxsChannels:                      params.TxsChannels,
+		RequestsChan:                     params.RequestsChan,
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -119,7 +119,7 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 			DepositManager: params.DepositManager,
 			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
 		},
-		txsChannels: params.TxsChannels,
+		requestsChan: params.RequestsChan,
 	}, nil
 }
 

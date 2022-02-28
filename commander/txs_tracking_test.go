@@ -52,7 +52,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(cfg *eth.ClientConfig) 
 	// pass txs channels to testClient to use commander tracking worker
 	clientCfg := &eth.TestClientConfig{
 		ClientConfig: *cfg,
-		TxsChannels:  s.cmd.txsTrackingChannels,
+		RequestsChan: s.cmd.requestsChan,
 	}
 
 	s.client = newClientWithGenesisStateWithClientConfig(s.T(), s.storage, clientCfg)
@@ -62,7 +62,7 @@ func (s *TxsTrackingTestSuite) setupTestWithClientConfig(cfg *eth.ClientConfig) 
 	s.cmd.client = s.client.Client
 	s.cmd.blockchain = s.client.Blockchain
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txsTracker, err = tracker.NewTracker(s.client.Client, clientCfg.TxsChannels.SentTxs, clientCfg.TxsChannels.Requests)
+	s.cmd.txsTracker, err = tracker.NewTracker(s.client.Client, clientCfg.RequestsChan)
 	s.NoError(err)
 
 	err = s.cmd.addGenesisBatch()

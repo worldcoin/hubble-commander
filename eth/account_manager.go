@@ -18,7 +18,7 @@ type AccountManager struct {
 	AccountRegistry                  *AccountRegistry
 	batchAccountRegistrationGasLimit uint64
 	mineTimeout                      time.Duration
-	txsChannels                      *TxsTrackingChannels
+	requestsChan                     chan<- *TxSendingRequest
 }
 
 //goland:noinspection GoDeprecation
@@ -37,7 +37,7 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 		},
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 		mineTimeout:                      params.MineTimeout,
-		txsChannels:                      params.TxsChannels,
+		requestsChan:                     params.RequestsChan,
 	}, nil
 }
 
@@ -48,7 +48,7 @@ func (a *AccountManager) packAndRequest(
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
-	return packAndRequest(a.txsChannels, contract, opts, shouldTrackTx, method, data...)
+	return packAndRequest(a.requestsChan, contract, opts, shouldTrackTx, method, data...)
 }
 
 type AccountManagerParams struct {
@@ -56,5 +56,5 @@ type AccountManagerParams struct {
 	AccountRegistryAddress           common.Address
 	BatchAccountRegistrationGasLimit uint64
 	MineTimeout                      time.Duration
-	TxsChannels                      *TxsTrackingChannels
+	RequestsChan                     chan<- *TxSendingRequest
 }
