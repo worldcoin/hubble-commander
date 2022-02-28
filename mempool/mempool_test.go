@@ -344,6 +344,48 @@ func (s *MempoolTestSuite) TestRemoveFailedTxs_DecrementsTxCounts() {
 	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesTxs() {
+	s.mempool.RemoveSyncedTxs(models.GenericArray{s.txs[2], s.txs[5], s.txs[8]})
+
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+	s.Equal(s.mempool.buckets[1].txs, s.txs[3:5])
+	s.Equal(s.mempool.buckets[2].txs, s.txs[6:7])
+	s.Equal(s.mempool.buckets[3].txs, []models.GenericTransaction{s.txs[7], s.txs[9]})
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_IncrementsNonces() {
+	s.mempool.RemoveSyncedTxs(models.GenericArray{
+		s.txs[2],
+		s.newTransfer(1, 10),
+		s.newTransfer(1, 11),
+		s.txs[5],
+		s.txs[8],
+	})
+
+	s.EqualValues(s.mempool.buckets[0].nonce, 11)
+	s.EqualValues(s.mempool.buckets[1].nonce, 12)
+	s.EqualValues(s.mempool.buckets[2].nonce, 16)
+	s.EqualValues(s.mempool.buckets[3].nonce, 11)
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesEmptyBuckets() {
+	s.mempool.RemoveSyncedTxs(s.txs[5:7])
+
+	s.NotContains(s.mempool.buckets, uint32(2))
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_OmitsEmptyBuckets() {
+	tx := s.newTransfer(20, 1)
+	s.mempool.RemoveSyncedTxs(models.GenericArray{tx, s.txs[2]})
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_DecrementsTxCounts() {
+	s.mempool.RemoveSyncedTxs(models.GenericArray{s.txs[2], s.txs[7]})
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }
