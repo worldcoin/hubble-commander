@@ -29,13 +29,9 @@ type txPool struct {
 }
 
 func NewTxPool(storage *st.Storage) (*txPool, error) {
-	pool, err := NewMempool(storage)
-	if err != nil {
-		return nil, err
-	}
 	return &txPool{
 		storage:         storage,
-		mempool:         pool,
+		mempool:         NewMempool(),
 		incomingTxs:     make([]models.GenericTransaction, 0),
 		incomingTxsChan: make(chan models.GenericTransaction, 1024),
 	}, nil
