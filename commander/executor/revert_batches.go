@@ -28,7 +28,7 @@ func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 	if err != nil {
 		return err
 	}
-	err = c.storage.DeleteCommitmentsByBatchIDs(batchIDs...)
+	err = c.storage.RemoveCommitmentsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
