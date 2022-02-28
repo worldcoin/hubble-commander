@@ -72,7 +72,7 @@ func (s *DepositSubtreeTestSuite) TestGetPendingDepositSubtree_NonexistentTree()
 	s.True(IsNotFoundError(err))
 }
 
-func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees() {
+func (s *DepositSubtreeTestSuite) TestRemovePendingDepositSubtrees() {
 	subtrees := []models.PendingDepositSubtree{
 		{
 			ID:   models.MakeUint256(1),
@@ -110,7 +110,7 @@ func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees() {
 		s.NoError(err)
 	}
 
-	err := s.storage.DeletePendingDepositSubtrees(subtrees[0].ID, subtrees[1].ID)
+	err := s.storage.RemovePendingDepositSubtrees(subtrees[0].ID, subtrees[1].ID)
 	s.NoError(err)
 
 	for i := range subtrees {
@@ -119,8 +119,8 @@ func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees() {
 	}
 }
 
-func (s *DepositSubtreeTestSuite) TestDeletePendingDepositSubtrees_NonexistentTree() {
-	err := s.storage.DeletePendingDepositSubtrees(models.MakeUint256(1))
+func (s *DepositSubtreeTestSuite) TestRemovePendingDepositSubtrees_NonexistentTree() {
+	err := s.storage.RemovePendingDepositSubtrees(models.MakeUint256(1))
 	s.ErrorIs(err, NewNotFoundError("deposit sub tree"))
 }
 
