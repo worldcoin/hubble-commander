@@ -196,7 +196,7 @@ func (s *WithdrawalsE2ETestSuite) makeFullDepositBatch(depositsNeeded int) {
 	s.testDoActionAndAssertTokenBalanceDifference(s.transactor.From, expectedBalanceDifference, func() {
 		txs := make([]types.Transaction, 0, depositsNeeded)
 		for i := 0; i < depositsNeeded; i++ {
-			tx, err := s.ETHClient.QueueDeposit(queueDepositGasLimit, targetPubKeyID, depositAmount, &s.token.ID)
+			tx, err := s.ETHClient.QueueDeposit(s.QueueDepositGasLimit, targetPubKeyID, depositAmount, &s.token.ID)
 			s.NoError(err)
 			txs = append(txs, *tx)
 		}
