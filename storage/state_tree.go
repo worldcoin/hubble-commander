@@ -271,7 +271,7 @@ func (s *StateTree) revertState(stateUpdate *models.StateUpdate) (*common.Hash, 
 		panic("unexpected state root after state update rollback, this should never happen")
 	}
 
-	err = s.deleteStateUpdate(stateUpdate.ID)
+	err = s.removeStateUpdate(stateUpdate.ID)
 	if err != nil {
 		return nil, err
 	}
