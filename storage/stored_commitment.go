@@ -55,7 +55,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error
 	return &storedCommitment.CommitmentBase, nil
 }
 
-func (s *CommitmentStorage) DeleteCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
+func (s *CommitmentStorage) RemoveCommitmentsByBatchIDs(batchIDs ...models.Uint256) error {
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
 		ids := make([]models.CommitmentID, 0, len(batchIDs))
 		for i := range batchIDs {

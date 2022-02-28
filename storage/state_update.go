@@ -22,6 +22,6 @@ func (s *StateTree) getStateUpdate(id uint64) (*models.StateUpdate, error) {
 	return &stateUpdate, nil
 }
 
-func (s *StateTree) deleteStateUpdate(id uint64) error {
+func (s *StateTree) removeStateUpdate(id uint64) error {
 	return s.database.Badger.Delete(id, models.StateUpdate{})
 }

@@ -185,17 +185,12 @@ func (s *TransactionStorage) checkNoTx(hash *common.Hash, result interface{}) er
 	return err
 }
 
-func (s *TransactionStorage) ReplacePendingTransaction(hash *common.Hash, newTx models.GenericTransaction) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		err := txStorage.database.Badger.Delete(*hash, &stored.PendingTx{})
-		if errors.Is(err, bh.ErrNotFound) {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-		if err != nil {
-			return err
-		}
-		return txStorage.database.Badger.Insert(newTx.GetBase().Hash, *stored.NewPendingTx(newTx))
-	})
+func (s *TransactionStorage) RemovePendingTransaction(hash *common.Hash) error {
+	err := s.database.Badger.Delete(*hash, &stored.PendingTx{})
+	if errors.Is(err, bh.ErrNotFound) {
+		return errors.WithStack(NewNotFoundError("transaction"))
+	}
+	return errors.WithStack(err)
 }
 
 func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionArray) error {

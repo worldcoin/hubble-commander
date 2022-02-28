@@ -19,7 +19,7 @@ func (c *DepositsContext) SyncCommitments(remoteBatch eth.DecodedBatch) error {
 		return err
 	}
 
-	err = c.storage.DeletePendingDepositSubtrees(depositSubtree.ID)
+	err = c.storage.RemovePendingDepositSubtrees(depositSubtree.ID)
 	if err != nil {
 		return err
 	}

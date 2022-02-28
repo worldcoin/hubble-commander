@@ -76,7 +76,7 @@ func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteT
 		panic(removeErr) // should never happen
 	}
 
-	log.WithField("tx_hash", tx.GetBase().Hash.String()).
+	log.WithField("txHash", tx.GetBase().Hash.String()).
 		Errorf("%s failed: %s", tx.Type().String(), err)
 	result.AddInvalidTx(tx)
 	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{

@@ -41,7 +41,7 @@ func (s *DepositStorage) GetFirstPendingDepositSubtree() (subtree *models.Pendin
 	return subtree, err
 }
 
-func (s *DepositStorage) DeletePendingDepositSubtrees(subtreeIDs ...models.Uint256) error {
+func (s *DepositStorage) RemovePendingDepositSubtrees(subtreeIDs ...models.Uint256) error {
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
 		for i := range subtreeIDs {
 			err := txDatabase.Badger.Delete(subtreeIDs[i], models.PendingDepositSubtree{})
