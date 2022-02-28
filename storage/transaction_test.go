@@ -152,27 +152,19 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
-func (s *TransactionTestSuite) TestReplacePendingTransaction() {
+func (s *TransactionTestSuite) TestRemovePendingTransaction() {
 	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
-	updatedTx := transfer
-	updatedTx.Hash = utils.RandomHash()
-	err = s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
+	err = s.storage.RemovePendingTransaction(&transfer.Hash)
 	s.NoError(err)
 
 	_, err = s.storage.GetTransfer(transfer.Hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
-
-	tx, err := s.storage.GetTransfer(updatedTx.Hash)
-	s.NoError(err)
-	s.Equal(updatedTx, *tx)
 }
 
-func (s *TransactionTestSuite) TestReplacePendingTransaction_NoPendingTransaction() {
-	updatedTx := transfer
-	updatedTx.Hash = utils.RandomHash()
-	err := s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
+func (s *TransactionTestSuite) TestRemovePendingTransaction_NoTransaction() {
+	err := s.storage.RemovePendingTransaction(&transfer.Hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 

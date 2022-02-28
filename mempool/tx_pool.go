@@ -87,7 +87,7 @@ func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
 	}
 
 	if prevTxHash != nil {
-		return p.storage.ReplacePendingTransaction(prevTxHash, tx)
+		return p.storage.RemovePendingTransaction(prevTxHash)
 	}
 	return nil
 }
