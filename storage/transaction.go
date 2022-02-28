@@ -273,3 +273,49 @@ func (s *TransactionStorage) RemovePendingTransactions(hashes ...common.Hash) er
 		return nil
 	})
 }
+
+func (s *TransactionStorage) RemoveFailedTransactions(txs []models.GenericTransaction) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		return txStorage.unsafeFindAndRemoveFailedTxs(txs)
+	})
+}
+
+func (s *TransactionStorage) unsafeFindAndRemoveFailedTxs(txs []models.GenericTransaction) error {
+	for _, tx := range txs {
+		failedTxs, err := s.getFailedTxsByIndex(tx.GetBase())
+		if err != nil {
+			return err
+		}
+
+		err = s.unsafeRemoveFailedTxs(failedTxs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *TransactionStorage) getFailedTxsByIndex(txBase *models.TransactionBase) ([]stored.FailedTx, error) {
+	failedTxs := make([]stored.FailedTx, 0, 1)
+	err := s.database.Badger.Find(
+		&failedTxs,
+		bh.Where("FromStateID:Nonce").Eq(stored.NewFailedTxIndex(txBase.FromStateID, &txBase.Nonce)).Index("FromStateID:Nonce"),
+	)
+	if errors.Is(err, bh.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return failedTxs, nil
+}
+
+func (s *TransactionStorage) unsafeRemoveFailedTxs(txs []stored.FailedTx) error {
+	for i := range txs {
+		err := s.database.Badger.Delete(txs[i].Hash, &txs[i])
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	return nil
+}
