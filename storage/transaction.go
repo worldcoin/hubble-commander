@@ -190,7 +190,7 @@ func (s *TransactionStorage) RemovePendingTransaction(hash *common.Hash) error {
 	if errors.Is(err, bh.ErrNotFound) {
 		return errors.WithStack(NewNotFoundError("transaction"))
 	}
-	return nil
+	return errors.WithStack(err)
 }
 
 func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionArray) error {
