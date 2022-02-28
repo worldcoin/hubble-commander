@@ -33,7 +33,7 @@ func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 		return err
 	}
 	logrus.Debugf("Removing %d local batches", len(batches))
-	return c.storage.DeleteBatches(batchIDs...)
+	return c.storage.RemoveBatches(batchIDs...)
 }
 
 func (c *ExecutionContext) revertCommitments(batches []models.Batch) error {
