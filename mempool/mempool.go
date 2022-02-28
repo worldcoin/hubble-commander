@@ -240,6 +240,33 @@ func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
 	}
 }
 
+func (m *Mempool) RemoveSyncedTxs(txs []models.GenericTransaction) {
+	for i := range txs {
+		bucket := m.getBucket(txs[i].GetFromStateID())
+		if bucket == nil {
+			continue
+		}
+		bucket.nonce++
+		m.removeTxByCondition(bucket, txs[i].GetFromStateID(), func(txBase *models.TransactionBase) bool {
+			return txBase.Nonce.Eq(&txs[i].GetBase().Nonce)
+		})
+	}
+}
+
+func (m *Mempool) removeTxByCondition(bucket *txBucket, stateID uint32, condition func(txBase *models.TransactionBase) bool) {
+	for i := range bucket.txs {
+		txBase := bucket.txs[i].GetBase()
+		if condition(txBase) {
+			bucket.removeAt(i)
+			if len(bucket.txs) == 0 {
+				delete(m.buckets, stateID)
+			}
+			m.changeTxCount(txBase.TxType, -1)
+			return
+		}
+	}
+}
+
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
 	bucket, err := m.getOrInitBucket(storage, newTx.GetFromStateID())
 	if err != nil {
