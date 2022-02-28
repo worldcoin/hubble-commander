@@ -95,6 +95,20 @@ func (s *E2ETestSuite) GetAllBatches() []dto.Batch {
 	return batches
 }
 
+func (s *E2ETestSuite) GetBatchByID(batchID uint64) dto.BatchWithRootAndCommitments {
+	var batch dto.BatchWithRootAndCommitments
+	err := s.RPCClient.CallFor(&batch, "hubble_getBatchByID", []interface{}{models.MakeUint256(batchID)})
+	s.NoError(err)
+	return batch
+}
+
+func (s *E2ETestSuite) GetCommitment(commitmentID models.CommitmentID) dto.TxCommitment {
+	var commitment dto.TxCommitment
+	err := s.RPCClient.CallFor(&commitment, "hubble_getCommitment", []interface{}{commitmentID})
+	s.NoError(err)
+	return commitment
+}
+
 func (s *E2ETestSuite) GetUserStates(publicKey models.PublicKey) []dto.UserStateWithID {
 	var userStates []dto.UserStateWithID
 	err := s.RPCClient.CallFor(&userStates, "hubble_getUserStates", []interface{}{publicKey})
