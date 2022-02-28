@@ -216,7 +216,7 @@ func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
 	s.Equal(txBeforeUpsert, txAfterUpsert)
 }
 
-func (s *TransactionTestSuite) TestDeletePendingTransactions_DeletesTxs() {
+func (s *TransactionTestSuite) TestRemovePendingTransactions_RemovesTxs() {
 	txs := models.GenericArray{
 		testutils.NewTransfer(0, 1, 0, 100),
 		testutils.NewTransfer(1, 2, 1, 100),
@@ -224,7 +224,7 @@ func (s *TransactionTestSuite) TestDeletePendingTransactions_DeletesTxs() {
 	err := s.storage.BatchAddTransaction(txs)
 	s.NoError(err)
 
-	err = s.storage.DeletePendingTransactions(txs[0].GetBase().Hash, txs[1].GetBase().Hash)
+	err = s.storage.RemovePendingTransactions(txs[0].GetBase().Hash, txs[1].GetBase().Hash)
 	s.NoError(err)
 
 	for _, tx := range txs {
@@ -233,8 +233,8 @@ func (s *TransactionTestSuite) TestDeletePendingTransactions_DeletesTxs() {
 	}
 }
 
-func (s *TransactionTestSuite) TestDeletePendingTransactions_NoTransactions() {
-	err := s.storage.DeletePendingTransactions(transfer.Hash)
+func (s *TransactionTestSuite) TestRemovePendingTransactions_NoTransactions() {
+	err := s.storage.RemovePendingTransactions(transfer.Hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 }
 

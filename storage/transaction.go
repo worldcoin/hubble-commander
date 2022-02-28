@@ -259,7 +259,7 @@ func (s *TransactionStorage) addTxsInMultipleDBTransactions(txs models.GenericTr
 	return nil
 }
 
-func (s *TransactionStorage) DeletePendingTransactions(hashes ...common.Hash) error {
+func (s *TransactionStorage) RemovePendingTransactions(hashes ...common.Hash) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range hashes {
 			err := txStorage.database.Badger.Delete(hashes[i], &stored.PendingTx{})
