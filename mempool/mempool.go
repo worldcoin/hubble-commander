@@ -222,21 +222,9 @@ func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) {
 		if bucket == nil {
 			continue
 		}
-		m.removeTxByHash(bucket, &txErrors[i])
-	}
-}
-
-func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
-	for i := range bucket.txs {
-		txBase := bucket.txs[i].GetBase()
-		if txBase.Hash == txError.TxHash {
-			bucket.removeAt(i)
-			if len(bucket.txs) == 0 {
-				delete(m.buckets, txError.SenderStateID)
-			}
-			m.changeTxCount(txBase.TxType, -1)
-			return
-		}
+		m.removeTxByCondition(bucket, txErrors[i].SenderStateID, func(txBase *models.TransactionBase) bool {
+			return txBase.Hash == txErrors[i].TxHash
+		})
 	}
 }
 
