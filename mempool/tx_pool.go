@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type TxPool interface {
@@ -78,16 +79,26 @@ func (p *txPool) UpdateMempool() error {
 }
 
 func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
+	txHash := &tx.GetBase().Hash
 	prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
 	if errors.Is(err, ErrTxReplacementFailed) {
-		return p.storage.SetTransactionError(getReplacementError(&tx.GetBase().Hash))
+		log.WithField("txHash", *txHash).Debug("Mempool: transaction replacement failed")
+		return p.storage.SetTransactionError(getReplacementError(txHash))
 	}
 	if err != nil {
 		return err
 	}
 
 	if prevTxHash != nil {
-		return p.storage.RemovePendingTransaction(prevTxHash)
+		log.WithFields(log.Fields{
+			"previousTxHash": *prevTxHash,
+			"newTxHash":      *txHash,
+		}).Debug("Mempool: replaced transaction")
+		err = p.storage.RemovePendingTransaction(prevTxHash)
+		if st.IsNotFoundError(err) {
+			return nil
+		}
+		return err
 	}
 	return nil
 }
