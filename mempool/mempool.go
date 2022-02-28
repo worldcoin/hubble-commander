@@ -228,20 +228,25 @@ func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) {
 	}
 }
 
-func (m *Mempool) RemoveSyncedTxs(txs []models.GenericTransaction) {
+func (m *Mempool) RemoveSyncedTxs(txs []models.GenericTransaction) []common.Hash {
+	hashes := make([]common.Hash, 0, len(txs))
 	for i := range txs {
 		bucket := m.getBucket(txs[i].GetFromStateID())
 		if bucket == nil {
 			continue
 		}
 		bucket.nonce++
-		m.removeTxByCondition(bucket, txs[i].GetFromStateID(), func(txBase *models.TransactionBase) bool {
+		txHash := m.removeTxByCondition(bucket, txs[i].GetFromStateID(), func(txBase *models.TransactionBase) bool {
 			return txBase.Nonce.Eq(&txs[i].GetBase().Nonce)
 		})
+		if txHash != nil {
+			hashes = append(hashes, *txHash)
+		}
 	}
+	return hashes
 }
 
-func (m *Mempool) removeTxByCondition(bucket *txBucket, stateID uint32, condition func(txBase *models.TransactionBase) bool) {
+func (m *Mempool) removeTxByCondition(bucket *txBucket, stateID uint32, condition func(txBase *models.TransactionBase) bool) *common.Hash {
 	for i := range bucket.txs {
 		txBase := bucket.txs[i].GetBase()
 		if condition(txBase) {
@@ -250,9 +255,10 @@ func (m *Mempool) removeTxByCondition(bucket *txBucket, stateID uint32, conditio
 				delete(m.buckets, stateID)
 			}
 			m.changeTxCount(txBase.TxType, -1)
-			return
+			return &txBase.Hash
 		}
 	}
+	return nil
 }
 
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
