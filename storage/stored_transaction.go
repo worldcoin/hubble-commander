@@ -320,7 +320,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 			if err != nil {
 				return err
 			}
-			s.incrementTransactionCount()
+			txStorage.incrementTransactionCount()
 		}
 		return nil
 	})
