@@ -113,6 +113,7 @@ func (s *syncTestSuite) syncAllBatches() {
 		err = s.syncCtx.SyncBatch(newRemoteBatches[i])
 		s.NoError(err)
 	}
+	s.syncCtx.batchCtx.Commit()
 }
 
 func (s *syncTestSuite) recreateDatabase() {
@@ -124,7 +125,8 @@ func (s *syncTestSuite) recreateDatabase() {
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
 	s.NoError(err)
-	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
+	s.syncCtx, err = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, s.txsCtx.BatchType)
+	s.NoError(err)
 
 	s.seedDB(s.wallets)
 }
