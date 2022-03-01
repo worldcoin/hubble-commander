@@ -36,6 +36,11 @@ func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
 }
 
 func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
+	err := c.txPool.UpdateMempool()
+	if err != nil {
+		return err
+	}
+
 	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
