@@ -39,7 +39,7 @@ type WithdrawalsE2ETestSuite struct {
 
 func (s *WithdrawalsE2ETestSuite) SetupTest() {
 	commanderConfig := config.GetConfig()
-	commanderConfig.Rollup.MinTxsPerCommitment = 32
+	commanderConfig.Rollup.MinTxsPerCommitment = 2
 	commanderConfig.Rollup.MaxTxsPerCommitment = 32
 	commanderConfig.Rollup.MinCommitmentsPerBatch = 1
 
