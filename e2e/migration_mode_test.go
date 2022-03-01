@@ -52,6 +52,7 @@ func (s *MigrationModeE2ETestSuite) SetupTest() {
 }
 
 func (s *MigrationModeE2ETestSuite) TearDownTest() {
+	s.E2ETestSuite.TearDownTest()
 	s.gethRPCClient.Close()
 }
 
