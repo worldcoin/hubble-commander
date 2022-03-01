@@ -56,7 +56,7 @@ func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deploye
 	s.RPCClient = s.Commander.Client()
 
 	s.ETHClient = s.newE2ETestETHClient()
-	s.prepareEtherFunds()
+	s.prepareTokenFunds()
 
 	err = s.Commander.Start()
 	s.NoError(err)
@@ -67,7 +67,12 @@ func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deploye
 	s.NoError(err)
 }
 
-func (s *E2ETestSuite) prepareEtherFunds() {
+func (s *E2ETestSuite) TearDownTest() {
+	s.NoError(s.Commander.Stop())
+	s.NoError(os.Remove(*s.Cfg.Bootstrap.ChainSpecPath))
+}
+
+func (s *E2ETestSuite) prepareTokenFunds() {
 	commanderETHClient := s.newCommanderETHClient()
 	token, tokenContract := s.GetDeployedToken(0)
 	s.ApproveToken(token.Contract, "1000")
@@ -79,9 +84,16 @@ func (s *E2ETestSuite) prepareEtherFunds() {
 	)
 }
 
-func (s *E2ETestSuite) TearDownTest() {
-	s.NoError(s.Commander.Stop())
-	s.NoError(os.Remove(*s.Cfg.Bootstrap.ChainSpecPath))
+func (s *E2ETestSuite) transferTokens(
+	tokenContract *customtoken.TestCustomToken,
+	commanderClient *eth.Client,
+	recipient common.Address,
+	amount string,
+) {
+	tx, err := tokenContract.Transfer(commanderClient.Blockchain.GetAccount(), recipient, utils.ParseEther(amount))
+	s.NoError(err)
+	_, err = commanderClient.WaitToBeMined(tx)
+	s.NoError(err)
 }
 
 func (s *E2ETestSuite) GetNetworkInfo() dto.NetworkInfo {

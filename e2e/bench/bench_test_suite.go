@@ -8,7 +8,6 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -57,22 +56,6 @@ func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
 	s.SetupTestEnvironment(nil, nil)
 
 	s.benchConfig = benchmarkConfig
-	s.stateIds = make([]uint32, 0)
-	s.waitGroup = sync.WaitGroup{}
-	s.txsSent = 0
-	s.txsQueued = 0
-	s.lastReportedTxCount = 0
-}
-
-func (s *benchmarkTestSuite) SetupTestWithRollupConfig(benchmarkConfig BenchmarkConfig, cfg *config.Config) {
-	s.benchConfig = benchmarkConfig
-
-	commander, err := setup.NewConfiguredCommanderFromEnv(cfg, nil)
-	s.NoError(err)
-
-	err = commander.Start()
-	s.NoError(err)
-
 	s.stateIds = make([]uint32, 0)
 	s.waitGroup = sync.WaitGroup{}
 	s.txsSent = 0

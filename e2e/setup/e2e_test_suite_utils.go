@@ -8,7 +8,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
-	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
@@ -16,7 +15,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
-	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -158,16 +156,4 @@ func (s *E2ETestSuite) sendNMassMigrations(n int, massMigration dto.MassMigratio
 	}
 
 	return firstTxHash
-}
-
-func (s *E2ETestSuite) transferTokens(
-	tokenContract *customtoken.TestCustomToken,
-	commanderClient *eth.Client,
-	recipient common.Address,
-	amount string,
-) {
-	tx, err := tokenContract.Transfer(commanderClient.Blockchain.GetAccount(), recipient, utils.ParseEther(amount))
-	s.NoError(err)
-	_, err = commanderClient.WaitToBeMined(tx)
-	s.NoError(err)
 }
