@@ -67,3 +67,11 @@ func newTxsContext(
 		TxType:     txType,
 	}
 }
+
+func (c *TxsContext) Commit() {
+	c.mempoolCtx.Commit()
+}
+
+func (c *TxsContext) Rollback() {
+	c.mempoolCtx.Rollback()
+}

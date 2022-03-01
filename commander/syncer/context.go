@@ -14,6 +14,8 @@ import (
 type batchContext interface {
 	SyncCommitments(batch eth.DecodedBatch) error
 	UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error
+	Commit()
+	Rollback()
 }
 
 type Context struct {
@@ -73,10 +75,12 @@ func newContext(
 }
 
 func (c *Context) Commit() error {
+	c.batchCtx.Commit()
 	return c.tx.Commit()
 }
 
 // nolint:gocritic
 func (c *Context) Rollback(cause *error) {
+	c.batchCtx.Rollback()
 	c.tx.Rollback(cause)
 }
