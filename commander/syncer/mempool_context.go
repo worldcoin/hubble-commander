@@ -7,6 +7,14 @@ type MempoolContext struct {
 	txController *mempool.TxController
 }
 
+func NewMempoolContext(pool *mempool.Mempool) *MempoolContext {
+	txController, txMempool := pool.BeginTransaction()
+	return &MempoolContext{
+		Mempool:      txMempool,
+		txController: txController,
+	}
+}
+
 func (c *MempoolContext) Commit() {
 	c.txController.Commit()
 }

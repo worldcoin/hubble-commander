@@ -8,14 +8,6 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 )
 
-func NewMempoolContext(pool *mempool.Mempool) *MempoolContext {
-	txController, txMempool := pool.BeginTransaction()
-	return &MempoolContext{
-		Mempool:      txMempool,
-		txController: txController,
-	}
-}
-
 type TxsContext struct {
 	cfg        *config.RollupConfig
 	storage    *st.Storage
