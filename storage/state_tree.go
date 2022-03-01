@@ -24,7 +24,7 @@ type StateTree struct {
 	database   *Database
 	merkleTree *StoredMerkleTree
 
-	leavesCounter *uint64
+	leavesCount *uint64
 }
 
 func NewStateTree(database *Database) (*StateTree, error) {
@@ -33,22 +33,22 @@ func NewStateTree(database *Database) (*StateTree, error) {
 	if err != nil {
 		return nil, err
 	}
-	atomic.StoreUint64(stateTree.leavesCounter, count)
+	atomic.StoreUint64(stateTree.leavesCount, count)
 	return stateTree, nil
 }
 
 func newStateTree(database *Database) *StateTree {
 	return &StateTree{
-		database:      database,
-		merkleTree:    NewStoredMerkleTree("state", database, StateTreeDepth),
-		leavesCounter: ref.Uint64(0),
+		database:    database,
+		merkleTree:  NewStoredMerkleTree("state", database, StateTreeDepth),
+		leavesCount: ref.Uint64(0),
 	}
 }
 
 func (s *StateTree) copyWithNewDatabase(database *Database) *StateTree {
 	stateTree := newStateTree(database)
-	leavesCount := atomic.LoadUint64(s.leavesCounter)
-	atomic.StoreUint64(stateTree.leavesCounter, leavesCount)
+	leavesCount := atomic.LoadUint64(s.leavesCount)
+	atomic.StoreUint64(stateTree.leavesCount, leavesCount)
 	return stateTree
 }
 
@@ -77,7 +77,7 @@ func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
 }
 
 func (s *StateTree) LeavesCount() uint64 {
-	return atomic.LoadUint64(s.leavesCounter)
+	return atomic.LoadUint64(s.leavesCount)
 }
 
 func (s *StateTree) leavesCountFromStorage() (uint64, error) {
@@ -86,7 +86,7 @@ func (s *StateTree) leavesCountFromStorage() (uint64, error) {
 }
 
 func (s *StateTree) incrementLeavesCounter() {
-	atomic.AddUint64(s.leavesCounter, 1)
+	atomic.AddUint64(s.leavesCount, 1)
 }
 
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
