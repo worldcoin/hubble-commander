@@ -52,17 +52,17 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	registeredSpokeStorage := NewRegisteredSpokeStorage(database)
 
+	stateTree, err := NewStateTree(database)
+	if err != nil {
+		return nil, err
+	}
+
 	accountTree, err := NewAccountTree(database)
 	if err != nil {
 		return nil, err
 	}
 
 	pendingStakeWithdrawalStorage := NewPendingStakeWithdrawalStorage(database)
-
-	stateTree, err := NewStateTree(database)
-	if err != nil {
-		return nil, err
-	}
 
 	storage := &Storage{
 		BatchStorage:                  batchStorage,
