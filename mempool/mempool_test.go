@@ -390,18 +390,18 @@ func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesTxs() {
 func (s *MempoolTestSuite) TestRemoveSyncedTxs_IncrementsNonces() {
 	txController, txMempool := s.mempool.BeginTransaction()
 	removedHashes := txMempool.RemoveSyncedTxs(models.GenericArray{
-		s.txs[2],
+		s.txs[0],
+		s.txs[1],
 		s.newTransfer(1, 10),
 		s.newTransfer(1, 11),
-		s.txs[5],
-		s.txs[8],
+		s.txs[7],
 	})
 	txController.Commit()
 
-	s.Equal(removedHashes, getTxsHashes(s.txs[2], s.txs[3], s.txs[5], s.txs[8]))
-	s.EqualValues(s.mempool.buckets[0].nonce, 11)
+	s.Equal(removedHashes, getTxsHashes(s.txs[0], s.txs[1], s.txs[3], s.txs[7]))
+	s.EqualValues(s.mempool.buckets[0].nonce, 12)
 	s.EqualValues(s.mempool.buckets[1].nonce, 12)
-	s.EqualValues(s.mempool.buckets[2].nonce, 16)
+	s.EqualValues(s.mempool.buckets[2].nonce, 15)
 	s.EqualValues(s.mempool.buckets[3].nonce, 11)
 }
 
