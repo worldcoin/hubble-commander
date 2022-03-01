@@ -1,7 +1,9 @@
 package mempool
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -25,12 +27,34 @@ func (s *MempoolTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
+func NewTestMempool(storage *st.Storage, txs []models.GenericTransaction) (*Mempool, error) {
+	shuffledTxs := make([]models.GenericTransaction, len(txs))
+	copy(shuffledTxs, txs)
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(shuffledTxs), func(i, j int) { shuffledTxs[i], shuffledTxs[j] = shuffledTxs[j], shuffledTxs[i] })
+
+	mempool := NewMempool()
+	for _, tx := range shuffledTxs {
+		_, err := mempool.AddOrReplace(storage, tx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return mempool, nil
+}
+
 func (s *MempoolTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	// no need to shuffle initial transactions as they are retrieved from DB sorted by tx hashes which are random
+	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
+		0: 10,
+		1: 10,
+		2: 15,
+		3: 10,
+	})
+
 	s.txs = []models.GenericTransaction{
 		s.newTransfer(0, 10), // 0 - executable
 		s.newTransfer(0, 11), // 1
@@ -47,17 +71,7 @@ func (s *MempoolTestSuite) SetupTest() {
 		s.newTransfer(3, 12), // 9
 	}
 
-	err = s.storage.BatchAddTransaction(models.GenericArray(s.txs))
-	s.NoError(err)
-
-	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
-		0: 10,
-		1: 10,
-		2: 15,
-		3: 10,
-	})
-
-	s.mempool, err = NewMempool(s.storage.Storage)
+	s.mempool, err = NewTestMempool(s.storage.Storage, s.txs)
 	s.NoError(err)
 }
 
@@ -66,8 +80,8 @@ func (s *MempoolTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
-	mempool, err := NewMempool(s.storage.Storage)
+func (s *MempoolTestSuite) TestNewTestMempool_InitsBucketsCorrectly() {
+	mempool, err := NewTestMempool(s.storage.Storage, s.txs)
 	s.NoError(err)
 
 	s.Len(mempool.buckets, 4)
@@ -80,6 +94,15 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.EqualValues(mempool.buckets[1].nonce, 10)
 	s.EqualValues(mempool.buckets[2].nonce, 15)
 	s.EqualValues(mempool.buckets[3].nonce, 10)
+}
+
+func (s *MempoolTestSuite) TestNewTestMempool_InitsTxCountsCorrectly() {
+	mempool, err := NewTestMempool(s.storage.Storage, s.txs)
+	s.NoError(err)
+
+	s.Equal(8, mempool.txCounts[txtype.Transfer])
+	s.Equal(2, mempool.txCounts[txtype.Create2Transfer])
+	s.Equal(0, mempool.txCounts[txtype.MassMigration])
 }
 
 func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsAllExecutableTxsOfGivenType() {
@@ -375,7 +398,7 @@ func setUserStates(s *require.Assertions, stateTree *st.StateTree, nonces map[ui
 	for stateID, nonce := range nonces {
 		_, err := stateTree.Set(stateID, &models.UserState{
 			PubKeyID: 0,
-			TokenID:  models.MakeUint256(uint64(stateID)),
+			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(1000),
 			Nonce:    models.MakeUint256(nonce),
 		})

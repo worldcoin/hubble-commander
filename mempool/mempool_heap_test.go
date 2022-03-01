@@ -29,6 +29,13 @@ func (s *MempoolHeapTestSuite) SetupTest() {
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
+	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
+		0: 10,
+		1: 10,
+		2: 15,
+		3: 10,
+	})
+
 	s.txs = []models.GenericTransaction{
 		s.newTransfer(0, 10, 100), // 0 - executable
 		s.newTransfer(0, 11, 100), // 1
@@ -43,16 +50,6 @@ func (s *MempoolHeapTestSuite) SetupTest() {
 		s.newC2T(3, 10, 130), // 7 - executable
 		s.newC2T(3, 11, 130), // 8
 	}
-
-	err = s.storage.BatchAddTransaction(models.GenericArray(s.txs))
-	s.NoError(err)
-
-	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
-		0: 10,
-		1: 10,
-		2: 15,
-		3: 10,
-	})
 }
 
 func (s *MempoolHeapTestSuite) TearDownTest() {
@@ -61,7 +58,7 @@ func (s *MempoolHeapTestSuite) TearDownTest() {
 }
 
 func (s *MempoolHeapTestSuite) Test_MempoolAndHeapRealUsage() {
-	mempool, err := NewMempool(s.storage.Storage)
+	mempool, err := NewTestMempool(s.storage.Storage, s.txs)
 	s.NoError(err)
 	s.Equal(7, mempool.TxCount(txtype.Transfer))
 	s.Equal(2, mempool.TxCount(txtype.Create2Transfer))

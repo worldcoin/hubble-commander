@@ -2,6 +2,7 @@ package mempool
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -29,18 +30,29 @@ type txPool struct {
 }
 
 func NewTxPool(storage *st.Storage) (*txPool, error) {
-	pool, err := NewMempool(storage)
+	txs, err := storage.GetAllPendingTransactions()
 	if err != nil {
 		return nil, err
 	}
-	return &txPool{
-		storage:         storage,
-		mempool:         pool,
-		incomingTxs:     make([]models.GenericTransaction, 0),
-		incomingTxsChan: make(chan models.GenericTransaction, 1024),
-	}, nil
-}
 
+	sort.Slice(txs, func(i, j int) bool {
+		return earlierTimestamp(txs[i].GetBase().ReceiveTime, txs[j].GetBase().ReceiveTime)
+	})
+
+	pool := txPool{
+		storage:         storage,
+		mempool:         NewMempool(),
+		incomingTxs:     txs.ToSlice(),
+		incomingTxsChan: make(chan models.GenericTransaction, 1024),
+	}
+
+	err = pool.UpdateMempool()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pool, nil
+}
 func (p *txPool) ReadTxs(ctx context.Context) error {
 	for {
 		select {
@@ -126,6 +138,16 @@ func (p *txPool) RemoveFailedTxs(txErrors []models.TxError) error {
 
 	p.mempool.RemoveFailedTxs(txErrors)
 	return nil
+}
+
+func earlierTimestamp(left, right *models.Timestamp) bool {
+	if left == nil {
+		return false
+	}
+	if right == nil {
+		return true
+	}
+	return left.Before(*right)
 }
 
 func getReplacementError(txHash *common.Hash) models.TxError {
