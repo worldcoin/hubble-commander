@@ -153,22 +153,6 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
-func (s *TransactionTestSuite) TestRemovePendingTransaction() {
-	err := s.storage.AddTransaction(&transfer)
-	s.NoError(err)
-
-	err = s.storage.RemovePendingTransaction(&transfer.Hash)
-	s.NoError(err)
-
-	_, err = s.storage.GetTransfer(transfer.Hash)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-}
-
-func (s *TransactionTestSuite) TestRemovePendingTransaction_NoTransaction() {
-	err := s.storage.RemovePendingTransaction(&transfer.Hash)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-}
-
 func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID

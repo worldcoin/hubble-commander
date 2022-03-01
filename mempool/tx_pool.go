@@ -94,7 +94,7 @@ func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
 			"previousTxHash": *prevTxHash,
 			"newTxHash":      *txHash,
 		}).Debug("Mempool: replaced transaction")
-		err = p.storage.RemovePendingTransaction(prevTxHash)
+		err = p.storage.RemovePendingTransactions(*prevTxHash)
 		if st.IsNotFoundError(err) {
 			return nil
 		}
