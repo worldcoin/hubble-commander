@@ -244,7 +244,7 @@ func (m *TxMempool) RemoveSyncedTxs(txs models.GenericTransactionArray) []common
 			return txBase.Nonce.Eq(&tx.GetBase().Nonce)
 		})
 		if len(bucket.txs) == 0 {
-			m.buckets[tx.GetFromStateID()] = nil
+			m.setBucket(tx.GetFromStateID(), nil)
 		}
 		if txHash != nil {
 			hashes = append(hashes, *txHash)
