@@ -51,7 +51,7 @@ func newContext(
 	var batchCtx batchContext
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		batchCtx = newTxsContext(txStorage, client, cfg, txtype.TransactionType(batchType))
+		batchCtx = newTxsContext(txStorage, client, nil, cfg, txtype.TransactionType(batchType))
 	case batchtype.Deposit:
 		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis:
