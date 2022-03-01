@@ -257,7 +257,7 @@ func (s *TransactionTestSuite) TestRemoveFailedTransactions() {
 }
 
 func (s *TransactionTestSuite) TestRemoveFailedTransactions_NoTransactions() {
-	err := s.storage.RemoveFailedTransactions([]models.GenericTransaction{&transfer})
+	err := s.storage.RemoveFailedTransactions(models.TransferArray{transfer})
 	s.NoError(err)
 }
 

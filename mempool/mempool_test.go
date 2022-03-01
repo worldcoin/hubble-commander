@@ -372,7 +372,7 @@ func (s *MempoolTestSuite) TestRemoveSyncedTxs_IncrementsNonces() {
 }
 
 func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesEmptyBuckets() {
-	removedHashes := s.mempool.RemoveSyncedTxs(s.txs[5:7])
+	removedHashes := s.mempool.RemoveSyncedTxs(models.GenericArray(s.txs[5:7]))
 
 	s.Equal(removedHashes, getTxsHashes(s.txs[5:7]...))
 	s.NotContains(s.mempool.buckets, uint32(2))

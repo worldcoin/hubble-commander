@@ -274,15 +274,15 @@ func (s *TransactionStorage) RemovePendingTransactions(hashes ...common.Hash) er
 	})
 }
 
-func (s *TransactionStorage) RemoveFailedTransactions(txs []models.GenericTransaction) error {
+func (s *TransactionStorage) RemoveFailedTransactions(txs models.GenericTransactionArray) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		return txStorage.unsafeFindAndRemoveFailedTxs(txs)
 	})
 }
 
-func (s *TransactionStorage) unsafeFindAndRemoveFailedTxs(txs []models.GenericTransaction) error {
-	for _, tx := range txs {
-		failedTxs, err := s.getFailedTxsByIndex(tx.GetBase())
+func (s *TransactionStorage) unsafeFindAndRemoveFailedTxs(txs models.GenericTransactionArray) error {
+	for i := 0; i < txs.Len(); i++ {
+		failedTxs, err := s.getFailedTxsByIndex(txs.At(i).GetBase())
 		if err != nil {
 			return err
 		}
