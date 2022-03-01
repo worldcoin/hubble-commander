@@ -57,7 +57,6 @@ func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
 	s.SetupTestEnvironment(nil, nil)
 
 	s.benchConfig = benchmarkConfig
-
 	s.stateIds = make([]uint32, 0)
 	s.waitGroup = sync.WaitGroup{}
 	s.txsSent = 0

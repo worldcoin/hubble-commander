@@ -45,14 +45,13 @@ func (s *E2ETestSuite) SetupSuite() {
 }
 
 func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deployerConfig *config.DeployerConfig) {
-	var err error
-
 	if commanderCfg == nil {
 		commanderCfg = config.GetConfig()
 	}
 
 	s.Cfg = commanderCfg
 
+	var err error
 	s.Commander, err = NewConfiguredCommanderFromEnv(commanderCfg, deployerConfig)
 	s.NoError(err)
 
@@ -176,10 +175,8 @@ func (s *E2ETestSuite) WaitForBatchStatus(batchID uint64, status batchstatus.Bat
 
 func (s *E2ETestSuite) WaitForTxToBeIncludedInBatch(txHash common.Hash) {
 	s.Eventually(func() bool {
-		var txReceipt dto.TransactionReceipt
-		err := s.RPCClient.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
-		s.NoError(err)
-		return txReceipt.Status == txstatus.Mined
+		receipt := s.GetTransaction(txHash)
+		return receipt.Status == txstatus.Mined
 	}, 30*time.Second, testutils.TryInterval)
 }
 

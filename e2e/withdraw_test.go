@@ -6,7 +6,6 @@ package e2e
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -43,14 +42,14 @@ func (s *WithdrawalsE2ETestSuite) SetupTest() {
 	commanderConfig.Rollup.MinTxsPerCommitment = 32
 	commanderConfig.Rollup.MaxTxsPerCommitment = 32
 	commanderConfig.Rollup.MinCommitmentsPerBatch = 1
-	commanderConfig.Rollup.MaxTxnDelay = 2 * time.Second
 
 	deployerConfig := config.GetDeployerTestConfig()
 	deployerConfig.Bootstrap.BlocksToFinalise = 1
 
 	s.SetupTestEnvironment(commanderConfig, deployerConfig)
 
-	s.transactor = s.getTransactor(1_000_000)
+	gasLimit := 1_000_000
+	s.transactor = s.getTransactor(uint64(gasLimit))
 	s.withdrawManager, s.withdrawManagerAddress = s.getWithdrawManager()
 	s.token, s.tokenContract = s.getDeployedTokenAndApprove()
 	s.senderWallet = s.Wallets[1]

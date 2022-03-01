@@ -132,7 +132,7 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		s.NoError(migrationCommander.Stop())
 	}()
 
-	// All furthers calls are going to be made to the new migrated commander
+	// All further calls are going to be made to the new migrated commander
 	s.RPCClient = migrationAdminRPCClient
 
 	s.configureCommander(dto.ConfigureParams{

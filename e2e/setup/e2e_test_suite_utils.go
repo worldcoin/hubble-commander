@@ -20,6 +20,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+func (s *E2ETestSuite) CalculateDepositsCountForFullBatch() int {
+	subtreeDepth, err := s.ETHClient.GetMaxSubtreeDepthParam()
+	s.NoError(err)
+	depositsCount := 1 << *subtreeDepth
+
+	return depositsCount
+}
+
 func (s *E2ETestSuite) getDomain() bls.Domain {
 	info := s.GetNetworkInfo()
 	return info.SignatureDomain
@@ -30,7 +38,7 @@ func (s *E2ETestSuite) newCommanderETHClient() *eth.Client {
 }
 
 func (s *E2ETestSuite) newE2ETestETHClient() *eth.Client {
-	return s.newEthClient(EthClientPrivateKey)
+	return s.newEthClient(TestEthClientPrivateKey)
 }
 
 func (s *E2ETestSuite) newEthClient(privateKey string) *eth.Client {
@@ -84,14 +92,6 @@ func (s *E2ETestSuite) newEthClient(privateKey string) *eth.Client {
 	})
 	s.NoError(err)
 	return ethClient
-}
-
-func (s *E2ETestSuite) CalculateDepositsCountForFullBatch() int {
-	subtreeDepth, err := s.ETHClient.GetMaxSubtreeDepthParam()
-	s.NoError(err)
-	depositsCount := 1 << *subtreeDepth
-
-	return depositsCount
 }
 
 func (s *E2ETestSuite) submitTransactionToCommander(tx interface{}) common.Hash {
