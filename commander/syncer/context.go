@@ -26,11 +26,12 @@ type Context struct {
 func NewContext(
 	storage *st.Storage,
 	client *eth.Client,
+	pool *mempool.Mempool,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-	return newContext(txStorage, tx, client, nil, cfg, batchType)
+	return newContext(txStorage, tx, client, pool, cfg, batchType)
 }
 
 func NewTestContext(
