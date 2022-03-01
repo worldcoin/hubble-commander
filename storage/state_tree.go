@@ -29,7 +29,7 @@ type StateTree struct {
 
 func NewStateTree(database *Database) (*StateTree, error) {
 	stateTree := newStateTree(database)
-	count, err := stateTree.leavesCountFromStorage()
+	count, err := stateTree.getLeavesCountFromStorage()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (s *StateTree) LeavesCount() uint64 {
 	return atomic.LoadUint64(s.leavesCount)
 }
 
-func (s *StateTree) leavesCountFromStorage() (uint64, error) {
+func (s *StateTree) getLeavesCountFromStorage() (uint64, error) {
 	count, err := s.database.Badger.Count(&stored.StateLeaf{}, nil)
 	return count, err
 }
