@@ -78,7 +78,7 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		ToStateID:   ref.Uint32(999),
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(4),
+		Nonce:       models.NewUint256(8),
 	})
 	// Some valid txs
 	s.SendNTransactions(4, dto.Transfer{
@@ -90,11 +90,11 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 	})
 	// Another invalid tx
 	s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(1),
+		FromStateID: ref.Uint32(2),
 		ToStateID:   ref.Uint32(999),
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(5),
+		Nonce:       models.NewUint256(0),
 	})
 
 	s.WaitForBatchStatus(2, batchstatus.Submitted)

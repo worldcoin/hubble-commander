@@ -55,17 +55,31 @@ func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deploye
 
 	s.Commander, err = NewConfiguredCommanderFromEnv(commanderCfg, deployerConfig)
 	s.NoError(err)
-	err = s.Commander.Start()
-	s.NoError(err)
 
 	s.RPCClient = s.Commander.Client()
 
-	s.ETHClient = s.newEthClient()
+	s.ETHClient = s.newE2ETestETHClient()
+	s.prepareEtherFunds()
+
+	err = s.Commander.Start()
+	s.NoError(err)
 
 	s.Domain = s.getDomain()
 
 	s.Wallets, err = CreateWallets(s.Domain)
 	s.NoError(err)
+}
+
+func (s *E2ETestSuite) prepareEtherFunds() {
+	commanderETHClient := s.newCommanderETHClient()
+	token, tokenContract := s.GetDeployedToken(0)
+	s.ApproveToken(token.Contract, "1000")
+	s.transferTokens(
+		tokenContract,
+		commanderETHClient,
+		s.ETHClient.Blockchain.GetAccount().From,
+		"1000",
+	)
 }
 
 func (s *E2ETestSuite) TearDownTest() {
@@ -200,6 +214,9 @@ func (s *E2ETestSuite) SubmitTxBatchAndWait(submit func() common.Hash) {
 func (s *E2ETestSuite) SubmitDepositBatchAndWait(targetPubKeyID, tokenID *models.Uint256, depositAmount string) {
 	batchID, err := s.ETHClient.Rollup.NextBatchID(nil)
 	s.NoError(err)
+
+	// Wait for previous batch to be mined
+	s.WaitForBatchStatus(batchID.Uint64()-1, batchstatus.Mined)
 
 	fullDepositBatchCount := s.CalculateDepositsCountForFullBatch()
 	parsedDepositAmount := models.NewUint256FromBig(*utils.ParseEther(depositAmount))

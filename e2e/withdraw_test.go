@@ -24,7 +24,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -150,14 +149,7 @@ func (s *WithdrawalsE2ETestSuite) getWithdrawManager() (*withdrawmanager.Withdra
 }
 
 func (s *WithdrawalsE2ETestSuite) getTransactor(gasLimit uint64) *bind.TransactOpts {
-	chainID := big.NewInt(0).SetUint64(s.Cfg.Ethereum.ChainID)
-
-	privateKey, err := crypto.HexToECDSA(s.Cfg.Ethereum.PrivateKey)
-	s.NoError(err)
-
-	account, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	s.NoError(err)
-
+	account := s.ETHClient.Blockchain.GetAccount()
 	account.GasLimit = gasLimit
 
 	return account

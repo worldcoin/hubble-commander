@@ -3,10 +3,12 @@ package setup
 import (
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
+	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
@@ -14,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txstatus"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -22,21 +25,31 @@ func (s *E2ETestSuite) getDomain() bls.Domain {
 	return info.SignatureDomain
 }
 
-func (s *E2ETestSuite) newEthClient() *eth.Client {
-	info := s.GetNetworkInfo()
+func (s *E2ETestSuite) newCommanderETHClient() *eth.Client {
+	return s.newEthClient(s.Cfg.Ethereum.PrivateKey)
+}
 
+func (s *E2ETestSuite) newE2ETestETHClient() *eth.Client {
+	return s.newEthClient(EthClientPrivateKey)
+}
+
+func (s *E2ETestSuite) newEthClient(privateKey string) *eth.Client {
+	chainSpec := s.Commander.ChainSpec()
 	chainState := models.ChainState{
-		ChainID:                        info.ChainID,
-		AccountRegistry:                info.AccountRegistry,
-		AccountRegistryDeploymentBlock: info.AccountRegistryDeploymentBlock,
-		TokenRegistry:                  info.TokenRegistry,
-		SpokeRegistry:                  info.SpokeRegistry,
-		DepositManager:                 info.DepositManager,
-		WithdrawManager:                info.WithdrawManager,
-		Rollup:                         info.Rollup,
+		ChainID:                        chainSpec.ChainID,
+		AccountRegistry:                chainSpec.AccountRegistry,
+		AccountRegistryDeploymentBlock: chainSpec.AccountRegistryDeploymentBlock,
+		TokenRegistry:                  chainSpec.TokenRegistry,
+		SpokeRegistry:                  chainSpec.SpokeRegistry,
+		DepositManager:                 chainSpec.DepositManager,
+		WithdrawManager:                chainSpec.WithdrawManager,
+		Rollup:                         chainSpec.Rollup,
+		GenesisAccounts:                chainSpec.GenesisAccounts,
 	}
 
-	blockchain, err := chain.NewRPCConnection(s.Cfg.Ethereum)
+	cfg := config.GetConfig()
+	cfg.Ethereum.PrivateKey = privateKey
+	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	s.NoError(err)
 
 	backend := blockchain.GetBackend()
@@ -57,8 +70,7 @@ func (s *E2ETestSuite) newEthClient() *eth.Client {
 	s.NoError(err)
 
 	txsChannels := &eth.TxsTrackingChannels{
-		SkipSentTxsChannel:                true,
-		SkipSendingRequestsThroughChannel: true,
+		SkipChannelSending: true,
 	}
 
 	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
@@ -146,4 +158,16 @@ func (s *E2ETestSuite) sendNMassMigrations(n int, massMigration dto.MassMigratio
 	}
 
 	return firstTxHash
+}
+
+func (s *E2ETestSuite) transferTokens(
+	tokenContract *customtoken.TestCustomToken,
+	commanderClient *eth.Client,
+	recipient common.Address,
+	amount string,
+) {
+	tx, err := tokenContract.Transfer(commanderClient.Blockchain.GetAccount(), recipient, utils.ParseEther(amount))
+	s.NoError(err)
+	_, err = commanderClient.WaitToBeMined(tx)
+	s.NoError(err)
 }
