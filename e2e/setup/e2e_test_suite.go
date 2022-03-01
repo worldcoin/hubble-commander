@@ -23,11 +23,11 @@ import (
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+const QueueDepositGasLimit = 600_000
+
 type E2ETestSuite struct {
 	*require.Assertions
 	suite.Suite
-
-	QueueDepositGasLimit uint64
 
 	Cfg       *config.Config
 	Commander Commander
@@ -40,8 +40,6 @@ type E2ETestSuite struct {
 
 func (s *E2ETestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
-
-	s.QueueDepositGasLimit = 600_000
 }
 
 func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deployerConfig *config.DeployerConfig) {
@@ -221,7 +219,7 @@ func (s *E2ETestSuite) SubmitDepositBatchAndWait(targetPubKeyID, tokenID *models
 	txs := make([]types.Transaction, 0, fullDepositBatchCount)
 	for i := 0; i < fullDepositBatchCount; i++ {
 		var tx *types.Transaction
-		tx, err = s.ETHClient.QueueDeposit(s.QueueDepositGasLimit, targetPubKeyID, parsedDepositAmount, tokenID)
+		tx, err = s.ETHClient.QueueDeposit(QueueDepositGasLimit, targetPubKeyID, parsedDepositAmount, tokenID)
 		s.NoError(err)
 		txs = append(txs, *tx)
 	}
