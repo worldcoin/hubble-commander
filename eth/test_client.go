@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/testutils/simulator"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TestClient struct {
@@ -77,4 +78,11 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		ExampleTokenAddress: contracts.ExampleTokenAddress,
 		RequestsChan:        clientCfg.RequestsChan,
 	}, nil
+}
+
+func (c *TestClient) rollup() *rollupSessionBuilder {
+	builder := c.Client.rollup()
+	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
+		builder.contract.BoundContract.RawTransact(builder.TransactOpts, data...)
+	}
 }
