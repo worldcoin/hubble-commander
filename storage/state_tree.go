@@ -85,7 +85,7 @@ func (s *StateTree) leavesCountFromStorage() (uint64, error) {
 	return count, err
 }
 
-func (s *StateTree) incrementLeavesCounter() {
+func (s *StateTree) incrementLeavesCount() {
 	atomic.AddUint64(s.leavesCount, 1)
 }
 
@@ -165,7 +165,7 @@ func (s *StateTree) Set(id uint32, state *models.UserState) (witness models.Witn
 		return nil, err
 	}
 	if isNewLeaf {
-		s.incrementLeavesCounter()
+		s.incrementLeavesCount()
 	}
 
 	return witness, nil
