@@ -42,6 +42,7 @@ func (s *WithdrawalsE2ETestSuite) SetupTest() {
 	commanderConfig.Rollup.MinTxsPerCommitment = 2
 	commanderConfig.Rollup.MaxTxsPerCommitment = 32
 	commanderConfig.Rollup.MinCommitmentsPerBatch = 1
+	commanderConfig.API.EnableProofMethods = true
 
 	deployerConfig := config.GetDeployerTestConfig()
 	deployerConfig.Bootstrap.BlocksToFinalise = 1
