@@ -99,6 +99,10 @@ func (s *StateTree) incrementLeavesCount() {
 	atomic.AddUint64(s.leavesCount, 1)
 }
 
+func (s *StateTree) decreaseLeavesCount(delta uint64) {
+	atomic.AddUint64(s.leavesCount, ^(delta - 1))
+}
+
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
 	return s.NextVacantSubtree(0)
 }
@@ -197,6 +201,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	if *currentRootHash == targetRootHash {
 		return nil
 	}
+	revertedLeavesCount := uint64(0)
 
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) (err error) {
 		stateTree := newStateTree(txDatabase)
@@ -215,6 +220,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			if err != nil {
 				return false, err
 			}
+			revertedLeavesCount++
 			return *currentRootHash == targetRootHash, nil
 		})
 		if err != nil && err != db.ErrIteratorFinished {
@@ -224,6 +230,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		if *currentRootHash != targetRootHash {
 			return errors.WithStack(ErrNonexistentState)
 		}
+		s.decreaseLeavesCount(revertedLeavesCount)
 		return nil
 	})
 }
