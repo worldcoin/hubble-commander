@@ -123,6 +123,10 @@ func (t GenericArray) ToMassMigrationArray() MassMigrationArray {
 	return MakeMassMigrationArray(array...)
 }
 
+func (t GenericArray) ToSlice() []GenericTransaction {
+	return t
+}
+
 type TransferArray []Transfer
 
 func MakeTransferArray(transfers ...Transfer) TransferArray {
