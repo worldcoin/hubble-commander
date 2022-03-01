@@ -12,6 +12,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 )
@@ -285,6 +286,66 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_CommitmentWithNonexistentFeeR
 	s.Equal(expectedNewlyCreatedFeeReceiver, feeReceiver)
 	s.Equal(models.MakeUint256(1000-400-100), sender.Balance)
 	s.Equal(models.MakeUint256(400), receiver.Balance)
+}
+
+func (s *SyncTransferBatchTestSuite) TestSyncBatch_AddsSyncedTxsAsBatched() {
+	txs := []*models.Transfer{
+		testutils.NewTransfer(0, 1, 0, 100),
+		testutils.NewTransfer(0, 1, 1, 100),
+		testutils.NewTransfer(0, 1, 2, 100),
+	}
+	s.setTxHashAndSign(txs...)
+
+	for i := range txs {
+		err := s.storage.AddTransaction(txs[i])
+		s.NoError(err)
+		_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, txs[i])
+		s.NoError(err)
+	}
+
+	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch()
+	s.NoError(err)
+	s.client.Backend.Commit()
+
+	s.recreateDatabase()
+
+	remoteBatches, err := s.client.GetAllBatches()
+	s.NoError(err)
+	s.Len(remoteBatches, 1)
+
+	txs[1].ErrorMessage = ref.String("some message")
+	err = s.storage.BatchAddTransaction(models.GenericArray{
+		txs[0], // pending tx
+		txs[1], // failed tx
+	})
+	s.NoError(err)
+
+	_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, txs[0])
+	s.NoError(err)
+	ctx := s.syncCtx.batchCtx.(*TxsContext)
+	ctx.mempoolCtx = NewMempoolContext(s.txsCtx.Mempool)
+
+	s.syncAllBatches()
+	s.checkBatchedTxs(pendingBatch, txs)
+}
+
+func (s *SyncTransferBatchTestSuite) checkBatchedTxs(pendingBatch *models.Batch, txs []*models.Transfer) {
+	txCount := s.txsCtx.Mempool.TxCount(txtype.Transfer)
+	s.Equal(0, txCount)
+
+	pendingTxs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(pendingTxs, 0)
+
+	failedTxs, err := s.storage.GetAllPendingTransactions()
+	s.NoError(err)
+	s.Len(failedTxs, 0)
+
+	txHashes, err := s.storage.GetTransactionHashesByBatchIDs(pendingBatch.ID)
+	s.NoError(err)
+	s.Contains(txHashes, txs[0].Hash)
+	s.Contains(txHashes, txs[1].Hash)
+	s.Contains(txHashes, txs[2].Hash)
 }
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {

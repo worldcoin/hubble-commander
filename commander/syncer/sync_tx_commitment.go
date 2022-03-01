@@ -83,11 +83,6 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 	if txs.Len() == 0 {
 		return nil
 	}
-	// TODO-sync:
-	// remove from mempool
-	// remove from pending txs
-	// remove from failed txs
-	// add to batched txs
 
 	for i := 0; i < txs.Len(); i++ {
 		txs.At(i).GetBase().CommitmentID = commitmentID
@@ -97,5 +92,15 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 		}
 		txs.At(i).GetBase().Hash = *hashTransfer
 	}
-	return c.storage.BatchUpsertTransaction(txs)
+
+	removedTxsHashes := c.mempoolCtx.Mempool.RemoveSyncedTxs(txs)
+	err := c.storage.RemovePendingTransactions(removedTxsHashes...)
+	if err != nil {
+		return err
+	}
+	err = c.storage.RemoveFailedTransactions(txs)
+	if err != nil {
+		return err
+	}
+	return c.storage.BatchAddTransaction(txs)
 }

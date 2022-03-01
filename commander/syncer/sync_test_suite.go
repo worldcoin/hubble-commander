@@ -113,6 +113,7 @@ func (s *syncTestSuite) syncAllBatches() {
 		err = s.syncCtx.SyncBatch(newRemoteBatches[i])
 		s.NoError(err)
 	}
+	s.syncCtx.batchCtx.Commit()
 }
 
 func (s *syncTestSuite) recreateDatabase() {
