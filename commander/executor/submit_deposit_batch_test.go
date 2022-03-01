@@ -101,7 +101,7 @@ func (s *SubmitDepositBatchTestSuite) addGenesisBatch() {
 	s.NoError(err)
 
 	batch := contractBatch.ToModelBatch()
-	batch.PrevStateRoot = root
+	batch.PrevStateRoot = *root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
 }

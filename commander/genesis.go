@@ -107,7 +107,7 @@ func (c *Commander) addGenesisBatch() error {
 		return err
 	}
 	batch = contractBatch.ToModelBatch()
-	batch.PrevStateRoot = root
+	batch.PrevStateRoot = *root
 
 	return c.storage.AddBatch(batch)
 }

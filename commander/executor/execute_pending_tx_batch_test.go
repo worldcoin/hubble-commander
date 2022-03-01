@@ -104,7 +104,7 @@ func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_AddsPendingBatc
 		ID:              s.pendingBatch.ID,
 		Type:            s.pendingBatch.Type,
 		TransactionHash: s.pendingBatch.TransactionHash,
-		PrevStateRoot:   &s.pendingBatch.PrevStateRoot,
+		PrevStateRoot:   s.pendingBatch.PrevStateRoot,
 	}
 
 	batch, err := s.storage.GetBatch(s.pendingBatch.ID)

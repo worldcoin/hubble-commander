@@ -38,6 +38,6 @@ func (c *ExecutionContext) NewPendingBatch(batchType batchtype.BatchType) (*mode
 	return &models.Batch{
 		ID:            *batchID,
 		Type:          batchType,
-		PrevStateRoot: prevStateRoot,
+		PrevStateRoot: *prevStateRoot,
 	}, nil
 }

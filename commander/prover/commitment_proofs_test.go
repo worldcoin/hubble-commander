@@ -95,7 +95,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
-		PrevStateRoot:     utils.NewRandomHash(),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -158,7 +158,7 @@ func (s *CommitmentProofsTestSuite) TestPreviousCommitmentInclusionProof_Previou
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   utils.NewRandomHash(),
-		PrevStateRoot:     utils.NewRandomHash(),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -211,7 +211,7 @@ func (s *CommitmentProofsTestSuite) TestGenesisBatchCommitmentInclusionProof() {
 
 	expected := models.CommitmentInclusionProof{
 		CommitmentInclusionProofBase: models.CommitmentInclusionProofBase{
-			StateRoot: *genesisBatch.PrevStateRoot,
+			StateRoot: genesisBatch.PrevStateRoot,
 			Path: &models.MerklePath{
 				Path:  0,
 				Depth: 2,
@@ -304,7 +304,7 @@ func (s *CommitmentProofsTestSuite) addGenesisBatch() *models.Batch {
 		Type:            batchtype.Genesis,
 		TransactionHash: common.Hash{},
 		Hash:            utils.NewRandomHash(),
-		PrevStateRoot:   root,
+		PrevStateRoot:   *root,
 	}
 
 	err = s.storage.AddBatch(batch)

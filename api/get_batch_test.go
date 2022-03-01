@@ -51,7 +51,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
 		AccountTreeRoot:   utils.NewRandomHash(),
-		PrevStateRoot:     prevStateRoot,
+		PrevStateRoot:     *prevStateRoot,
 		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
@@ -181,7 +181,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
-		PrevStateRoot:     utils.NewRandomHash(),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)
@@ -256,7 +256,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
-		PrevStateRoot:     utils.NewRandomHash(),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)

@@ -29,7 +29,7 @@ func NewBatchFromModelsBatch(b *models.Batch) *Batch {
 		Hash:              b.Hash,
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
-		PrevStateRoot:     b.PrevStateRoot,
+		PrevStateRoot:     &b.PrevStateRoot,
 		MinedTime:         b.MinedTime,
 	}
 }
@@ -42,7 +42,7 @@ func (b *Batch) ToModelsBatch() *models.Batch {
 		Hash:              b.Hash,
 		FinalisationBlock: b.FinalisationBlock,
 		AccountTreeRoot:   b.AccountTreeRoot,
-		PrevStateRoot:     b.PrevStateRoot,
+		PrevStateRoot:     *b.PrevStateRoot,
 		MinedTime:         b.MinedTime,
 	}
 }

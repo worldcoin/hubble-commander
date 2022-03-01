@@ -103,7 +103,7 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	err = s.storage.AddBatch(&models.Batch{
 		ID:            models.MakeUint256(1),
 		Type:          batchtype.MassMigration,
-		PrevStateRoot: stateRoot,
+		PrevStateRoot: *stateRoot,
 	})
 	s.NoError(err)
 }
@@ -139,7 +139,7 @@ func (s *GetWithdrawProofTestSuite) TestGetWithdrawProof_InvalidBatchType() {
 	err := s.storage.AddBatch(&models.Batch{
 		ID:            commitmentID.BatchID,
 		Type:          batchtype.Transfer,
-		PrevStateRoot: utils.NewRandomHash(),
+		PrevStateRoot: utils.RandomHash(),
 	})
 	s.NoError(err)
 

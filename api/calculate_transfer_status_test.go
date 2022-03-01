@@ -85,7 +85,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInPendingBatch() {
 	batch := models.Batch{
 		ID:            models.MakeUint256(1),
-		PrevStateRoot: utils.NewRandomHash(),
+		PrevStateRoot: utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -107,7 +107,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(math.MaxUint32),
-		PrevStateRoot:     root,
+		PrevStateRoot:     *root,
 	}
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -131,7 +131,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Fin
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(uint32(*currentBlockNumber) + 1),
-		PrevStateRoot:     prevStateRoot,
+		PrevStateRoot:     *prevStateRoot,
 	}
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)

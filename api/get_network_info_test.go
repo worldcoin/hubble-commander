@@ -62,7 +62,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1234),
-			PrevStateRoot:     utils.NewRandomHash(),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(2000),
@@ -70,7 +70,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo_NoFinalisedBatches() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2000),
-			PrevStateRoot:     utils.NewRandomHash(),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 	}
 	err := s.api.storage.AddBatch(&batches[0])
@@ -93,7 +93,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(1),
-			PrevStateRoot:     utils.NewRandomHash(),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(2000),
@@ -101,7 +101,7 @@ func (s *NetworkInfoTestSuite) TestGetNetworkInfo() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(2000),
-			PrevStateRoot:     utils.NewRandomHash(),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 	}
 	err := s.api.storage.AddBatch(&batches[0])
