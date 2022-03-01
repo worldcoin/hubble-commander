@@ -120,15 +120,15 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTxsWithTooLowNonces() {
-	badTxs := []models.GenericTransaction{
+	invalidTxs := []models.GenericTransaction{
 		s.newTransfer(0, 10),
 		s.newTransfer(1, 10),
 	}
-	goodTx := s.newTransfer(5, 10)
+	validTx := s.newTransfer(5, 10)
 	txs := []models.GenericTransaction{
-		badTxs[0],
-		goodTx,
-		badTxs[1],
+		invalidTxs[0],
+		validTx,
+		invalidTxs[1],
 	}
 
 	stopReadingTxs := s.startReadingTxs()
@@ -147,12 +147,12 @@ func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTxsWithTooLowNonces() 
 
 	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
-	s.Equal(goodTx, mempoolTxs[0])
+	s.Equal(validTx, mempoolTxs[0])
 
 	failedTxs, err := s.storage.GetAllFailedTransactions()
 	s.NoError(err)
 	s.Len(failedTxs, 2)
-	for _, badTx := range badTxs {
+	for _, badTx := range invalidTxs {
 		badTx.GetBase().ErrorMessage = ref.String(ErrTxNonceTooLow.Error())
 		s.Contains(failedTxs, badTx)
 	}
