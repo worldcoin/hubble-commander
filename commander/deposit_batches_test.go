@@ -146,7 +146,8 @@ func (s *DepositBatchesTestSuite) submitInvalidBatches() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	txsSyncCtx := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, txtype.Transfer)
+	txsSyncCtx, err := syncer.NewTestTxsContext(txStorage, s.client.Client, s.cfg.Rollup, txtype.Transfer)
+	s.NoError(err)
 	err = txsSyncCtx.UpdateExistingBatch(remoteBatches[0], *previousRoot)
 	s.NoError(err)
 

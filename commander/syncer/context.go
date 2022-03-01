@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -29,7 +30,7 @@ func NewContext(
 	batchType batchtype.BatchType,
 ) *Context {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-	return newContext(txStorage, tx, client, cfg, batchType)
+	return newContext(txStorage, tx, client, nil, cfg, batchType)
 }
 
 func NewTestContext(
@@ -37,21 +38,26 @@ func NewTestContext(
 	client *eth.Client,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
-) *Context {
-	return newContext(storage, nil, client, cfg, batchType)
+) (*Context, error) {
+	pool, err := mempool.NewMempool(storage)
+	if err != nil {
+		return nil, err
+	}
+	return newContext(storage, nil, client, pool, cfg, batchType), nil
 }
 
 func newContext(
 	txStorage *st.Storage,
 	tx *db.TxController,
 	client *eth.Client,
+	pool *mempool.Mempool,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
 	var batchCtx batchContext
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		batchCtx = newTxsContext(txStorage, client, nil, cfg, txtype.TransactionType(batchType))
+		batchCtx = newTxsContext(txStorage, client, pool, cfg, txtype.TransactionType(batchType))
 	case batchtype.Deposit:
 		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis:

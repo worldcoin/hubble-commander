@@ -120,7 +120,8 @@ func (s *testSuiteWithContexts) newContexts(
 	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchType)
 	s.NoError(err)
 
-	s.syncCtx = syncer.NewTestTxsContext(storage, client, cfg, txtype.TransactionType(batchType))
+	s.syncCtx, err = syncer.NewTestTxsContext(storage, client, cfg, txtype.TransactionType(batchType))
+	s.NoError(err)
 	s.disputeCtx = NewContext(storage, s.client.Client)
 }
 

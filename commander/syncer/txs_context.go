@@ -38,8 +38,17 @@ type TxsContext struct {
 	TxType     txtype.TransactionType
 }
 
-func NewTestTxsContext(storage *st.Storage, client *eth.Client, cfg *config.RollupConfig, txType txtype.TransactionType) *TxsContext {
-	return newTxsContext(storage, client, nil, cfg, txType)
+func NewTestTxsContext(
+	storage *st.Storage,
+	client *eth.Client,
+	cfg *config.RollupConfig,
+	txType txtype.TransactionType,
+) (*TxsContext, error) {
+	pool, err := mempool.NewMempool(storage)
+	if err != nil {
+		return nil, err
+	}
+	return newTxsContext(storage, client, pool, cfg, txType), nil
 }
 
 func newTxsContext(

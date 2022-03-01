@@ -44,7 +44,8 @@ func (s *testSuiteWithSyncAndRollupContext) SetupTestWithConfig(batchType batcht
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg)
 	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchType)
 	s.NoError(err)
-	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
+	s.syncCtx, err = NewTestContext(s.storage.Storage, s.client.Client, s.cfg, batchType)
+	s.NoError(err)
 }
 
 func (s *testSuiteWithSyncAndRollupContext) TearDownTest() {
