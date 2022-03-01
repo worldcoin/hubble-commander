@@ -102,5 +102,5 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 	if err != nil {
 		return err
 	}
-	return c.storage.BatchAddTransaction(txs)
+	return c.storage.BatchUpsertTransaction(txs)
 }
