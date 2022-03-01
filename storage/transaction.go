@@ -201,6 +201,28 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 	})
 }
 
+func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactionArray) error {
+	if txs.Len() < 1 {
+		return errors.WithStack(ErrNoRowsAffected)
+	}
+
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := 0; i < txs.Len(); i++ {
+			err := txStorage.AddTransaction(txs.At(i))
+			if errors.Is(err, bh.ErrKeyExists) {
+				err = txStorage.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
+				if err != nil {
+					return err
+				}
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (s *TransactionStorage) AddFailedTransactions(txs models.GenericTransactionArray) error {
 	return s.addTxsInMultipleDBTransactions(txs, "failed")
 }
