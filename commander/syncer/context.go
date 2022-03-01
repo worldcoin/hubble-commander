@@ -42,11 +42,11 @@ func NewTestContext(
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) (*Context, error) {
-	pool, err := mempool.NewMempool(storage)
+	txPool, err := mempool.NewTxPool(storage)
 	if err != nil {
 		return nil, err
 	}
-	return newContext(storage, nil, client, pool, cfg, batchType), nil
+	return newContext(storage, nil, client, txPool.Mempool(), cfg, batchType), nil
 }
 
 func newContext(

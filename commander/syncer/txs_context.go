@@ -44,11 +44,11 @@ func NewTestTxsContext(
 	cfg *config.RollupConfig,
 	txType txtype.TransactionType,
 ) (*TxsContext, error) {
-	pool, err := mempool.NewMempool(storage)
+	txPool, err := mempool.NewTxPool(storage)
 	if err != nil {
 		return nil, err
 	}
-	return newTxsContext(storage, client, pool, cfg, txType), nil
+	return newTxsContext(storage, client, txPool.Mempool(), cfg, txType), nil
 }
 
 func newTxsContext(
