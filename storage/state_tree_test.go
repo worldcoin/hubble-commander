@@ -365,15 +365,15 @@ func (s *StateTreeTestSuite) TestSet_ReturnsWitness() {
 	s.Equal(node.DataHash, witness[31])
 }
 
-func (s *StateTreeTestSuite) TestLeavesCount_UpdateCountAfterAddingNewLeaves() {
+func (s *StateTreeTestSuite) TestLeavesCount_UpdatesCountAfterAddingNewLeaves() {
 	s.setStateLeaves(0, 2, 4, 8, 9)
 
 	count := s.storage.StateTree.LeavesCount()
 	s.EqualValues(5, count)
 
-	s.setStateLeaves(4, 8)
+	s.setStateLeaves(5, 7)
 	count = s.storage.StateTree.LeavesCount()
-	s.EqualValues(5, count)
+	s.EqualValues(7, count)
 }
 
 func (s *StateTreeTestSuite) TestLeavesCount_TheSameCountAfterUpdatingLeaves() {
