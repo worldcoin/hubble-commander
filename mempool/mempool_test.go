@@ -263,6 +263,13 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	s.Equal(tx, bucket.txs[1])
 }
 
+func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnTxWithNonceTooLow() {
+	tx := s.newTransfer(0, 9)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.Nil(prevTxHash)
+	s.ErrorIs(err, ErrTxNonceTooLow)
+}
+
 func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	tx := s.newTransfer(0, 11)
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)

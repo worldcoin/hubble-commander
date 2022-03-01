@@ -14,6 +14,7 @@ import (
 type IterationCallback func(tx models.GenericTransaction) error
 
 var (
+	ErrTxNonceTooLow       = fmt.Errorf("nonce too low")
 	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
 )
@@ -269,6 +270,9 @@ func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
 
 func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (previousTx models.GenericTransaction, err error) {
 	newTxNonce := &newTx.GetBase().Nonce
+	if newTxNonce.CmpN(b.nonce) < 0 {
+		return nil, errors.WithStack(ErrTxNonceTooLow)
+	}
 	for i, tx := range b.txs {
 		if newTxNonce.Eq(&tx.GetBase().Nonce) {
 			return b.replace(i, newTx)

@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,7 +38,7 @@ func (s *TxPoolTestSuite) SetupTest() {
 		PubKeyID: 0,
 		TokenID:  models.MakeUint256(0),
 		Balance:  models.MakeUint256(100),
-		Nonce:    models.MakeUint256(0),
+		Nonce:    models.MakeUint256(5),
 	})
 	s.NoError(err)
 }
@@ -48,9 +49,10 @@ func (s *TxPoolTestSuite) TearDownTest() {
 }
 
 func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
-	for i := 0; i < 5; i++ {
+	for i := 5; i < 10; i++ {
 		s.txPool.Send(s.newTransfer(uint64(i), 10))
 	}
 
@@ -59,20 +61,18 @@ func (s *TxPoolTestSuite) TestReadTxsAndUpdateMempool() {
 	err := s.txPool.UpdateMempool()
 	s.NoError(err)
 
-	receivedTxs := s.getAllTxs(0)
+	receivedTxs := s.getAllTxs()
 	s.Len(receivedTxs, 5)
-
-	cancel()
-	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() {
-	tx := s.newTransfer(0, 10)
-	replacementTx := s.newTransfer(0, 5)
+	tx := s.newTransfer(5, 10)
+	replacementTx := s.newTransfer(5, 5)
 	err := s.storage.AddTransaction(replacementTx)
 	s.NoError(err)
 
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
 	s.txPool.Send(tx)
 	s.txPool.Send(replacementTx)
@@ -88,22 +88,20 @@ func (s *TxPoolTestSuite) TestUpdateMempool_MarksInvalidReplacementTxAsFailed() 
 	s.Equal(replacementTx.Hash, txs.At(0).GetBase().Hash)
 	s.Equal(ErrTxReplacementFailed.Error(), *txs.At(0).GetBase().ErrorMessage)
 
-	mempoolTxs := s.getAllTxs(0)
+	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
 	s.Equal(tx, mempoolTxs[0])
-
-	cancel()
-	wg.Wait()
 }
 
 func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
-	previousTx := s.newTransfer(0, 5)
-	newTx := s.newTransfer(0, 10)
+	previousTx := s.newTransfer(5, 5)
+	newTx := s.newTransfer(5, 10)
 
 	err := s.storage.AddTransaction(previousTx)
 	s.NoError(err)
 
-	wg, cancel := s.startReadingTxs()
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
 
 	s.txPool.Send(previousTx)
 	s.txPool.Send(newTx)
@@ -116,19 +114,55 @@ func (s *TxPoolTestSuite) TestUpdateMempool_ReplacesPendingTx() {
 	_, err = s.storage.GetTransfer(previousTx.Hash)
 	s.True(st.IsNotFoundError(err))
 
-	mempoolTxs := s.getAllTxs(0)
+	mempoolTxs := s.getAllTxs()
 	s.Len(mempoolTxs, 1)
 	s.Equal(newTx, mempoolTxs[0])
+}
 
-	cancel()
-	wg.Wait()
+func (s *TxPoolTestSuite) TestUpdateMempool_RemovesPendingTxsWithTooLowNonces() {
+	invalidTxs := []models.GenericTransaction{
+		s.newTransfer(0, 10),
+		s.newTransfer(1, 10),
+	}
+	validTx := s.newTransfer(5, 10)
+	txs := []models.GenericTransaction{
+		invalidTxs[0],
+		validTx,
+		invalidTxs[1],
+	}
+
+	stopReadingTxs := s.startReadingTxs()
+	defer stopReadingTxs()
+
+	for _, tx := range txs {
+		err := s.storage.AddTransaction(tx)
+		s.NoError(err)
+		s.txPool.Send(tx)
+	}
+
+	s.waitForTxsToBeRead(3)
+
+	err := s.txPool.UpdateMempool()
+	s.NoError(err)
+
+	mempoolTxs := s.getAllTxs()
+	s.Len(mempoolTxs, 1)
+	s.Equal(validTx, mempoolTxs[0])
+
+	failedTxs, err := s.storage.GetAllFailedTransactions()
+	s.NoError(err)
+	s.Len(failedTxs, 2)
+	for _, badTx := range invalidTxs {
+		badTx.GetBase().ErrorMessage = ref.String(ErrTxNonceTooLow.Error())
+		s.Contains(failedTxs, badTx)
+	}
 }
 
 func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAsFailed() {
 	txs := []models.GenericTransaction{
-		s.newTransfer(0, 10),
-		s.newTransfer(1, 10),
-		s.newTransfer(2, 10),
+		s.newTransfer(5, 10),
+		s.newTransfer(6, 10),
+		s.newTransfer(7, 10),
 	}
 	for _, tx := range txs {
 		err := s.storage.AddTransaction(tx)
@@ -149,7 +183,7 @@ func (s *TxPoolTestSuite) TestRemoveFailedTxs_RemovesTxsFromMempoolAndMarksTxsAs
 	s.NotContains(s.txPool.mempool.buckets, 0)
 }
 
-func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc) {
+func (s *TxPoolTestSuite) startReadingTxs() (stopReadingTxs func()) {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -159,7 +193,10 @@ func (s *TxPoolTestSuite) startReadingTxs() (*sync.WaitGroup, context.CancelFunc
 		err := s.txPool.ReadTxs(ctx)
 		s.NoError(err)
 	}()
-	return wg, cancel
+	return func() {
+		cancel()
+		wg.Wait()
+	}
 }
 
 func (s *TxPoolTestSuite) waitForTxsToBeRead(expectedTxsLength int) {
@@ -176,12 +213,12 @@ func (s *TxPoolTestSuite) newTransfer(nonce, fee uint64) *models.Transfer {
 	return tx
 }
 
-func (s *TxPoolTestSuite) getAllTxs(stateID uint32) []models.GenericTransaction {
+func (s *TxPoolTestSuite) getAllTxs() []models.GenericTransaction {
 	txs := s.txPool.Mempool().GetExecutableTxs(txtype.Transfer)
 
 	_, txMempool := s.txPool.Mempool().BeginTransaction()
 	for {
-		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, stateID)
+		tx, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
 		s.NoError(err)
 		if tx == nil {
 			break
