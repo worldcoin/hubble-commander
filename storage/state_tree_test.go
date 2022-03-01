@@ -392,6 +392,24 @@ func (s *StateTreeTestSuite) TestLeavesCount_NoLeaves() {
 	s.EqualValues(0, count)
 }
 
+func (s *StateTreeTestSuite) TestLeavesCount_ReturnsCorrectCountAfterRevert() {
+	s.setStateLeaves(0, 2, 4, 8, 9)
+
+	root, err := s.storage.StateTree.Root()
+	s.NoError(err)
+
+	s.setStateLeaves(1)
+
+	count := s.storage.StateTree.LeavesCount()
+	s.EqualValues(6, count)
+
+	err = s.storage.StateTree.RevertTo(*root)
+	s.NoError(err)
+
+	count = s.storage.StateTree.LeavesCount()
+	s.EqualValues(5, count)
+}
+
 func (s *StateTreeTestSuite) TestRevertTo() {
 	states := []models.UserState{
 		{
