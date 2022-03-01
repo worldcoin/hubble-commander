@@ -63,7 +63,7 @@ func (s *benchmarkTestSuite) SetupTest(benchmarkConfig BenchmarkConfig) {
 	s.lastReportedTxCount = 0
 }
 
-func (s *benchmarkTestSuite) sendTransferFromCustomWallet(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendTransferFromWallet(wallet bls.Wallet, from, to uint32, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignTransfer(&wallet, dto.Transfer{
 		FromStateID: &from,
 		ToStateID:   &to,
@@ -81,12 +81,7 @@ func (s *benchmarkTestSuite) sendTransferFromCustomWallet(wallet bls.Wallet, fro
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) sendC2TFromCustomWallet(
-	wallet bls.Wallet,
-	from uint32,
-	to *models.PublicKey,
-	nonce models.Uint256,
-) common.Hash {
+func (s *benchmarkTestSuite) sendC2TFromWallet(wallet bls.Wallet, from uint32, to *models.PublicKey, nonce models.Uint256) common.Hash {
 	transfer, err := api.SignCreate2Transfer(&wallet, dto.Create2Transfer{
 		FromStateID: &from,
 		ToPublicKey: to,
@@ -104,7 +99,7 @@ func (s *benchmarkTestSuite) sendC2TFromCustomWallet(
 	return transferHash
 }
 
-func (s *benchmarkTestSuite) sendMMFromCustomWallet(wallet bls.Wallet, from uint32, nonce models.Uint256) common.Hash {
+func (s *benchmarkTestSuite) sendMMFromWallet(wallet bls.Wallet, from uint32, nonce models.Uint256) common.Hash {
 	massMigration, err := api.SignMassMigration(&wallet, dto.MassMigration{
 		FromStateID: &from,
 		SpokeID:     ref.Uint32(1),

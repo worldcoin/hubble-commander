@@ -142,15 +142,15 @@ func (s *BenchmarkTransactionsSuite) sendTransactionsWithDistribution(distributi
 				to = s.stateIds[randomInt(len(s.stateIds))]
 			}
 
-			lastTxHash = s.sendTransferFromCustomWallet(senderWallet, senderStateID, to, nonce)
+			lastTxHash = s.sendTransferFromWallet(senderWallet, senderStateID, to, nonce)
 		case txtype.Create2Transfer:
 			// Pick random unregistered receiver pubkey
 			to := s.unregisteredWallets[unregisteredWalletsIndex].PublicKey()
 			unregisteredWalletsIndex++
 
-			lastTxHash = s.sendC2TFromCustomWallet(senderWallet, senderStateID, to, nonce)
+			lastTxHash = s.sendC2TFromWallet(senderWallet, senderStateID, to, nonce)
 		case txtype.MassMigration:
-			lastTxHash = s.sendMMFromCustomWallet(senderWallet, senderStateID, nonce)
+			lastTxHash = s.sendMMFromWallet(senderWallet, senderStateID, nonce)
 		}
 
 		return lastTxHash
