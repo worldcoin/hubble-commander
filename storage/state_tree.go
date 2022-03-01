@@ -69,11 +69,21 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 }
 
 func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.Leaf(stateID)
-	if IsNotFoundError(err) {
-		return emptyStateLeaf(stateID), nil
+	leaf, _, err := s.leafOrEmpty(stateID)
+	if err != nil {
+		return nil, err
 	}
-	return leaf, err
+	return leaf, nil
+}
+
+func (s *StateTree) leafOrEmpty(stateID uint32) (leaf *models.StateLeaf, isEmpty bool, err error) {
+	leaf, err = s.Leaf(stateID)
+	if IsNotFoundError(err) {
+		return emptyStateLeaf(stateID), true, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	return leaf, false, nil
 }
 
 func (s *StateTree) LeavesCount() uint64 {
@@ -234,33 +244,37 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 }
 
 func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (witness models.Witness, isNewLeaf bool, err error) {
-	prevLeaf, err := s.Leaf(index)
-	if IsNotFoundError(err) {
-		prevLeaf = emptyStateLeaf(index)
-		isNewLeaf = true
-	} else if err != nil {
-		return nil, false, err
-	}
-
-	prevRoot, err := s.Root()
+	prevLeaf, isNewLeaf, err := s.leafOrEmpty(index)
 	if err != nil {
 		return nil, false, err
+	}
+	witness, err = s.unsafeSetLeaf(index, prevLeaf, state)
+	if err != nil {
+		return nil, false, err
+	}
+	return witness, isNewLeaf, nil
+}
+
+func (s *StateTree) unsafeSetLeaf(index uint32, prevLeaf *models.StateLeaf, state *models.UserState) (witness models.Witness, err error) {
+	prevRoot, err := s.Root()
+	if err != nil {
+		return nil, err
 	}
 
 	currentLeaf, err := NewStateLeaf(index, state)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	err = s.upsertStateLeaf(currentLeaf)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	prevLeafPath := models.MakeMerklePathFromLeafID(prevLeaf.StateID)
 	currentRoot, witness, err := s.merkleTree.SetNode(&prevLeafPath, currentLeaf.DataHash)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	err = s.addStateUpdate(&models.StateUpdate{
@@ -269,9 +283,10 @@ func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (witness mo
 		PrevStateLeaf: *prevLeaf,
 	})
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	return witness, isNewLeaf, nil
+
+	return witness, nil
 }
 
 func (s *StateTree) getLeafByPubKeyIDAndTokenID(pubKeyID uint32, tokenID models.Uint256) (*models.StateLeaf, error) {
