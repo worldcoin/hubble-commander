@@ -1,15 +1,18 @@
 package eth
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type TxSendingRequest struct {
-	contract     *bind.BoundContract
-	input        []byte
-	opts         *bind.TransactOpts
-	resultTxChan chan SendResponse
+	contract      *bind.BoundContract
+	input         []byte
+	opts          bind.TransactOpts
+	ShouldTrackTx bool
+	ResultTxChan  chan SendResponse
 }
 
 type SendResponse struct {
@@ -22,30 +25,24 @@ type TxsTrackingChannels struct {
 	SentTxs  chan *types.Transaction
 
 	// must be used only for tests
-	SkipSendingRequestsThroughChannel bool
-	SkipSentTxsChannel                bool
+	SkipChannelSending bool
 }
-
-type packAndRequestFunc func(
-	contract *Contract,
-	opts *bind.TransactOpts,
-	method string,
-	data ...interface{},
-) (*types.Transaction, error)
 
 func (c *Client) packAndRequest(
 	contract *Contract,
 	opts *bind.TransactOpts,
+	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
-	return packAndRequest(c.txsChannels, contract, opts, method, data...)
+	return packAndRequest(c.txsChannels, contract, opts, shouldTrackTx, method, data...)
 }
 
 func packAndRequest(
 	txsChannels *TxsTrackingChannels,
 	contract *Contract,
 	opts *bind.TransactOpts,
+	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
@@ -54,37 +51,28 @@ func packAndRequest(
 		return nil, err
 	}
 
-	var tx *types.Transaction
-	if txsChannels.SkipSendingRequestsThroughChannel {
-		tx, err = contract.BoundContract.RawTransact(opts, input)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		responseChan := make(chan SendResponse, 1)
-		txsChannels.Requests <- &TxSendingRequest{
-			contract:     contract.BoundContract,
-			input:        input,
-			opts:         opts,
-			resultTxChan: responseChan,
-		}
-		response := <-responseChan
-		if response.Error != nil {
-			return nil, response.Error
-		}
-		tx = response.Transaction
+	if txsChannels.SkipChannelSending {
+		return contract.BoundContract.RawTransact(opts, input)
 	}
-	if !txsChannels.SkipSentTxsChannel {
-		txsChannels.SentTxs <- tx
+
+	responseChan := make(chan SendResponse, 1)
+	txsChannels.Requests <- &TxSendingRequest{
+		contract:      contract.BoundContract,
+		input:         input,
+		opts:          *opts,
+		ShouldTrackTx: shouldTrackTx,
+		ResultTxChan:  responseChan,
 	}
-	return tx, nil
+	response := <-responseChan
+	return response.Transaction, response.Error
 }
 
-func (c *TxSendingRequest) Send() error {
-	tx, err := c.contract.RawTransact(c.opts, c.input)
-	c.resultTxChan <- SendResponse{
+func (c *TxSendingRequest) Send(nonce uint64) (*types.Transaction, error) {
+	c.opts.Nonce = big.NewInt(int64(nonce))
+	tx, err := c.contract.RawTransact(&c.opts, c.input)
+	c.ResultTxChan <- SendResponse{
 		Transaction: tx,
 		Error:       err,
 	}
-	return err
+	return tx, err
 }

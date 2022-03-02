@@ -44,7 +44,8 @@ func (s *TxsSendingTestSuite) SetupTest() {
 		},
 	)
 	s.NoError(err)
-	s.tracker = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
+	s.tracker, err = NewTracker(s.client.Client, s.txsChannels.SentTxs, s.txsChannels.Requests)
+	s.NoError(err)
 	s.startTxsSending()
 }
 

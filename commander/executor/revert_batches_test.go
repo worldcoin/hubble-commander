@@ -38,7 +38,8 @@ func (s *RevertBatchesTestSuite) SetupTest() {
 		MinTxsPerCommitment:    1,
 		MaxTxsPerCommitment:    1,
 	})
-	s.txsCtx = NewTestTxsContext(s.executionCtx, batchtype.Transfer)
+	s.txsCtx, err = NewTestTxsContext(s.executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	s.transfer = testutils.MakeTransfer(0, 1, 0, 400)
 	err = populateAccounts(s.storage.Storage, []models.Uint256{models.MakeUint256(1000), models.MakeUint256(0)})
@@ -123,8 +124,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
 }
 
 func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
-	err := s.txsCtx.storage.AddTransaction(tx)
-	s.NoError(err)
+	initTxs(s.Assertions, s.txsCtx, models.TransferArray{*tx})
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)

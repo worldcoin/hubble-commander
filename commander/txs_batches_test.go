@@ -9,6 +9,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/result"
@@ -50,9 +51,12 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txPool, err = mempool.NewTxPool(s.storage.Storage)
+	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	err = s.cmd.addGenesisBatch()
 	s.NoError(err)
@@ -350,8 +354,10 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredReceiverPublicKey() {
 	// Change batch type used in TxsContext
+	var err error
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
-	s.txsCtx = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
+	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchtype.Create2Transfer)
+	s.NoError(err)
 
 	// Register public keys added to the account tree for signature disputes to work
 	s.registerAccounts([]uint32{0, 1})
@@ -359,20 +365,22 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	tx := testutils.MakeCreate2Transfer(0, nil, 0, 100, s.wallets[0].PublicKey())
 	s.submitInvalidBatchInTx(&tx, func(storage *st.Storage, commitment *models.TxCommitmentWithTxs) {
 		// Fix post state root
-		_, err := storage.StateTree.Set(3, &models.UserState{
+		_, err = storage.StateTree.Set(3, &models.UserState{
 			PubKeyID: 1234,
 			TokenID:  models.MakeUint256(0),
 			Balance:  tx.Amount,
 			Nonce:    models.MakeUint256(0),
 		})
 		s.NoError(err)
-		root, err := storage.StateTree.Root()
+		var root *common.Hash
+		root, err = storage.StateTree.Root()
 		s.NoError(err)
 		commitment.PostStateRoot = *root
 
 		// Replace toStateID and toPubKeyID in C2T
 		tx.ToStateID = ref.Uint32(3)
-		encodedTx, err := encoder.EncodeCreate2TransferForCommitment(&tx, 1234)
+		var encodedTx []byte
+		encodedTx, err = encoder.EncodeCreate2TransferForCommitment(&tx, 1234)
 		s.NoError(err)
 		commitment.Transactions = encodedTx
 	})
@@ -482,6 +490,8 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *models.Batch {
 	err := s.cmd.storage.AddTransaction(tx)
 	s.NoError(err)
+	_, err = s.txsCtx.Mempool.AddOrReplace(s.cmd.storage, tx)
+	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
@@ -534,7 +544,9 @@ func (s *TxsBatchesTestSuite) beginTransaction() (*db.TxController, *st.Storage,
 	txController, txStorage := s.storage.BeginTransaction(st.TxOptions{})
 
 	executionCtx := executor.NewTestExecutionContext(txStorage, s.client.Client, s.cfg.Rollup)
-	return txController, txStorage, executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	txsCtx, err := executor.NewTestTxsContext(executionCtx, s.txsCtx.BatchType)
+	s.NoError(err)
+	return txController, txStorage, txsCtx
 }
 
 func submitInvalidTxsBatch(
@@ -545,6 +557,8 @@ func submitInvalidTxsBatch(
 	modifier func(storage *st.Storage, commitment *models.TxCommitmentWithTxs),
 ) *models.Batch {
 	err := storage.AddTransaction(tx)
+	s.NoError(err)
+	_, err = txsCtx.Mempool.AddOrReplace(storage, tx)
 	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)

@@ -119,6 +119,8 @@ func Encode(value interface{}) ([]byte, error) {
 		return nil, errors.WithStack(errPassedByPointer)
 	case bh.KeyList:
 		return EncodeKeyList(&v)
+	case []byte:
+		return v, nil
 	default:
 		return bh.DefaultEncode(value)
 	}
@@ -182,6 +184,9 @@ func Decode(data []byte, value interface{}) error {
 		return v.SetBytes(data)
 	case *bh.KeyList:
 		return DecodeKeyList(data, v)
+	case []byte:
+		copy(data, v)
+		return nil
 	default:
 		return bh.DefaultDecode(data, value)
 	}

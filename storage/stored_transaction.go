@@ -245,7 +245,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 	return hashes, nil
 }
 
-func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericTransactionArray, error) {
+func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
 	var pendingTxs []stored.PendingTx
 
 	err := s.database.Badger.Find(&pendingTxs, bh.Where("TxType").Eq(txType))
@@ -261,7 +261,7 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 	return models.MakeGenericArray(txs...), nil
 }
 
-func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericTransactionArray, error) {
+func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericArray, error) {
 	var pendingTxs []stored.PendingTx
 	err := s.database.Badger.Find(&pendingTxs, &bh.Query{})
 	if err != nil {
@@ -276,7 +276,7 @@ func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericTransact
 	return models.MakeGenericArray(txs...), nil
 }
 
-func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericTransactionArray, error) {
+func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericArray, error) {
 	var failedTxs []stored.FailedTx
 	err := s.database.Badger.Find(&failedTxs, nil)
 	if err != nil {
@@ -320,7 +320,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 			if err != nil {
 				return err
 			}
-			s.incrementTransactionCount()
+			txStorage.incrementTransactionCount()
 		}
 		return nil
 	})

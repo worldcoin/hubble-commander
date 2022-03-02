@@ -60,7 +60,7 @@ func (s *StateUpdateTestSuite) TestGetStateUpdateByRootHash_NonexistentUpdate() 
 	s.Nil(res)
 }
 
-func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
+func (s *StateUpdateTestSuite) TestRemoveStateUpdate() {
 	updates := []models.StateUpdate{
 		{
 			ID:          0,
@@ -98,7 +98,7 @@ func (s *StateUpdateTestSuite) TestDeleteStateUpdate() {
 	err = s.storage.StateTree.addStateUpdate(&updates[1])
 	s.NoError(err)
 
-	err = s.storage.StateTree.deleteStateUpdate(1)
+	err = s.storage.StateTree.removeStateUpdate(1)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.getStateUpdate(updates[1].ID)

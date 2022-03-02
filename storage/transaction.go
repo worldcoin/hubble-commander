@@ -110,7 +110,7 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		return s.unsafeAddTransaction(tx)
+		return txStorage.unsafeAddTransaction(tx)
 	})
 }
 
@@ -185,19 +185,6 @@ func (s *TransactionStorage) checkNoTx(hash *common.Hash, result interface{}) er
 	return err
 }
 
-func (s *TransactionStorage) ReplacePendingTransaction(hash *common.Hash, newTx models.GenericTransaction) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		err := s.database.Badger.Delete(*hash, &stored.PendingTx{})
-		if errors.Is(err, bh.ErrNotFound) {
-			return errors.WithStack(NewNotFoundError("transaction"))
-		}
-		if err != nil {
-			return err
-		}
-		return s.database.Badger.Insert(newTx.GetBase().Hash, *stored.NewPendingTx(newTx))
-	})
-}
-
 func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionArray) error {
 	if txs.Len() < 1 {
 		return errors.WithStack(ErrNoRowsAffected)
@@ -223,7 +210,7 @@ func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactio
 		for i := 0; i < txs.Len(); i++ {
 			err := txStorage.AddTransaction(txs.At(i))
 			if errors.Is(err, bh.ErrKeyExists) {
-				err = s.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
+				err = txStorage.MarkTransactionsAsIncluded(models.GenericArray{txs.At(i)}, txs.At(i).GetBase().CommitmentID)
 				if err != nil {
 					return err
 				}
@@ -260,6 +247,67 @@ func (s *TransactionStorage) addTxsInMultipleDBTransactions(txs models.GenericTr
 	dbTxsCount, err := s.updateInMultipleTransactions(operations)
 	if err != nil {
 		return errors.Wrapf(err, "storing %d %s tx(s) failed during database transaction #%d", txs.Len(), status, dbTxsCount)
+	}
+	return nil
+}
+
+func (s *TransactionStorage) RemovePendingTransactions(hashes ...common.Hash) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		for i := range hashes {
+			err := txStorage.database.Badger.Delete(hashes[i], &stored.PendingTx{})
+			if errors.Is(err, bh.ErrNotFound) {
+				return errors.WithStack(NewNotFoundError("transaction"))
+			}
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+		return nil
+	})
+}
+
+func (s *TransactionStorage) RemoveFailedTransactions(txs models.GenericTransactionArray) error {
+	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+		return txStorage.unsafeFindAndRemoveFailedTxs(txs)
+	})
+}
+
+func (s *TransactionStorage) unsafeFindAndRemoveFailedTxs(txs models.GenericTransactionArray) error {
+	for i := 0; i < txs.Len(); i++ {
+		failedTxs, err := s.getFailedTxsByIndex(txs.At(i).GetBase())
+		if err != nil {
+			return err
+		}
+
+		err = s.unsafeRemoveFailedTxs(failedTxs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *TransactionStorage) getFailedTxsByIndex(txBase *models.TransactionBase) ([]stored.FailedTx, error) {
+	failedTxs := make([]stored.FailedTx, 0, 1)
+	err := s.database.Badger.Find(
+		&failedTxs,
+		bh.Where("FromStateID:Nonce").Eq(stored.NewFailedTxIndex(txBase.FromStateID, &txBase.Nonce)).Index("FromStateID:Nonce"),
+	)
+	if errors.Is(err, bh.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return failedTxs, nil
+}
+
+func (s *TransactionStorage) unsafeRemoveFailedTxs(txs []stored.FailedTx) error {
+	for i := range txs {
+		err := s.database.Badger.Delete(txs[i].Hash, &txs[i])
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	return nil
 }

@@ -2,8 +2,10 @@ package commander
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
@@ -63,6 +65,7 @@ func (s *MigrateTestSuite) SetupTest() {
 
 	s.cmd = NewCommander(s.cfg, nil)
 	s.cmd.storage = s.storage.Storage
+	s.cmd.txPool = mempool.NewTestTxPool()
 
 	setStateLeaves(s.T(), s.storage.Storage)
 
@@ -152,6 +155,40 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
 		s.NoError(err)
 		s.Equal(*txs.At(i).ToTransfer(), *tx)
 	}
+}
+
+func (s *MigrateTestSuite) TestMigrateCommanderData_AddsPendingTransactionsToMempool() {
+	txPool, err := mempool.NewTxPool(s.storage.Storage)
+	s.NoError(err)
+	s.cmd.txPool = txPool
+
+	s.cmd.workersWaitGroup.Add(1)
+	go func() {
+		err = s.cmd.txPool.ReadTxs(s.cmd.workersContext)
+		s.NoError(err)
+		s.cmd.workersWaitGroup.Done()
+	}()
+
+	expectedTxs := models.GenericArray{
+		testutils.NewTransfer(0, 1, 0, 100),
+		testutils.NewTransfer(1, 2, 0, 110),
+	}
+
+	hubble := new(MockHubble)
+	hubble.On(getPendingBatchesMethod).Return([]dto.PendingBatch{}, nil)
+	hubble.On(getPendingTransactionsMethod).Return(expectedTxs, nil)
+	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
+
+	err = s.cmd.migrateCommanderData(hubble)
+	s.NoError(err)
+
+	s.Eventually(func() bool {
+		err = s.cmd.txPool.UpdateMempool()
+		s.NoError(err)
+
+		txs := txPool.Mempool().GetExecutableTxs(txtype.Transfer)
+		return len(txs) == 2
+	}, 1*time.Second, 10*time.Millisecond)
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {

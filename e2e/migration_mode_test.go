@@ -5,12 +5,10 @@ package e2e
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
-	"github.com/Worldcoin/hubble-commander/bls"
 	admintypes "github.com/Worldcoin/hubble-commander/client"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
@@ -25,130 +23,169 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/ybbus/jsonrpc/v2"
 )
 
-// nolint:funlen
-func TestCommanderMigrationMode(t *testing.T) {
+type MigrationModeE2ETestSuite struct {
+	setup.E2ETestSuite
+
+	gethRPCClient *rpc.Client
+}
+
+func (s *MigrationModeE2ETestSuite) SetupTest() {
 	cfg := config.GetConfig()
 	cfg.Rollup.MinTxsPerCommitment = 4
 	cfg.Rollup.MaxTxsPerCommitment = 10
 	cfg.Rollup.MinCommitmentsPerBatch = 1
+
 	if cfg.Ethereum == nil {
 		log.Panicf("migration mode test cannot be run on simulator")
 	}
 
-	cfg.Bootstrap.Prune = true
-	cfg.API.Port = "5001"
-	cfg.Metrics.Port = "2001"
-	firstCommander, err := setup.DeployAndCreateInProcessCommander(cfg, nil)
-	require.NoError(t, err)
+	s.SetupTestEnvironment(cfg, nil)
+	s.RPCClient = s.createAdminRPCClient(cfg)
 
-	adminRPCClient := testCreateAdminRPCClient(cfg)
+	var err error
+	s.gethRPCClient, err = rpc.Dial(cfg.Ethereum.RPCURL)
+	s.NoError(err)
+}
 
-	gethRPCClient, err := rpc.Dial(cfg.Ethereum.RPCURL)
-	require.NoError(t, err)
+func (s *MigrationModeE2ETestSuite) TearDownTest() {
+	s.E2ETestSuite.TearDownTest()
+	s.gethRPCClient.Close()
+}
 
-	err = firstCommander.Start()
-	require.NoError(t, err)
+func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
+	s.SubmitTxBatchAndWait(func() common.Hash {
+		return s.SendNTransactions(4, dto.Transfer{
+			FromStateID: ref.Uint32(1),
+			ToStateID:   ref.Uint32(2),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(0),
+		})
+	})
+	s.WaitForBatchStatus(1, batchstatus.Mined)
+
+	s.stopMiningBlocks()
 	defer func() {
-		gethRPCClient.Close()
-		require.NoError(t, firstCommander.Stop())
-		require.NoError(t, os.Remove(*cfg.Bootstrap.ChainSpecPath))
+		s.startMiningBlocks()
 	}()
 
-	domain := GetDomain(t, firstCommander.Client())
+	// Invalid tx
+	s.SendTransaction(dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(999), // Non-existent receiver
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(8),
+	})
+	// Some valid txs
+	s.SendNTransactions(4, dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(4),
+	})
+	// Another invalid tx
+	s.SendTransaction(dto.Transfer{
+		FromStateID: ref.Uint32(2),
+		ToStateID:   ref.Uint32(999), // Non-existent receiver
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+	})
 
-	wallets, err := setup.CreateWallets(domain)
-	require.NoError(t, err)
+	s.WaitForBatchStatus(2, batchstatus.Submitted)
 
-	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 1)
-	testWaitForBatchStatus(t, adminRPCClient, 1, batchstatus.Mined)
-
-	testStopMining(t, gethRPCClient)
-	defer func() {
-		testStartMining(t, gethRPCClient)
-	}()
-
-	testSendInvalidTx(t, adminRPCClient, 4, wallets)
-	testSendValidTxs(t, adminRPCClient, 4, 4, wallets, 1)
-	testSendInvalidTx(t, adminRPCClient, 5, wallets)
-
-	testWaitForBatchStatus(t, adminRPCClient, 2, batchstatus.Submitted)
-
-	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
+	s.configureCommander(dto.ConfigureParams{
 		CreateBatches: ref.Bool(false),
 	})
 
-	testSendValidTxs(t, adminRPCClient, 8, 4, wallets, 1)
-	testSendValidTxs(t, adminRPCClient, 0, 4, wallets, 2)
+	s.SendNTransactions(4, dto.Transfer{
+		FromStateID: ref.Uint32(1),
+		ToStateID:   ref.Uint32(2),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(8),
+	})
+	s.SendNTransactions(4, dto.Transfer{
+		FromStateID: ref.Uint32(2),
+		ToStateID:   ref.Uint32(3),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+	})
 
-	testConfigureCommander(t, adminRPCClient, dto.ConfigureParams{
+	s.configureCommander(dto.ConfigureParams{
 		AcceptTransactions: ref.Bool(false),
 	})
 
-	testValidateCommanderNotAcceptingTxs(t, adminRPCClient, wallets)
+	s.testValidateCommanderNotAcceptingTxs()
 
-	cfg.Bootstrap.Prune = true
-	cfg.Bootstrap.Migrate = true
-	bootstrapURL := fmt.Sprint("http://localhost:", cfg.API.Port)
-	cfg.Bootstrap.BootstrapNodeURL = &bootstrapURL
-	cfg.API.Port = "5002"
-	cfg.Metrics.Port = "2002"
-	cfg.Badger.Path += "_migration"
-	migratedCommander, err := setup.CreateInProcessCommander(cfg, nil)
-	require.NoError(t, err)
+	migrationCommander, migrationAdminRPCClient := s.prepareMigrationCommander()
 
-	err = migratedCommander.Start()
-	require.NoError(t, err)
+	err := migrationCommander.Start()
+	s.NoError(err)
 	defer func() {
-		require.NoError(t, migratedCommander.Stop())
+		s.NoError(migrationCommander.Stop())
 	}()
 
-	migratedAdminRPCClient := testCreateAdminRPCClient(cfg)
+	// All further calls are going to be made to the new migrated commander
+	s.RPCClient = migrationAdminRPCClient
 
-	testConfigureCommander(t, migratedAdminRPCClient, dto.ConfigureParams{
+	s.configureCommander(dto.ConfigureParams{
 		CreateBatches: ref.Bool(false),
 	})
 
-	testWaitForCommanderReadyStatus(t, migratedCommander.Client())
+	s.waitForCommanderReadyStatus()
+	s.validateSuccessfulMigration()
 
-	testValidateMigration(t, migratedAdminRPCClient)
-
-	testConfigureCommander(t, migratedAdminRPCClient, dto.ConfigureParams{
+	s.configureCommander(dto.ConfigureParams{
 		CreateBatches: ref.Bool(true),
 	})
 
-	testStartMining(t, gethRPCClient)
+	s.startMiningBlocks()
 
-	// Wait for pending batch migrated from Original Commander and validate it
-	batch1 := testWaitForBatchStatus(t, migratedCommander.Client(), 2, batchstatus.Mined)
-	testValidateBatch(t, migratedCommander.Client(), batch1, 4)
-
-	// Wait for new batch created by Migrated Commander from pending transactions and validate it
-	batch2 := testWaitForBatchStatus(t, migratedCommander.Client(), 3, batchstatus.Mined)
-	testValidateBatch(t, migratedCommander.Client(), batch2, 8)
-
-	// Send some txs to Migrated Commander and validate that it is creating new batches
-	testSendValidTxs(t, migratedAdminRPCClient, 0, 7, wallets, 0)
-	batch3 := testWaitForBatchStatus(t, migratedCommander.Client(), 4, batchstatus.Mined)
-	testValidateBatch(t, migratedCommander.Client(), batch3, 7)
+	s.testValidateMigratedCommanderFunctionalities()
 }
 
-func testStopMining(t *testing.T, client *rpc.Client) {
-	err := client.Call(nil, "miner_stop")
-	require.NoError(t, err)
-	log.Printf("Stopping mining new blocks")
+func (s *MigrationModeE2ETestSuite) testValidateCommanderNotAcceptingTxs() {
+	transfer, err := api.SignTransfer(&s.Wallets[0], dto.Transfer{
+		FromStateID: ref.Uint32(0),
+		ToStateID:   ref.Uint32(1),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+	})
+	s.NoError(err)
+
+	var txHash common.Hash
+	var rpcError *jsonrpc.RPCError
+	err = s.RPCClient.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
+	s.True(errors.As(err, &rpcError))
+	s.Equal(10017, rpcError.Code)
 }
 
-func testStartMining(t *testing.T, client *rpc.Client) {
-	err := client.Call(nil, "miner_start")
-	require.NoError(t, err)
-	log.Printf("Starting mining new block")
+func (s *MigrationModeE2ETestSuite) testValidateMigratedCommanderFunctionalities() {
+	s.waitForMinedBatchAndValidate(2, 4)
+
+	s.waitForMinedBatchAndValidate(3, 8)
+
+	s.SendNTransactions(7, dto.Transfer{
+		FromStateID: ref.Uint32(0),
+		ToStateID:   ref.Uint32(1),
+		Amount:      models.NewUint256(90),
+		Fee:         models.NewUint256(10),
+		Nonce:       models.NewUint256(0),
+	})
+
+	s.waitForMinedBatchAndValidate(4, 7)
 }
 
-func testCreateAdminRPCClient(cfg *config.Config) jsonrpc.RPCClient {
+func (s *MigrationModeE2ETestSuite) createAdminRPCClient(cfg *config.Config) jsonrpc.RPCClient {
 	url := fmt.Sprint("http://localhost:", cfg.API.Port)
 	adminRPCClient := jsonrpc.NewClientWithOpts(url, &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
@@ -159,134 +196,99 @@ func testCreateAdminRPCClient(cfg *config.Config) jsonrpc.RPCClient {
 	return adminRPCClient
 }
 
-func testSendValidTxs(t *testing.T, client jsonrpc.RPCClient, startingNonce, txsCount uint64, wallets []bls.Wallet, fromStateID uint32) {
-	for i := uint64(0); i < txsCount; i++ {
-		transfer, err := api.SignTransfer(&wallets[fromStateID], dto.Transfer{
-			FromStateID: ref.Uint32(fromStateID),
-			ToStateID:   ref.Uint32(fromStateID + 1),
-			Amount:      models.NewUint256(90),
-			Fee:         models.NewUint256(10),
-			Nonce:       models.NewUint256(startingNonce + i),
-		})
-		require.NoError(t, err)
-
-		var txHash common.Hash
-		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
-		require.NoError(t, err)
-		require.NotZero(t, txHash)
-	}
+func (s *MigrationModeE2ETestSuite) stopMiningBlocks() {
+	err := s.gethRPCClient.Call(nil, "miner_stop")
+	s.NoError(err)
+	log.Printf("Stopping mining new blocks")
 }
 
-func testSendInvalidTx(t *testing.T, client jsonrpc.RPCClient, nonce uint64, wallets []bls.Wallet) {
-	transfer, err := api.SignTransfer(&wallets[1], dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(999),
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(nonce),
-	})
-	require.NoError(t, err)
-
-	var txHash common.Hash
-	err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
-	require.NoError(t, err)
-	require.NotZero(t, txHash)
+func (s *MigrationModeE2ETestSuite) startMiningBlocks() {
+	err := s.gethRPCClient.Call(nil, "miner_start")
+	s.NoError(err)
+	log.Printf("Starting mining new block")
 }
 
-func testWaitForBatchStatus(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	batchID uint64,
-	status batchstatus.BatchStatus,
-) *dto.BatchWithRootAndCommitments {
-	var batch dto.BatchWithRootAndCommitments
+func (s *MigrationModeE2ETestSuite) configureCommander(params dto.ConfigureParams) {
+	_, err := s.RPCClient.Call("admin_configure", []interface{}{params})
+	s.NoError(err)
+}
 
-	require.Eventually(t, func() bool {
-		var rpcError *jsonrpc.RPCError
-		err := client.CallFor(&batch, "hubble_getBatchByID", []interface{}{models.MakeUint256(batchID)})
-		if err != nil && errors.As(err, &rpcError) {
-			if rpcError.Code == 30000 {
-				return false
-			}
-		}
-		require.NoError(t, err)
-		return batch.Status == status
+func (s *MigrationModeE2ETestSuite) waitForCommanderReadyStatus() {
+	s.Eventually(func() bool {
+		var status string
+		err := s.RPCClient.CallFor(&status, "hubble_getStatus")
+		s.NoError(err)
+		return status == healthstatus.Ready
 	}, 30*time.Second, testutils.TryInterval)
-
-	return &batch
 }
 
-func testValidateBatch(t *testing.T, client jsonrpc.RPCClient, batch *dto.BatchWithRootAndCommitments, txCount int) {
-	require.Len(t, batch.Commitments, 1)
+func (s *MigrationModeE2ETestSuite) prepareMigrationCommander() (*setup.InProcessCommander, jsonrpc.RPCClient) {
+	newCommanderCfg := *s.Cfg
+	newCommanderCfg.Bootstrap.Prune = true
+	newCommanderCfg.Bootstrap.Migrate = true
+	bootstrapURL := fmt.Sprint("http://localhost:", newCommanderCfg.API.Port)
+	newCommanderCfg.Bootstrap.BootstrapNodeURL = &bootstrapURL
+	newCommanderCfg.API.Port = "5555"
+	newCommanderCfg.Metrics.Port = "2222"
+	newCommanderCfg.Badger.Path += "_migration"
+	migrationCommander, err := setup.CreateInProcessCommander(&newCommanderCfg, nil)
+	s.NoError(err)
+
+	migrationAdminRPCClient := s.createAdminRPCClient(&newCommanderCfg)
+
+	return migrationCommander, migrationAdminRPCClient
+}
+
+func (s *MigrationModeE2ETestSuite) validateSuccessfulMigration() {
+	s.validateFailedTxs()
+	s.validatePendingTxs()
+	s.validatePendingBatches()
+}
+
+func (s *MigrationModeE2ETestSuite) validatePendingTxs() {
+	pendingTxs := make([]admintypes.Transaction, 0)
+	err := s.RPCClient.CallFor(&pendingTxs, "admin_getPendingTransactions")
+	s.NoError(err)
+	s.Len(pendingTxs, 8)
+}
+
+func (s *MigrationModeE2ETestSuite) validateFailedTxs() {
+	failedTxs := make([]admintypes.Transaction, 0)
+	err := s.RPCClient.CallFor(&failedTxs, "admin_getFailedTransactions")
+	s.NoError(err)
+	s.Len(failedTxs, 2)
+}
+
+func (s *MigrationModeE2ETestSuite) validatePendingBatches() {
+	pendingBatches := make([]admintypes.Batch, 0)
+	err := s.RPCClient.CallFor(&pendingBatches, "admin_getPendingBatches")
+	s.NoError(err)
+
+	s.Len(pendingBatches, 1)
+	s.Equal(models.MakeUint256(2), pendingBatches[0].ID)
+	s.Len(pendingBatches[0].Commitments, 1)
+	s.Len(pendingBatches[0].Commitments[0].Transactions, 4)
+}
+
+func (s *MigrationModeE2ETestSuite) validateBatch(batchID uint64, txCount int) {
+	batch := s.GetBatchByID(batchID)
+
+	s.Len(batch.Commitments, 1)
 
 	commitmentID := models.CommitmentID{
 		BatchID:      batch.ID,
 		IndexInBatch: 0,
 	}
 
-	var commitment dto.TxCommitment
-	err := client.CallFor(&commitment, "hubble_getCommitment", []interface{}{commitmentID})
-	require.NoError(t, err)
-	require.Len(t, commitment.Transactions, txCount)
+	commitment := s.GetCommitment(commitmentID)
+	s.Len(commitment.Transactions, txCount)
 }
 
-func testConfigureCommander(t *testing.T, client jsonrpc.RPCClient, params dto.ConfigureParams) {
-	_, err := client.Call("admin_configure", []interface{}{params})
-	require.NoError(t, err)
+func (s *MigrationModeE2ETestSuite) waitForMinedBatchAndValidate(batchID uint64, txCount int) {
+	s.WaitForBatchStatus(batchID, batchstatus.Mined)
+	s.validateBatch(batchID, txCount)
 }
 
-func testWaitForCommanderReadyStatus(t *testing.T, client jsonrpc.RPCClient) {
-	require.Eventually(t, func() bool {
-		var status string
-		err := client.CallFor(&status, "hubble_getStatus")
-		require.NoError(t, err)
-		return status == healthstatus.Ready
-	}, 30*time.Second, testutils.TryInterval)
-}
-
-func testValidateCommanderNotAcceptingTxs(t *testing.T, client jsonrpc.RPCClient, wallets []bls.Wallet) {
-	transfer, err := api.SignTransfer(&wallets[0], dto.Transfer{
-		FromStateID: ref.Uint32(0),
-		ToStateID:   ref.Uint32(1),
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
-	})
-	require.NoError(t, err)
-
-	var txHash common.Hash
-	var rpcError *jsonrpc.RPCError
-	err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*transfer})
-	require.True(t, errors.As(err, &rpcError))
-	require.Equal(t, 10017, rpcError.Code)
-}
-
-func testValidateMigration(t *testing.T, client jsonrpc.RPCClient) {
-	testValidateFailedTxs(t, client)
-	testValidatePendingTxs(t, client)
-	testValidatePendingBatches(t, client)
-}
-
-func testValidatePendingTxs(t *testing.T, client jsonrpc.RPCClient) {
-	pendingTxs := make([]admintypes.Transaction, 0)
-	err := client.CallFor(&pendingTxs, "admin_getPendingTransactions")
-	require.NoError(t, err)
-	require.Len(t, pendingTxs, 8)
-}
-
-func testValidateFailedTxs(t *testing.T, client jsonrpc.RPCClient) {
-	failedTxs := make([]admintypes.Transaction, 0)
-	err := client.CallFor(&failedTxs, "admin_getFailedTransactions")
-	require.NoError(t, err)
-	require.Len(t, failedTxs, 2)
-}
-
-func testValidatePendingBatches(t *testing.T, client jsonrpc.RPCClient) {
-	pendingBatches := make([]admintypes.Batch, 0)
-	err := client.CallFor(&pendingBatches, "admin_getPendingBatches")
-	require.NoError(t, err)
-
-	require.Len(t, pendingBatches, 1)
-	require.Len(t, pendingBatches[0].Commitments, 1)
-	require.Len(t, pendingBatches[0].Commitments[0].Transactions, 4)
+func TestMigrationModeE2ETestSuite(t *testing.T) {
+	suite.Run(t, new(MigrationModeE2ETestSuite))
 }

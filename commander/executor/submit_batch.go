@@ -4,10 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 )
 
-var (
-	ErrNotEnoughCommitments  = NewRollupError("not enough commitments")
-	ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
-)
+var ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
 
 func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.CommitmentWithTxs) error {
 	select {

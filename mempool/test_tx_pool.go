@@ -22,6 +22,10 @@ func (p *testTxPool) UpdateMempool() error {
 	return nil
 }
 
+func (p *testTxPool) RemoveFailedTxs([]models.TxError) error {
+	return nil
+}
+
 func (p *testTxPool) Mempool() *Mempool {
 	return nil
 }

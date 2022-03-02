@@ -108,7 +108,7 @@ func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_AppliesTransfer
 }
 
 func (s *ApplyCreate2TransferTestSuite) TestApplyCreate2Transfer_InvalidTransfer() {
-	transfers := testutils.GenerateInvalidCreate2Transfers(1)
+	transfers := testutils.GenerateInvalidCreate2Transfers(1, 1)
 	transfers[0].Amount = models.MakeUint256(500)
 
 	_, txError, appErr := s.applier.ApplyCreate2Transfer(&transfers[0], feeReceiverTokenID)

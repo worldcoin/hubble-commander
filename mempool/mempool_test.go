@@ -1,7 +1,9 @@
 package mempool
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -25,12 +27,34 @@ func (s *MempoolTestSuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
+func NewTestMempool(storage *st.Storage, txs []models.GenericTransaction) (*Mempool, error) {
+	shuffledTxs := make([]models.GenericTransaction, len(txs))
+	copy(shuffledTxs, txs)
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(shuffledTxs), func(i, j int) { shuffledTxs[i], shuffledTxs[j] = shuffledTxs[j], shuffledTxs[i] })
+
+	mempool := NewMempool()
+	for _, tx := range shuffledTxs {
+		_, err := mempool.AddOrReplace(storage, tx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return mempool, nil
+}
+
 func (s *MempoolTestSuite) SetupTest() {
 	var err error
 	s.storage, err = st.NewTestStorage()
 	s.NoError(err)
 
-	// no need to shuffle initial transactions as they are retrieved from DB sorted by tx hashes which are random
+	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
+		0: 10,
+		1: 10,
+		2: 15,
+		3: 10,
+	})
+
 	s.txs = []models.GenericTransaction{
 		s.newTransfer(0, 10), // 0 - executable
 		s.newTransfer(0, 11), // 1
@@ -47,17 +71,7 @@ func (s *MempoolTestSuite) SetupTest() {
 		s.newTransfer(3, 12), // 9
 	}
 
-	err = s.storage.BatchAddTransaction(models.GenericArray(s.txs))
-	s.NoError(err)
-
-	setUserStates(s.Assertions, s.storage.StateTree, map[uint32]uint64{
-		0: 10,
-		1: 10,
-		2: 15,
-		3: 10,
-	})
-
-	s.mempool, err = NewMempool(s.storage.Storage)
+	s.mempool, err = NewTestMempool(s.storage.Storage, s.txs)
 	s.NoError(err)
 }
 
@@ -66,8 +80,8 @@ func (s *MempoolTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
-func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
-	mempool, err := NewMempool(s.storage.Storage)
+func (s *MempoolTestSuite) TestNewTestMempool_InitsBucketsCorrectly() {
+	mempool, err := NewTestMempool(s.storage.Storage, s.txs)
 	s.NoError(err)
 
 	s.Len(mempool.buckets, 4)
@@ -80,6 +94,15 @@ func (s *MempoolTestSuite) TestNewMempool_InitsBucketsCorrectly() {
 	s.EqualValues(mempool.buckets[1].nonce, 10)
 	s.EqualValues(mempool.buckets[2].nonce, 15)
 	s.EqualValues(mempool.buckets[3].nonce, 10)
+}
+
+func (s *MempoolTestSuite) TestNewTestMempool_InitsTxCountsCorrectly() {
+	mempool, err := NewTestMempool(s.storage.Storage, s.txs)
+	s.NoError(err)
+
+	s.Equal(8, mempool.txCounts[txtype.Transfer])
+	s.Equal(2, mempool.txCounts[txtype.Create2Transfer])
+	s.Equal(0, mempool.txCounts[txtype.MassMigration])
 }
 
 func (s *MempoolTestSuite) TestGetExecutableTxs_ReturnsAllExecutableTxsOfGivenType() {
@@ -170,10 +193,12 @@ func (s *MempoolTestSuite) TestGetNextExecutableTx_DecrementsTxCount() {
 	_, err := txMempool.GetNextExecutableTx(txtype.Transfer, 0)
 	s.NoError(err)
 
-	s.Equal(9, txMempool.TxCount())
+	s.Equal(7, txMempool.TxCount(txtype.Transfer))
+	s.Equal(2, txMempool.TxCount(txtype.Create2Transfer))
 
 	txController.Commit()
-	s.Equal(9, s.mempool.TxCount())
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestRemoveFailedTx_RemovesTxFromMempool() {
@@ -221,10 +246,12 @@ func (s *MempoolTestSuite) TestRemoveFailedTx_DecrementsTxCount() {
 	err := txMempool.RemoveFailedTx(0)
 	s.NoError(err)
 
-	s.Equal(9, txMempool.TxCount())
+	s.Equal(7, txMempool.TxCount(txtype.Transfer))
+	s.Equal(2, txMempool.TxCount(txtype.Create2Transfer))
 
 	txController.Commit()
-	s.Equal(9, s.mempool.TxCount())
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestAddOrReplace_AppendsNewTxToBucketList() {
@@ -259,6 +286,13 @@ func (s *MempoolTestSuite) TestAddOrReplace_ReplacesTx() {
 	s.Equal(tx, bucket.txs[1])
 }
 
+func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnTxWithNonceTooLow() {
+	tx := s.newTransfer(0, 9)
+	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.Nil(prevTxHash)
+	s.ErrorIs(err, ErrTxNonceTooLow)
+}
+
 func (s *MempoolTestSuite) TestAddOrReplace_ReturnsErrorOnFeeTooLowToReplace() {
 	tx := s.newTransfer(0, 11)
 	prevTxHash, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
@@ -271,20 +305,33 @@ func (s *MempoolTestSuite) TestAddOrReplace_IncrementsTxCountOnInsertion() {
 	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
-	s.Equal(11, s.mempool.TxCount())
+	s.Equal(9, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
-func (s *MempoolTestSuite) TestAddOrReplace_DoesNotIncrementTxCountOnReplacement() {
+func (s *MempoolTestSuite) TestAddOrReplace_DoesNotChangeTxCountOnReplacementWithTheSameType() {
 	tx := s.newTransfer(0, 11)
 	tx.Fee = models.MakeUint256(20)
 	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
-	s.Equal(10, s.mempool.TxCount())
+	s.Equal(8, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
-func (s *MempoolTestSuite) TestTxCount() {
-	s.Equal(10, s.mempool.TxCount())
+func (s *MempoolTestSuite) TestAddOrReplace_ChangesTxCountsOnReplacementWithDifferentType() {
+	tx := s.newC2T(0, 11)
+	tx.Fee = models.MakeUint256(20)
+	_, err := s.mempool.AddOrReplace(s.storage.Storage, tx)
+	s.NoError(err)
+
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(3, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
+func (s *MempoolTestSuite) TestTxCount_ReturnsCountForGivenTxType() {
+	s.Equal(8, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(2, s.mempool.TxCount(txtype.Create2Transfer))
 }
 
 func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransaction() {
@@ -300,6 +347,93 @@ func (s *MempoolTestSuite) TestForEach_ExecutesCallbackFunctionForEachTransactio
 	}
 }
 
+func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesTxs() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[5], s.txs[8]))
+
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+	s.Equal(s.mempool.buckets[1].txs, s.txs[3:5])
+	s.Equal(s.mempool.buckets[2].txs, s.txs[6:7])
+	s.Equal(s.mempool.buckets[3].txs, []models.GenericTransaction{s.txs[7], s.txs[9]})
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_RemovesEmptyBuckets() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[5:7]...))
+
+	s.NotContains(s.mempool.buckets, uint32(2))
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_OmitsEmptyBuckets() {
+	tx := s.newTransfer(20, 1)
+	s.mempool.RemoveFailedTxs(txsToTxErrors(tx, s.txs[2]))
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+}
+
+func (s *MempoolTestSuite) TestRemoveFailedTxs_DecrementsTxCounts() {
+	s.mempool.RemoveFailedTxs(txsToTxErrors(s.txs[2], s.txs[7]))
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesTxs() {
+	txController, txMempool := s.mempool.BeginTransaction()
+	txs := models.GenericArray{s.txs[2], s.txs[5], s.txs[8]}
+	removedHashes := txMempool.RemoveSyncedTxs(txs)
+	txController.Commit()
+
+	s.Equal(removedHashes, getTxsHashes(txs...))
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+	s.Equal(s.mempool.buckets[1].txs, s.txs[3:5])
+	s.Equal(s.mempool.buckets[2].txs, s.txs[6:7])
+	s.Equal(s.mempool.buckets[3].txs, []models.GenericTransaction{s.txs[7], s.txs[9]})
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_IncrementsNonces() {
+	txController, txMempool := s.mempool.BeginTransaction()
+	removedHashes := txMempool.RemoveSyncedTxs(models.GenericArray{
+		s.txs[0],
+		s.txs[1],
+		s.newTransfer(1, 10),
+		s.newTransfer(1, 11),
+		s.txs[7],
+	})
+	txController.Commit()
+
+	s.Equal(removedHashes, getTxsHashes(s.txs[0], s.txs[1], s.txs[3], s.txs[7]))
+	s.EqualValues(s.mempool.buckets[0].nonce, 12)
+	s.EqualValues(s.mempool.buckets[1].nonce, 12)
+	s.EqualValues(s.mempool.buckets[2].nonce, 15)
+	s.EqualValues(s.mempool.buckets[3].nonce, 11)
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_RemovesEmptyBuckets() {
+	txController, txMempool := s.mempool.BeginTransaction()
+	removedHashes := txMempool.RemoveSyncedTxs(models.GenericArray(s.txs[5:7]))
+	txController.Commit()
+
+	s.Equal(removedHashes, getTxsHashes(s.txs[5:7]...))
+	s.NotContains(s.mempool.buckets, uint32(2))
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_OmitsEmptyBuckets() {
+	txController, txMempool := s.mempool.BeginTransaction()
+	tx := s.newTransfer(20, 1)
+	removedHashes := txMempool.RemoveSyncedTxs(models.GenericArray{tx, s.txs[2]})
+	txController.Commit()
+
+	s.Equal(removedHashes, getTxsHashes(s.txs[2]))
+	s.Equal(s.mempool.buckets[0].txs, s.txs[0:2])
+}
+
+func (s *MempoolTestSuite) TestRemoveSyncedTxs_DecrementsTxCounts() {
+	txController, txMempool := s.mempool.BeginTransaction()
+	removedHashes := txMempool.RemoveSyncedTxs(models.GenericArray{s.txs[2], s.txs[7]})
+	txController.Commit()
+
+	s.Equal(removedHashes, getTxsHashes(s.txs[2], s.txs[7]))
+	s.Equal(7, s.mempool.TxCount(txtype.Transfer))
+	s.Equal(1, s.mempool.TxCount(txtype.Create2Transfer))
+}
+
 func (s *MempoolTestSuite) newTransfer(from uint32, nonce uint64) *models.Transfer {
 	return testutils.NewTransfer(from, 1, nonce, 100)
 }
@@ -308,11 +442,31 @@ func (s *MempoolTestSuite) newC2T(from uint32, nonce uint64) *models.Create2Tran
 	return testutils.NewCreate2Transfer(from, ref.Uint32(1), nonce, 100, nil)
 }
 
+func txsToTxErrors(txs ...models.GenericTransaction) []models.TxError {
+	txErrors := make([]models.TxError, 0, len(txs))
+	for _, tx := range txs {
+		txErrors = append(txErrors, models.TxError{
+			TxHash:        tx.GetBase().Hash,
+			SenderStateID: tx.GetFromStateID(),
+			ErrorMessage:  "some error",
+		})
+	}
+	return txErrors
+}
+
+func getTxsHashes(txs ...models.GenericTransaction) []common.Hash {
+	hashes := make([]common.Hash, 0, len(txs))
+	for _, tx := range txs {
+		hashes = append(hashes, tx.GetBase().Hash)
+	}
+	return hashes
+}
+
 func setUserStates(s *require.Assertions, stateTree *st.StateTree, nonces map[uint32]uint64) {
 	for stateID, nonce := range nonces {
 		_, err := stateTree.Set(stateID, &models.UserState{
 			PubKeyID: 0,
-			TokenID:  models.MakeUint256(uint64(stateID)),
+			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(1000),
 			Nonce:    models.MakeUint256(nonce),
 		})

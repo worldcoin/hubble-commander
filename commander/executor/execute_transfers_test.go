@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -38,7 +39,8 @@ func (s *ExecuteTransfersTestSuite) SetupTest() {
 	setInitialUserStates(s.Assertions, s.storage.Storage)
 
 	executionCtx := NewTestExecutionContext(s.storage.Storage, nil, s.cfg)
-	s.txsCtx = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.txsCtx, err = NewTestTxsContext(executionCtx, batchtype.Transfer)
+	s.NoError(err)
 
 	s.feeReceiver = &FeeReceiver{
 		StateID: 3,
@@ -81,8 +83,9 @@ func (s *ExecuteTransfersTestSuite) TearDownTest() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 3)
@@ -91,19 +94,21 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
-	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3, 1)...)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 2)
-	s.Len(executeTxsResult.InvalidTxs(), 3)
+	s.Len(executeTxsResult.InvalidTxs(), 1)
 }
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 	generatedTransfers := testutils.GenerateValidTransfers(13)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 6)
@@ -116,28 +121,29 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimit() {
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
-	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(2)...)
+	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidTransfers(3, 1)...)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	err := s.storage.BatchAddTransaction(generatedTransfers)
-	s.NoError(err)
-
-	result, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(result.AppliedTxs(), 3)
-	s.Len(result.InvalidTxs(), 2)
-	s.Len(s.txsCtx.txErrorsToStore, 2)
+	s.Len(result.InvalidTxs(), 1)
+	s.Len(s.txsCtx.txErrorsToStore, 1)
 
-	for i := 0; i < result.InvalidTxs().Len(); i++ {
-		s.Equal(generatedTransfers[i+3].Hash, s.txsCtx.txErrorsToStore[i].TxHash)
-		s.Equal(applier.ErrNonceTooLow.Error(), s.txsCtx.txErrorsToStore[i].ErrorMessage)
+	expectedTxError := models.TxError{
+		TxHash:        generatedTransfers[3].Hash,
+		SenderStateID: generatedTransfers[3].FromStateID,
+		ErrorMessage:  applier.ErrBalanceTooLow.Error(),
 	}
+	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
 
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	_, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	_, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.txsCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -148,13 +154,35 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AppliesFee() {
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 	generatedTransfers := testutils.GenerateValidTransfers(2)
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
+	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(generatedTransfers, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
-	s.Len(executeTxsResult.SkippedTxs(), 1)
-	s.Equal(*executeTxsResult.SkippedTxs().At(0).ToTransfer(), generatedTransfers[1])
+}
+
+func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
+	initTxs(s, txsCtx, txs)
+	err := txsCtx.newHeap()
+	s.NoError(err)
+
+	_, txMempool := txsCtx.Mempool.BeginTransaction()
+	return txMempool
+}
+
+func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
+	if txs.Len() == 0 {
+		return
+	}
+
+	err := txsCtx.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	for i := 0; i < txs.Len(); i++ {
+		_, err = txsCtx.Mempool.AddOrReplace(txsCtx.storage, txs.At(i))
+		s.NoError(err)
+	}
 }
 
 func TestExecuteTransfersTestSuite(t *testing.T) {

@@ -10,19 +10,25 @@ import (
 type Tracker struct {
 	txs   []*types.Transaction
 	mutex sync.RWMutex
+	nonce uint64
 
 	client       *eth.Client
-	txsChan      <-chan *types.Transaction
-	requestsChan <-chan *eth.TxSendingRequest
+	txsChan      chan *types.Transaction
+	requestsChan chan *eth.TxSendingRequest
 }
 
-func NewTracker(client *eth.Client, txsChan <-chan *types.Transaction, requestsChan <-chan *eth.TxSendingRequest) *Tracker {
+func NewTracker(client *eth.Client, txsChan chan *types.Transaction, requestsChan chan *eth.TxSendingRequest) (*Tracker, error) {
+	nonce, err := client.GetNonce()
+	if err != nil {
+		return nil, err
+	}
 	return &Tracker{
 		txs:          make([]*types.Transaction, 0),
+		nonce:        nonce,
 		client:       client,
 		txsChan:      txsChan,
 		requestsChan: requestsChan,
-	}
+	}, nil
 }
 
 func (t *Tracker) addTx(tx *types.Transaction) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -152,30 +153,6 @@ func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePending
 	s.ErrorIs(err, NewNotFoundError("FailedTx"))
 }
 
-func (s *TransactionTestSuite) TestReplacePendingTransaction() {
-	err := s.storage.AddTransaction(&transfer)
-	s.NoError(err)
-
-	updatedTx := transfer
-	updatedTx.Hash = utils.RandomHash()
-	err = s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
-	s.NoError(err)
-
-	_, err = s.storage.GetTransfer(transfer.Hash)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-
-	tx, err := s.storage.GetTransfer(updatedTx.Hash)
-	s.NoError(err)
-	s.Equal(updatedTx, *tx)
-}
-
-func (s *TransactionTestSuite) TestReplacePendingTransaction_NoPendingTransaction() {
-	updatedTx := transfer
-	updatedTx.Hash = utils.RandomHash()
-	err := s.storage.ReplacePendingTransaction(&transfer.Hash, &updatedTx)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-}
-
 func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentID = &txCommitment.ID
@@ -221,6 +198,57 @@ func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
 	txAfterUpsert, err := s.storage.GetTransfer(txBeforeUpsert.Hash)
 	s.NoError(err)
 	s.Equal(txBeforeUpsert, txAfterUpsert)
+}
+
+func (s *TransactionTestSuite) TestRemovePendingTransactions_RemovesTxs() {
+	txs := models.GenericArray{
+		testutils.NewTransfer(0, 1, 0, 100),
+		testutils.NewTransfer(1, 2, 1, 100),
+	}
+	err := s.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	err = s.storage.RemovePendingTransactions(txs[0].GetBase().Hash, txs[1].GetBase().Hash)
+	s.NoError(err)
+
+	for _, tx := range txs {
+		_, err = s.storage.GetTransfer(tx.GetBase().Hash)
+		s.ErrorIs(err, NewNotFoundError("transaction"))
+	}
+}
+
+func (s *TransactionTestSuite) TestRemovePendingTransactions_NoTransactions() {
+	err := s.storage.RemovePendingTransactions(transfer.Hash)
+	s.ErrorIs(err, NewNotFoundError("transaction"))
+}
+
+func (s *TransactionTestSuite) TestRemoveFailedTransactions() {
+	txs := models.GenericArray{newFailedTransfer(), &transfer, newFailedTransfer()}
+	err := s.storage.BatchAddTransaction(txs)
+	s.NoError(err)
+
+	err = s.storage.RemoveFailedTransactions(txs)
+	s.NoError(err)
+
+	_, err = s.storage.GetTransfer(txs[0].GetBase().Hash)
+	s.True(IsNotFoundError(err))
+
+	_, err = s.storage.GetTransfer(txs[1].GetBase().Hash)
+	s.NoError(err)
+
+	_, err = s.storage.GetTransfer(txs[2].GetBase().Hash)
+	s.True(IsNotFoundError(err))
+}
+
+func (s *TransactionTestSuite) TestRemoveFailedTransactions_NoTransactions() {
+	err := s.storage.RemoveFailedTransactions(models.TransferArray{transfer})
+	s.NoError(err)
+}
+
+func newFailedTransfer() *models.Transfer {
+	tx := testutils.NewTransfer(2, 1, 3, 10)
+	tx.ErrorMessage = ref.String("some message")
+	return tx
 }
 
 func TestTransactionTestSuite(t *testing.T) {

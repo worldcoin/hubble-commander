@@ -21,6 +21,12 @@ var (
 		Balance:  models.MakeUint256(420),
 		Nonce:    models.MakeUint256(0),
 	}
+	userState3 = &models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(2),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	}
 )
 
 type StateLeafTestSuite struct {
@@ -223,11 +229,12 @@ func (s *StateLeafTestSuite) TestGetStateLeavesByPublicKey_SortsStateLeaves() {
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
-
 	_, err = s.storage.StateTree.Set(1, userState2)
 	s.NoError(err)
+	_, err = s.storage.StateTree.Set(3, userState3)
+	s.NoError(err)
 
-	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(userState1.PubKeyID, userState1.TokenID)
+	stateLeaf, err := s.storage.GetFeeReceiverStateLeaf(1, models.MakeUint256(1))
 	s.NoError(err)
 	s.Equal(*userState1, stateLeaf.UserState)
 	s.Equal(uint32(0), stateLeaf.StateID)
@@ -237,7 +244,6 @@ func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf() {
 func (s *StateLeafTestSuite) TestGetFeeReceiverStateLeaf_WorkWithCachedValue() {
 	_, err := s.storage.StateTree.Set(0, userState1)
 	s.NoError(err)
-
 	_, err = s.storage.StateTree.Set(1, userState2)
 	s.NoError(err)
 
