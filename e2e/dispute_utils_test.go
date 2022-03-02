@@ -70,7 +70,7 @@ func (s *DisputesE2ETestSuite) calculateWithdrawRoot(receiverBalance models.Uint
 	return merkleTree.Root()
 }
 
-func (s *DisputesE2ETestSuite) sendNTransfersBatchWithInvalidSignature(batchID uint64, txsAmount uint32) {
+func (s *DisputesE2ETestSuite) sendNTransfersBatchWithInvalidSignature(batchID uint64, txsAmount uint32, postStateRoot common.Hash) {
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
@@ -82,8 +82,6 @@ func (s *DisputesE2ETestSuite) sendNTransfersBatchWithInvalidSignature(batchID u
 
 	encodedTransfer, err := encoder.EncodeTransferForCommitment(&transfer)
 	s.NoError(err)
-	postStateRoot := common.Hash{223, 216, 112, 56, 113, 248, 202, 217, 207, 95, 115, 189, 153, 14, 156, 202, 27, 160, 133, 14, 118, 218,
-		161, 109, 17, 61, 77, 118, 7, 252, 42, 18}
 
 	commitment := models.TxCommitmentWithTxs{
 		TxCommitment: models.TxCommitment{
@@ -102,7 +100,7 @@ func (s *DisputesE2ETestSuite) sendNTransfersBatchWithInvalidStateRoot(batchID u
 	transfer := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
-			Amount:      models.MakeUint256(90),
+			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(10),
 		},
 		ToStateID: 2,
@@ -114,18 +112,15 @@ func (s *DisputesE2ETestSuite) sendNTransfersBatchWithInvalidStateRoot(batchID u
 	s.sendTransferCommitment(bytes.Repeat(encodedTransfer, int(txsAmount)), batchID)
 }
 
-func (s *DisputesE2ETestSuite) sendNC2TsBatchWithInvalidSignature(batchID uint64, txsAmount uint32) {
+func (s *DisputesE2ETestSuite) sendNC2TsBatchWithInvalidSignature(batchID uint64, txsAmount uint32, postStateRoot common.Hash) {
 	transfer := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
-			Amount:      models.MakeUint256(90),
+			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(10),
 		},
 		ToStateID: ref.Uint32(6),
 	}
-
-	postStateRoot := common.Hash{5, 64, 118, 3, 181, 231, 59, 98, 230, 215, 146, 132, 59, 141, 73, 132, 133, 23, 149, 118, 59, 118, 88, 153,
-		150, 65, 112, 215, 128, 132, 47, 58}
 
 	encodedTransfers := s.registerAccountsAndEncodeC2Ts(&transfer, txsAmount)
 
@@ -197,11 +192,11 @@ func (s *DisputesE2ETestSuite) registerAccountsAndEncodeC2Ts(transfer *models.Cr
 	return encodedTransfers
 }
 
-func (s *DisputesE2ETestSuite) sendNMMsBatchWithInvalidSignature(batchID uint64, txsAmount uint32) {
+func (s *DisputesE2ETestSuite) sendNMMsBatchWithInvalidSignature(batchID uint64, txsAmount uint32, postStateRoot common.Hash) {
 	tx := models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			FromStateID: 1,
-			Amount:      models.MakeUint256(90),
+			Amount:      models.MakeUint256(100),
 			Fee:         models.MakeUint256(10),
 		},
 		SpokeID: 1,
@@ -209,9 +204,6 @@ func (s *DisputesE2ETestSuite) sendNMMsBatchWithInvalidSignature(batchID uint64,
 
 	encodedTx, err := encoder.EncodeMassMigrationForCommitment(&tx)
 	s.NoError(err)
-
-	postStateRoot := common.Hash{25, 2, 167, 141, 141, 223, 41, 53, 199, 36, 50, 52, 166, 110, 139, 144, 117, 71, 15, 68, 65, 127, 115, 174,
-		77, 40, 231, 185, 228, 186, 225, 136}
 
 	commitment := models.MMCommitmentWithTxs{
 		MMCommitment: models.MMCommitment{
@@ -222,10 +214,10 @@ func (s *DisputesE2ETestSuite) sendNMMsBatchWithInvalidSignature(batchID uint64,
 			Meta: &models.MassMigrationMeta{
 				SpokeID:     tx.SpokeID,
 				TokenID:     models.MakeUint256(0),
-				Amount:      tx.Amount,
+				Amount:      *tx.Amount.MulN(uint64(txsAmount)),
 				FeeReceiver: 0,
 			},
-			WithdrawRoot: s.calculateWithdrawRoot(tx.Amount, 1),
+			WithdrawRoot: s.calculateWithdrawRoot(tx.Amount, int(txsAmount)),
 		},
 		Transactions: bytes.Repeat(encodedTx, int(txsAmount)),
 	}

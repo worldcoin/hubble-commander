@@ -60,7 +60,8 @@ func (s *DisputesE2ETestSuite) TestMeasureDisputesGasUsage() {
 
 func (s *DisputesE2ETestSuite) testDisputeSignatureTransfer() {
 	s.requireRollbackCompleted(func() {
-		s.sendNTransfersBatchWithInvalidSignature(1, 1)
+		postStateRoot := common.Hash{67, 176, 141, 0, 2, 50, 199, 28, 151, 99, 125, 127, 174, 183, 63, 187, 57, 94, 96, 143, 40, 65, 71, 129, 140, 109, 96, 138, 47, 64, 15, 207}
+		s.sendNTransfersBatchWithInvalidSignature(1, 1, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)
@@ -68,7 +69,8 @@ func (s *DisputesE2ETestSuite) testDisputeSignatureTransfer() {
 
 func (s *DisputesE2ETestSuite) testDisputeSignatureC2T() {
 	s.requireRollbackCompleted(func() {
-		s.sendNC2TsBatchWithInvalidSignature(1, 1)
+		postStateRoot := common.Hash{148, 161, 17, 219, 203, 227, 135, 229, 169, 243, 249, 27, 68, 196, 71, 192, 229, 71, 220, 254, 108, 164, 8, 136, 125, 30, 61, 226, 146, 163, 116, 94}
+		s.sendNC2TsBatchWithInvalidSignature(1, 1, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)
@@ -76,7 +78,8 @@ func (s *DisputesE2ETestSuite) testDisputeSignatureC2T() {
 
 func (s *DisputesE2ETestSuite) testDisputeSignatureMM() {
 	s.requireRollbackCompleted(func() {
-		s.sendNMMsBatchWithInvalidSignature(1, 1)
+		postStateRoot := common.Hash{161, 160, 52, 208, 71, 192, 169, 92, 255, 70, 215, 143, 101, 201, 129, 143, 184, 94, 24, 48, 137, 254, 133, 57, 232, 166, 27, 150, 225, 125, 207, 107}
+		s.sendNMMsBatchWithInvalidSignature(1, 1, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)
@@ -149,7 +152,8 @@ func (s *DisputesE2ETestSuite) testDisputeTransitionMM() {
 
 func (s *DisputesE2ETestSuite) measureDisputeSignatureTransfer() {
 	s.requireRollbackCompleted(func() {
-		s.sendNTransfersBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment)
+		postStateRoot := common.Hash{218, 39, 24, 204, 77, 219, 251, 62, 246, 186, 68, 119, 175, 83, 17, 234, 153, 92, 73, 42, 200, 2, 98, 27, 106, 20, 147, 37, 147, 100, 145, 233}
+		s.sendNTransfersBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)
@@ -157,7 +161,8 @@ func (s *DisputesE2ETestSuite) measureDisputeSignatureTransfer() {
 
 func (s *DisputesE2ETestSuite) measureDisputeSignatureC2T() {
 	s.requireRollbackCompleted(func() {
-		s.sendNC2TsBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment)
+		postStateRoot := common.Hash{42, 173, 143, 147, 46, 6, 72, 244, 166, 38, 240, 98, 63, 249, 81, 151, 53, 8, 196, 185, 69, 71, 5, 166, 172, 117, 126, 138, 192, 163, 99, 127}
+		s.sendNC2TsBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)
@@ -165,7 +170,8 @@ func (s *DisputesE2ETestSuite) measureDisputeSignatureC2T() {
 
 func (s *DisputesE2ETestSuite) measureDisputeSignatureMM() {
 	s.requireRollbackCompleted(func() {
-		s.sendNMMsBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment)
+		postStateRoot := common.Hash{157, 167, 18, 112, 146, 192, 201, 9, 143, 73, 16, 150, 43, 69, 28, 236, 185, 148, 237, 111, 173, 121, 11, 169, 195, 70, 158, 54, 157, 100, 207, 38}
+		s.sendNMMsBatchWithInvalidSignature(1, s.Cfg.Rollup.MaxTxsPerCommitment, postStateRoot)
 	})
 
 	s.requireBatchesCount(1)

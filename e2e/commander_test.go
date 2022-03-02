@@ -50,7 +50,7 @@ func (s *CoreCommanderE2ETestSuite) TestCommander() {
 	s.testSubmitDepositBatchAndWait()
 
 	s.testUserStateAfterTransfers(
-		s.Wallets[1].PublicKey(),
+		testWalletPublicKey,
 		1,
 		32*3+1,
 		-1*(32*100*3+100),
@@ -206,7 +206,7 @@ func (s *CoreCommanderE2ETestSuite) testMaxBatchDelay(startNonce uint64) {
 	log.Warn("Delayed tx is not yet in batch, waiting..")
 
 	s.Eventually(func() bool {
-		txReceipt := s.GetTransaction(txHash)
+		txReceipt = s.GetTransaction(txHash)
 		return txReceipt.Status == txstatus.Mined
 	}, 10*time.Second, testutils.TryInterval)
 }
