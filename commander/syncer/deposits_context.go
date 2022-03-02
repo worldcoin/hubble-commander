@@ -19,3 +19,7 @@ func newDepositsContext(storage *st.Storage, client *eth.Client) *DepositsContex
 		applier: applier.NewApplier(storage),
 	}
 }
+
+func (c *DepositsContext) Commit() {}
+
+func (c *DepositsContext) Rollback() {}
