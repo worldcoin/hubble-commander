@@ -13,19 +13,31 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/contracts/withdrawmanager"
 	"github.com/Worldcoin/hubble-commander/e2e/setup"
-	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/enums/batchstatus"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/require"
-	"github.com/ybbus/jsonrpc/v2"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestWithdrawProcess(t *testing.T) {
+type WithdrawalsE2ETestSuite struct {
+	setup.E2ETestSuite
+
+	transactor             *bind.TransactOpts
+	withdrawManager        *withdrawmanager.WithdrawManager
+	withdrawManagerAddress common.Address
+	token                  *models.RegisteredToken
+	tokenContract          *customtoken.TestCustomToken
+	senderWallet           bls.Wallet
+}
+
+func (s *WithdrawalsE2ETestSuite) SetupTest() {
 	commanderConfig := config.GetConfig()
 	commanderConfig.Rollup.MinTxsPerCommitment = 2
 	commanderConfig.Rollup.MaxTxsPerCommitment = 2
@@ -35,131 +47,172 @@ func TestWithdrawProcess(t *testing.T) {
 	deployerConfig := config.GetDeployerTestConfig()
 	deployerConfig.Bootstrap.BlocksToFinalise = 1
 
-	commander, err := setup.NewConfiguredCommanderFromEnv(commanderConfig, deployerConfig)
-	require.NoError(t, err)
+	s.SetupTestEnvironment(commanderConfig, deployerConfig)
 
-	commanderClient := newEthClient(t, commander, commanderConfig.Ethereum.PrivateKey)
-	ethClient := newEthClient(t, commander, setup.EthClientPrivateKey)
-	token, tokenContract := getDeployedToken(t, ethClient)
-	transferTokens(t, tokenContract, commanderClient, ethClient.Blockchain.GetAccount().From)
-	approveTokens(t, tokenContract, ethClient)
-
-	err = commander.Start()
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, commander.Stop())
-	}()
-
-	domain := GetDomain(t, commander.Client())
-
-	wallets, err := setup.CreateWallets(domain)
-	require.NoError(t, err)
-
-	senderWallet := wallets[1]
-
-	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
-	fullDepositBatchCount := calculateDepositsCountForFullBatch(t, ethClient)
-
-	userStatesBeforeDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
-
-	makeFullDepositBatch(t, commander.Client(), ethClient, depositAmount, &token.ID, tokenContract, fullDepositBatchCount)
-
-	userStatesAfterDeposit := getSenderUserStates(t, commander.Client(), senderWallet.PublicKey())
-
-	newUserStates := userStatesDifference(userStatesAfterDeposit, userStatesBeforeDeposit)
-	require.Len(t, newUserStates, fullDepositBatchCount)
-
-	targetMassMigrationHash := testSubmitWithdrawBatch(t, commander.Client(), senderWallet, newUserStates[0].StateID)
-
-	withdrawManager, withdrawManagerAddress := getWithdrawManager(t, commander.Client(), ethClient)
-	testProcessWithdrawCommitment(t, commander.Client(), ethClient, withdrawManager, withdrawManagerAddress, tokenContract)
-
-	testClaimTokens(t, commander.Client(), ethClient, withdrawManager, tokenContract, senderWallet, targetMassMigrationHash)
+	gasLimit := 1_000_000
+	s.transactor = s.getTransactor(uint64(gasLimit))
+	s.withdrawManager, s.withdrawManagerAddress = s.getWithdrawManager()
+	s.token, s.tokenContract = s.getDeployedTokenAndApprove()
+	s.senderWallet = s.Wallets[1]
 }
 
-func transferTokens(t *testing.T, tokenContract *customtoken.TestCustomToken, commanderClient *eth.Client, recipient common.Address) {
-	tx, err := tokenContract.Transfer(commanderClient.Blockchain.GetAccount(), recipient, utils.ParseEther("1000"))
-	require.NoError(t, err)
-	_, err = commanderClient.WaitToBeMined(tx)
-	require.NoError(t, err)
+func (s *WithdrawalsE2ETestSuite) TestWithdrawals() {
+	newUserStates := s.makeDeposit()
+
+	targetMassMigrationHash := s.submitWithdrawBatch(newUserStates[0].StateID)
+
+	s.testProcessWithdrawCommitment()
+
+	s.testClaimTokens(targetMassMigrationHash)
 }
 
-func getWithdrawManager(t *testing.T, client jsonrpc.RPCClient, ethClient *eth.Client) (*withdrawmanager.WithdrawManager, common.Address) {
-	var info dto.NetworkInfo
-	err := client.CallFor(&info, "hubble_getNetworkInfo")
-	require.NoError(t, err)
+func (s *WithdrawalsE2ETestSuite) makeDeposit() []dto.UserStateWithID {
+	fullDepositBatchCount := s.CalculateDepositsCountForFullBatch()
 
-	withdrawManager, err := withdrawmanager.NewWithdrawManager(info.WithdrawManager, ethClient.Blockchain.GetBackend())
-	require.NoError(t, err)
+	userStatesBeforeDeposit := s.GetUserStates(s.senderWallet.PublicKey())
 
-	return withdrawManager, info.WithdrawManager
+	s.makeFullDepositBatch(fullDepositBatchCount)
+
+	userStatesAfterDeposit := s.GetUserStates(s.senderWallet.PublicKey())
+
+	newUserStates := s.userStatesDifference(userStatesAfterDeposit, userStatesBeforeDeposit)
+	s.Len(newUserStates, fullDepositBatchCount)
+
+	return newUserStates
 }
 
-func getSenderUserStates(t *testing.T, client jsonrpc.RPCClient, senderPublicKey *models.PublicKey) []dto.UserStateWithID {
-	var userStates []dto.UserStateWithID
-	err := client.CallFor(&userStates, "hubble_getUserStates", []interface{}{senderPublicKey})
-	require.NoError(t, err)
+func (s *WithdrawalsE2ETestSuite) testProcessWithdrawCommitment() {
+	commitmentID := &models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
 
-	return userStates
+	proof := s.getMassMigrationCommitmentProof(commitmentID)
+
+	typedProof := s.massMigrationCommitmentProofToCalldata(proof)
+
+	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(consts.L2Unit)
+	s.testDoActionAndAssertTokenBalanceDifference(s.withdrawManagerAddress, expectedBalanceDifference, func() {
+		tx, err := s.withdrawManager.ProcessWithdrawCommitment(s.transactor, commitmentID.BatchID.ToBig(), typedProof)
+		s.NoError(err)
+
+		receipt, err := s.ETHClient.WaitToBeMined(tx)
+		s.NoError(err)
+		s.NotZero(receipt.Status)
+	})
 }
 
-func calculateDepositsCountForFullBatch(t *testing.T, ethClient *eth.Client) int {
-	subtreeDepth, err := ethClient.GetMaxSubtreeDepthParam()
-	require.NoError(t, err)
-	depositsCount := 1 << *subtreeDepth
+func (s *WithdrawalsE2ETestSuite) testClaimTokens(transactionHash common.Hash) {
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(2),
+		IndexInBatch: 0,
+	}
+	proof := s.getWithdrawProof(commitmentID, transactionHash)
 
-	return depositsCount
+	typedProof := s.withdrawProofToCalldata(proof)
+
+	message, err := s.senderWallet.Sign(s.transactor.From.Bytes())
+	s.NoError(err)
+
+	publicKeyProof := s.getPublicKeyProof(proof.UserState.PubKeyID)
+
+	expectedBalanceDifference := *proof.UserState.Balance.MulN(consts.L2Unit)
+	s.testDoActionAndAssertTokenBalanceDifference(s.transactor.From, expectedBalanceDifference, func() {
+		tx, err := s.withdrawManager.ClaimTokens(
+			s.transactor,
+			utils.ByteSliceTo32ByteArray(proof.Root.Bytes()),
+			typedProof,
+			s.senderWallet.PublicKey().BigInts(),
+			message.BigInts(),
+			publicKeyProof.Witness.Bytes(),
+		)
+		s.NoError(err)
+
+		receipt, err := s.ETHClient.WaitToBeMined(tx)
+		s.NoError(err)
+		s.NotZero(receipt.Status)
+	})
 }
 
-func testDoActionAndAssertTokenBalanceDifference(
-	t *testing.T,
-	token *customtoken.TestCustomToken,
+func (s *WithdrawalsE2ETestSuite) getWithdrawManager() (*withdrawmanager.WithdrawManager, common.Address) {
+	networkInfo := s.GetNetworkInfo()
+
+	blockchain, err := chain.NewRPCConnection(s.Cfg.Ethereum)
+	s.NoError(err)
+
+	backend := blockchain.GetBackend()
+
+	withdrawManager, err := withdrawmanager.NewWithdrawManager(networkInfo.WithdrawManager, backend)
+	s.NoError(err)
+
+	return withdrawManager, networkInfo.WithdrawManager
+}
+
+func (s *WithdrawalsE2ETestSuite) getTransactor(gasLimit uint64) *bind.TransactOpts {
+	account := s.ETHClient.Blockchain.GetAccount()
+	account.GasLimit = gasLimit
+
+	return account
+}
+
+func (s *WithdrawalsE2ETestSuite) getDeployedTokenAndApprove() (*models.RegisteredToken, *customtoken.TestCustomToken) {
+	token, tokenContract := s.GetDeployedToken(0)
+	s.ApproveToken(token.Contract, "100")
+
+	return token, tokenContract
+}
+
+func (s *WithdrawalsE2ETestSuite) testDoActionAndAssertTokenBalanceDifference(
 	address common.Address,
 	expectedBalanceDifference models.Uint256,
 	action func(),
 ) {
-	balanceBeforeAction, err := token.BalanceOf(nil, address)
-	require.NoError(t, err)
+	balanceBeforeAction, err := s.tokenContract.BalanceOf(nil, address)
+	s.NoError(err)
 
 	action()
 
-	balanceAfterAction, err := token.BalanceOf(nil, address)
-	require.NoError(t, err)
+	balanceAfterAction, err := s.tokenContract.BalanceOf(nil, address)
+	s.NoError(err)
 
 	signedBalanceDifference := balanceAfterAction.Sub(balanceAfterAction, balanceBeforeAction)
 	balanceDifference := models.MakeUint256FromBig(*big.NewInt(0).Abs(signedBalanceDifference))
-	require.Equal(t, expectedBalanceDifference, balanceDifference)
+	s.Equal(expectedBalanceDifference, balanceDifference)
 }
 
-func makeFullDepositBatch(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	ethClient *eth.Client,
-	depositAmount, tokenID *models.Uint256,
-	token *customtoken.TestCustomToken,
-	depositsNeeded int,
-) {
+func (s *WithdrawalsE2ETestSuite) makeFullDepositBatch(depositsNeeded int) {
+	depositAmount := models.NewUint256FromBig(*utils.ParseEther("10"))
+
 	expectedBalanceDifference := *depositAmount.MulN(uint64(depositsNeeded))
-	testDoActionAndAssertTokenBalanceDifference(t, token, ethClient.Blockchain.GetAccount().From, expectedBalanceDifference, func() {
+	targetPubKeyID := models.NewUint256(1)
+	s.testDoActionAndAssertTokenBalanceDifference(s.transactor.From, expectedBalanceDifference, func() {
 		txs := make([]types.Transaction, 0, depositsNeeded)
 		for i := 0; i < depositsNeeded; i++ {
-			tx, err := ethClient.QueueDeposit(queueDepositGasLimit, models.NewUint256(1), depositAmount, tokenID)
-			require.NoError(t, err)
+			tx, err := s.ETHClient.QueueDeposit(setup.QueueDepositGasLimit, targetPubKeyID, depositAmount, &s.token.ID)
+			s.NoError(err)
 			txs = append(txs, *tx)
 		}
-		receipt, err := ethClient.WaitForMultipleTxs(txs...)
-		require.NoError(t, err)
+		_, err := s.ETHClient.WaitForMultipleTxs(txs...)
+		s.NoError(err)
 
-		for i := range receipt {
-			require.EqualValues(t, 1, receipt[i].Status)
-		}
-
-		waitForBatch(t, client, models.MakeUint256(1))
+		s.WaitForBatchStatus(1, batchstatus.Submitted)
 	})
 }
 
+func (s *WithdrawalsE2ETestSuite) sendMMFromWallet(wallet bls.Wallet, massMigration dto.MassMigration) common.Hash {
+	signedMassMigration, err := api.SignMassMigration(&wallet, massMigration)
+	s.NoError(err)
+
+	var txHash common.Hash
+	err = s.RPCClient.CallFor(&txHash, "hubble_sendTransaction", []interface{}{signedMassMigration})
+	s.NoError(err)
+	s.NotZero(txHash)
+
+	return txHash
+}
+
 // userStatesDifference returns the user states in `a` that aren't in `b`.
-func userStatesDifference(a, b []dto.UserStateWithID) []dto.UserStateWithID {
+func (s *WithdrawalsE2ETestSuite) userStatesDifference(a, b []dto.UserStateWithID) []dto.UserStateWithID {
 	mb := make(map[uint32]struct{}, len(b))
 	for _, x := range b {
 		mb[x.StateID] = struct{}{}
@@ -173,59 +226,26 @@ func userStatesDifference(a, b []dto.UserStateWithID) []dto.UserStateWithID {
 	return diff
 }
 
-func testSendMassMigrationsForWithdrawal(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	senderWallet bls.Wallet,
-	fromStateID uint32,
-	amounts []models.Uint256,
-	startingNonce int,
-) common.Hash {
-	var firstTxHash common.Hash
-
-	for i := range amounts {
-		massMigration, err := api.SignMassMigration(&senderWallet, dto.MassMigration{
-			FromStateID: ref.Uint32(fromStateID),
-			SpokeID:     ref.Uint32(1),
-			Amount:      &amounts[i],
-			Fee:         models.NewUint256(1),
-			Nonce:       models.NewUint256(uint64(startingNonce + i)),
-		})
-		require.NoError(t, err)
-
-		var txHash common.Hash
-		err = client.CallFor(&txHash, "hubble_sendTransaction", []interface{}{*massMigration})
-		require.NoError(t, err)
-		require.NotZero(t, txHash)
-
-		testGetTransaction(t, client, txHash)
-
-		if i == 0 {
-			firstTxHash = txHash
-		}
-	}
-
-	return firstTxHash
-}
-
-func testSubmitWithdrawBatch(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	senderWallet bls.Wallet,
-	fromStateID uint32,
-) common.Hash {
-	massMigrationWithdrawalAmount := models.MakeUint256(9 * consts.L2Unit)
+func (s *WithdrawalsE2ETestSuite) submitWithdrawBatch(fromStateID uint32) common.Hash {
+	massMigrationWithdrawalAmount := models.NewUint256(9 * consts.L2Unit)
 
 	var targetMassMigrationHash common.Hash
-	submitTxBatchAndWait(t, client, func() common.Hash {
-		targetMassMigrationHash = testSendMassMigrationsForWithdrawal(
-			t,
-			client,
-			senderWallet,
-			fromStateID,
-			[]models.Uint256{massMigrationWithdrawalAmount, models.MakeUint256(90)},
-			0,
-		)
+	s.SubmitTxBatchAndWait(func() common.Hash {
+		targetMassMigrationHash = s.sendMMFromWallet(s.senderWallet, dto.MassMigration{
+			FromStateID: ref.Uint32(fromStateID),
+			SpokeID:     ref.Uint32(1),
+			Amount:      massMigrationWithdrawalAmount,
+			Fee:         models.NewUint256(1),
+			Nonce:       models.NewUint256(0),
+		})
+
+		s.sendMMFromWallet(s.senderWallet, dto.MassMigration{
+			FromStateID: ref.Uint32(fromStateID),
+			SpokeID:     ref.Uint32(1),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(1),
+			Nonce:       models.NewUint256(1),
+		})
 
 		return targetMassMigrationHash
 	})
@@ -233,19 +253,17 @@ func testSubmitWithdrawBatch(
 	return targetMassMigrationHash
 }
 
-func testGetMassMigrationCommitmentProof(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	commitmentID *models.CommitmentID,
-) *dto.MassMigrationCommitmentProof {
+func (s *WithdrawalsE2ETestSuite) getMassMigrationCommitmentProof(commitmentID *models.CommitmentID) *dto.MassMigrationCommitmentProof {
 	var proof dto.MassMigrationCommitmentProof
-	err := client.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{commitmentID})
-	require.NoError(t, err)
+	err := s.RPCClient.CallFor(&proof, "hubble_getMassMigrationCommitmentProof", []interface{}{commitmentID})
+	s.NoError(err)
 
 	return &proof
 }
 
-func massMigrationCommitmentProofToCalldata(proof *dto.MassMigrationCommitmentProof) withdrawmanager.TypesMMCommitmentInclusionProof {
+func (s *WithdrawalsE2ETestSuite) massMigrationCommitmentProofToCalldata(
+	proof *dto.MassMigrationCommitmentProof,
+) withdrawmanager.TypesMMCommitmentInclusionProof {
 	return withdrawmanager.TypesMMCommitmentInclusionProof{
 		Commitment: withdrawmanager.TypesMassMigrationCommitment{
 			StateRoot: utils.ByteSliceTo32ByteArray(proof.StateRoot.Bytes()),
@@ -265,59 +283,26 @@ func massMigrationCommitmentProofToCalldata(proof *dto.MassMigrationCommitmentPr
 	}
 }
 
-func testProcessWithdrawCommitment(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	ethClient *eth.Client,
-	withdrawManager *withdrawmanager.WithdrawManager,
-	withdrawManagerAddress common.Address,
-	token *customtoken.TestCustomToken,
-) {
-	transactor := ethClient.Blockchain.GetAccount()
-	transactor.GasLimit = 1_000_000
-
-	commitmentID := &models.CommitmentID{
-		BatchID:      models.MakeUint256(2),
-		IndexInBatch: 0,
-	}
-
-	proof := testGetMassMigrationCommitmentProof(t, client, commitmentID)
-
-	typedProof := massMigrationCommitmentProofToCalldata(proof)
-
-	expectedBalanceDifference := *proof.Body.Meta.Amount.MulN(consts.L2Unit)
-	testDoActionAndAssertTokenBalanceDifference(t, token, withdrawManagerAddress, expectedBalanceDifference, func() {
-		tx, err := withdrawManager.ProcessWithdrawCommitment(transactor, commitmentID.BatchID.ToBig(), typedProof)
-		require.NoError(t, err)
-
-		receipt, err := ethClient.WaitToBeMined(tx)
-		require.NoError(t, err)
-		require.NotZero(t, receipt.Status)
-	})
-}
-
-func testGetWithdrawProof(
-	t *testing.T,
-	client jsonrpc.RPCClient,
+func (s *WithdrawalsE2ETestSuite) getWithdrawProof(
 	commitmentID models.CommitmentID,
 	transactionHash common.Hash,
 ) *dto.WithdrawProof {
 	var proof dto.WithdrawProof
-	err := client.CallFor(&proof, "hubble_getWithdrawProof", []interface{}{commitmentID, transactionHash})
-	require.NoError(t, err)
+	err := s.RPCClient.CallFor(&proof, "hubble_getWithdrawProof", []interface{}{commitmentID, transactionHash})
+	s.NoError(err)
 
 	return &proof
 }
 
-func testGetPublicKeyProof(t *testing.T, client jsonrpc.RPCClient, pubKeyID uint32) dto.PublicKeyProof {
+func (s *WithdrawalsE2ETestSuite) getPublicKeyProof(pubKeyID uint32) dto.PublicKeyProof {
 	var proof dto.PublicKeyProof
-	err := client.CallFor(&proof, "hubble_getPublicKeyProofByPubKeyID", []interface{}{pubKeyID})
-	require.NoError(t, err)
+	err := s.RPCClient.CallFor(&proof, "hubble_getPublicKeyProofByPubKeyID", []interface{}{pubKeyID})
+	s.NoError(err)
 
 	return proof
 }
 
-func withdrawProofToCalldata(proof *dto.WithdrawProof) withdrawmanager.TypesStateMerkleProofWithPath {
+func (s *WithdrawalsE2ETestSuite) withdrawProofToCalldata(proof *dto.WithdrawProof) withdrawmanager.TypesStateMerkleProofWithPath {
 	return withdrawmanager.TypesStateMerkleProofWithPath{
 		State: withdrawmanager.TypesUserState{
 			PubkeyID: big.NewInt(int64(proof.UserState.PubKeyID)),
@@ -330,45 +315,6 @@ func withdrawProofToCalldata(proof *dto.WithdrawProof) withdrawmanager.TypesStat
 	}
 }
 
-func testClaimTokens(
-	t *testing.T,
-	client jsonrpc.RPCClient,
-	ethClient *eth.Client,
-	withdrawManager *withdrawmanager.WithdrawManager,
-	token *customtoken.TestCustomToken,
-	sender bls.Wallet,
-	transactionHash common.Hash,
-) {
-	transactor := ethClient.Blockchain.GetAccount()
-	transactor.GasLimit = 1_000_000
-
-	commitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(2),
-		IndexInBatch: 0,
-	}
-	proof := testGetWithdrawProof(t, client, commitmentID, transactionHash)
-
-	typedProof := withdrawProofToCalldata(proof)
-
-	message, err := sender.Sign(transactor.From.Bytes())
-	require.NoError(t, err)
-
-	publicKeyProof := testGetPublicKeyProof(t, client, proof.UserState.PubKeyID)
-
-	expectedBalanceDifference := *proof.UserState.Balance.MulN(consts.L2Unit)
-	testDoActionAndAssertTokenBalanceDifference(t, token, transactor.From, expectedBalanceDifference, func() {
-		tx, err := withdrawManager.ClaimTokens(
-			transactor,
-			utils.ByteSliceTo32ByteArray(proof.Root.Bytes()),
-			typedProof,
-			sender.PublicKey().BigInts(),
-			message.BigInts(),
-			publicKeyProof.Witness.Bytes(),
-		)
-		require.NoError(t, err)
-
-		receipt, err := ethClient.WaitToBeMined(tx)
-		require.NoError(t, err)
-		require.NotZero(t, receipt.Status)
-	})
+func TestWithdrawalsE2ETestSuite(t *testing.T) {
+	suite.Run(t, new(WithdrawalsE2ETestSuite))
 }

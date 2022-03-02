@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const EthClientPrivateKey = "c216d5eef9c83c9d6f4629fff79e8e90d73b4beb9921de18f974f0d2c6d4e9b0"
+const TestEthClientPrivateKey = "c216d5eef9c83c9d6f4629fff79e8e90d73b4beb9921de18f974f0d2c6d4e9b0"
 
 func deployContracts(blockchain chain.Connection, deployerConfig *config.DeployerConfig) (*models.ChainSpec, *string, error) {
 	err := deployChooser(blockchain, deployerConfig)
@@ -27,7 +27,7 @@ func deployContracts(blockchain chain.Connection, deployerConfig *config.Deploye
 }
 
 func deployChooser(blockchain chain.Connection, deployerConfig *config.DeployerConfig) error {
-	e2eAccountAddress, err := privateKeyToAddress(EthClientPrivateKey)
+	e2eAccountAddress, err := privateKeyToAddress(TestEthClientPrivateKey)
 	if err != nil {
 		return err
 	}
