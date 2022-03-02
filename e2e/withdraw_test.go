@@ -40,7 +40,7 @@ type WithdrawalsE2ETestSuite struct {
 func (s *WithdrawalsE2ETestSuite) SetupTest() {
 	commanderConfig := config.GetConfig()
 	commanderConfig.Rollup.MinTxsPerCommitment = 2
-	commanderConfig.Rollup.MaxTxsPerCommitment = 32
+	commanderConfig.Rollup.MaxTxsPerCommitment = 2
 	commanderConfig.Rollup.MinCommitmentsPerBatch = 1
 	commanderConfig.API.EnableProofMethods = true
 
@@ -199,7 +199,7 @@ func (s *WithdrawalsE2ETestSuite) makeFullDepositBatch(depositsNeeded int) {
 	})
 }
 
-func (s *WithdrawalsE2ETestSuite) sendMMFromCustomWallet(wallet bls.Wallet, massMigration dto.MassMigration) common.Hash {
+func (s *WithdrawalsE2ETestSuite) sendMMFromWallet(wallet bls.Wallet, massMigration dto.MassMigration) common.Hash {
 	signedMassMigration, err := api.SignMassMigration(&wallet, massMigration)
 	s.NoError(err)
 
@@ -231,7 +231,7 @@ func (s *WithdrawalsE2ETestSuite) submitWithdrawBatch(fromStateID uint32) common
 
 	var targetMassMigrationHash common.Hash
 	s.SubmitTxBatchAndWait(func() common.Hash {
-		targetMassMigrationHash = s.sendMMFromCustomWallet(s.senderWallet, dto.MassMigration{
+		targetMassMigrationHash = s.sendMMFromWallet(s.senderWallet, dto.MassMigration{
 			FromStateID: ref.Uint32(fromStateID),
 			SpokeID:     ref.Uint32(1),
 			Amount:      massMigrationWithdrawalAmount,
@@ -239,7 +239,7 @@ func (s *WithdrawalsE2ETestSuite) submitWithdrawBatch(fromStateID uint32) common
 			Nonce:       models.NewUint256(0),
 		})
 
-		s.sendMMFromCustomWallet(s.senderWallet, dto.MassMigration{
+		s.sendMMFromWallet(s.senderWallet, dto.MassMigration{
 			FromStateID: ref.Uint32(fromStateID),
 			SpokeID:     ref.Uint32(1),
 			Amount:      models.NewUint256(90),

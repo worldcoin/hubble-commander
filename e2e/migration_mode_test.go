@@ -76,7 +76,7 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 	// Invalid tx
 	s.SendTransaction(dto.Transfer{
 		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(999),
+		ToStateID:   ref.Uint32(999), // Non-existent receiver
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(8),
@@ -92,7 +92,7 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 	// Another invalid tx
 	s.SendTransaction(dto.Transfer{
 		FromStateID: ref.Uint32(2),
-		ToStateID:   ref.Uint32(999),
+		ToStateID:   ref.Uint32(999), // Non-existent receiver
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(0),
