@@ -17,13 +17,13 @@ func (t *Tracker) TrackTxs(ctx context.Context) error {
 	errChan := make(chan error, 3)
 	wg.Add(1)
 	go func() {
-		errChan <- t.startReadingChannel(subCtx)
+		t.startReadingTxsChanLoop()
 		wg.Done()
 	}()
 
 	wg.Add(1)
 	go func() {
-		errChan <- t.startCheckingTxs(subCtx)
+		errChan <- t.startCheckingTxsLoop(subCtx)
 		wg.Done()
 	}()
 
@@ -39,18 +39,17 @@ func (t *Tracker) TrackTxs(ctx context.Context) error {
 	return err
 }
 
-func (t *Tracker) startReadingChannel(ctx context.Context) error {
+func (t *Tracker) startReadingTxsChanLoop() {
 	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case tx := <-t.txsChan:
-			t.addTx(tx)
+		tx, closed := <-t.txsChan
+		if closed {
+			return
 		}
+		t.addTx(tx)
 	}
 }
 
-func (t *Tracker) startCheckingTxs(ctx context.Context) error {
+func (t *Tracker) startCheckingTxsLoop(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():

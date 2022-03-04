@@ -23,6 +23,7 @@ func (t *Tracker) sendRequestedTxsLoop(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
+			close(t.txsChan)
 			return nil
 		case request := <-t.requestsChan:
 			if err := t.sendTx(request); err != nil {
