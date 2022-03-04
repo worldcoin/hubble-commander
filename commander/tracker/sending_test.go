@@ -34,7 +34,7 @@ func (s *TxsSendingTestSuite) SetupTest() {
 	s.requestsChan = make(chan *eth.TxSendingRequest, 8)
 
 	var err error
-	s.client, err = eth.NewConfiguredTestClient(
+	s.client, err = eth.NewConfiguredTestClientWithChannels(
 		&rollup.DeploymentConfig{},
 		&eth.TestClientConfig{
 			RequestsChan: s.requestsChan,
