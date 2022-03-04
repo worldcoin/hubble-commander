@@ -170,13 +170,8 @@ func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchTy
 }
 
 func (s *TxsTrackingTestSuite) startWorkers() {
-	s.cmd.startWorker("Test Sending Requested Txs", func() error {
-		err := s.cmd.txsTracker.SendRequestedTxs(s.cmd.workersContext)
-		s.NoError(err)
-		return err
-	})
-	s.cmd.startWorker("Test Tracking Sent Txs", func() error {
-		err := s.cmd.txsTracker.TrackSentTxs(s.cmd.workersContext)
+	s.cmd.startWorker("Test Tracking Txs", func() error {
+		err := s.cmd.txsTracker.TrackTxs(s.cmd.workersContext)
 		s.Error(err)
 		return err
 	})

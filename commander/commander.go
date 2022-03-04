@@ -129,8 +129,7 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
-	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
-	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
+	c.startWorker("Tracking Txs", func() error { return c.txsTracker.TrackTxs(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
 	c.startWorker("Tx Pool", func() error { return c.txPool.ReadTxs(c.workersContext) })
 

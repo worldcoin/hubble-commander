@@ -52,7 +52,7 @@ func (s *TxsSendingTestSuite) startTxsSending() {
 
 	s.wg.Add(1)
 	go func() {
-		err := s.tracker.SendRequestedTxs(ctx)
+		err := s.tracker.sendRequestedTxs(ctx)
 		s.NoError(err)
 		s.wg.Done()
 	}()

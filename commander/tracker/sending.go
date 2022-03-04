@@ -9,8 +9,8 @@ import (
 
 var errChannelClosed = fmt.Errorf("channel closed")
 
-func (t *Tracker) SendRequestedTxs(ctx context.Context) error {
-	err := t.sendRequestedTxs(ctx)
+func (t *Tracker) sendRequestedTxs(ctx context.Context) error {
+	err := t.sendRequestedTxsLoop(ctx)
 	close(t.requestsChan)
 
 	for request := range t.requestsChan {
@@ -19,7 +19,7 @@ func (t *Tracker) SendRequestedTxs(ctx context.Context) error {
 	return err
 }
 
-func (t *Tracker) sendRequestedTxs(ctx context.Context) error {
+func (t *Tracker) sendRequestedTxsLoop(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():

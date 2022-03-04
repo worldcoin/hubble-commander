@@ -52,14 +52,7 @@ func (s *TxsTrackingTestSuite) startTxsTracking() {
 
 	s.wg.Add(1)
 	go func() {
-		err := s.tracker.TrackSentTxs(ctx)
-		s.NoError(err)
-		s.wg.Done()
-	}()
-
-	s.wg.Add(1)
-	go func() {
-		err := s.tracker.SendRequestedTxs(ctx)
+		err := s.tracker.TrackTxs(ctx)
 		s.NoError(err)
 		s.wg.Done()
 	}()

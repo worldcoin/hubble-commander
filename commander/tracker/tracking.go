@@ -9,22 +9,27 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t *Tracker) TrackSentTxs(ctx context.Context) error {
+func (t *Tracker) TrackTxs(ctx context.Context) error {
 	wg := sync.WaitGroup{}
 	subCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	errChan := make(chan error, 3)
 	wg.Add(1)
 	go func() {
-		t.startReadingChannel(subCtx)
+		errChan <- t.startReadingChannel(subCtx)
 		wg.Done()
 	}()
 
-	errChan := make(chan error)
 	wg.Add(1)
 	go func() {
-		err := t.startCheckingTxs(subCtx)
-		errChan <- err
+		errChan <- t.startCheckingTxs(subCtx)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		errChan <- t.sendRequestedTxs(subCtx)
 		wg.Done()
 	}()
 
@@ -34,11 +39,11 @@ func (t *Tracker) TrackSentTxs(ctx context.Context) error {
 	return err
 }
 
-func (t *Tracker) startReadingChannel(ctx context.Context) {
+func (t *Tracker) startReadingChannel(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case tx := <-t.txsChan:
 			t.addTx(tx)
 		}
