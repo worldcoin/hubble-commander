@@ -449,7 +449,7 @@ func newEthClient(t *testing.T, cmd setup.Commander, privateKey string) *eth.Cli
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	require.NoError(t, err)
 
-	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
+	ethClient, err := eth.NewClientWithoutChannels(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		SpokeRegistry:   spokeRegistry,

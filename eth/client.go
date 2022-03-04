@@ -135,6 +135,22 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	}, nil
 }
 
+func NewClientWithoutChannels(blockchain chain.Connection, commanderMetrics *metrics.CommanderMetrics, params *NewClientParams) (*Client, error) {
+	client, err := NewClient(blockchain, commanderMetrics, params)
+	if err != nil {
+		return nil, err
+	}
+	client.accountRegistrySessionBuilderCreator = newTestAccountManagerSessionBuilder(blockchain, client.AccountRegistry)
+	client.sessionBuildersCreator = newTestSessionBuilders(
+		blockchain,
+		client.Rollup,
+		client.DepositManager,
+		client.TokenRegistry,
+		client.SpokeRegistry,
+	)
+	return client, nil
+}
+
 func fillWithDefaults(c *ClientConfig) {
 	if c.TxMineTimeout == nil {
 		c.TxMineTimeout = ref.Duration(config.DefaultEthereumMineTimeout)
