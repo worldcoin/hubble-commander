@@ -7,11 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-//type Tracker interface {
-//	TrackSentTxs(ctx context.Context) error
-//	SendRequestedTxs(ctx context.Context) error
-//}
-
 type Tracker struct {
 	txs   []*types.Transaction
 	mutex sync.RWMutex
