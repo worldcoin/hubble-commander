@@ -34,7 +34,7 @@ func (s *TxsTrackingTestSuite) SetupTest() {
 	s.RequestsChan = make(chan *eth.TxSendingRequest, 8)
 
 	var err error
-	s.client, err = eth.NewConfiguredTestClient(
+	s.client, err = eth.NewConfiguredTestClientWithChannels(
 		&rollup.DeploymentConfig{},
 		&eth.TestClientConfig{
 			RequestsChan: s.RequestsChan,
@@ -64,7 +64,7 @@ func (s *TxsTrackingTestSuite) TearDownTest() {
 	s.client.Close()
 }
 
-func (s *TxsTrackingTestSuite) TestTrackSentTxs_TracksSubmittedTransfers() {
+func (s *TxsTrackingTestSuite) TestTrackTxs_TracksSubmittedTransfers() {
 	txs := make([]*types.Transaction, 8)
 	commitments := getCommitments(batchtype.Transfer)
 
