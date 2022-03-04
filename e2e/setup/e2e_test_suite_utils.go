@@ -75,18 +75,13 @@ func (s *E2ETestSuite) newEthClient(privateKey string) *eth.Client {
 	rollupContract, err := rollup.NewRollup(chainState.Rollup, backend)
 	s.NoError(err)
 
-	txsChannels := &eth.TxsTrackingChannels{
-		SkipChannelSending: true,
-	}
-
-	ethClient, err := eth.NewClient(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
+	ethClient, err := eth.NewClientWithoutChannels(blockchain, metrics.NewCommanderMetrics(), &eth.NewClientParams{
 		ChainState:      chainState,
 		AccountRegistry: accountRegistry,
 		SpokeRegistry:   spokeRegistry,
 		TokenRegistry:   tokenRegistry,
 		DepositManager:  depositManager,
 		Rollup:          rollupContract,
-		TxsChannels:     txsChannels,
 	})
 	s.NoError(err)
 	return ethClient
