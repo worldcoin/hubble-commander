@@ -84,6 +84,13 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	}
 	backend := blockchain.GetBackend()
 
+	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
+		AccountRegistry:                  params.AccountRegistry,
+		AccountRegistryAddress:           params.ChainState.AccountRegistry,
+		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
+		MineTimeout:                      *params.TxMineTimeout,
+		RequestsChan:                     params.RequestsChan,
+	})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -93,17 +100,18 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
 
 	ethRollup := &Rollup{Rollup: params.Rollup, Contract: MakeContract(&rollupAbi, rollupContract)}
-	ethTokenRegistry := &TokenRegistry{TokenRegistry: params.TokenRegistry, Contract: MakeContract(&tokenRegistryAbi, tokenRegistryContract)}
-	ethDepositManager := &DepositManager{DepositManager: params.DepositManager, Contract: MakeContract(&depositManagerAbi, depositManagerContract)}
-	ethSpokeRegistry := &SpokeRegistry{SpokeRegistry: params.SpokeRegistry, Contract: MakeContract(&spokeRegistryAbi, spokeRegistryContract)}
-
-	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
-		AccountRegistry:                  params.AccountRegistry,
-		AccountRegistryAddress:           params.ChainState.AccountRegistry,
-		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
-		MineTimeout:                      *params.TxMineTimeout,
-		RequestsChan:                     params.RequestsChan,
-	})
+	ethTokenRegistry := &TokenRegistry{
+		TokenRegistry: params.TokenRegistry,
+		Contract:      MakeContract(&tokenRegistryAbi, tokenRegistryContract),
+	}
+	ethDepositManager := &DepositManager{
+		DepositManager: params.DepositManager,
+		Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
+	}
+	ethSpokeRegistry := &SpokeRegistry{
+		SpokeRegistry: params.SpokeRegistry,
+		Contract:      MakeContract(&spokeRegistryAbi, spokeRegistryContract),
+	}
 
 	return &Client{
 		config:         params.ClientConfig,

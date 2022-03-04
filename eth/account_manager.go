@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 )
 
@@ -31,7 +30,10 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 	}
 	backend := blockchain.GetBackend()
 	accountRegistryContract := bind.NewBoundContract(params.AccountRegistryAddress, accountRegistryAbi, backend, backend, backend)
-	ethAccountRegistryContract := &AccountRegistry{AccountRegistry: params.AccountRegistry, Contract: MakeContract(&accountRegistryAbi, accountRegistryContract)}
+	ethAccountRegistryContract := &AccountRegistry{
+		AccountRegistry: params.AccountRegistry,
+		Contract:        MakeContract(&accountRegistryAbi, accountRegistryContract),
+	}
 
 	return &AccountManager{
 		Blockchain:                       blockchain,
@@ -45,16 +47,6 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 			ethAccountRegistryContract,
 		),
 	}, nil
-}
-
-func (a *AccountManager) packAndRequest(
-	contract *Contract,
-	opts *bind.TransactOpts,
-	shouldTrackTx bool,
-	method string,
-	data ...interface{},
-) (*types.Transaction, error) {
-	return packAndRequest(a.requestsChan, contract, opts, shouldTrackTx, method, data...)
 }
 
 type AccountManagerParams struct {

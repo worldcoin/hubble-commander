@@ -20,16 +20,6 @@ type SendResponse struct {
 	Error       error
 }
 
-func (c *Client) packAndRequest(
-	contract *Contract,
-	opts *bind.TransactOpts,
-	shouldTrackTx bool,
-	method string,
-	data ...interface{},
-) (*types.Transaction, error) {
-	return packAndRequest(c.requestsChan, contract, opts, shouldTrackTx, method, data...)
-}
-
 func packAndRequest(
 	requestsChan chan<- *TxSendingRequest,
 	contract *Contract,
