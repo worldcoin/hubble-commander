@@ -135,7 +135,11 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	}, nil
 }
 
-func NewClientWithoutChannels(blockchain chain.Connection, commanderMetrics *metrics.CommanderMetrics, params *NewClientParams) (*Client, error) {
+func NewClientWithoutChannels(
+	blockchain chain.Connection,
+	commanderMetrics *metrics.CommanderMetrics,
+	params *NewClientParams,
+) (*Client, error) {
 	client, err := NewClient(blockchain, commanderMetrics, params)
 	if err != nil {
 		return nil, err
