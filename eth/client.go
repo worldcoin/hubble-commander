@@ -59,6 +59,7 @@ type Client struct {
 	requestsChan           chan<- *TxSendingRequest
 
 	*AccountManager
+	sessionBuildersCreator
 }
 
 //goland:noinspection GoDeprecation
@@ -83,13 +84,6 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	}
 	backend := blockchain.GetBackend()
 
-	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
-		AccountRegistry:                  params.AccountRegistry,
-		AccountRegistryAddress:           params.ChainState.AccountRegistry,
-		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
-		MineTimeout:                      *params.TxMineTimeout,
-		RequestsChan:                     params.RequestsChan,
-	})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -97,29 +91,39 @@ func NewClient(blockchain chain.Connection, commanderMetrics *metrics.CommanderM
 	tokenRegistryContract := bind.NewBoundContract(params.ChainState.TokenRegistry, tokenRegistryAbi, backend, backend, backend)
 	spokeRegistryContract := bind.NewBoundContract(params.ChainState.SpokeRegistry, spokeRegistryAbi, backend, backend, backend)
 	depositManagerContract := bind.NewBoundContract(params.ChainState.DepositManager, depositManagerAbi, backend, backend, backend)
+
+	ethRollup := &Rollup{Rollup: params.Rollup, Contract: MakeContract(&rollupAbi, rollupContract)}
+	ethTokenRegistry := &TokenRegistry{TokenRegistry: params.TokenRegistry, Contract: MakeContract(&tokenRegistryAbi, tokenRegistryContract)}
+	ethDepositManager := &DepositManager{DepositManager: params.DepositManager, Contract: MakeContract(&depositManagerAbi, depositManagerContract)}
+	ethSpokeRegistry := &SpokeRegistry{SpokeRegistry: params.SpokeRegistry, Contract: MakeContract(&spokeRegistryAbi, spokeRegistryContract)}
+
+	accountManager, err := NewAccountManager(blockchain, &AccountManagerParams{
+		AccountRegistry:                  params.AccountRegistry,
+		AccountRegistryAddress:           params.ChainState.AccountRegistry,
+		BatchAccountRegistrationGasLimit: *params.BatchAccountRegistrationGasLimit,
+		MineTimeout:                      *params.TxMineTimeout,
+		RequestsChan:                     params.RequestsChan,
+	})
+
 	return &Client{
 		config:         params.ClientConfig,
 		ChainState:     params.ChainState,
 		Blockchain:     blockchain,
 		Metrics:        commanderMetrics,
 		AccountManager: accountManager,
-		Rollup: &Rollup{
-			Rollup:   params.Rollup,
-			Contract: MakeContract(&rollupAbi, rollupContract),
-		},
-		TokenRegistry: &TokenRegistry{
-			TokenRegistry: params.TokenRegistry,
-			Contract:      MakeContract(&tokenRegistryAbi, tokenRegistryContract),
-		},
-		SpokeRegistry: &SpokeRegistry{
-			SpokeRegistry: params.SpokeRegistry,
-			Contract:      MakeContract(&spokeRegistryAbi, spokeRegistryContract),
-		},
-		DepositManager: &DepositManager{
-			DepositManager: params.DepositManager,
-			Contract:       MakeContract(&depositManagerAbi, depositManagerContract),
-		},
-		requestsChan: params.RequestsChan,
+		Rollup:         ethRollup,
+		TokenRegistry:  ethTokenRegistry,
+		SpokeRegistry:  ethSpokeRegistry,
+		DepositManager: ethDepositManager,
+		requestsChan:   params.RequestsChan,
+		sessionBuildersCreator: newSessionBuilders(
+			blockchain,
+			params.RequestsChan,
+			ethRollup,
+			ethTokenRegistry,
+			ethDepositManager,
+			ethSpokeRegistry,
+		),
 	}, nil
 }
 

@@ -19,6 +19,8 @@ type AccountManager struct {
 	batchAccountRegistrationGasLimit uint64
 	mineTimeout                      time.Duration
 	requestsChan                     chan<- *TxSendingRequest
+
+	accountRegistrySessionBuilderCreator
 }
 
 //goland:noinspection GoDeprecation
@@ -29,15 +31,19 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 	}
 	backend := blockchain.GetBackend()
 	accountRegistryContract := bind.NewBoundContract(params.AccountRegistryAddress, accountRegistryAbi, backend, backend, backend)
+	ethAccountRegistryContract := &AccountRegistry{AccountRegistry: params.AccountRegistry, Contract: MakeContract(&accountRegistryAbi, accountRegistryContract)}
+
 	return &AccountManager{
-		Blockchain: blockchain,
-		AccountRegistry: &AccountRegistry{
-			AccountRegistry: params.AccountRegistry,
-			Contract:        MakeContract(&accountRegistryAbi, accountRegistryContract),
-		},
+		Blockchain:                       blockchain,
+		AccountRegistry:                  ethAccountRegistryContract,
 		batchAccountRegistrationGasLimit: params.BatchAccountRegistrationGasLimit,
 		mineTimeout:                      params.MineTimeout,
 		requestsChan:                     params.RequestsChan,
+		accountRegistrySessionBuilderCreator: newAccountManagerSessionBuilder(
+			blockchain,
+			params.RequestsChan,
+			ethAccountRegistryContract,
+		),
 	}, nil
 }
 

@@ -55,6 +55,20 @@ func packAndRequest(
 	return response.Transaction, response.Error
 }
 
+func rawRequest(
+	contract *Contract,
+	opts *bind.TransactOpts,
+	method string,
+	data ...interface{},
+) (*types.Transaction, error) {
+	input, err := contract.ABI.Pack(method, data...)
+	if err != nil {
+		return nil, err
+	}
+
+	return contract.BoundContract.RawTransact(opts, input)
+}
+
 func (c *TxSendingRequest) Send(nonce uint64) (*types.Transaction, error) {
 	c.opts.Nonce = big.NewInt(int64(nonce))
 	tx, err := c.contract.RawTransact(&c.opts, c.input)

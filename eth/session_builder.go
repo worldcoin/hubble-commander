@@ -9,11 +9,106 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type packAndRequestFunc func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error)
+
+type sessionBuildersCreator interface {
+	rollup() *rollupSessionBuilder
+	depositManager() *depositManagerSessionBuilder
+	tokenRegistry() *tokenRegistrySessionBuilder
+	spokeRegistry() *spokeRegistrySessionBuilder
+}
+
+type accountRegistrySessionBuilderCreator interface {
+	accountRegistry() *accountRegistrySessionBuilder
+}
+
+type clientSessionBuilders struct {
+	blockchain             chain.Connection
+	requestsChan           chan<- *TxSendingRequest
+	rollupContract         *Rollup
+	depositManagerContract *DepositManager
+	tokenRegistryContract  *TokenRegistry
+	spokeRegistryContract  *SpokeRegistry
+}
+
+type testClientSessionBuilders struct {
+	*clientSessionBuilders
+}
+
+type accountManagerSessionBuilder struct {
+	blockchain              chain.Connection
+	requestsChan            chan<- *TxSendingRequest
+	accountRegistryContract *AccountRegistry
+}
+
+type testAccountManagerSessionBuilder struct {
+	*accountManagerSessionBuilder
+}
+
+func newSessionBuilders(
+	blockchain chain.Connection,
+	requestsChan chan<- *TxSendingRequest,
+	rollupContract *Rollup,
+	trContract *TokenRegistry,
+	dmContract *DepositManager,
+	srContract *SpokeRegistry,
+) *clientSessionBuilders {
+	return &clientSessionBuilders{
+		blockchain:             blockchain,
+		requestsChan:           requestsChan,
+		rollupContract:         rollupContract,
+		tokenRegistryContract:  trContract,
+		depositManagerContract: dmContract,
+		spokeRegistryContract:  srContract,
+	}
+}
+
+func newTestSessionBuilders(
+	blockchain chain.Connection,
+	rollupContract *Rollup,
+	dmContract *DepositManager,
+	trContract *TokenRegistry,
+	srContract *SpokeRegistry,
+) *testClientSessionBuilders {
+	return &testClientSessionBuilders{
+		clientSessionBuilders: &clientSessionBuilders{
+			blockchain:             blockchain,
+			rollupContract:         rollupContract,
+			depositManagerContract: dmContract,
+			tokenRegistryContract:  trContract,
+			spokeRegistryContract:  srContract,
+		},
+	}
+}
+
+func newAccountManagerSessionBuilder(
+	blockchain chain.Connection,
+	requestsChan chan<- *TxSendingRequest,
+	arContract *AccountRegistry,
+) *accountManagerSessionBuilder {
+	return &accountManagerSessionBuilder{
+		blockchain:              blockchain,
+		requestsChan:            requestsChan,
+		accountRegistryContract: arContract,
+	}
+}
+
+func newTestAccountManagerSessionBuilder(
+	blockchain chain.Connection,
+	arContract *AccountRegistry,
+) *testAccountManagerSessionBuilder {
+	return &testAccountManagerSessionBuilder{
+		accountManagerSessionBuilder: &accountManagerSessionBuilder{
+			blockchain:              blockchain,
+			accountRegistryContract: arContract,
+		},
+	}
+}
 
 type rollupSessionBuilder struct {
 	rollup.RollupSession
@@ -21,17 +116,33 @@ type rollupSessionBuilder struct {
 	packAndRequest packAndRequestFunc
 }
 
-func (c *Client) rollup() *rollupSessionBuilder {
+func (s *clientSessionBuilders) rollup() *rollupSessionBuilder {
 	builder := rollupSessionBuilder{
 		RollupSession: rollup.RollupSession{
-			Contract:     c.Rollup.Rollup,
-			TransactOpts: *c.Blockchain.GetAccount(),
+			Contract:     s.rollupContract.Rollup,
+			TransactOpts: *s.blockchain.GetAccount(),
 		},
-		contract: c.Rollup.Contract,
+		contract: s.rollupContract.Contract,
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
-		return c.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+		return packAndRequest(s.requestsChan, &builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+	}
+
+	return &builder
+}
+
+func (s *testClientSessionBuilders) rollup() *rollupSessionBuilder {
+	builder := rollupSessionBuilder{
+		RollupSession: rollup.RollupSession{
+			Contract:     s.rollupContract.Rollup,
+			TransactOpts: *s.blockchain.GetAccount(),
+		},
+		contract: s.rollupContract.Contract,
+	}
+
+	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
+		return rawRequest(&builder.contract, &builder.TransactOpts, method, data...)
 	}
 
 	return &builder
@@ -151,17 +262,33 @@ type accountRegistrySessionBuilder struct {
 	packAndRequest packAndRequestFunc
 }
 
-func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
+func (a *accountManagerSessionBuilder) accountRegistry() *accountRegistrySessionBuilder {
 	builder := accountRegistrySessionBuilder{
 		AccountRegistrySession: accountregistry.AccountRegistrySession{
-			Contract:     a.AccountRegistry.AccountRegistry,
-			TransactOpts: *a.Blockchain.GetAccount(),
+			Contract:     a.accountRegistryContract.AccountRegistry,
+			TransactOpts: *a.blockchain.GetAccount(),
 		},
-		contract: a.AccountRegistry.Contract,
+		contract: a.accountRegistryContract.Contract,
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
-		return a.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+		return packAndRequest(a.requestsChan, &builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+	}
+
+	return &builder
+}
+
+func (a *testAccountManagerSessionBuilder) accountRegistry() *accountRegistrySessionBuilder {
+	builder := accountRegistrySessionBuilder{
+		AccountRegistrySession: accountregistry.AccountRegistrySession{
+			Contract:     a.accountRegistryContract.AccountRegistry,
+			TransactOpts: *a.blockchain.GetAccount(),
+		},
+		contract: a.accountRegistryContract.Contract,
+	}
+
+	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
+		return rawRequest(&builder.contract, &builder.TransactOpts, method, data...)
 	}
 
 	return &builder
@@ -185,10 +312,10 @@ type depositManagerSessionBuilder struct {
 	depositmanager.DepositManagerSession
 }
 
-func (c *Client) depositManager() *depositManagerSessionBuilder {
+func (s *clientSessionBuilders) depositManager() *depositManagerSessionBuilder {
 	return &depositManagerSessionBuilder{depositmanager.DepositManagerSession{
-		Contract:     c.DepositManager.DepositManager,
-		TransactOpts: *c.Blockchain.GetAccount(),
+		Contract:     s.depositManagerContract.DepositManager,
+		TransactOpts: *s.blockchain.GetAccount(),
 	}}
 }
 
@@ -206,10 +333,10 @@ type tokenRegistrySessionBuilder struct {
 	tokenregistry.TokenRegistrySession
 }
 
-func (c *Client) tokenRegistry() *tokenRegistrySessionBuilder {
+func (s *clientSessionBuilders) tokenRegistry() *tokenRegistrySessionBuilder {
 	return &tokenRegistrySessionBuilder{tokenregistry.TokenRegistrySession{
-		Contract:     c.TokenRegistry.TokenRegistry,
-		TransactOpts: *c.Blockchain.GetAccount(),
+		Contract:     s.tokenRegistryContract.TokenRegistry,
+		TransactOpts: *s.blockchain.GetAccount(),
 	}}
 }
 
@@ -227,10 +354,10 @@ type spokeRegistrySessionBuilder struct {
 	spokeregistry.SpokeRegistrySession
 }
 
-func (c *Client) spokeRegistry() *spokeRegistrySessionBuilder {
+func (s *clientSessionBuilders) spokeRegistry() *spokeRegistrySessionBuilder {
 	return &spokeRegistrySessionBuilder{spokeregistry.SpokeRegistrySession{
-		Contract:     c.SpokeRegistry.SpokeRegistry,
-		TransactOpts: *c.Blockchain.GetAccount(),
+		Contract:     s.spokeRegistryContract.SpokeRegistry,
+		TransactOpts: *s.blockchain.GetAccount(),
 	}}
 }
 

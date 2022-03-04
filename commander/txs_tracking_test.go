@@ -192,7 +192,7 @@ func newClientWithGenesisStateWithClientConfig(t *testing.T, storage *st.TestSto
 	genesisRoot, err := storage.StateTree.Root()
 	require.NoError(t, err)
 
-	client, err := eth.NewConfiguredTestClient(&rollup.DeploymentConfig{
+	client, err := eth.NewConfiguredTestClientWithChannels(&rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot: genesisRoot,
 		},
