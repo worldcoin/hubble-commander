@@ -48,7 +48,8 @@ func (s *SyncDepositBatchTestSuite) SetupTest() {
 	s.prepareDeposits()
 
 	s.depositsCtx = executor.NewDepositsContext(s.storage.Storage, s.client.Client, nil, metrics.NewCommanderMetrics(), context.Background())
-	s.syncCtx = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
+	s.syncCtx, err = NewTestContext(s.storage.Storage, s.client.Client, nil, batchtype.Deposit)
+	s.NoError(err)
 }
 
 func (s *SyncDepositBatchTestSuite) TearDownTest() {

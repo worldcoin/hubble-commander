@@ -62,7 +62,7 @@ func (c *DepositsContext) executeDeposits(depositSubtree *models.PendingDepositS
 		return nil, err
 	}
 
-	err = c.storage.DeletePendingDepositSubtrees(depositSubtree.ID)
+	err = c.storage.RemovePendingDepositSubtrees(depositSubtree.ID)
 	if err != nil {
 		return nil, err
 	}

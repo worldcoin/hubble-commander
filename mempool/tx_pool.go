@@ -2,12 +2,14 @@ package mempool
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type TxPool interface {
@@ -28,18 +30,29 @@ type txPool struct {
 }
 
 func NewTxPool(storage *st.Storage) (*txPool, error) {
-	pool, err := NewMempool(storage)
+	txs, err := storage.GetAllPendingTransactions()
 	if err != nil {
 		return nil, err
 	}
-	return &txPool{
-		storage:         storage,
-		mempool:         pool,
-		incomingTxs:     make([]models.GenericTransaction, 0),
-		incomingTxsChan: make(chan models.GenericTransaction, 1024),
-	}, nil
-}
 
+	sort.Slice(txs, func(i, j int) bool {
+		return earlierTimestamp(txs[i].GetBase().ReceiveTime, txs[j].GetBase().ReceiveTime)
+	})
+
+	pool := txPool{
+		storage:         storage,
+		mempool:         NewMempool(),
+		incomingTxs:     txs.ToSlice(),
+		incomingTxsChan: make(chan models.GenericTransaction, 1024),
+	}
+
+	err = pool.UpdateMempool()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pool, nil
+}
 func (p *txPool) ReadTxs(ctx context.Context) error {
 	for {
 		select {
@@ -78,16 +91,30 @@ func (p *txPool) UpdateMempool() error {
 }
 
 func (p *txPool) addOrReplaceTx(tx models.GenericTransaction) error {
+	txHash := &tx.GetBase().Hash
 	prevTxHash, err := p.mempool.AddOrReplace(p.storage, tx)
+	if errors.Is(err, ErrTxNonceTooLow) {
+		log.WithField("txHash", *txHash).Errorf("Mempool: %s failed: %s", tx.Type().String(), err)
+		return p.storage.SetTransactionError(getNonceError(txHash))
+	}
 	if errors.Is(err, ErrTxReplacementFailed) {
-		return p.storage.SetTransactionError(getReplacementError(&tx.GetBase().Hash))
+		log.WithField("txHash", *txHash).Debug("Mempool: transaction replacement failed")
+		return p.storage.SetTransactionError(getReplacementError(txHash))
 	}
 	if err != nil {
 		return err
 	}
 
 	if prevTxHash != nil {
-		return p.storage.ReplacePendingTransaction(prevTxHash, tx)
+		log.WithFields(log.Fields{
+			"previousTxHash": *prevTxHash,
+			"newTxHash":      *txHash,
+		}).Debug("Mempool: replaced transaction")
+		err = p.storage.RemovePendingTransactions(*prevTxHash)
+		if st.IsNotFoundError(err) {
+			return nil
+		}
+		return err
 	}
 	return nil
 }
@@ -113,9 +140,26 @@ func (p *txPool) RemoveFailedTxs(txErrors []models.TxError) error {
 	return nil
 }
 
+func earlierTimestamp(left, right *models.Timestamp) bool {
+	if left == nil {
+		return false
+	}
+	if right == nil {
+		return true
+	}
+	return left.Before(*right)
+}
+
 func getReplacementError(txHash *common.Hash) models.TxError {
 	return models.TxError{
 		TxHash:       *txHash,
 		ErrorMessage: ErrTxReplacementFailed.Error(),
+	}
+}
+
+func getNonceError(txHash *common.Hash) models.TxError {
+	return models.TxError{
+		TxHash:       *txHash,
+		ErrorMessage: ErrTxNonceTooLow.Error(),
 	}
 }

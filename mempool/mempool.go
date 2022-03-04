@@ -2,7 +2,6 @@ package mempool
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
@@ -14,6 +13,7 @@ import (
 type IterationCallback func(tx models.GenericTransaction) error
 
 var (
+	ErrTxNonceTooLow       = fmt.Errorf("nonce too low")
 	ErrTxReplacementFailed = fmt.Errorf("new transaction didn't meet replace condition")
 	ErrNonexistentBucket   = fmt.Errorf("bucket doesn't exist")
 )
@@ -85,66 +85,11 @@ func beginTransaction(m someMempool) (*TxController, *TxMempool) {
 	return txController, txMempool
 }
 
-func NewMempool(storage *st.Storage) (*Mempool, error) {
-	txs, err := storage.GetAllPendingTransactions()
-	if err != nil {
-		return nil, err
-	}
-
-	mempool := &Mempool{
+func NewMempool() *Mempool {
+	return &Mempool{
 		buckets:  map[uint32]*txBucket{},
 		txCounts: make(txCounts),
 	}
-
-	err = mempool.initBucketsAndTxCounts(storage, txs)
-	if err != nil {
-		return nil, err
-	}
-	mempool.sortTxs()
-
-	return mempool, nil
-}
-
-func (m *Mempool) initBucketsAndTxCounts(storage *st.Storage, txs models.GenericTransactionArray) error {
-	for i := 0; i < txs.Len(); i++ {
-		tx := txs.At(i)
-
-		bucket, err := m.getOrInitBucket(storage, tx.GetFromStateID())
-		if err != nil {
-			return err
-		}
-		bucket.txs = append(bucket.txs, tx)
-
-		m.changeTxCount(tx.Type(), +1)
-	}
-	return nil
-}
-
-func (m *Mempool) sortTxs() {
-	for _, bucket := range m.buckets {
-		sort.Slice(bucket.txs, func(i, j int) bool {
-			txA := bucket.txs[i].GetBase()
-			txB := bucket.txs[j].GetBase()
-			return txA.Nonce.Cmp(&txB.Nonce) < 0
-		})
-	}
-}
-
-func (m *Mempool) getOrInitBucket(storage *st.Storage, stateID uint32) (*txBucket, error) {
-	bucket, ok := m.buckets[stateID]
-	if !ok {
-		stateLeaf, err := storage.StateTree.Leaf(stateID)
-		if err != nil {
-			return nil, err
-		}
-
-		bucket = &txBucket{
-			txs:   make([]models.GenericTransaction, 0, 1),
-			nonce: stateLeaf.Nonce.Uint64(),
-		}
-		m.buckets[stateID] = bucket
-	}
-	return bucket, nil
 }
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
@@ -222,22 +167,47 @@ func (m *Mempool) RemoveFailedTxs(txErrors []models.TxError) {
 		if bucket == nil {
 			continue
 		}
-		m.removeTxByHash(bucket, &txErrors[i])
+		m.removeTxByCondition(bucket, func(txBase *models.TransactionBase) bool {
+			return txBase.Hash == txErrors[i].TxHash
+		})
+		if len(bucket.txs) == 0 {
+			delete(m.buckets, txErrors[i].SenderStateID)
+		}
 	}
 }
 
-func (m *Mempool) removeTxByHash(bucket *txBucket, txError *models.TxError) {
-	for i := range bucket.txs {
-		txBase := bucket.txs[i].GetBase()
-		if txBase.Hash == txError.TxHash {
-			bucket.removeAt(i)
-			if len(bucket.txs) == 0 {
-				delete(m.buckets, txError.SenderStateID)
-			}
-			m.changeTxCount(txBase.TxType, -1)
-			return
+func (m *TxMempool) RemoveSyncedTxs(txs models.GenericTransactionArray) []common.Hash {
+	hashes := make([]common.Hash, 0, txs.Len())
+	for i := 0; i < txs.Len(); i++ {
+		tx := txs.At(i)
+		bucket := m.getBucket(tx.GetFromStateID())
+		if bucket == nil {
+			continue
+		}
+		bucket.nonce++
+		txHash := m.removeTxByCondition(bucket, func(txBase *models.TransactionBase) bool {
+			return txBase.Nonce.Eq(&tx.GetBase().Nonce)
+		})
+		if len(bucket.txs) == 0 {
+			m.setBucket(tx.GetFromStateID(), nil)
+		}
+		if txHash != nil {
+			hashes = append(hashes, *txHash)
 		}
 	}
+	return hashes
+}
+
+func (m *Mempool) removeTxByCondition(bucket *txBucket, condition func(txBase *models.TransactionBase) bool) *common.Hash {
+	for i := range bucket.txs {
+		txBase := bucket.txs[i].GetBase()
+		if condition(txBase) {
+			bucket.removeAt(i)
+			m.changeTxCount(txBase.TxType, -1)
+			return &txBase.Hash
+		}
+	}
+	return nil
 }
 
 func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransaction) (*common.Hash, error) {
@@ -263,12 +233,32 @@ func (m *Mempool) AddOrReplace(storage *st.Storage, newTx models.GenericTransact
 	return &previousTx.GetBase().Hash, nil
 }
 
+func (m *Mempool) getOrInitBucket(storage *st.Storage, stateID uint32) (*txBucket, error) {
+	bucket, ok := m.buckets[stateID]
+	if !ok {
+		stateLeaf, err := storage.StateTree.Leaf(stateID)
+		if err != nil {
+			return nil, err
+		}
+
+		bucket = &txBucket{
+			txs:   make([]models.GenericTransaction, 0, 1),
+			nonce: stateLeaf.Nonce.Uint64(),
+		}
+		m.buckets[stateID] = bucket
+	}
+	return bucket, nil
+}
+
 func (m *TxMempool) AddOrReplace(_ models.GenericTransaction, _ uint64) error {
 	panic("AddOrReplace should only be called on Mempool")
 }
 
 func (b *txBucket) addOrReplace(newTx models.GenericTransaction) (previousTx models.GenericTransaction, err error) {
 	newTxNonce := &newTx.GetBase().Nonce
+	if newTxNonce.CmpN(b.nonce) < 0 {
+		return nil, errors.WithStack(ErrTxNonceTooLow)
+	}
 	for i, tx := range b.txs {
 		if newTxNonce.Eq(&tx.GetBase().Nonce) {
 			return b.replace(i, newTx)

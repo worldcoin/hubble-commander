@@ -94,7 +94,7 @@ func (s *StoredCommitmentTestSuite) TestGetLatestCommitment_NoCommitments() {
 	s.ErrorIs(err, NewNotFoundError("commitment"))
 }
 
-func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
+func (s *StoredCommitmentTestSuite) TestRemoveCommitmentsByBatchIDs() {
 	batches := []models.Batch{
 		{
 			ID:                models.MakeUint256(111),
@@ -132,7 +132,7 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	err := s.storage.AddCommitment(&depositCommitment)
 	s.NoError(err)
 
-	err = s.storage.DeleteCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
+	err = s.storage.RemoveCommitmentsByBatchIDs(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 	for i := range batches {
 		commitments, err := s.storage.getStoredCommitmentsByBatchID(batches[i].ID)
@@ -141,12 +141,12 @@ func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs() {
 	}
 }
 
-func (s *StoredCommitmentTestSuite) TestDeleteCommitmentsByBatchIDs_NoCommitments() {
+func (s *StoredCommitmentTestSuite) TestRemoveCommitmentsByBatchIDs_NoCommitments() {
 	batchID := s.addRandomBatch()
 	err := s.storage.AddCommitment(&txCommitment)
 	s.NoError(err)
 
-	err = s.storage.DeleteCommitmentsByBatchIDs(batchID)
+	err = s.storage.RemoveCommitmentsByBatchIDs(batchID)
 	s.ErrorIs(err, NewNotFoundError("commitments"))
 
 	_, err = s.storage.GetCommitment(&txCommitment.ID)

@@ -59,7 +59,8 @@ func (s *syncTxsTestSuite) SetupTest(txType txtype.TransactionType) {
 	_, err = s.storage.StateTree.Set(3, &feeReceiverState)
 	s.NoError(err)
 
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, nil, s.cfg, txType)
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, nil, s.cfg, txType)
+	s.NoError(err)
 
 	s.feeReceiverStateID = 3
 }

@@ -79,5 +79,5 @@ func (t *Tracker) waitUntilTxMinedAndCheckForFail(tx *types.Transaction) error {
 		return nil
 	}
 	err = t.client.GetRevertMessage(tx, receipt)
-	return fmt.Errorf("%w tx_hash=%s", err, tx.Hash().String())
+	return fmt.Errorf("%w txHash=%s", err, tx.Hash().String())
 }

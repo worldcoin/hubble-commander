@@ -328,7 +328,7 @@ func (s *BatchTestSuite) TestGetBatchByHash_NonexistentBatch() {
 	s.True(IsNotFoundError(err))
 }
 
-func (s *BatchTestSuite) TestDeleteBatches() {
+func (s *BatchTestSuite) TestRemoveBatches() {
 	batches := []models.Batch{
 		{
 			ID:              models.MakeUint256(1),
@@ -348,7 +348,7 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 		s.NoError(err)
 	}
 
-	err := s.storage.DeleteBatches(batches[0].ID, batches[1].ID)
+	err := s.storage.RemoveBatches(batches[0].ID, batches[1].ID)
 	s.NoError(err)
 
 	for i := range batches {
@@ -357,8 +357,8 @@ func (s *BatchTestSuite) TestDeleteBatches() {
 	}
 }
 
-func (s *BatchTestSuite) TestDeleteBatches_NotExistentBatch() {
-	err := s.storage.DeleteBatches(models.MakeUint256(1))
+func (s *BatchTestSuite) TestRemoveBatches_NotExistentBatch() {
+	err := s.storage.RemoveBatches(models.MakeUint256(1))
 	s.ErrorIs(err, NewNotFoundError("batch"))
 }
 

@@ -54,7 +54,9 @@ func (s *VerifySignatureTestSuite) TearDownTest() {
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	s.NoError(err)
 
 	txs := models.TransferArray{
 		{
@@ -95,7 +97,9 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_ValidSignature() 
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	s.NoError(err)
 
 	txs := models.TransferArray{
 		{
@@ -142,19 +146,23 @@ func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_InvalidSignature(
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyTransferSignature_EmptyTransactions() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	s.NoError(err)
 
 	txs := make(models.TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.syncCtx.verifyTxSignature(commitment, txs)
+	err = s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSignature() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
+	s.NoError(err)
 
 	txs := models.Create2TransferArray{
 		{
@@ -197,19 +205,23 @@ func (s *VerifySignatureTestSuite) TestVerifyCreate2TransferSignature_ValidSigna
 }
 
 func (s *VerifySignatureTestSuite) TestVerifyCreate2TransfersSignature_EmptyTransactions() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Create2Transfer)
+	s.NoError(err)
 
 	txs := make(models.Create2TransferArray, 0)
 	commitment := &encoder.DecodedCommitment{
 		CombinedSignature: models.Signature{1, 2, 3},
 	}
 
-	err := s.syncCtx.verifyTxSignature(commitment, txs)
+	err = s.syncCtx.verifyTxSignature(commitment, txs)
 	s.NoError(err)
 }
 
 func (s *VerifySignatureTestSuite) TestUserStateProof() {
-	s.syncCtx = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	var err error
+	s.syncCtx, err = NewTestTxsContext(s.storage.Storage, s.client, s.cfg, txtype.Transfer)
+	s.NoError(err)
 
 	userState := &models.UserState{
 		PubKeyID: 1,
