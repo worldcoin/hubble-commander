@@ -20,10 +20,13 @@ func (t *Tracker) sendRequestedTxs(ctx context.Context) error {
 }
 
 func (t *Tracker) sendRequestedTxsLoop(ctx context.Context) error {
+	defer func() {
+		close(t.txsChan)
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
-			close(t.txsChan)
 			return nil
 		case request := <-t.requestsChan:
 			if err := t.sendTx(request); err != nil {
