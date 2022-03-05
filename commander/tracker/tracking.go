@@ -41,8 +41,8 @@ func (t *Tracker) TrackTxs(ctx context.Context) error {
 
 func (t *Tracker) startReadingTxsChanLoop() {
 	for {
-		tx, closed := <-t.txsChan
-		if closed {
+		tx, isOpen := <-t.txsChan
+		if !isOpen {
 			return
 		}
 		t.addTx(tx)
