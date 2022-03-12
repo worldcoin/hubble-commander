@@ -7,7 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var StateLeafPrefix = models.GetBadgerHoldPrefix(StateLeaf{})
+var StateLeafPrefix = models.GetBadgerHoldPrefix(FlatStateLeaf{})
+
+type FlatStateLeaf struct {
+}
 
 type StateLeaf struct {
 	StateID  uint32
