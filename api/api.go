@@ -59,6 +59,9 @@ func NewServer(
 	} else {
 		mux.Handle("/", middleware.DefaultHandler(server, commanderMetrics))
 	}
+	mux.Handle("/ready", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
 
 	addr := fmt.Sprintf(":%s", cfg.API.Port)
 	return &http.Server{Addr: addr, Handler: mux}, nil
