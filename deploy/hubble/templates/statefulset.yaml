@@ -5,9 +5,7 @@ metadata:
   labels:
     {{- include "hubble.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "hubble.selectorLabels" . | nindent 6 }}
@@ -98,7 +96,7 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /ready
+              path: /health
               scheme: HTTP
               port: 8080
             initialDelaySeconds: 10
@@ -107,7 +105,7 @@ spec:
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: /ready
+              path: /health
               scheme: HTTP
               port: 8080
             initialDelaySeconds: 10
