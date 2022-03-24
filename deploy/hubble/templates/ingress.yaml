@@ -1,4 +1,3 @@
-{{- if not .Values.canary.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -20,4 +19,3 @@ spec:
                 name: "{{ include "hubble.fullname" . }}"
                 port:
                   name: http
-{{- end }}
