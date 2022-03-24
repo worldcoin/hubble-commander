@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "hubble.fullname" . }}
+  labels:
+    {{- include "hubble.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "hubble.selectorLabels" . | nindent 6 }}
+  serviceName: hubble-commander-headless
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "hubble.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "hubble.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: chain-spec-config-volume
+          configMap:
+            name: chain-spec-config
+      initContainers:
+        - name: create-data-dir
+          image: busybox:1.28
+          command: [ 'sh', '-c', "mkdir -p /volume/data && chmod -R 777 /volume/data && chown 10001:10001 /volume/data" ] # for soe execute permissinos are needed on data
+          volumeMounts:
+            - name: hubble-storage
+              mountPath: "/volume"
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: hubble-storage
+              mountPath: "/volume"
+            - name: chain-spec-config-volume
+              mountPath: /config
+          env:
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_ENV
+              value: {{ .Values.environment }}
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['pod-template-hash']
+            - name: DD_SERVICE
+              value: {{ .Chart.Name }}
+            - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
+              value: /config/chain-spec.yaml
+            - name: HUBBLE_ETHEREUM_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_ETHEREUM_RPC_URL
+            - name: HUBBLE_ETHEREUM_CHAIN_ID
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_ETHEREUM_CHAIN_ID
+            - name: HUBBLE_ETHEREUM_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_ETHEREUM_PRIVATE_KEY
+            - name: HUBBLE_BADGER_PATH
+              value: /volume/data
+            - name: HUBBLE_LOG_LEVEL
+              value: debug
+            - name: HUBBLE_API_AUTHENTICATION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_API_AUTHENTICATION_KEY
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: something
+              containerPort: 2112
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ready
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /ready
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 2
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: hubble-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: gp2
+        resources:
+          requests:
+            storage: 100Gi

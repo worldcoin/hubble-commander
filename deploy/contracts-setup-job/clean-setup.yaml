@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genesis-config
+  namespace: hubble-commander
+data:
+  genesis.yaml: |
+    ---
+    - public_key: 0x0df68cb87856229b0bc3f158fff8b82b04deb1a4c23dadbf3ed2da4ec6f6efcb1c165c6b47d8c89ab2ddb0831c182237b27a4b3d9701775ad6c180303f87ef260566cb2f0bcc7b89c2260de2fee8ec29d7b5e575a1e36eb4bcead52a74a511b7188d7df7c9d08f94b9daa9d89105fbdf22bf14e30b84f8adefb3695ebff00e88
+      state_id: 0
+      state:
+        pub_key_id: 0
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+    - public_key: 0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc
+      state_id: 1
+      state:
+        pub_key_id: 1
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+    - public_key: 0x1ccf19871320b7e850475845d879a9f9717a6c9694fab19498e4261b442de4e011406bdc967984771508a2e50d774f49db36bf5b04b15f9f411b8c8733fe0d8e301f8f2e9aa98f7dde7de3635baa216fdc969e752f4ef646fd5f81d89e46d39804c0ac92c7ea4cc5957b4214ef41a0aa4f1a6f343cebfb577e9dcaf8ff2551d5
+      state_id: 2
+      state:
+        pub_key_id: 2
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+    - public_key: 0x0097f465fe827ce4dad751988f6ce5ec747458075992180ca11b0776b9ea3a910c3ee4dca4a03d06c3863778affe91ce38d502138356a35ae12695c565b24ea6151b83eabd41a6090b8ac3bb25e173c84c3b080a5545260b1327495920c342c02d51cac4418228db1a3d98aa12e6fd7b3267c703475f5999b2ec7a197ad7d8bc
+      state_id: 3
+      state:
+        pub_key_id: 3
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+    - public_key: 0x2007003172b5453c5468dc4181c1fb058f1adec22f5e955f59b25acdc18207c406f615ec693aa1c93c7c6cd0de0fb3a9a4ee68cd4c0791dd7b1c21aa61618bf7159c612bdbd04a8f28e440026f80c1fb7efc7edaad443bae643bb70154e11f0f1df929eefccfbeddb43290663f1a2b367cfb0bc86e9df1e849a5f19f9709f8b7
+      state_id: 4
+      state:
+        pub_key_id: 4
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+    - public_key: 0x022699f03c1c9fddd7cc29e5e3c837c1dcfcb402ed9b47d43bd9702321662d860ca2081d046a01e852b6e4ecd860edf85e0e0c1aef5e62af34c85f7ce221bc31179de95c4162111a605d09aaa66a63a7a502c904d42d7675dad5b48328b8ccdc1a10c6bcf774e7f5a12deab11c488e19fd3f3995f7d9c2090ffab88deb8b71f7
+      state_id: 5
+      state:
+        pub_key_id: 5
+        token_id: "0"
+        balance: "1000000000"
+        nonce: "0"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: contracts-deploy-job
+  namespace: hubble-commander
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: hubble-commander
+  name: chainspec-cfg-updater
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create","get","update","patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: chainspec-cfg-updater-binding
+  namespace: hubble-commander
+subjects:
+  - kind: ServiceAccount
+    name: contracts-deploy-job
+    namespace: hubble-commander
+roleRef:
+  kind: Role
+  name: chainspec-cfg-updater
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: contracts-setup-job
+  namespace: hubble-commander
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      name: contracts-setup-job
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-secret
+      serviceAccountName: contracts-deploy-job
+      volumes:
+        - name: genesis-config-volume
+          configMap:
+            name: genesis-config
+        - name: ephemeral
+          emptyDir: {}
+      initContainers:
+        - name: move-money
+          image: ethereum/client-go:stable
+          command:
+            - sh
+            - -c
+            - >
+              geth attach ws://geth:8546 --exec 'eth.sendTransaction({ from:  eth.accounts[0], to: "0xCd2a3d9f938e13Cd947eC05ABC7fe734df8DD826", value: web3.toWei(1000, "ether") })'
+        - name: create-chain-spec-file
+          image: busybox:1.28
+          command: [ 'sh', '-c', "touch /data/chain-spec.yaml && chmod -R 666 /data/chain-spec.yaml" ]
+          volumeMounts:
+            - name: ephemeral
+              mountPath: "/data"
+        - name: deploy-contracts
+          image: ghcr.io/worldcoin/hubble-commander:latest  #TOD0 need the currently build image here
+          args:
+            - deploy
+            - --file
+            - /data/chain-spec.yaml
+          volumeMounts:
+            - name: genesis-config-volume
+              mountPath: /config
+            - name: ephemeral
+              mountPath: "/data"
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+              drop:
+                - all
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+          env:
+            - name: HUBBLE_BOOTSTRAP_BLOCKS_TO_FINALISE #TODO maybe drop this ?
+              value: "1209600" # 2 weeks on network with 1s block time
+            - name: HUBBLE_BOOTSTRAP_GENESIS_PATH
+              value: /config/genesis.yaml
+            - name: HUBBLE_ETHEREUM_RPC_URL
+              value: ws://geth:8546
+            - name: HUBBLE_ETHEREUM_CHAIN_ID
+              value: "1337"
+            - name: HUBBLE_ETHEREUM_PRIVATE_KEY
+              value: c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4
+      containers:
+        - name: create-chain-spec-config
+          image: bitnami/kubectl:latest
+          command: [ 'sh', '-c', "kubectl create configmap chain-spec-config --from-file /data/chain-spec.yaml --dry-run=true -o yaml | kubectl apply -n hubble-commander -f -" ]
+          volumeMounts:
+            - name: ephemeral
+              mountPath: "/data"

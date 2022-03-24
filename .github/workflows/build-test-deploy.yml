@@ -1,0 +1,343 @@
+name: Build, Test & Deploy
+
+on:
+  push
+
+env:
+  IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.43.0
+          args: --timeout 2m --build-tags hardhat,e2e
+          skip-build-cache: true
+          skip-pkg-cache: true
+  test-on-hardhat:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Install Go dependencies
+        run: make install
+      - name: Install JavaScript dependancies
+        run: npm ci
+        working-directory: hubble-contracts
+      - name: Compile contracts and generate ts types
+        run: npm run generate
+        working-directory: hubble-contracts
+      - name: Run node in the background
+        run: npm run hardhat:node &
+        working-directory: hubble-contracts
+      - name: Deploy gas estimator contracts
+        run: npm run keyless:deploy
+        working-directory: hubble-contracts
+      - name: Test
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic -tags hardhat ./bls/hardhat
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2.1.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          files: ./coverage.out
+          flags: ${{ github.job }}
+          fail_ci_if_error: true
+          verbose: true
+  generate:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Install Go dependencies
+        run: make install
+      - name: Install abigen
+        run: |
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo apt-get update
+          sudo apt-get install ethereum
+      - name: Move existing files
+        run: |
+          find contracts -type f ! -name '*.go' -exec rm {} \;
+          find contracts -type f -name 'events.go' -exec rm {} \;
+          mv contracts tmp-contracts
+      - name: Generate bindings
+        run: make generate
+      - name: Check diff
+        run: diff -r contracts tmp-contracts
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Install Go dependencies
+        run: make install
+      - name: Build
+        run: make build
+  build-and-push:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build & push docker image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ env.IMAGE_ID }}
+          context: .
+  deploy-stage-wipe-setup:
+    runs-on: ubuntu-latest
+    needs: [ build-and-push ]
+    if: github.ref == 'refs/heads/master'
+    environment: stage
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_STAGE_REGION }}
+          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+      - name: Create pull secret for ghcr.io
+        run: kubectl create secret docker-registry ghcr-secret
+          --namespace "${{ github.event.repository.name }}"
+          --docker-server=ghcr.io
+          --docker-username="${{ github.repository_owner }}"
+          --docker-password="${{ secrets.GITHUB_TOKEN }}"
+          --dry-run=client --output=yaml | kubectl apply -f -
+      - name: Delete setup job
+        run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
+      - name: Delete Hubble instances
+        run: helm delete -n hubble-commander hubble-commander
+      - name: Delete Geth
+        run: helm delete -n hubble-commander geth
+      - name: Delete PVCs
+        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 hubble-storage-hubble-commander-0 hubble-storage-hubble-commander-1 --ignore-not-found=true
+      - name: Deploy new Geth
+        run: helm upgrade --install geth  ./deploy/geth
+          --install --atomic --timeout 60s
+          --namespace hubble-commander
+      - name: Deploy contracts
+        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
+  deploy-stage-hubble-instances:
+    runs-on: ubuntu-latest
+    needs: [ deploy-stage-wipe-setup ]
+    if: github.ref == 'refs/heads/master'
+    environment: stage
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_STAGE_REGION }}
+          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+      - name: Create pull secret for ghcr.io
+        run: kubectl create secret docker-registry ghcr-secret
+          --namespace "${{ github.event.repository.name }}"
+          --docker-server=ghcr.io
+          --docker-username="${{ github.repository_owner }}"
+          --docker-password="${{ secrets.GITHUB_TOKEN }}"
+          --dry-run=client --output=yaml | kubectl apply -f -
+      - name: Helm install
+        run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
+          --install --atomic --timeout 60s
+          --namespace "${{ github.event.repository.name }}"
+          --set image.tag="${{ github.sha }}"
+          --set image.pullSecret=ghcr-secret
+          --set ingress.host=hubble.stage-crypto.worldcoin.dev
+          --set environment=stage
+  deploy-stage-wipe-setup-manual:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    environment: stage-manual
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_STAGE_REGION }}
+          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+      - name: Create pull secret for ghcr.io
+        run: kubectl create secret docker-registry ghcr-secret
+          --namespace "${{ github.event.repository.name }}"
+          --docker-server=ghcr.io
+          --docker-username="${{ github.repository_owner }}"
+          --docker-password="${{ secrets.GITHUB_TOKEN }}"
+          --dry-run=client --output=yaml | kubectl apply -f -
+      - name: Delete setup job
+        run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
+      - name: Delete Hubble instances
+        run: helm delete -n hubble-commander hubble-commander
+      - name: Delete Geth
+        run: helm delete -n hubble-commander geth
+      - name: Delete PVCs
+        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 hubble-storage-hubble-commander-0 hubble-storage-hubble-commander-1 --ignore-not-found=true
+      - name: Deploy new Geth
+        run: helm upgrade --install geth  ./deploy/geth
+          --install --atomic --timeout 60s
+          --namespace hubble-commander
+      - name: Deploy contracts
+        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
+  deploy-stage-hubble-instances-manual:
+    runs-on: ubuntu-latest
+    needs: [ deploy-stage-wipe-setup-manual ]
+    environment: stage-manual
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_STAGE_REGION }}
+          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+      - name: Create pull secret for ghcr.io
+        run: kubectl create secret docker-registry ghcr-secret
+          --namespace "${{ github.event.repository.name }}"
+          --docker-server=ghcr.io
+          --docker-username="${{ github.repository_owner }}"
+          --docker-password="${{ secrets.GITHUB_TOKEN }}"
+          --dry-run=client --output=yaml | kubectl apply -f -
+      - name: Helm install
+        run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
+          --install --atomic --timeout 60s
+          --namespace "${{ github.event.repository.name }}"
+          --set image.tag="${{ github.sha }}"
+          --set image.pullSecret=ghcr-secret
+          --set ingress.host=hubble.stage-crypto.worldcoin.dev
+          --set environment=stage
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: [ build-and-push ]
+#    if: github.ref == 'refs/heads/master'
+    environment: prod
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_PROD_REGION }}
+          role-to-assume: ${{ secrets.AWS_PROD_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_PROD_REGION }}
+          --name ${{ secrets.AWS_PROD_CLUSTER }}
+      - name: Create pull secret for ghcr.io
+        run: kubectl create secret docker-registry ghcr-secret
+          --namespace "${{ github.event.repository.name }}"
+          --docker-server=ghcr.io
+          --docker-username="${{ github.repository_owner }}"
+          --docker-password="${{ secrets.GITHUB_TOKEN }}"
+          --dry-run=client --output=yaml | kubectl apply -f -
+      - name: Helm install
+        run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
+          --install --atomic --timeout 120s
+          --namespace "${{ github.event.repository.name }}"
+          --set image.tag="${{ github.sha }}"
+          --set image.pullSecret=ghcr-secret
