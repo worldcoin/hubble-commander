@@ -59,7 +59,7 @@ func NewServer(
 	} else {
 		mux.Handle("/", middleware.DefaultHandler(server, commanderMetrics))
 	}
-	mux.Handle("/ready", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	}))
 
