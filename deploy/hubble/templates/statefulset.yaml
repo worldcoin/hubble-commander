@@ -128,7 +128,7 @@ spec:
       {{- end }}
   volumeClaimTemplates:
     - metadata:
-        name: hubble-storage
+        name: hubble-storage #
       spec:
         accessModes: [ "ReadWriteOnce" ]
         storageClassName: gp2
