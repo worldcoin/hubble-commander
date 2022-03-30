@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "geth.fullname" . }}
+  labels:
+    {{- include "geth.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 8546
+      targetPort: 8546
+      protocol: TCP
+      name: rpc-b
+    - port: 8545
+      targetPort: 8545
+      protocol: TCP
+      name: rpc-a
+  selector:
+    {{- include "geth.selectorLabels" . | nindent 4 }}
