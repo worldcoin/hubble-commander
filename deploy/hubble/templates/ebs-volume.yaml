@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "hubble.fullname" . }}
+  labels:
+    {{- include "hubble.labels" . | nindent 4 }}
+  {{- if .Values.wipeDisk }}
+  annotations:
+    "helm.sh/hook": pre-install
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  awsElasticBlockStore:
+    fsType: ext4
+    volumeID: {{ .Values.persistentStorage.volumeID }}
+  capacity:
+    storage: {{ .Values.persistentStorage.size }}
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - {{ regexFind "\\w+-\\w+-\\w+" .Values.persistentStorage.volumeID }} # aws://us-east-1c/vol-aabbcc123 => us-east-1c
+  claimRef:
+    name: {{ include "hubble.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "hubble.fullname" . }}
+  labels:
+    {{- include "hubble.labels" . | nindent 4 }}
+  {{- if .Values.wipeDisk }}
+  annotations:
+    "helm.sh/hook": pre-install
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: {{ .Values.persistentStorage.size }}

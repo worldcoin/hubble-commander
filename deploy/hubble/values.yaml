@@ -52,3 +52,9 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+persistentStorage:
+  size: 100Gi
+  volumeID: aws://us-east-1c/vol-aabbcc123 # example: aws://us-east-1c/vol-aabbcc123
+
+wipeDisk: false
