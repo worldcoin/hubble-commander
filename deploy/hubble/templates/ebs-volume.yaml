@@ -7,6 +7,7 @@ metadata:
   {{- if .Values.wipeDisk }}
   annotations:
     "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "1"
   {{- end }}
 spec:
   accessModes:
@@ -39,6 +40,7 @@ metadata:
   {{- if .Values.wipeDisk }}
   annotations:
     "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "2"
   {{- end }}
 spec:
   accessModes:
