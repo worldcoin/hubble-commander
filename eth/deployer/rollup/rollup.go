@@ -21,6 +21,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -395,7 +396,13 @@ func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout t
 		dependencies.Chooser = proofOfAuthorityAddress
 	}
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout)
+
+		tree := deployer.NewTree(storage.AccountTreeDepth)
+		root := tree.LeftRoot()
+
+		subtreesArray := (*[storage.AccountTreeDepth-1]common.Hash)(tree.Subtrees)
+
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout, &root, 0, *subtreesArray)
 		if err != nil {
 			return err
 		}

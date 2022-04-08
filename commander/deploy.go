@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
+	// "github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -64,15 +64,46 @@ func deployContractsAndSetupGenesisState(
 		}
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
+	totalGenesisAmount := models.NewUint256(0)
+	for _, account := range cfg.Bootstrap.GenesisAccounts {
+		totalGenesisAmount = totalGenesisAmount.Add(&account.State.Balance)
+	}
+
+	// Here we process the set of GenesisAccounts and build the tree we will deploy.
+
+	accountTree := deployer.NewTree(st.AccountTreeDepth)
+	for _, account := range cfg.Bootstrap.GenesisAccounts {
+		accountTree.RegisterAccount(&account.PublicKey)
+	}
+
+	accountTreeRoot := accountTree.LeftRoot()
+	accountSubtreesArray := (*[st.AccountTreeDepth-1]common.Hash)(accountTree.Subtrees)
+
+	log.Printf(
+		"- Using precomputed account tree.\n - root: %s\n - count: %d\n - subtrees: %s\n",
+		accountTreeRoot,
+		accountTree.LeafIndexLeft,
+		accountSubtreesArray,
+	)
+
+	// lithp-PR: change signature, don't return accountRegistry
+	accountRegistryAddress, accountRegistryDeploymentBlock, _, err := deployer.DeployAccountRegistry(
 		blockchain,
 		chooserAddress,
 		cfg.Ethereum.MineTimeout,
+		&accountTreeRoot,
+		accountTree.LeafIndexLeft,
+		*accountSubtreesArray,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// lithp-TODO: what does this do?
+	//             This appears to build the eth object representing the registry
+	//             I don't think it takes any on-chain actions.
+	//             Probably doesn't require any changes.
+	/*
 	accountManager, err := eth.NewAccountManager(blockchain, &eth.AccountManagerParams{
 		AccountRegistry:        accountRegistry,
 		AccountRegistryAddress: *accountRegistryAddress,
@@ -80,16 +111,9 @@ func deployContractsAndSetupGenesisState(
 	if err != nil {
 		return nil, err
 	}
+	*/
 
-	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(
-		accountManager,
-		cfg.Bootstrap.GenesisAccounts,
-		cfg.Ethereum.MineTimeout,
-	)
-	if err != nil {
-		return nil, err
-	}
-
+	// lithp-TODO: This saves the accounts to storage, it does not make on-chain changes
 	err = PopulateGenesisAccounts(storage, cfg.Bootstrap.GenesisAccounts)
 	if err != nil {
 		return nil, err

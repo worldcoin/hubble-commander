@@ -2,15 +2,15 @@ package commander
 
 import (
 	"fmt"
-	"time"
+	// "time"
 
-	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/eth/chain"
+	// "github.com/Worldcoin/hubble-commander/eth/chain"
+	// "github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/ethereum/go-ethereum/core/types"
+	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -45,8 +45,10 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccou
 	return nil
 }
 
+/*
+// lithp-TODO: drop this method?
 func RegisterGenesisAccountsAndCalculateTotalAmount(
-	accountMgr *eth.AccountManager,
+	accountTree *storage.AccountTree,
 	accounts []models.GenesisAccount,
 	mineTimeout time.Duration,
 ) (*models.Uint256, error) {
@@ -86,6 +88,7 @@ func RegisterGenesisAccountsAndCalculateTotalAmount(
 
 	return totalGenesisAmount, nil
 }
+*/
 
 func (c *Commander) addGenesisBatch() error {
 	batchID := models.MakeUint256(0)
