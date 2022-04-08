@@ -15,8 +15,8 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.43.0
-          args: --timeout 2m --build-tags hardhat,e2e
+          version: v1.45.2
+          args: --timeout 5m --build-tags hardhat,e2e
           skip-build-cache: true
           skip-pkg-cache: true
   test-on-hardhat:
@@ -252,6 +252,8 @@ jobs:
           --set image.tag="${{ github.sha }}"
           --set ingress.host=hubble.stage-crypto.worldcoin.dev
           --set environment=stage
+          --set wipeDisk=true
+          --set persistentStorage.volumeID=aws://us-east-1a/vol-000677922f895379c
   deploy-stage-wipe-setup-manual:
     runs-on: ubuntu-latest
     needs: [build-and-push]
@@ -276,11 +278,11 @@ jobs:
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Hubble instances
-        run: helm delete -n hubble-commander hubble-commander
+        run: helm delete -n hubble-commander hubble-commander || true
       - name: Delete Geth
         run: helm delete -n hubble-commander geth
       - name: Delete PVCs
-        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 hubble-storage-hubble-commander-0 hubble-storage-hubble-commander-1 --ignore-not-found=true
+        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 --ignore-not-found=true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -314,6 +316,8 @@ jobs:
           --set image.tag="${{ github.sha }}"
           --set ingress.host=hubble.stage-crypto.worldcoin.dev
           --set environment=stage
+          --set wipeDisk=true
+          --set persistentStorage.volumeID=aws://us-east-1a/vol-000677922f895379c
   deploy-prod:
     runs-on: ubuntu-latest
     needs: [ build-and-push, e2e-tests ]

@@ -30,6 +30,9 @@ spec:
         - name: chain-spec-config-volume
           configMap:
             name: chain-spec-config
+        - name: hubble-storage
+          persistentVolumeClaim:
+            claimName: {{ include "hubble.fullname" . }}
       initContainers:
         - name: create-data-dir
           image: busybox:1.28
@@ -126,12 +129,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  volumeClaimTemplates:
-    - metadata:
-        name: hubble-storage
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: gp2
-        resources:
-          requests:
-            storage: 100Gi
