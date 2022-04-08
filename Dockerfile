@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as build-env
+FROM golang:1.17-alpine as build-env
 WORKDIR /src
 
 # Install tools

@@ -146,6 +146,10 @@ func (sim *Simulator) GetBackend() chain.Backend {
 	return sim.Backend
 }
 
+func (sim *Simulator) Commit() {
+	sim.Backend.Commit()
+}
+
 func (sim *Simulator) GetChainID() models.Uint256 {
 	return models.MakeUint256FromBig(*sim.Backend.Blockchain().Config().ChainID)
 }

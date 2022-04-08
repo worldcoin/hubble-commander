@@ -106,6 +106,7 @@ func (p *MerklePath) Child(right bool) (*MerklePath, error) {
 	}, nil
 }
 
+// TODO: can this ever really error?
 func (p *MerklePath) Sibling() (*MerklePath, error) {
 	if p.IsLeftNode() {
 		return p.Add(1)

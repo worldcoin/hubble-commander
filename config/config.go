@@ -15,7 +15,7 @@ const (
 	DefaultC2TBatchSubmissionGasLimit       = uint64(500_000)
 	DefaultMMBatchSubmissionGasLimit        = uint64(550_000)
 	DefaultDepositBatchSubmissionGasLimit   = uint64(220_000)
-	DefaultTransitionDisputeGasLimit        = uint64(4_100_000)
+	DefaultTransitionDisputeGasLimit        = uint64(4_500_000)
 	DefaultSignatureDisputeGasLimit         = uint64(7_600_000)
 	DefaultBatchAccountRegistrationGasLimit = uint64(8_000_000)
 	DefaultStakeWithdrawalGasLimit          = uint64(200_000)
