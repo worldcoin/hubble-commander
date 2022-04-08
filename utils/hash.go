@@ -11,3 +11,11 @@ func HashTwo(a, b common.Hash) common.Hash {
 	copy(buf[32:64], b.Bytes())
 	return crypto.Keccak256Hash(buf)
 }
+
+/*
+ * This syntax was added in go 1.17
+ * - https://tip.golang.org/ref/spec#Conversions_from_slice_to_array_pointer
+ */
+func HashToByteArray(a *common.Hash) [32]byte {
+	return *(*[32]byte)(a.Bytes())
+}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/eth"
+	"github.com/Worldcoin/hubble-commander/deployment"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -64,27 +64,22 @@ func deployContractsAndSetupGenesisState(
 		}
 	}
 
-	accountRegistryAddress, accountRegistryDeploymentBlock, accountRegistry, err := deployer.DeployAccountRegistry(
+	accountTree := deployment.NewTree(st.AccountTreeDepth)
+	for i := range cfg.Bootstrap.GenesisAccounts {
+		account := cfg.Bootstrap.GenesisAccounts[i]
+		accountTree.RegisterAccount(&account.PublicKey)
+	}
+
+	accountTreeRoot := accountTree.LeftRoot()
+	accountSubtreesArray := (*[st.AccountTreeDepth - 1]common.Hash)(accountTree.Subtrees)
+
+	accountRegistryAddress, accountRegistryDeploymentBlock, _, err := deployer.DeployAccountRegistry(
 		blockchain,
 		chooserAddress,
 		cfg.Ethereum.MineTimeout,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	accountManager, err := eth.NewAccountManager(blockchain, &eth.AccountManagerParams{
-		AccountRegistry:        accountRegistry,
-		AccountRegistryAddress: *accountRegistryAddress,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	totalGenesisAmount, err := RegisterGenesisAccountsAndCalculateTotalAmount(
-		accountManager,
-		cfg.Bootstrap.GenesisAccounts,
-		cfg.Ethereum.MineTimeout,
+		&accountTreeRoot,
+		accountTree.AccountCount,
+		accountSubtreesArray,
 	)
 	if err != nil {
 		return nil, err
@@ -98,6 +93,12 @@ func deployContractsAndSetupGenesisState(
 	stateRoot, err := storage.StateTree.Root()
 	if err != nil {
 		return nil, err
+	}
+
+	totalGenesisAmount := models.NewUint256(0)
+	for i := range cfg.Bootstrap.GenesisAccounts {
+		account := cfg.Bootstrap.GenesisAccounts[i]
+		totalGenesisAmount = totalGenesisAmount.Add(&account.State.Balance)
 	}
 
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, &rollup.DeploymentConfig{

@@ -18,9 +18,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/transfer"
 	"github.com/Worldcoin/hubble-commander/contracts/vault"
 	"github.com/Worldcoin/hubble-commander/contracts/withdrawmanager"
+	"github.com/Worldcoin/hubble-commander/deployment"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -35,7 +37,7 @@ const (
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
 
-	originalCostEstimatorAddress = "079d8077c465bd0bf0fc502ad2b846757e415661"
+	originalCostEstimatorAddress = "9f19c6456854fda109dfc2b9ad45d9bf147c8557"
 )
 
 type DeploymentConfig struct {
@@ -395,7 +397,12 @@ func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout t
 		dependencies.Chooser = proofOfAuthorityAddress
 	}
 	if dependencies.AccountRegistry == nil {
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout)
+		tree := deployment.NewTree(storage.AccountTreeDepth)
+		root := tree.LeftRoot()
+
+		subtreesArray := (*[storage.AccountTreeDepth - 1]common.Hash)(tree.Subtrees)
+
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout, &root, 0, subtreesArray)
 		if err != nil {
 			return err
 		}
