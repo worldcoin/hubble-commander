@@ -2,15 +2,10 @@ package commander
 
 import (
 	"fmt"
-	// "time"
 
-	// "github.com/Worldcoin/hubble-commander/eth/chain"
-	// "github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	// log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -45,50 +40,6 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccou
 	return nil
 }
 
-/*
-// lithp-TODO: drop this method?
-func RegisterGenesisAccountsAndCalculateTotalAmount(
-	accountTree *storage.AccountTree,
-	accounts []models.GenesisAccount,
-	mineTimeout time.Duration,
-) (*models.Uint256, error) {
-	log.Println("Registering genesis accounts")
-
-	emptyPublicKey := models.PublicKey{}
-	txs := make([]types.Transaction, 0, len(accounts))
-	for i := range accounts {
-		if accounts[i].PublicKey == emptyPublicKey {
-			return nil, errors.WithStack(errMissingGenesisPublicKey)
-		}
-
-		tx, err := accountMgr.RegisterAccount(&accounts[i].PublicKey)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		txs = append(txs, *tx)
-	}
-
-	receipts, err := chain.WaitForMultipleTxs(accountMgr.Blockchain.GetBackend(), mineTimeout, txs...)
-	if err != nil {
-		return nil, err
-	}
-
-	totalGenesisAmount := models.NewUint256(0)
-	for i := range accounts {
-		pubKeyID, err := accountMgr.RetrieveRegisteredPubKeyID(&receipts[i])
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		if accounts[i].State.PubKeyID != *pubKeyID {
-			return nil, fmt.Errorf("different pubKeyID for account %s", accounts[i].PublicKey)
-		}
-		totalGenesisAmount = totalGenesisAmount.Add(&accounts[i].State.Balance)
-	}
-
-	return totalGenesisAmount, nil
-}
-*/
 
 func (c *Commander) addGenesisBatch() error {
 	batchID := models.MakeUint256(0)

@@ -9,19 +9,28 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// This file duplicates logic found in AccountTree.sol and BLSAccountRegistry.sol
+// It allows us to simulate the result of adding many leaves to AccountTree.sol so
+// that during deploys we can initialize our AccountTree.sol with a pre-computed state.
+
 type Tree struct {
 	Depth uint8
 
 	Smt *storage.StoredMerkleTree
-	LeafIndexLeft uint32
+	AccountCount uint32
+
+	// This is not a witness, this is an accumulator which allows AccountTree.sol to
+	// correctly update the root node. It is possible to compute the new root using
+	// constant space because AccountTree.sol only inserts leaves into the leftmost
+	// open slot.
 	Subtrees []common.Hash
 }
 
 func NewTree(depth uint8) *Tree {
 	db, err := db.NewInMemoryDatabase()
 	if err != nil {
-			panic("err creating db")
-    }
+		panic("err creating db")
+	}
 
 	database := &storage.Database{
 		Badger: db,
@@ -53,32 +62,31 @@ func NewTree(depth uint8) *Tree {
 	return &Tree{
 		Depth: depth,
 		Smt: smt,
-		LeafIndexLeft: 0,
+		AccountCount: 0,
 		Subtrees: subtrees,
 	}
 }
 
-// lithp-TODO: check that this is the correct encoding method
 func (t *Tree) RegisterAccount(pubkey *models.PublicKey) {
-	bytes := pubkey.Bytes()  // abi.encodePacked(pubkey)
+	// duplicates BLSAccountRegistry.sol:register(pubkey)
+	//   leaf = keccak256(abi.encodePacked(pubkey))
+
+	bytes := pubkey.Bytes()
 	leaf := crypto.Keccak256Hash(bytes)
 	t.Insert(leaf)
 }
 
 func (t *Tree) Insert(hash common.Hash) {
-	path := &models.MerklePath { Path: t.LeafIndexLeft, Depth: t.Depth}
+	path := &models.MerklePath { Path: t.AccountCount, Depth: t.Depth}
 	t.Smt.SetNode(path, hash)
-	t.LeafIndexLeft += 1
+	t.AccountCount += 1
 
-	// This duplicates logic from AccountTree._updateSingle
+	// This duplicates AccountTree.sol:_updateSingle
 	// - When _updateSingle computes the new root it needs to know all the
 	//   subtrees which have a full left tree and are waiting for their right
 	//   half.
 	// - The least-significant 0 of our path is the left subtree which we have just
 	//   completed, so we record it!
-	// - If there is no least-significant 0 then we have added 2**Depth
-	//   accounts, which will not happen in any of the situations this scripts
-	//   expects to be called
 
 	for {
 		// search for the deepest part of our path which is a left-branch
@@ -90,6 +98,8 @@ func (t *Tree) Insert(hash common.Hash) {
 		path, _ = path.Parent()
 
 		if path.Depth == 0 {
+			// If there is no least-significant 0 then we have `Insert`ed
+			// 2**Depth accounts.
 			panic("we completely filled the tree")
 		}
 	}
@@ -97,7 +107,7 @@ func (t *Tree) Insert(hash common.Hash) {
 	// Invert, because these two variables use different numbering schemes:
 	// - subtrees[0] is a leaf node
 	// - path.Depth = 0 is a root node
-	newSubtreeDepth := t.Depth - path.Depth  // subtrees[0] is a leaf node
+	newSubtreeDepth := t.Depth - path.Depth
 
 	subtreeRoot, err := t.Smt.Get(*path)
 	if err != nil {

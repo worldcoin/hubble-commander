@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -15,17 +16,14 @@ import (
 func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTimeout time.Duration, root *common.Hash, initialAccountCount uint32, subtrees [storage.AccountTreeDepth-1]common.Hash) (
 	*common.Address, *uint64, *accountregistry.AccountRegistry, error,
 ) {
-
-	// lithp-TODO: Is there a way to clean up these casts?
-
-	rootBytes := *(*[32]byte)(root.Bytes())
+	rootBytes := utils.HashToByteArray(root)
 
 	var accountCountBig big.Int
 	accountCountBig.SetUint64(uint64(initialAccountCount))
 
 	var subtreesBytes [storage.AccountTreeDepth-1][32]byte
 	for i, hash := range subtrees {
-		subtreesBytes[i] = *(*[32]byte)(hash.Bytes())
+		subtreesBytes[i] = utils.HashToByteArray(&hash)
 	}
 
 	log.Println("Deploying AccountRegistry")
