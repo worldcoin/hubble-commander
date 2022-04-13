@@ -14,7 +14,14 @@ import (
 
 // we use 31 instead of referencing storage.AccountTreeDepth because importing
 // storage causes an import loop
-func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTimeout time.Duration, root *common.Hash, initialAccountCount uint32, subtrees [31]common.Hash) (
+func DeployAccountRegistry(
+	c chain.Connection,
+	chooser *common.Address,
+	mineTimeout time.Duration,
+	root *common.Hash,
+	initialAccountCount uint32,
+	subtrees *[31]common.Hash,
+) (
 	*common.Address, *uint64, *accountregistry.AccountRegistry, error,
 ) {
 	rootBytes := utils.HashToByteArray(root)
@@ -23,12 +30,15 @@ func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTime
 	accountCountBig.SetUint64(uint64(initialAccountCount))
 
 	var subtreesBytes [31][32]byte
-	for i, hash := range subtrees {
-		subtreesBytes[i] = utils.HashToByteArray(&hash)
+	for i := range subtrees {
+		subtreesBytes[i] = utils.HashToByteArray(&subtrees[i])
 	}
 
 	log.Println("Deploying AccountRegistry")
-	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(c.GetAccount(), c.GetBackend(), *chooser, rootBytes, &accountCountBig, subtreesBytes)
+	accountRegistryAddress, tx, accountRegistry, err := accountregistry.DeployAccountRegistry(
+		c.GetAccount(), c.GetBackend(), *chooser,
+		rootBytes, &accountCountBig, subtreesBytes,
+	)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}

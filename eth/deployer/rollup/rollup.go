@@ -402,7 +402,7 @@ func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout t
 
 		subtreesArray := (*[storage.AccountTreeDepth - 1]common.Hash)(tree.Subtrees)
 
-		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout, &root, 0, *subtreesArray)
+		accountRegistryAddress, _, _, err := deployer.DeployAccountRegistry(c, dependencies.Chooser, mineTimeout, &root, 0, subtreesArray)
 		if err != nil {
 			return err
 		}

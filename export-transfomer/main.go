@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -23,20 +23,20 @@ func main() {
 
 	var keysMissingState []uint32
 	var genesisAccounts []models.GenesisAccount
-	for i, account := range accounts {
+	for i := range accounts {
 		if i%1000 == 0 {
 			fmt.Println(i)
 		}
 
-		state, err := findUserStateByPubKey(states, account.PubKeyID)
+		state, err := findUserStateByPubKey(states, accounts[i].PubKeyID)
 		if err != nil {
-			keysMissingState = append(keysMissingState, account.PubKeyID)
+			keysMissingState = append(keysMissingState, accounts[i].PubKeyID)
 		}
 		genesisAccounts = append(genesisAccounts, models.GenesisAccount{
-			PublicKey: account.PublicKey,
+			PublicKey: accounts[i].PublicKey,
 			StateID:   state.StateID,
 			State: models.UserState{
-				PubKeyID: account.PubKeyID,
+				PubKeyID: accounts[i].PubKeyID,
 				TokenID:  state.TokenID,
 				Balance:  state.Balance,
 				Nonce:    state.Nonce,
@@ -49,7 +49,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = ioutil.WriteFile("missing_keys.json", missingKeysJSON, 0666)
+	err = os.WriteFile("missing_keys.json", missingKeysJSON, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -59,15 +59,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = ioutil.WriteFile("gen_accounts.yaml", genesisAccountsYAML, 0666)
+	err = os.WriteFile("gen_accounts.yaml", genesisAccountsYAML, 0600)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func findUserStateByPubKey(states []ModifiedUserState, pubKeyId uint32) (ModifiedUserState, error) {
+func findUserStateByPubKey(states []ModifiedUserState, pubKeyID uint32) (ModifiedUserState, error) {
 	for _, v := range states {
-		if v.PubKeyID == pubKeyId {
+		if v.PubKeyID == pubKeyID {
 			return v, nil
 		}
 	}
@@ -81,7 +81,7 @@ func readAccounts(file string) []models.AccountLeaf {
 	}
 	defer jsonFile.Close()
 
-	fileBytes, _ := ioutil.ReadAll(jsonFile)
+	fileBytes, _ := io.ReadAll(jsonFile)
 
 	var accounts []models.AccountLeaf
 	err = json.Unmarshal(fileBytes, &accounts)
@@ -99,7 +99,7 @@ func readUserStates(file string) []ModifiedUserState {
 	}
 	defer jsonFile.Close()
 
-	fileBytes, _ := ioutil.ReadAll(jsonFile)
+	fileBytes, _ := io.ReadAll(jsonFile)
 
 	var accounts []ModifiedUserState
 	err = json.Unmarshal(fileBytes, &accounts)

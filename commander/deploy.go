@@ -65,8 +65,8 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	accountTree := deployment.NewTree(st.AccountTreeDepth)
-	for _, account := range cfg.Bootstrap.GenesisAccounts {
-		accountTree.RegisterAccount(&account.PublicKey)
+	for i := range cfg.Bootstrap.GenesisAccounts {
+		accountTree.RegisterAccount(&cfg.Bootstrap.GenesisAccounts[i].PublicKey)
 	}
 
 	accountTreeRoot := accountTree.LeftRoot()
@@ -78,7 +78,7 @@ func deployContractsAndSetupGenesisState(
 		cfg.Ethereum.MineTimeout,
 		&accountTreeRoot,
 		accountTree.AccountCount,
-		*accountSubtreesArray,
+		accountSubtreesArray,
 	)
 	if err != nil {
 		return nil, err
@@ -95,8 +95,9 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	totalGenesisAmount := models.NewUint256(0)
-	for _, account := range cfg.Bootstrap.GenesisAccounts {
-		totalGenesisAmount = totalGenesisAmount.Add(&account.State.Balance)
+	for i := range cfg.Bootstrap.GenesisAccounts {
+		balance := cfg.Bootstrap.GenesisAccounts[i].State.Balance
+		totalGenesisAmount = totalGenesisAmount.Add(&balance)
 	}
 
 	contracts, err := rollup.DeployConfiguredRollup(blockchain, &rollup.DeploymentConfig{

@@ -1,12 +1,14 @@
 package deployment
 
+// This file would be better off in eth/deployer. However, importing `storage` from
+// inside there causes an import loop.
+
 import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -47,16 +49,16 @@ func NewTree(depth uint8) *Tree {
 		panic("tree must have a depth of at least 2")
 	}
 
-	db, err := db.NewInMemoryDatabase()
+	database, err := db.NewInMemoryDatabase()
 	if err != nil {
 		panic(fmt.Errorf("err creating db: %w", err))
 	}
 
-	database := &storage.Database{
-		Badger: db,
+	storageDatabase := &storage.Database{
+		Badger: database,
 	}
 
-	smt := storage.NewStoredMerkleTree("tree", database, depth)
+	smt := storage.NewStoredMerkleTree("tree", storageDatabase, depth)
 
 	// For an empty tree all leaves have the same witness. This witness is the
 	// initial value of Subtrees.
@@ -96,7 +98,10 @@ func (t *Tree) RegisterAccount(pubkey *models.PublicKey) {
 
 func (t *Tree) Insert(hash common.Hash) {
 	path := &models.MerklePath{Path: t.AccountCount, Depth: t.Depth}
-	t.Smt.SetNode(path, hash)
+	_, _, err := t.Smt.SetNode(path, hash)
+	if err != nil {
+		panic(fmt.Errorf("failed to insert into the tree: %w", err))
+	}
 
 	// This duplicates AccountTree.sol:_updateSingle
 	// - Accounts are inserted into the tree from left to right, `AccountCount` is the
