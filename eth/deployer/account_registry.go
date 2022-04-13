@@ -1,19 +1,20 @@
 package deployer
 
 import (
-	"time"
 	"math/big"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTimeout time.Duration, root *common.Hash, initialAccountCount uint32, subtrees [storage.AccountTreeDepth-1]common.Hash) (
+// we use 31 instead of referencing storage.AccountTreeDepth because importing
+// storage causes an import loop
+func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTimeout time.Duration, root *common.Hash, initialAccountCount uint32, subtrees [31]common.Hash) (
 	*common.Address, *uint64, *accountregistry.AccountRegistry, error,
 ) {
 	rootBytes := utils.HashToByteArray(root)
@@ -21,7 +22,7 @@ func DeployAccountRegistry(c chain.Connection, chooser *common.Address, mineTime
 	var accountCountBig big.Int
 	accountCountBig.SetUint64(uint64(initialAccountCount))
 
-	var subtreesBytes [storage.AccountTreeDepth-1][32]byte
+	var subtreesBytes [31][32]byte
 	for i, hash := range subtrees {
 		subtreesBytes[i] = utils.HashToByteArray(&hash)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/config"
+	"github.com/Worldcoin/hubble-commander/deployment"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
@@ -63,13 +64,13 @@ func deployContractsAndSetupGenesisState(
 		}
 	}
 
-	accountTree := deployer.NewTree(st.AccountTreeDepth)
+	accountTree := deployment.NewTree(st.AccountTreeDepth)
 	for _, account := range cfg.Bootstrap.GenesisAccounts {
 		accountTree.RegisterAccount(&account.PublicKey)
 	}
 
 	accountTreeRoot := accountTree.LeftRoot()
-	accountSubtreesArray := (*[st.AccountTreeDepth-1]common.Hash)(accountTree.Subtrees)
+	accountSubtreesArray := (*[st.AccountTreeDepth - 1]common.Hash)(accountTree.Subtrees)
 
 	accountRegistryAddress, accountRegistryDeploymentBlock, _, err := deployer.DeployAccountRegistry(
 		blockchain,

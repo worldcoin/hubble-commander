@@ -10,7 +10,6 @@ import (
 
 var (
 	errGenesisAccountsUniqueStateID = fmt.Errorf("accounts must have unique state IDs")
-	errMissingGenesisPublicKey      = fmt.Errorf("genesis accounts require public keys")
 )
 
 func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccount) error {
@@ -39,7 +38,6 @@ func PopulateGenesisAccounts(storage *st.Storage, accounts []models.GenesisAccou
 	}
 	return nil
 }
-
 
 func (c *Commander) addGenesisBatch() error {
 	batchID := models.MakeUint256(0)

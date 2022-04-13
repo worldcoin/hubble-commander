@@ -1,4 +1,4 @@
-package deployer
+package deployment
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ func get(smt *storage.StoredMerkleTree, path models.MerklePath) common.Hash {
 type Tree struct {
 	Depth uint8
 
-	Smt *storage.StoredMerkleTree
+	Smt          *storage.StoredMerkleTree
 	AccountCount uint32
 
 	// This is not a witness, this is an accumulator which allows AccountTree.sol to
@@ -61,7 +61,7 @@ func NewTree(depth uint8) *Tree {
 	// For an empty tree all leaves have the same witness. This witness is the
 	// initial value of Subtrees.
 	var subtrees []common.Hash
-	path := &models.MerklePath { Path: 0, Depth: depth}
+	path := &models.MerklePath{Path: 0, Depth: depth}
 	for {
 		node := get(smt, *path)
 		subtrees = append(subtrees, node)
@@ -78,10 +78,10 @@ func NewTree(depth uint8) *Tree {
 	}
 
 	return &Tree{
-		Depth: depth,
-		Smt: smt,
+		Depth:        depth,
+		Smt:          smt,
 		AccountCount: 0,
-		Subtrees: subtrees,
+		Subtrees:     subtrees,
 	}
 }
 
@@ -95,7 +95,7 @@ func (t *Tree) RegisterAccount(pubkey *models.PublicKey) {
 }
 
 func (t *Tree) Insert(hash common.Hash) {
-	path := &models.MerklePath { Path: t.AccountCount, Depth: t.Depth}
+	path := &models.MerklePath{Path: t.AccountCount, Depth: t.Depth}
 	t.Smt.SetNode(path, hash)
 
 	// This duplicates AccountTree.sol:_updateSingle
@@ -118,7 +118,7 @@ func (t *Tree) Insert(hash common.Hash) {
 	for {
 		// search for the deepest part of our path which is a left-branch
 
-		if path.Path & 1 == 0 {
+		if path.Path&1 == 0 {
 			break
 		}
 
@@ -142,5 +142,5 @@ func (t *Tree) Insert(hash common.Hash) {
 }
 
 func (t *Tree) LeftRoot() common.Hash {
-	return get(t.Smt, models.MerklePath { Path: 0, Depth: 1 })
+	return get(t.Smt, models.MerklePath{Path: 0, Depth: 1})
 }
