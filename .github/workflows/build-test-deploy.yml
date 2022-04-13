@@ -1,7 +1,10 @@
 name: Build, Test & Deploy
 
 on:
-  push
+  push:
+  workflow_dispatch:
+    branches:
+      - master
 
 env:
   IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
@@ -344,3 +347,18 @@ jobs:
           --install --atomic --timeout 120s
           --namespace "${{ github.event.repository.name }}"
           --set image.tag="${{ github.sha }}"
+
+  release-tag:
+    # Any commit message that includes #major, #minor, #patch, or #none will trigger the respective version bump
+    # Commit message without such word, will be recognized as #minor
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
