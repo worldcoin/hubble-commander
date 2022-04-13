@@ -1,6 +1,8 @@
 package deployer
 
 import (
+	"fmt"
+
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/storage"
@@ -12,6 +14,20 @@ import (
 // This file duplicates logic found in AccountTree.sol and BLSAccountRegistry.sol
 // It allows us to simulate the result of adding many leaves to AccountTree.sol so
 // that during deploys we can initialize our AccountTree.sol with a pre-computed state.
+
+func get(smt *storage.StoredMerkleTree, path models.MerklePath) common.Hash {
+	// throw away the error because this file only ever looks for paths which exist
+	// also: we use an in-memory database which vastly reduces the number of errors
+	//   lookups might experience
+
+	res, err := smt.Get(path)
+
+	if err != nil {
+		panic(fmt.Errorf("failed to lookup node: %w", err))
+	}
+
+	return res.DataHash
+}
 
 type Tree struct {
 	Depth uint8
@@ -27,9 +43,13 @@ type Tree struct {
 }
 
 func NewTree(depth uint8) *Tree {
+	if depth < 2 {
+		panic("tree must have a depth of at least 2")
+	}
+
 	db, err := db.NewInMemoryDatabase()
 	if err != nil {
-		panic("err creating db")
+		panic(fmt.Errorf("err creating db: %w", err))
 	}
 
 	database := &storage.Database{
@@ -38,24 +58,22 @@ func NewTree(depth uint8) *Tree {
 
 	smt := storage.NewStoredMerkleTree("tree", database, depth)
 
+	// For an empty tree all leaves have the same witness. This witness is the
+	// initial value of Subtrees.
 	var subtrees []common.Hash
 	path := &models.MerklePath { Path: 0, Depth: depth}
-
 	for {
-		node, err := smt.Get(*path)
-		if err != nil {
-			panic("failed to lookup node")
-		}
-
-		subtrees = append(subtrees, node.DataHash)
+		node := get(smt, *path)
+		subtrees = append(subtrees, node)
 
 		path, err = path.Parent()
 		if err != nil {
+			// unreachable, only happens when path was at depth 0
 			panic(err)
 		}
 
 		if path.Depth == 1 {
-				break
+			break
 		}
 	}
 
@@ -79,14 +97,23 @@ func (t *Tree) RegisterAccount(pubkey *models.PublicKey) {
 func (t *Tree) Insert(hash common.Hash) {
 	path := &models.MerklePath { Path: t.AccountCount, Depth: t.Depth}
 	t.Smt.SetNode(path, hash)
-	t.AccountCount += 1
 
 	// This duplicates AccountTree.sol:_updateSingle
-	// - When _updateSingle computes the new root it needs to know all the
-	//   subtrees which have a full left tree and are waiting for their right
-	//   half.
-	// - The least-significant 0 of our path is the left subtree which we have just
-	//   completed, so we record it!
+	// - Accounts are inserted into the tree from left to right, `AccountCount` is the
+	//   location of our new leaf. When interpreted as a bitstring it becomes a path:
+	//   0 means left and 1 means right
+	// - When _updateSingle computes the new root it starts at the leaf which was
+	//   just added and works up.
+	// - As it works up, if our new account is on the left subtree for a given depth
+	//   then we know the right subtree is empty and can easily lookup its hash.
+	// - If our new account is in the right subtree for a given depth then a previous
+	//   call to _updateSingle has already finished creating the left subtree for the
+	//   depth. If we have remembered it then we can compute the new parent hash.
+	// - So, to compute the new root we only need to remember the hash of each full
+	//   left subtree.
+	// - Unless we are inserting the final leaf, inserting a leaf always completes a
+	//   single left subtree. The least-significant 0 of our path is the left subtree
+	//   we are completing. If we save it to t.Subtrees then we are done!
 
 	for {
 		// search for the deepest part of our path which is a left-branch
@@ -109,24 +136,11 @@ func (t *Tree) Insert(hash common.Hash) {
 	// - path.Depth = 0 is a root node
 	newSubtreeDepth := t.Depth - path.Depth
 
-	subtreeRoot, err := t.Smt.Get(*path)
-	if err != nil {
-		panic("failed to lookup node")
-	}
-
-	t.Subtrees[newSubtreeDepth] = subtreeRoot.DataHash
-}
-
-func (t *Tree) Get(path models.MerklePath) common.Hash {
-	res, err := t.Smt.Get(path)
-
-	if err != nil {
-		panic("failed to lookup node")
-	}
-
-	return res.DataHash
+	subtreeRoot := get(t.Smt, *path)
+	t.Subtrees[newSubtreeDepth] = subtreeRoot
+	t.AccountCount += 1
 }
 
 func (t *Tree) LeftRoot() common.Hash {
-	return t.Get(models.MerklePath { Path: 0, Depth: 1 })
+	return get(t.Smt, models.MerklePath { Path: 0, Depth: 1 })
 }
