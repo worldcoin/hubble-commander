@@ -13,8 +13,10 @@ spec:
   template:
     metadata:
       annotations:
-        ad.datadoghq.com/{{ .Chart.Name }}.check_names: ["openmetrics"]
-        ad.datadoghq.com/{{ .Chart.Name }}.init_configs: [{}]
+        ad.datadoghq.com/{{ .Chart.Name }}.check_names: |
+          ["openmetrics"]
+        ad.datadoghq.com/{{ .Chart.Name }}.init_configs: |
+          [{}]
         ad.datadoghq.com/{{ .Chart.Name }}.instances: |
           [
             {
