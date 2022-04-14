@@ -1,10 +1,12 @@
 name: Rollback prod
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    branches:
+      - master
 
 jobs:
   rollback-prod:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
     environment: prod
     permissions:
       id-token: write
