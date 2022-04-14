@@ -20,9 +20,9 @@ spec:
         ad.datadoghq.com/{{ .Chart.Name }}.instances: |
           [
             {
-              "openmetrics_endpoint": "http://%%host%%:2112/metrics ",
+              "openmetrics_endpoint": "http://%%host%%:2112/metrics",
               "namespace": "{{ .Release.Namespace }}",
-              "metrics": ["*"]
+              "metrics": ["hubble_*"]
             }
           ]
       {{- with .Values.podAnnotations }}
