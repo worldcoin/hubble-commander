@@ -22,7 +22,7 @@ spec:
             {
               "openmetrics_endpoint": "http://%%host%%:2112/metrics ",
               "namespace": "{{ .Release.Namespace }}",
-              "metrics": [*]
+              "metrics": ["*"]
             }
           ]
       {{- with .Values.podAnnotations }}
