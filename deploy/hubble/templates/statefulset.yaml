@@ -12,8 +12,18 @@ spec:
   serviceName: hubble-commander-headless
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        ad.datadoghq.com/{{ .Chart.Name }}.check_names: ["openmetrics"]
+        ad.datadoghq.com/{{ .Chart.Name }}.init_configs: [{}]
+        ad.datadoghq.com/{{ .Chart.Name }}.instances: |
+          [
+            {
+              "openmetrics_endpoint": "http://%%host%%:2112/metrics ",
+              "namespace": "{{ .Release.Namespace }}",
+              "metrics": [*]
+            }
+          ]
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
