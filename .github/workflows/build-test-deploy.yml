@@ -8,7 +8,7 @@ env:
 
 jobs:
 
-  test:
+  teststs:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/master'
     environment: stage
