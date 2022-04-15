@@ -2,23 +2,6 @@ name: Rollback
 on: [workflow_dispatch]
 
 jobs:
-
-  test:
-    runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/master'
-    environment: stage
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ secrets.AWS_STAGE_REGION }}
-          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
-          role-duration-seconds: 900
-      - run: aws sts get-caller-identity
-
   rollback-stage:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/master'

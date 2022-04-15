@@ -7,6 +7,23 @@ env:
   IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
 jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+    environment: stage
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - run: aws sts get-caller-identity
+
   lint:
     runs-on: ubuntu-20.04
     steps:
