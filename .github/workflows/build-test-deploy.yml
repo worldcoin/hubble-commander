@@ -1,10 +1,7 @@
 name: Build, Test & Deploy
 
 on:
-  push:
-  workflow_dispatch:
-    branches:
-      - master
+  push
 
 env:
   IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
@@ -215,12 +212,10 @@ jobs:
           --name ${{ secrets.AWS_STAGE_CLUSTER }}
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Hubble instances
-        run: helm delete -n hubble-commander hubble-commander
       - name: Delete Geth
         run: helm delete -n hubble-commander geth
       - name: Delete PVCs
-        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 hubble-storage-hubble-commander-0 hubble-storage-hubble-commander-1 --ignore-not-found=true
+        run: kubectl delete pvc -n geth-data-geth-0 --ignore-not-found=true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -280,12 +275,10 @@ jobs:
           --name ${{ secrets.AWS_STAGE_CLUSTER }}
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Hubble instances
-        run: helm delete -n hubble-commander hubble-commander || true
       - name: Delete Geth
         run: helm delete -n hubble-commander geth
       - name: Delete PVCs
-        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 --ignore-not-found=true
+        run: kubectl delete pvc -n geth-data-geth-0 --ignore-not-found=true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -347,18 +340,3 @@ jobs:
           --install --atomic --timeout 120s
           --namespace "${{ github.event.repository.name }}"
           --set image.tag="${{ github.sha }}"
-
-  release-tag:
-    # Any commit message that includes #major, #minor, #patch, or #none will trigger the respective version bump
-    # Commit message without such word, will be recognized as #minor
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: '0'
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.36.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
