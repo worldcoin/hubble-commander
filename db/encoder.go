@@ -61,9 +61,9 @@ func Encode(value interface{}) ([]byte, error) {
 		return v.Bytes(), nil
 	case *models.PublicKey:
 		return nil, errors.WithStack(errPassedByPointer)
-	case stored.StateLeaf:
+	case stored.FlatStateLeaf:
 		return v.Bytes(), nil
-	case *stored.StateLeaf:
+	case *stored.FlatStateLeaf:
 		return nil, errors.WithStack(errPassedByPointer)
 	case models.StateUpdate:
 		return v.Bytes(), nil
@@ -151,7 +151,7 @@ func Decode(data []byte, value interface{}) error {
 		return stored.DecodeHash(data, &v.DataHash)
 	case *models.PublicKey:
 		return v.SetBytes(data)
-	case *stored.StateLeaf:
+	case *stored.FlatStateLeaf:
 		return v.SetBytes(data)
 	case *models.StateUpdate:
 		return v.SetBytes(data)
