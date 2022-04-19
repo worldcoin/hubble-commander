@@ -10,9 +10,6 @@ import (
 var StateLeafPrefix = models.GetBadgerHoldPrefix(FlatStateLeaf{})
 
 type FlatStateLeaf struct {
-}
-
-type StateLeaf struct {
 	StateID  uint32
 	DataHash common.Hash
 	PubKeyID uint32 `badgerhold:"index"`
@@ -21,8 +18,8 @@ type StateLeaf struct {
 	Nonce    models.Uint256
 }
 
-func MakeStateLeaf(leaf *models.StateLeaf) StateLeaf {
-	return StateLeaf{
+func MakeStateLeaf(leaf *models.StateLeaf) FlatStateLeaf {
+	return FlatStateLeaf{
 		StateID:  leaf.StateID,
 		DataHash: leaf.DataHash,
 		PubKeyID: leaf.PubKeyID,
@@ -32,7 +29,7 @@ func MakeStateLeaf(leaf *models.StateLeaf) StateLeaf {
 	}
 }
 
-func (l *StateLeaf) ToModelsStateLeaf() *models.StateLeaf {
+func (l *FlatStateLeaf) ToModelsStateLeaf() *models.StateLeaf {
 	return &models.StateLeaf{
 		StateID:  l.StateID,
 		DataHash: l.DataHash,
@@ -45,7 +42,7 @@ func (l *StateLeaf) ToModelsStateLeaf() *models.StateLeaf {
 	}
 }
 
-func (l *StateLeaf) Bytes() []byte {
+func (l *FlatStateLeaf) Bytes() []byte {
 	b := make([]byte, 136)
 	binary.BigEndian.PutUint32(b[0:4], l.StateID)
 	copy(b[4:36], l.DataHash[:])
@@ -56,7 +53,7 @@ func (l *StateLeaf) Bytes() []byte {
 	return b
 }
 
-func (l *StateLeaf) SetBytes(data []byte) error {
+func (l *FlatStateLeaf) SetBytes(data []byte) error {
 	l.StateID = binary.BigEndian.Uint32(data[0:4])
 	l.DataHash.SetBytes(data[4:36])
 	l.PubKeyID = binary.BigEndian.Uint32(data[36:40])

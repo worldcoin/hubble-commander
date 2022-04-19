@@ -9,7 +9,7 @@ import (
 )
 
 func TestStateLeaf_Bytes(t *testing.T) {
-	leaf := StateLeaf{
+	leaf := FlatStateLeaf{
 		StateID:  1,
 		DataHash: utils.RandomHash(),
 		PubKeyID: 2,
@@ -18,7 +18,7 @@ func TestStateLeaf_Bytes(t *testing.T) {
 		Nonce:    models.MakeUint256(5),
 	}
 
-	var decodedLeaf StateLeaf
+	var decodedLeaf FlatStateLeaf
 	_ = decodedLeaf.SetBytes(leaf.Bytes())
 	require.Equal(t, leaf, decodedLeaf)
 }
