@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Install Go dependencies
@@ -71,7 +71,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('/go.sum') }}
           restore-keys: | 
             ${{ runner.os }}-go-
       - name: Setup Node
@@ -121,7 +121,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Setup Node
