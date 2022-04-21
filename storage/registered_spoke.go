@@ -30,7 +30,7 @@ func (s *RegisteredSpokeStorage) AddRegisteredSpoke(registeredSpoke *models.Regi
 func (s *RegisteredSpokeStorage) GetRegisteredSpoke(spokeID models.Uint256) (*models.RegisteredSpoke, error) {
 	var registeredSpoke models.RegisteredSpoke
 	err := s.database.Badger.Get(spokeID, &registeredSpoke)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("registered spoke"))
 	}
 	if err != nil {

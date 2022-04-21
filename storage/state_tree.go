@@ -95,7 +95,7 @@ func (s *StateTree) NextVacantSubtree(subtreeDepth uint8) (*uint32, error) {
 		prevTakenNodeIndex = currentNodeIndex
 		return false, nil
 	})
-	if err == db.ErrIteratorFinished { // We finished without finding any gaps, try to append the subtree at the end.
+	if errors.Is(err, db.ErrIteratorFinished) { // We finished without finding any gaps, try to append the subtree at the end.
 		roundedNodeIndex := roundAndValidateStateTreeSlot(prevTakenNodeIndex+1, StateTreeSize, subtreeWidth)
 		if roundedNodeIndex == nil {
 			return nil, errors.WithStack(NewNoVacantSubtreeError(subtreeDepth))
@@ -175,7 +175,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			}
 			return *currentRootHash == targetRootHash, nil
 		})
-		if err != nil && err != db.ErrIteratorFinished {
+		if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 			return errors.WithStack(err)
 		}
 
@@ -290,7 +290,7 @@ func (s *StateTree) IterateLeaves(action func(stateLeaf *models.StateLeaf) error
 		err = action(stateLeaf.ToModelsStateLeaf())
 		return false, err
 	})
-	if err != nil && err != db.ErrIteratorFinished {
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return err
 	}
 	return nil

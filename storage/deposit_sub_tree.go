@@ -35,7 +35,7 @@ func (s *DepositStorage) GetFirstPendingDepositSubtree() (subtree *models.Pendin
 		}
 		return true, nil
 	})
-	if err == db.ErrIteratorFinished {
+	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
 	return subtree, err

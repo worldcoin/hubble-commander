@@ -56,7 +56,7 @@ func (s *PendingStakeWithdrawalStorage) GetReadyStateWithdrawals(currentBlock ui
 			}
 			return true, nil
 		})
-	if err != nil && err != db.ErrIteratorFinished {
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
 	return stakes, nil

@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	bdg "github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,7 +44,7 @@ func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database
 
 func (d *Database) ExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) error {
 	err := d.unsafeExecuteInTransaction(opts, fn)
-	if err == bdg.ErrConflict {
+	if errors.Is(err, bdg.ErrConflict) {
 		return d.ExecuteInTransaction(opts, fn)
 	}
 	return err

@@ -236,7 +236,7 @@ func (s *TransactionStorage) GetTransactionHashesByBatchIDs(batchIDs ...models.U
 		}
 		return false, nil
 	})
-	if err != nil && err != db.ErrIteratorFinished {
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
 	if len(hashes) == 0 {

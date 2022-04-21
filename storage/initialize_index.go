@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/Worldcoin/hubble-commander/db"
 	bdg "github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
@@ -44,7 +45,7 @@ func indexAlreadyInitialised(database *Database, indexKey []byte) (bool, error) 
 		_, err := txn.Get(indexKey)
 		return err
 	})
-	if err == bdg.ErrKeyNotFound {
+	if errors.Is(err, bdg.ErrKeyNotFound) {
 		return false, nil
 	}
 	if err != nil {

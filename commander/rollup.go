@@ -78,7 +78,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
 	err = validateStateRoot(c.storage)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	err = c.txPool.UpdateMempool()
