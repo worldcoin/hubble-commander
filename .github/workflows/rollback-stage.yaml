@@ -4,7 +4,6 @@ on: [workflow_dispatch]
 jobs:
   rollback-stage:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/master'
     environment: stage
     permissions:
       id-token: write

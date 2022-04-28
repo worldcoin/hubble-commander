@@ -4,7 +4,6 @@ on: [workflow_dispatch]
 jobs:
   rollback-prod:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
     environment: prod
     permissions:
       id-token: write
