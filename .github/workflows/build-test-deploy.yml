@@ -212,12 +212,8 @@ jobs:
           --name ${{ secrets.AWS_STAGE_CLUSTER }}
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Hubble instances
-        run: helm delete -n hubble-commander hubble-commander
       - name: Delete Geth
-        run: helm delete -n hubble-commander geth
-      - name: Delete PVCs
-        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 hubble-storage-hubble-commander-0 hubble-storage-hubble-commander-1 --ignore-not-found=true
+        run: helm delete -n hubble-commander geth || true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -277,12 +273,8 @@ jobs:
           --name ${{ secrets.AWS_STAGE_CLUSTER }}
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Hubble instances
-        run: helm delete -n hubble-commander hubble-commander || true
       - name: Delete Geth
-        run: helm delete -n hubble-commander geth
-      - name: Delete PVCs
-        run: kubectl delete pvc -n hubble-commander geth-data-geth-0 --ignore-not-found=true
+        run: helm delete -n hubble-commander geth || true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
