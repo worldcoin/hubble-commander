@@ -1,4 +1,4 @@
-name: Rollback-prod
+name: Rollback production
 on: [workflow_dispatch]
 
 jobs:

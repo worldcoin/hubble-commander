@@ -1,4 +1,4 @@
-name: Rollback-stage
+name: Rollback stage
 on: [workflow_dispatch]
 
 jobs:
