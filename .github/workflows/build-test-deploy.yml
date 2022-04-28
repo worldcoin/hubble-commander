@@ -213,7 +213,7 @@ jobs:
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Geth
-        run: helm delete -n hubble-commander geth
+        run: helm delete -n hubble-commander geth || true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -274,7 +274,7 @@ jobs:
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Geth
-        run: helm delete -n hubble-commander geth
+        run: helm delete -n hubble-commander geth || true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
