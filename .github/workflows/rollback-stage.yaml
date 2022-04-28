@@ -1,4 +1,4 @@
-name: Rollback
+name: Rollback-stage
 on: [workflow_dispatch]
 
 jobs:
@@ -17,25 +17,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
           role-duration-seconds: 900
       - run: aws eks --region ${{ secrets.AWS_STAGE_REGION }} update-kubeconfig --name ${{ secrets.AWS_STAGE_CLUSTER }}
-      - name: Rollback
-        # 0 means back to previous release
-        run: helm rollback -n "${{ github.event.repository.name }}" "${{ github.event.repository.name }}" 0
-
-  rollback-prod:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    environment: prod
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ secrets.AWS_PROD_REGION }}
-          role-to-assume: ${{ secrets.AWS_PROD_ROLE }}
-          role-duration-seconds: 900
-      - run: aws eks --region ${{ secrets.AWS_PROD_REGION }} update-kubeconfig --name ${{ secrets.AWS_PROD_CLUSTER }}
       - name: Rollback
         # 0 means back to previous release
         run: helm rollback -n "${{ github.event.repository.name }}" "${{ github.event.repository.name }}" 0
