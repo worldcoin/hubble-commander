@@ -214,8 +214,6 @@ jobs:
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Geth
         run: helm delete -n hubble-commander geth
-      - name: Delete PVCs
-        run: kubectl delete pvc -n geth-data-geth-0 --ignore-not-found=true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
@@ -277,8 +275,6 @@ jobs:
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Geth
         run: helm delete -n hubble-commander geth
-      - name: Delete PVCs
-        run: kubectl delete pvc -n geth-data-geth-0 --ignore-not-found=true
       - name: Deploy new Geth
         run: helm upgrade --install geth  ./deploy/geth
           --install --atomic --timeout 60s
