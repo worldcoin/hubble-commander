@@ -6,10 +6,9 @@ makes it difficult to list all the places our behavior under errors has changed 
 error handling was significantly revamped and it is very likely that code which relies on
 specific error codes or messages will need to be changed.
 
-0. For all responses object keys are serialized a little differently; they used to be in
-   `camelCase` but now they are in `TitleCase`. e.g. `latestBatch` is now `LatestBatch`.
-
 1. `hubble_getNetworkInfo`
+  - Capitalization of all keys has changed; all keys used to be in `camelCase` but
+    they are now in `TitleCase`. e.g. `latestBatch` is now `LatestBatch`.
   - The `DeploymentBlock` key has been renamed to `AccountRegistryDeploymentBlock`
   - The `TokenRegistry`, `SpokeRegistry`, `DepositManager`, `WithdrawManager`, and
     `TransactionCount` fields have been added.
