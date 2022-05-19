@@ -2,8 +2,12 @@ API Changes since v0.4
 ==================
 
 This list was created retroactively and is unlikely to be exhaustive. Our architecture
-makes it difficult to list all the places our behavior under errors has changed but it is
-very likely that errors now return different error codes and messages than they used to. 
+makes it difficult to list all the places our behavior under errors has changed but the
+error handling was significantly revamped and it is very likely that code which relies on
+specific error codes or messages will need to be changed.
+
+0. For all responses object keys are serialized a little differently; they used to be in
+   `camelCase` but now they are in `TitleCase`. e.g. `latestBatch` is now `LatestBatch`.
 
 1. `hubble_getNetworkInfo`
   - The `DeploymentBlock` key has been renamed to `AccountRegistryDeploymentBlock`
