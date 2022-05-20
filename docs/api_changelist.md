@@ -21,6 +21,24 @@ specific error codes or messages will need to be changed.
   - There is a new option for the `Type` field: `DEPOSIT`.
 
 4. `hubble_getCommitment`
+  - This used to accept a single parameter, the commitment ID as an integer. Commitment
+    IDs are now objects with a `BatchID` key and an `IndexInBatch` key.
+
+    Here is an example request:
+    ```json
+    {
+        "jsonrpc": "2.0",
+        "method": "hubble_getCommitment",
+        "params": [
+            {
+                "BatchID": "1",
+                "IndexInBatch": 0
+            }
+        ],
+        "id": 1
+    }
+    ```
+
   - errors now return a generic error: 20000
   - The `Commitment` field has been removed and its fields have been inlined.
     - As an example: `.Commitment.ID` is now just `ID.
