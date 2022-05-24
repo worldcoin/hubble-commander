@@ -21,7 +21,7 @@ func (s *Storage) GetStateLeavesByPublicKey(publicKey *models.PublicKey) (stateL
 
 	pubKeyIDs := utils.ValueToInterfaceSlice(accounts, "PubKeyID")
 
-	storedStateLeaves := make([]stored.StateLeaf, 0, 1)
+	storedStateLeaves := make([]stored.FlatStateLeaf, 0, 1)
 	err = s.database.Badger.Find(
 		&storedStateLeaves,
 		bh.Where("PubKeyID").In(pubKeyIDs...).Index("PubKeyID").SortBy("StateID"),
