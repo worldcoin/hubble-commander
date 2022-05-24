@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
@@ -60,7 +61,11 @@ func (d *Database) View(fn func(txn *badger.Txn) error) error {
 	if d.duringTransaction() {
 		return fn(d.txn)
 	}
-	return d.store.Badger().View(fn)
+	err := d.store.Badger().View(fn)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) RawUpdate(fn func(txn *badger.Txn) error) error {

@@ -64,7 +64,7 @@ func (s *DepositStorage) GetFirstPendingDeposits(amount int) ([]models.PendingDe
 		deposits = append(deposits, *deposit)
 		return len(deposits) == amount, nil
 	})
-	if err == db.ErrIteratorFinished {
+	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(ErrRanOutOfPendingDeposits)
 	}
 	if err != nil {

@@ -45,7 +45,7 @@ func (s *CommitmentStorage) GetLatestCommitment() (*models.CommitmentBase, error
 		storedCommitment, err = decodeStoredCommitment(item)
 		return true, err
 	})
-	if err == db.ErrIteratorFinished {
+	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	if err != nil {
@@ -92,7 +92,7 @@ func (s *CommitmentStorage) getStoredCommitmentsByBatchID(batchID models.Uint256
 		storedCommitments = append(storedCommitments, *commitment)
 		return false, nil
 	})
-	if err != nil && err != db.ErrIteratorFinished {
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
 	return storedCommitments, nil
@@ -119,7 +119,7 @@ func getCommitmentIDsByBatchID(txn *Database, batchID models.Uint256) ([]models.
 		ids = append(ids, id)
 		return false, nil
 	})
-	if err != nil && err != db.ErrIteratorFinished {
+	if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
 		return nil, err
 	}
 	return ids, nil

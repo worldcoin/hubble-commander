@@ -186,7 +186,7 @@ func (s *BatchStorage) reverseIterateBatches(filter func(batch *stored.Batch) bo
 		}
 		return filter(&storedBatch), nil
 	})
-	if err == db.ErrIteratorFinished {
+	if errors.Is(err, db.ErrIteratorFinished) {
 		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
