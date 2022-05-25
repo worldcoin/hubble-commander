@@ -270,7 +270,7 @@ jobs:
       - name: Connect to EKS cluster
         run: aws eks update-kubeconfig
           --region ${{ secrets.AWS_STAGE_REGION }}
-          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+          --name crypto-stage-us-east-1
       - name: Delete setup job
         run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
       - name: Delete Geth
@@ -300,7 +300,7 @@ jobs:
       - name: Connect to EKS cluster
         run: aws eks update-kubeconfig
           --region ${{ secrets.AWS_STAGE_REGION }}
-          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+          --name crypto-stage-us-east-1
       - name: Helm install
         run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
           --install --atomic --timeout 60s
