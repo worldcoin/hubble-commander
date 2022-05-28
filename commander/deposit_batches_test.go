@@ -77,7 +77,7 @@ func newClientWithGenesisState(t *testing.T, storage *st.TestStorage) *eth.TestC
 }
 
 func (s *DepositBatchesTestSuite) TearDownTest() {
-	stopCommander(s.cmd)
+	s.cmd.stopWorkersAndWait()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

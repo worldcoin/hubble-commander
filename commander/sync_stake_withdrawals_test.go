@@ -93,7 +93,7 @@ func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesNotSendStakeWithdra
 		"timeout when waiting for StakeWithdrawEvent",
 	)
 
-	stopCommander(s.cmd)
+	s.cmd.stopWorkersAndWait()
 
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
