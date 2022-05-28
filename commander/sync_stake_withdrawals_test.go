@@ -59,7 +59,6 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 
 func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
 	s.cmd.stopWorkersAndWait()
-	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)

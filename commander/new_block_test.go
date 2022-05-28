@@ -66,7 +66,6 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
 	s.cmd.stopWorkersAndWait()
-	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
