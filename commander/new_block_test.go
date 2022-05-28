@@ -280,13 +280,6 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 	require.NoError(t, err)
 }
 
-func stopCommander(cmd *Commander) {
-	if !cmd.isActive() {
-		return
-	}
-	cmd.stopWorkersAndWait()
-}
-
 func TestNewBlockLoopTestSuite(t *testing.T) {
 	suite.Run(t, new(NewBlockLoopTestSuite))
 }
