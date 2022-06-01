@@ -1,4 +1,4 @@
-package HubbleSDK
+package HubbleSDK //nolint:stylecheck
 
 import (
 	"encoding/hex"
