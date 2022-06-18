@@ -19,6 +19,7 @@ func (a *API) GetUserState(id uint32) (*dto.UserStateWithID, error) {
 }
 
 func (a *API) unsafeGetUserState(id uint32) (*dto.UserStateWithID, error) {
+	// span
 	leaf, err := a.storage.StateTree.Leaf(id)
 	if err != nil {
 		return nil, err

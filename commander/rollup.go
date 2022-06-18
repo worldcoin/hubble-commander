@@ -65,6 +65,7 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 }
 
 func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
+	// TODO here start a trace for a rollup iteration
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
@@ -139,7 +140,7 @@ func switchBatchType(batchType *batchtype.BatchType) {
 
 func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore []models.TxError) error {
 	if err.IsLoggable {
-		log.Warnf("%+v", err)
+		log.Warnf("%+v", err) // TODO why warning level ????
 	}
 
 	if errors.Is(err, executor.ErrNotEnoughDeposits) {

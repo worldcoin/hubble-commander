@@ -21,6 +21,7 @@ func (a *API) GetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
 }
 
 func (a *API) unsafeGetBatches(from, to *models.Uint256) ([]dto.Batch, error) {
+	// span
 	batches, err := a.storage.GetBatchesInRange(from, to)
 	if err != nil {
 		return []dto.Batch{}, err

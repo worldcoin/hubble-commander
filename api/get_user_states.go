@@ -20,6 +20,7 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID,
 }
 
 func (a *API) unsafeGetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
+	// span
 	leaves, err := a.storage.GetStateLeavesByPublicKey(publicKey)
 	if err != nil {
 		return nil, err

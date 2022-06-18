@@ -24,6 +24,7 @@ func (a *API) GetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments
 }
 
 func (a *API) unsafeGetBatchByHash(hash common.Hash) (*dto.BatchWithRootAndCommitments, error) {
+	// span
 	batch, err := a.storage.GetBatchByHash(hash)
 	if err != nil {
 		return nil, err

@@ -13,6 +13,7 @@ import (
 type SubmitBatchFunc func() (*types.Transaction, error)
 
 func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+	// span
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
@@ -24,6 +25,7 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 }
 
 func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+	// span
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
@@ -38,6 +40,7 @@ func (c *Client) SubmitMassMigrationsBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
+	// span
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.MMBatchSubmissionGasLimit).

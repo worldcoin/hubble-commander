@@ -114,6 +114,7 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 }
 
 func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
+	// span or level up or level down
 	switch t := tx.Parsed.(type) {
 	case dto.Transfer:
 		return a.handleTransfer(t)

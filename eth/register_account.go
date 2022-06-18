@@ -36,6 +36,7 @@ func (a *AccountManager) RetrieveRegisteredPubKeyID(receipt *types.Receipt) (*ui
 }
 
 func (a *AccountManager) RegisterAccount(publicKey *models.PublicKey) (*types.Transaction, error) {
+	// span
 	tx, err := a.accountRegistry().
 		WithGasLimit(500_000).
 		Register(publicKey.BigInts())

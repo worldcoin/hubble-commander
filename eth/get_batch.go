@@ -22,6 +22,7 @@ func (cb *ContractBatch) ToModelBatch() *models.Batch {
 }
 
 func (c *Client) GetContractBatch(batchID *models.Uint256) (*ContractBatch, error) {
+	// span
 	batch, err := c.Rollup.GetBatch(nil, batchID.ToBig())
 	if err != nil {
 		return nil, err

@@ -13,6 +13,7 @@ func (c *Client) SubmitDeposits(
 	previous *models.CommitmentInclusionProof,
 	proof *models.SubtreeVacancyProof,
 ) (*types.Transaction, error) {
+	// span
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).

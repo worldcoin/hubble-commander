@@ -35,6 +35,7 @@ func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
 }
 
 func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+	// span
 	batchEvents, depositEvents, err := c.getBatchEvents(filters)
 	if err != nil {
 		return nil, err

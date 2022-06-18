@@ -22,6 +22,7 @@ func (a *API) GetNetworkInfo() (*dto.NetworkInfo, error) {
 }
 
 func (a *API) unsafeGetNetworkInfo() (*dto.NetworkInfo, error) {
+	// span
 	networkInfo := dto.NetworkInfo{
 		ChainID:                        a.client.ChainState.ChainID,
 		AccountRegistry:                a.client.ChainState.AccountRegistry,
