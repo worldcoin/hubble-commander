@@ -2,6 +2,10 @@ module github.com/Worldcoin/hubble-commander
 
 go 1.17
 
+// fixes a bug with mremap on arm64 linux, without this we get weird errors from badger
+// which look a lot like database corruption
+replace github.com/dgraph-io/ristretto => github.com/lithp/ristretto v0.1.0-hotfix
+
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
