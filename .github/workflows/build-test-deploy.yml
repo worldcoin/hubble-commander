@@ -172,6 +172,8 @@ jobs:
   build-and-push:
     needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
