@@ -136,9 +136,15 @@ spec:
                   name: application
                   key: HUBBLE_ETHEREUM_RPC_URL
             - name: HUBBLE_ETHEREUM_CHAIN_ID
-              value: "1337"
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_ETHEREUM_CHAIN_ID
             - name: HUBBLE_ETHEREUM_PRIVATE_KEY
-              value: a1f00f84b6717c01fa10741d97fa8cfaeaa86092b92e516f1f5691d51dc5c2cb
+              valueFrom:
+                secretKeyRef:
+                  name: application
+                  key: HUBBLE_ETHEREUM_PRIVATE_KEY
       containers:
         - name: create-chain-spec-config
           image: bitnami/kubectl:latest
