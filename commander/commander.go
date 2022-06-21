@@ -20,6 +20,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/tracing"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -133,6 +134,18 @@ func (c *Commander) Start() (err error) {
 		}
 		return nil
 	})
+
+	if c.cfg.Tracing.Enabled {
+		shutdownTracer, err := tracing.Initialize(c.cfg.Tracing)
+		if err != nil {
+			return err
+		}
+		go func() {
+			<-c.workersContext.Done()
+			shutdownTracer()
+		}()
+	}
+
 	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
 	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })

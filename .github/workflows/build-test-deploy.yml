@@ -172,23 +172,25 @@ jobs:
   build-and-push:
     needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build & push docker image
         id: docker_build
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           push: true
           tags: ${{ env.IMAGE_ID }}
           context: .
-  deploy-stage-wipe-setup:
+  deploy-stage-hubble-instances:
     runs-on: ubuntu-latest
     needs: [ build-and-push ]
     if: github.ref == 'refs/heads/master'
@@ -196,38 +198,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ secrets.AWS_STAGE_REGION }}
-          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
-          role-duration-seconds: 900
-      - name: Connect to EKS cluster
-        run: aws eks update-kubeconfig
-          --region ${{ secrets.AWS_STAGE_REGION }}
-          --name ${{ secrets.AWS_STAGE_CLUSTER }}
-      - name: Delete setup job
-        run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Geth
-        run: helm delete -n hubble-commander geth || true
-      - name: Deploy new Geth
-        run: helm upgrade --install geth  ./deploy/geth
-          --install --atomic --timeout 60s
-          --namespace hubble-commander
-      - name: Deploy contracts
-        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
-  deploy-stage-hubble-instances:
-    runs-on: ubuntu-latest
-    needs: [ deploy-stage-wipe-setup ]
-    if: github.ref == 'refs/heads/master'
-    environment: stage
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -248,42 +218,10 @@ jobs:
           --set image.tag="${{ github.sha }}"
           --set ingress.host=hubble.stage-crypto.worldcoin.dev
           --set environment=stage
-          --set wipeDisk=true
           --set persistentStorage.volumeID=aws://us-east-1a/vol-065fd87c2124454e6
-  deploy-stage-wipe-setup-manual:
-    runs-on: ubuntu-latest
-    needs: [build-and-push]
-    environment: stage-manual
-    permissions:
-      id-token: write
-      contents: read
-      packages: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ secrets.AWS_STAGE_REGION }}
-          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
-          role-duration-seconds: 900
-      - name: Connect to EKS cluster
-        run: aws eks update-kubeconfig
-          --region ${{ secrets.AWS_STAGE_REGION }}
-          --name ${{ secrets.AWS_STAGE_CLUSTER }}
-      - name: Delete setup job
-        run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Geth
-        run: helm delete -n hubble-commander geth || true
-      - name: Deploy new Geth
-        run: helm upgrade --install geth  ./deploy/geth
-          --install --atomic --timeout 60s
-          --namespace hubble-commander
-      - name: Deploy contracts
-        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
   deploy-stage-hubble-instances-manual:
     runs-on: ubuntu-latest
-    needs: [ deploy-stage-wipe-setup-manual ]
+    needs: [ build-and-push ]
     environment: stage-manual
     permissions:
       id-token: write
@@ -303,12 +241,11 @@ jobs:
           --name ${{ secrets.AWS_STAGE_CLUSTER }}
       - name: Helm install
         run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
-          --install --atomic --timeout 60s
+          --install
           --namespace "${{ github.event.repository.name }}"
           --set image.tag="${{ github.sha }}"
           --set ingress.host=hubble.stage-crypto.worldcoin.dev
           --set environment=stage
-          --set wipeDisk=true
           --set persistentStorage.volumeID=aws://us-east-1a/vol-065fd87c2124454e6
   deploy-prod:
     runs-on: ubuntu-latest

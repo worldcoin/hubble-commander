@@ -1,9 +1,15 @@
 package api
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/Worldcoin/hubble-commander/storage"
+	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var getUserStatesAPIErrors = map[error]*APIError{
@@ -20,8 +26,15 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID,
 }
 
 func (a *API) unsafeGetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
+	ctx, span := otel.Tracer("rpc.call").Start(context.Background(), "get_user_states")
+	defer span.End()
+
+	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting leaves for public key: %s", publicKey.String())
+
 	leaves, err := a.storage.GetStateLeavesByPublicKey(publicKey)
 	if err != nil {
+		span.SetAttributes(attribute.String("error", err.Error()))
+		log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
 		return nil, err
 	}
 
