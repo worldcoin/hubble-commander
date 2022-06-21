@@ -30,6 +30,7 @@ func GetConfig() *Config {
 	return &Config{
 		Log:     getLogConfig(),
 		Metrics: getMetricsConfig(),
+		Tracing: getTracingConfig(),
 		Bootstrap: &CommanderBootstrapConfig{
 			Prune:            getBool("bootstrap.prune", false),
 			Migrate:          getBool("bootstrap.migrate", false),
@@ -166,6 +167,16 @@ func getMetricsConfig() *MetricsConfig {
 	return &MetricsConfig{
 		Port:     getString("metrics.port", DefaultMetricsPort),
 		Endpoint: getString("metrics.endpoint", DefaultMetricsEndpoint),
+	}
+}
+
+func getTracingConfig() *TracingConfig {
+	return &TracingConfig{
+		Enabled:     getBool("tracing.enabled", false),
+		ServiceName: getString("tracing.service", "hubble-commander"),
+		Version:     getString("tracing.version", "0.0.0"),
+		Env:         getString("tracing.env", "prod"),
+		Endpoint:    getString("metrics.endpoint", "localhost:4317"),
 	}
 }
 
