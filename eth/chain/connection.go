@@ -34,3 +34,13 @@ type Connection interface {
 	SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error)
 	EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error)
 }
+
+type ManualNonceConnection interface {
+	GetAccount() *bind.TransactOpts
+	GetBackend() Backend
+	GetChainID() models.Uint256
+	GetLatestBlockNumber() (*uint64, error)
+	SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error)
+	EstimateGas(ctx context.Context, msg *ethereum.CallMsg) (uint64, error)
+	BumpNonce()
+}

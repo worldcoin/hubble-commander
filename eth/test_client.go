@@ -2,6 +2,7 @@ package eth
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/eth/deployer/rollup"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -38,7 +39,12 @@ func NewConfiguredTestClient(cfg *rollup.DeploymentConfig, clientCfg *TestClient
 		return nil, err
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(sim, cfg)
+	wrappedConn, err := chain.NewManualNonceConnection(sim)
+	if err != nil {
+		return nil, err
+	}
+
+	contracts, err := rollup.DeployConfiguredRollup(wrappedConn, cfg)
 	if err != nil {
 		return nil, err
 	}

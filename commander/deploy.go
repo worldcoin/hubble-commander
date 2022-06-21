@@ -101,7 +101,8 @@ func deployContractsAndSetupGenesisState(
 		totalGenesisAmount = totalGenesisAmount.Add(&account.State.Balance)
 	}
 
-	contracts, err := rollup.DeployConfiguredRollup(blockchain, &rollup.DeploymentConfig{
+	wrappedConn, err := chain.NewManualNonceConnection(blockchain)
+	contracts, err := rollup.DeployConfiguredRollup(wrappedConn, &rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot:   stateRoot,
 			BlocksToFinalise:   models.NewUint256(uint64(cfg.Bootstrap.BlocksToFinalise)),
