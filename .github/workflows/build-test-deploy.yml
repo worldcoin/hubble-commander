@@ -7,6 +7,28 @@ env:
   IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
 jobs:
+  deploy-contracts:
+    runs-on: ubuntu-latest
+    environment: stage
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_STAGE_REGION }}
+          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
+          role-duration-seconds: 900
+      - name: Connect to EKS cluster
+        run: aws eks update-kubeconfig
+          --region ${{ secrets.AWS_STAGE_REGION }}
+          --name ${{ secrets.AWS_STAGE_CLUSTER }}
+      - name: Deploy contracts
+        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
   lint:
     runs-on: ubuntu-20.04
     steps:
@@ -190,41 +212,9 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_ID }}
           context: .
-  deploy-stage-wipe-setup:
-    runs-on: ubuntu-latest
-    needs: [ build-and-push ]
-    if: github.ref == 'refs/heads/master'
-    environment: stage
-    permissions:
-      id-token: write
-      contents: read
-      packages: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: ${{ secrets.AWS_STAGE_REGION }}
-          role-to-assume: ${{ secrets.AWS_STAGE_ROLE }}
-          role-duration-seconds: 900
-      - name: Connect to EKS cluster
-        run: aws eks update-kubeconfig
-          --region ${{ secrets.AWS_STAGE_REGION }}
-          --name ${{ secrets.AWS_STAGE_CLUSTER }}
-      - name: Delete setup job
-        run: kubectl delete job -n hubble-commander contracts-setup-job --ignore-not-found=true
-      - name: Delete Geth
-        run: helm delete -n hubble-commander geth || true
-      - name: Deploy new Geth
-        run: helm upgrade --install geth  ./deploy/geth
-          --install --atomic --timeout 60s
-          --namespace hubble-commander
-      - name: Deploy contracts
-        run: kubectl apply -n hubble-commander -f ./deploy/contracts-setup-job/clean-setup.yaml
   deploy-stage-hubble-instances:
     runs-on: ubuntu-latest
-    needs: [ deploy-stage-wipe-setup ]
+    needs: [ build-and-push ]
     if: github.ref == 'refs/heads/master'
     environment: stage
     permissions:
