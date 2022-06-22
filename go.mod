@@ -5,11 +5,15 @@ go 1.17
 // fixes a bug with mremap on arm64 linux, without this we get weird errors from badger
 // which look a lot like database corruption
 replace github.com/dgraph-io/ristretto => github.com/lithp/ristretto v0.1.0-hotfix
+// fixes a bug where badger does not garbage collect if you are only updating a single
+// key over and over again
+replace github.com/dgraph-io/badger/v3 => github.com/lithp/badger/v3 v3.2103.2-hotfix
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/go-connections v0.4.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/ethereum/go-ethereum v1.10.8
 	github.com/holiman/uint256 v1.2.0
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
@@ -47,7 +51,6 @@ require (
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect

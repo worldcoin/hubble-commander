@@ -18,6 +18,11 @@ func main() {
 				Action: startCommander,
 			},
 			{
+				Name:   "auditDatabase",
+				Usage:  "which prefixes and consuming the most space?",
+				Action: auditDatabase,
+			},
+			{
 				Name:  "deploy",
 				Usage: "deploy contracts and save chain spec",
 				Flags: []cli.Flag{

@@ -129,6 +129,10 @@ func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storag
 	})
 }
 
+func (s *Storage) TriggerGC() error {
+	return s.database.Badger.TriggerGC()
+}
+
 func (s *Storage) Close() error {
 	return s.database.Close()
 }
