@@ -64,8 +64,6 @@ func deployContractsAndSetupGenesisState(
 		}
 	}
 
-	blockchain.GetAccount().GasLimit = uint64(500_000_000)
-
 	accountTree := deployment.NewTree(st.AccountTreeDepth)
 	for i := range cfg.Bootstrap.GenesisAccounts {
 		account := cfg.Bootstrap.GenesisAccounts[i]
