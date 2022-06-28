@@ -18,7 +18,6 @@ var (
 		DepositManager:                 utils.RandomAddress(),
 		WithdrawManager:                utils.RandomAddress(),
 		Rollup:                         utils.RandomAddress(),
-		SyncedBlock:                    10,
 	}
 )
 

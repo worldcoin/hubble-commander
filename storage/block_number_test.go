@@ -40,13 +40,13 @@ func (s *BlockNumberTestSuite) TestSetLatestBlockNumber() {
 }
 
 func (s *BlockNumberTestSuite) TestGetSyncedBlock() {
-	err := s.storage.SetChainState(&chainState)
+	err := s.storage.SetSyncedBlock(10)
 	s.NoError(err)
 
 	syncedBlock, err := s.storage.GetSyncedBlock()
 	s.NoError(err)
 
-	s.Equal(chainState.SyncedBlock, *syncedBlock)
+	s.Equal(uint64(10), *syncedBlock)
 }
 
 func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
@@ -57,11 +57,8 @@ func (s *BlockNumberTestSuite) TestGetSyncedBlock_NoExistentChainState() {
 }
 
 func (s *BlockNumberTestSuite) TestSetSyncedBlock() {
-	err := s.storage.SetChainState(&chainState)
-	s.NoError(err)
-
 	blockNumber := uint64(450)
-	err = s.storage.SetSyncedBlock(blockNumber)
+	err := s.storage.SetSyncedBlock(blockNumber)
 	s.NoError(err)
 
 	syncedBlock, err := s.storage.GetSyncedBlock()

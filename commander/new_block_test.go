@@ -207,9 +207,11 @@ func (s *NewBlockLoopTestSuite) setAccountsAndChainState() {
 
 func setChainState(t *testing.T, storage *st.TestStorage) {
 	err := storage.SetChainState(&models.ChainState{
-		ChainID:     models.MakeUint256(1337),
-		SyncedBlock: 0,
+		ChainID: models.MakeUint256(1337),
 	})
+	require.NoError(t, err)
+
+	err = storage.SetSyncedBlock(0)
 	require.NoError(t, err)
 }
 
