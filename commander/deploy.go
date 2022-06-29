@@ -102,6 +102,10 @@ func deployContractsAndSetupGenesisState(
 	}
 
 	wrappedConn, err := chain.NewManualNonceConnection(blockchain)
+	if err != nil {
+		return nil, err
+	}
+
 	contracts, err := rollup.DeployConfiguredRollup(wrappedConn, &rollup.DeploymentConfig{
 		Params: rollup.Params{
 			GenesisStateRoot:   stateRoot,

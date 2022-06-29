@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/models"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -43,7 +42,7 @@ func NewManualNonceConnection(inner Connection) (*WrappedManualNonceConnection, 
 		return nil, errors.WithStack(err)
 	}
 
-	return &WrappedManualNonceConnection {
+	return &WrappedManualNonceConnection{
 		inner: inner,
 		nonce: pendingNonce,
 	}, nil
