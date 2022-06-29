@@ -20,6 +20,7 @@ func Initialize(cfg *config.TracingConfig) (func(), error) {
 	log.Infof("Initializing tracing with endpoint %s", cfg.Endpoint)
 
 	ctx := context.Background()
+	//nolint
 	traceExporter, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithTimeout(3*time.Second),
