@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
