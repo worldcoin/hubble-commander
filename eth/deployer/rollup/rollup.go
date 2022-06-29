@@ -94,12 +94,12 @@ type txHelperContracts struct {
 	Create2Transfer        *create2transfer.Create2Transfer
 }
 
-func DeployRollup(c chain.Connection) (*RollupContracts, error) {
+func DeployRollup(c chain.ManualNonceConnection) (*RollupContracts, error) {
 	return DeployConfiguredRollup(c, &DeploymentConfig{})
 }
 
 // nolint:funlen,gocyclo
-func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupContracts, error) {
+func DeployConfiguredRollup(c chain.ManualNonceConnection, cfg *DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&cfg.Params)
 
 	waitForMultipleTxs := chain.CreateWaitForMultipleTxsHelper(c.GetBackend(), cfg.MineTimeout)
@@ -117,17 +117,25 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 
+	// It is possible that this method (and submethods) contains a bug.  We call
+	// BumpNonce() whenever we successfully send a transaction.  We assume that an err
+	// means a transaction was not sent and the nonce of the account does not need to
+	// be incremented.  This might be a bad assumption.
+	c.BumpNonce()
+
 	log.Println("Deploying SpokeRegistry")
 	spokeRegistryAddress, spokeRegistryTx, spokeRegistry, err := spokeregistry.DeploySpokeRegistry(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Deploying BNPairingPrecompileCostEstimator")
 	costEstimatorAddress, costEstimatorDeployTx, costEstimator, err := estimator.DeployCostEstimator(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	_, err = waitForMultipleTxs(*tokenRegistryTx, *spokeRegistryTx, *costEstimatorDeployTx)
 	if err != nil {
@@ -140,6 +148,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Deploying Vault")
 	vaultAddress, vaultTx, vaultContract, err := vault.DeployVault(
@@ -151,6 +160,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	_, err = waitForMultipleTxs(*costEstimatorInitTx, *vaultTx)
 	if err != nil {
@@ -169,6 +179,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	var txHelpers *txHelperContracts
 	withReplacedCostEstimatorAddress(costEstimatorAddress, func() {
@@ -210,6 +221,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	_, err = chain.WaitToBeMined(c.GetBackend(), cfg.MineTimeout, tx)
 	if err != nil {
@@ -222,12 +234,14 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Setting Rollup address in Vault")
 	vaultInitTx, err := vaultContract.SetRollupAddress(c.GetAccount(), rollupAddress)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Deploying WithdrawManager")
 	var (
@@ -243,6 +257,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 			rollupAddress,
 		)
 	})
+	c.BumpNonce()
 
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -258,6 +273,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	_, err = waitForMultipleTxs(
 		*depositManagerInitTx,
@@ -278,6 +294,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 	stageSevenTxs = append(stageSevenTxs, *spokeRegistrationTx)
+	c.BumpNonce()
 
 	log.Println("Registering TestCustomToken in TokenRegistry")
 	registerTokenTx, err := tokenRegistry.RegisterToken(c.GetAccount(), exampleTokenAddress)
@@ -285,6 +302,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 		return nil, errors.WithStack(err)
 	}
 	stageSevenTxs = append(stageSevenTxs, *registerTokenTx)
+	c.BumpNonce()
 
 	if cfg.TotalGenesisAmount != nil {
 		log.Println("Transferring genesis funds to vault")
@@ -294,6 +312,7 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 			return nil, errors.WithStack(err)
 		}
 		stageSevenTxs = append(stageSevenTxs, *transferGenesisFundsTx)
+		c.BumpNonce()
 	}
 
 	_, err = waitForMultipleTxs(stageSevenTxs...)
@@ -333,24 +352,27 @@ func DeployConfiguredRollup(c chain.Connection, cfg *DeploymentConfig) (*RollupC
 	}, nil
 }
 
-func deployTransactionHelperContracts(c chain.Connection) (*txHelperContracts, error) {
+func deployTransactionHelperContracts(c chain.ManualNonceConnection) (*txHelperContracts, error) {
 	log.Println("Deploying Transfer")
 	transferAddress, transferTx, transferContract, err := transfer.DeployTransfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Deploying MassMigration")
 	massMigrationAddress, massMigrationTx, massMigration, err := massmigration.DeployMassMigration(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	log.Println("Deploying Create2Transfer")
 	create2TransferAddress, create2TransferTx, create2Transfer, err := create2transfer.DeployCreate2Transfer(c.GetAccount(), c.GetBackend())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	c.BumpNonce()
 
 	return &txHelperContracts{
 		TransferAddress:        transferAddress,
@@ -388,13 +410,14 @@ func fillWithDefaults(params *Params) {
 	}
 }
 
-func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout time.Duration) error {
+func deployMissing(dependencies *Dependencies, c chain.ManualNonceConnection, mineTimeout time.Duration) error {
 	if dependencies.Chooser == nil {
 		proofOfAuthorityAddress, _, err := deployer.DeployProofOfAuthority(c, mineTimeout, []common.Address{c.GetAccount().From})
 		if err != nil {
 			return err
 		}
 		dependencies.Chooser = proofOfAuthorityAddress
+		c.BumpNonce()
 	}
 	if dependencies.AccountRegistry == nil {
 		tree := deployment.NewTree(storage.AccountTreeDepth)
@@ -407,6 +430,7 @@ func deployMissing(dependencies *Dependencies, c chain.Connection, mineTimeout t
 			return err
 		}
 		dependencies.AccountRegistry = accountRegistryAddress
+		c.BumpNonce()
 	}
 	return nil
 }
