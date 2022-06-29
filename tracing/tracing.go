@@ -46,7 +46,7 @@ func Initialize(cfg *config.TracingConfig) (func(), error) {
 	return shutdownFunc, nil
 }
 
-func newResource(service string, version string, env string) *resource.Resource {
+func newResource(service, version, env string) *resource.Resource {
 	r, _ := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(

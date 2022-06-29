@@ -41,7 +41,7 @@ func NewManualNonceConnection(inner Connection) (*WrappedManualNonceConnection, 
 		return nil, errors.WithStack(err)
 	}
 
-	return &WrappedManualNonceConnection {
+	return &WrappedManualNonceConnection{
 		inner: inner,
 		nonce: pendingNonce,
 	}, nil
