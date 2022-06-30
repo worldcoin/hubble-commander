@@ -23,6 +23,54 @@ func main() {
 				Action: auditDatabase,
 			},
 			{
+				Name:   "newWallet",
+				Usage:  "create a new BLS wallet",
+				Action: newWallet,
+			},
+			{
+				Name:   "sendTransaction",
+				Usage:  "send tokens from one hubble account to another",
+				Action: sendTransaction,
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "rpcurl",
+						Usage: "location of the hubble commander",
+						Value: "http://localhost:8080",
+					},
+					&cli.StringFlag{
+						Name:  "type",
+						Usage: "either TRANSFER or CREATE2TRANSFER",
+						Value: "TRANSFER",
+					},
+					&cli.StringFlag{
+						Name:     "privateKey",
+						Aliases:  []string{"privatekey"},
+						Usage:    "The hex-encoded private key",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "from",
+						Usage:    "which wallet is sending",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "to",
+						Usage:    "which wallet is receiving",
+						Required: true,
+					},
+					&cli.Uint64Flag{
+						Name:     "amount",
+						Usage:    "how much to send",
+						Required: true,
+					},
+					&cli.Uint64Flag{
+						Name:     "fee",
+						Usage:    "how much to pay the sequencer",
+						Required: true,
+					},
+				},
+			},
+			{
 				Name:  "deploy",
 				Usage: "deploy contracts and save chain spec",
 				Flags: []cli.Flag{
