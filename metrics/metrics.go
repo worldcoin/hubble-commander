@@ -22,6 +22,9 @@ type CommanderMetrics struct {
 
 	// Blockchain
 	BlockchainCallDuration *prometheus.HistogramVec
+
+	// Mempool
+	MempoolSize prometheus.Gauge
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
@@ -33,6 +36,13 @@ func NewCommanderMetrics() *CommanderMetrics {
 	commanderMetrics.initializeRollupLoopMetrics()
 	commanderMetrics.initializeSyncingMetrics()
 	commanderMetrics.initializeBlockchainMetrics()
+
+	commanderMetrics.MempoolSize = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name: "mempool_size",
+		Help: "number of pending transactions",
+	})
+	commanderMetrics.registry.MustRegister(commanderMetrics.MempoolSize)
 
 	return commanderMetrics
 }

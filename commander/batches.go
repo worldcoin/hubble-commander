@@ -13,11 +13,15 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 
-func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
+func (c *Commander) syncBatches(ctx context.Context, startBlock, endBlock uint64) error {
+	_, span := otel.Tracer("rollupLoop").Start(ctx, "syncBatches")
+	defer span.End()
+
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 

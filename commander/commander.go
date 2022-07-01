@@ -108,7 +108,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txPool, err = mempool.NewTxPool(c.storage)
+	c.txPool, err = mempool.NewTxPoolWithGauge(c.storage, c.metrics.MempoolSize)
 	if err != nil {
 		return err
 	}

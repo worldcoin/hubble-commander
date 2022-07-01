@@ -71,6 +71,11 @@ func main() {
 				},
 			},
 			{
+				Name:   "benchmark",
+				Usage:  "run transactions against a commander",
+				Action: benchmarkHubble,
+			},
+			{
 				Name:  "deploy",
 				Usage: "deploy contracts and save chain spec",
 				Flags: []cli.Flag{

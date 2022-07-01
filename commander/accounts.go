@@ -15,15 +15,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves between the database and the contract")
 
 // TODO extract event filtering logic to eth.Client
 
-func (c *Commander) syncAccounts(start, end uint64) error {
+func (c *Commander) syncAccounts(ctx context.Context, start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
+
+	_, span := otel.Tracer("rollupLoop").Start(ctx, "syncAccounts")
+	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
 		newAccountsSingle, err = c.syncSingleAccounts(start, end)

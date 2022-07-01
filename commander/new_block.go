@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	stdErrors "errors"
 	"math/big"
 	"time"
@@ -11,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -205,32 +208,39 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
 
-	err := c.syncAccounts(startBlock, endBlock)
+	ctx, span := otel.Tracer("rollupLoop").Start(context.Background(), "syncRange")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("startBlock", int(startBlock)),
+		attribute.Int("endBlock", int(endBlock)),
+	)
+
+	err := c.syncAccounts(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncTokens(startBlock, endBlock)
+	err = c.syncTokens(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncSpokes(startBlock, endBlock)
+	err = c.syncSpokes(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncDeposits(startBlock, endBlock)
+	err = c.syncDeposits(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncBatches(startBlock, endBlock)
+	err = c.syncBatches(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncStakeWithdrawals(startBlock, endBlock)
+	err = c.syncStakeWithdrawals(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
