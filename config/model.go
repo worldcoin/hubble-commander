@@ -16,6 +16,7 @@ const (
 type Config struct {
 	Log       *LogConfig
 	Metrics   *MetricsConfig
+	Tracing   *TracingConfig
 	Bootstrap *CommanderBootstrapConfig
 	Rollup    *RollupConfig
 	API       *APIConfig
@@ -32,6 +33,14 @@ type LogConfig struct {
 type MetricsConfig struct {
 	Port     string
 	Endpoint string
+}
+
+type TracingConfig struct {
+	Endpoint    string
+	ServiceName string
+	Version     string
+	Env         string
+	Enabled     bool
 }
 
 type DeployerConfig struct {

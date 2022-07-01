@@ -70,11 +70,19 @@ spec:
                   fieldPath: status.hostIP
             - name: DD_ENV
               value: {{ .Values.environment }}
+            - name: HUBBLE_TRACING_ENV
+              value: {{ .Values.environment }}
             - name: DD_VERSION
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['pod-template-hash']
+            - name: HUBBLE_TRACING_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['pod-template-hash']
             - name: DD_SERVICE
+              value: {{ .Chart.Name }}
+            - name: HUBBLE_TRACING_SERVICE
               value: {{ .Chart.Name }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
@@ -97,6 +105,10 @@ spec:
               value: /volume/data
             - name: HUBBLE_LOG_LEVEL
               value: debug
+            - name: HUBBLE_TRACING_ENABLED
+              value: "true"
+            - name: HUBBLE_TRACING_ENDPOINT
+              value: "$(DD_AGENT_HOST):4317"
             - name: HUBBLE_API_AUTHENTICATION_KEY
               valueFrom:
                 secretKeyRef:
