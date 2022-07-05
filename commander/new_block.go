@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -208,7 +207,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
 
-	ctx, span := otel.Tracer("rollupLoop").Start(context.Background(), "syncRange")
+	ctx, span := rollupTracer.Start(context.Background(), "syncRange")
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int("startBlock", int(startBlock)),

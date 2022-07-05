@@ -14,12 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	bh "github.com/timshannon/badgerhold/v4"
-	"go.opentelemetry.io/otel"
 )
 
 func (c *Commander) syncSpokes(ctx context.Context, startBlock, endBlock uint64) error {
-
-	_, span := otel.Tracer("rollupLoop").Start(ctx, "syncSpokes")
+	_, span := rollupTracer.Start(ctx, "syncSpokes")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() error {

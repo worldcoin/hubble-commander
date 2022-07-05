@@ -10,13 +10,12 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
 )
 
 func (c *Commander) syncDeposits(ctx context.Context, start, end uint64) error {
 	var depositSubtrees []models.PendingDepositSubtree
 
-	_, span := otel.Tracer("rollupLoop").Start(ctx, "syncDeposits")
+	_, span := rollupTracer.Start(ctx, "syncDeposits")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() error {

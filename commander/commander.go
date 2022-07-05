@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
+	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -33,6 +34,8 @@ var (
 	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
 	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
+
+	rollupTracer = otel.Tracer("rollupLoop")
 )
 
 type Commander struct {

@@ -10,12 +10,11 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
 )
 
 func (c *Commander) syncStakeWithdrawals(ctx context.Context, startBlock, endBlock uint64) error {
 
-	_, span := otel.Tracer("rollupLoop").Start(ctx, "syncStakeWithdrawls")
+	_, span := rollupTracer.Start(ctx, "syncStakeWithdrawls")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
