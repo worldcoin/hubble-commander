@@ -372,7 +372,6 @@ type ChainState struct {
     TokenRegistry                  common.Address
     DepositManager                 common.Address
     Rollup                         common.Address
-    SyncedBlock                    uint64
     GenesisAccounts                []PopulatedGenesisAccount
 }
 

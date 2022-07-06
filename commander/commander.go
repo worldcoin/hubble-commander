@@ -308,6 +308,12 @@ func setGenesisStateAndCreateClient(
 		return nil, err
 	}
 
+	initialSyncedBlock := getInitialSyncedBlock(chainState.AccountRegistryDeploymentBlock)
+	err = storage.SetSyncedBlock(initialSyncedBlock)
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := createClientFromChainState(blockchain, chainState, cfg, commanderMetrics, txsChannels)
 	if err != nil {
 		return nil, err
@@ -346,7 +352,6 @@ func fetchChainStateFromRemoteNode(url string) (*models.ChainState, error) {
 		WithdrawManager:                info.WithdrawManager,
 		Rollup:                         info.Rollup,
 		GenesisAccounts:                genesisAccounts,
-		SyncedBlock:                    getInitialSyncedBlock(info.AccountRegistryDeploymentBlock),
 	}, nil
 }
 

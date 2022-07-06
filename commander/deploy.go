@@ -122,6 +122,12 @@ func deployContractsAndSetupGenesisState(
 		return nil, err
 	}
 
+	initialSyncedBlock := getInitialSyncedBlock(*accountRegistryDeploymentBlock)
+	err = storage.SetSyncedBlock(initialSyncedBlock)
+	if err != nil {
+		return nil, err
+	}
+
 	chainState = &models.ChainState{
 		ChainID:                        blockchain.GetChainID(),
 		AccountRegistry:                *accountRegistryAddress,
@@ -132,7 +138,6 @@ func deployContractsAndSetupGenesisState(
 		WithdrawManager:                contracts.WithdrawManagerAddress,
 		Rollup:                         contracts.RollupAddress,
 		GenesisAccounts:                cfg.Bootstrap.GenesisAccounts,
-		SyncedBlock:                    getInitialSyncedBlock(*accountRegistryDeploymentBlock),
 	}
 
 	return chainState, nil

@@ -16,7 +16,6 @@ var testChainState = ChainState{
 	DepositManager:                 utils.RandomAddress(),
 	WithdrawManager:                utils.RandomAddress(),
 	Rollup:                         utils.RandomAddress(),
-	SyncedBlock:                    8001,
 	GenesisAccounts: GenesisAccounts{
 		{
 			PublicKey: PublicKey{1, 2, 0, 5, 4},

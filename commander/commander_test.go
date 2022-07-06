@@ -57,7 +57,10 @@ func (s *CommanderTestSuite) TestStart_SetsCorrectSyncedBlock() {
 	err := s.cmd.Start()
 	s.NoError(err)
 
-	s.Equal(s.cmd.client.ChainState.AccountRegistryDeploymentBlock-1, s.cmd.client.ChainState.SyncedBlock)
+	blk, err := s.cmd.storage.GetSyncedBlock()
+	s.NoError(err)
+
+	s.Equal(s.cmd.client.ChainState.AccountRegistryDeploymentBlock-1, *blk)
 
 	err = s.cmd.Stop()
 	s.NoError(err)

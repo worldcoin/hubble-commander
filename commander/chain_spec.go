@@ -59,6 +59,5 @@ func newChainStateFromChainSpec(chainSpec *models.ChainSpec) *models.ChainState 
 		WithdrawManager:                chainSpec.WithdrawManager,
 		Rollup:                         chainSpec.Rollup,
 		GenesisAccounts:                chainSpec.GenesisAccounts,
-		SyncedBlock:                    getInitialSyncedBlock(chainSpec.AccountRegistryDeploymentBlock),
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const baseChainStateDataLength = 168
+const baseChainStateDataLength = 160
 
 type ChainState struct {
 	ChainID                        Uint256
@@ -17,7 +17,6 @@ type ChainState struct {
 	DepositManager                 common.Address
 	WithdrawManager                common.Address
 	Rollup                         common.Address
-	SyncedBlock                    uint64
 	GenesisAccounts                GenesisAccounts `json:"-"`
 }
 
@@ -75,7 +74,6 @@ func (s *ChainState) Bytes() []byte {
 	copy(b[100:120], s.DepositManager.Bytes())
 	copy(b[120:140], s.WithdrawManager.Bytes())
 	copy(b[140:160], s.Rollup.Bytes())
-	binary.BigEndian.PutUint64(b[160:168], s.SyncedBlock)
 
 	for i := range s.GenesisAccounts {
 		start := baseChainStateDataLength + i*populatedGenesisAccountByteSize
@@ -102,7 +100,6 @@ func (s *ChainState) SetBytes(data []byte) error {
 	s.DepositManager.SetBytes(data[100:120])
 	s.WithdrawManager.SetBytes(data[120:140])
 	s.Rollup.SetBytes(data[140:160])
-	s.SyncedBlock = binary.BigEndian.Uint64(data[160:168])
 
 	genesisAccountsCount := (dataLength - baseChainStateDataLength) / populatedGenesisAccountByteSize
 
