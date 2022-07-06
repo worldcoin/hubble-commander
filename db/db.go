@@ -47,6 +47,23 @@ func (d *Database) Close() error {
 	return d.store.Close()
 }
 
+func (d *Database) TriggerGC() error {
+	// We're garbage collecting the value log files, which are a combination WAL and
+	// mechamism for keeping large values out of the LSM levels which are frequently
+	// copied between files as levels are compacted. Each value log file is a
+	// collection of values, some number of which refer to inaccessible versions which
+	// should be garbage collected. The garbage collector works at the granularity of
+	// individual files, in order to garbage collect a file it reads all the records
+	// and creates a new file without all the discardable ones. The float we're
+	// passing in is the proportion of the records in a value log file which must be
+	// discardable for that value log file to be rewritten. e.g. if we pass 1.0 then
+	// value log files will be rewritten if they contain even a single discardable
+	// record. 0.5 is the recommended value and it seems fine, worth revisiting this
+	// number if we end up using too much disk space or if we're doing too much disk
+	// I/O.
+	return d.store.Badger().RunValueLogGC(0.5)
+}
+
 func (d *Database) duringTransaction() bool {
 	return d.txn != nil
 }

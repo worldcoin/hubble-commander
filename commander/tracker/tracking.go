@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -52,6 +53,7 @@ func (t *Tracker) startCheckingTxs(ctx context.Context) error {
 			return nil
 		default:
 			if t.isEmptyTxsQueue() {
+				time.Sleep(100 * time.Millisecond)
 				continue
 			}
 			tx := t.firstTx()
