@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-func extractMethod(r *http.Request) *string {
+func extractMethod(r *http.Request) string {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("API: failed to read request body: %s", err)
@@ -23,21 +23,19 @@ func extractMethod(r *http.Request) *string {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	var decoded payload
-
 	err = json.Unmarshal(body, &decoded)
 	if err != nil {
-		var unknown = "hubble_unknown"
-		return &unknown
+		return "hubble_unknown"
 	}
 
-	return &decoded.Method
+	return decoded.Method
 }
 
 func OpenTelemetryHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		method := extractMethod(r)
 
-		ctx, span := otel.Tracer("rpc.call").Start(r.Context(), *method)
+		ctx, span := otel.Tracer("rpc.call").Start(r.Context(), method)
 		defer span.End()
 		r = r.WithContext(ctx)
 
