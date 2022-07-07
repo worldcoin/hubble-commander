@@ -2,8 +2,6 @@ package main
 
 import (
 	"crypto/rand"
-	"encoding/hex"
-	"strings"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
@@ -14,62 +12,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/ybbus/jsonrpc/v2"
 )
-
-func getNetworkInfo(client jsonrpc.RPCClient) *dto.NetworkInfo {
-	resp, err := client.Call("hubble_getNetworkInfo")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var networkInfo dto.NetworkInfo
-	err = resp.GetObject(&networkInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &networkInfo
-}
-
-func getUserState(client jsonrpc.RPCClient, treeIndex uint32) *dto.UserStateWithID {
-	resp, err := client.Call("hubble_getUserState", treeIndex)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var userState dto.UserStateWithID
-	err = resp.GetObject(&userState)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &userState
-}
-
-func getPublicKey(client jsonrpc.RPCClient, treeIndex uint32) *models.PublicKey {
-	resp, err := client.Call("hubble_getPublicKeyByStateID", treeIndex)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var publicKey models.PublicKey
-	err = resp.GetObject(&publicKey)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &publicKey
-}
-
-func decodeHexString(asString string) []byte {
-	asString = strings.TrimPrefix(asString, "0x")
-
-	privateKey, err := hex.DecodeString(asString)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return privateKey
-}
 
 func randomPublicKey() *models.PublicKey {
 	privateKey := make([]byte, 32)
