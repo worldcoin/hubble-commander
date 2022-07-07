@@ -26,9 +26,8 @@ func extractMethod(r *http.Request) *string {
 
 	err = json.Unmarshal(body, &decoded)
 	if err != nil {
-		// TODO: this might be a batch request, we should try to interpret those
-		log.Warn("received JSON request without interpretable method, not creating a span")
-		return nil
+		var unknown = "hubble_unknown"
+		return &unknown
 	}
 
 	return &decoded.Method
@@ -37,11 +36,6 @@ func extractMethod(r *http.Request) *string {
 func OpenTelemetryHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		method := extractMethod(r)
-
-		if method == nil {
-			next.ServeHTTP(w, r)
-			return
-		}
 
 		ctx, span := otel.Tracer("rpc.call").Start(r.Context(), *method)
 		defer span.End()
@@ -64,7 +58,7 @@ func OpenTelemetryHandler(next http.Handler) http.Handler {
 		if err != nil {
 			// TODO: should we annotate the span with an error here, to make
 			//       these easier to search for?
-			log.WithFields(o11y.TraceFields(ctx)).Warn("received uninterpretable JSON response, not annotating span with status")
+			log.WithFields(o11y.TraceFields(ctx)).WithError(err).Warn("received uninterpretable JSON response, not annotating span with status")
 			return
 		}
 
