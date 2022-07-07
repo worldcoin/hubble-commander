@@ -48,7 +48,7 @@ func OpenTelemetryHandler(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		intercepted := make([]byte, 0)
-		w = httpsnoop.Wrap(w, httpsnoop.Hooks {
+		w = httpsnoop.Wrap(w, httpsnoop.Hooks{
 			Write: func(original httpsnoop.WriteFunc) httpsnoop.WriteFunc {
 				return func(b []byte) (int, error) {
 					intercepted = append(intercepted, b...)
@@ -64,7 +64,7 @@ func OpenTelemetryHandler(next http.Handler) http.Handler {
 		if err != nil {
 			// TODO: should we annotate the span with an error here, to make
 			//       these easier to search for?
-			log.WithFields(o11y.TraceFields(ctx)).Warn("received uninterpretable JSON reponse, not annotating span with status")
+			log.WithFields(o11y.TraceFields(ctx)).Warn("received uninterpretable JSON response, not annotating span with status")
 			return
 		}
 

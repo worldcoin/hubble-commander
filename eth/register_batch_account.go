@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -8,6 +9,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 const (
@@ -38,6 +41,11 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
 
+	_, span := clientTracer.Start(context.Background(), "AccountRegistry.RegisterBatchAccount")
+	defer span.End()
+
+	span.SetAttributes(attribute.Int("publicKeysLen", len(publicKeys)))
+
 	var pubKeys [accountBatchSize][4]*big.Int
 	for i := range publicKeys {
 		pubKeys[i] = publicKeys[i].BigInts()
@@ -47,8 +55,15 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 		WithGasLimit(a.batchAccountRegistrationGasLimit).
 		RegisterBatch(pubKeys)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 		return nil, errors.WithStack(err)
 	}
+
+	if tx != nil {
+		span.SetAttributes(attribute.String("txHash", tx.Hash().Hex()))
+	}
+	span.SetStatus(codes.Ok, "")
 
 	return tx, nil
 }

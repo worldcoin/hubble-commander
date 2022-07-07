@@ -3,8 +3,8 @@ package commander
 import (
 	"context"
 	"fmt"
-	"sync"
 	"runtime/debug"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )

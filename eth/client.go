@@ -18,7 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
 )
+
+var clientTracer = otel.Tracer("eth.client")
 
 type NewClientParams struct {
 	ChainState      models.ChainState

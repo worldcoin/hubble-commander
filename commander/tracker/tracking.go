@@ -73,6 +73,10 @@ func (t *Tracker) waitUntilTxMinedAndCheckForFail(tx *types.Transaction) error {
 		return errors.WithStack(err)
 	}
 
+	if t.gasUsedCounter != nil {
+		t.gasUsedCounter.Add(float64(receipt.GasUsed))
+	}
+
 	if receipt.Status == 1 {
 		return nil
 	}

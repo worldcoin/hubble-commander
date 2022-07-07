@@ -4,12 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"strings"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	// "github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/ybbus/jsonrpc/v2"
@@ -87,7 +87,6 @@ func randomPublicKey() *models.PublicKey {
 }
 
 func sendC2T(client jsonrpc.RPCClient, wallet *bls.Wallet, from uint32, nonce models.Uint256) string {
-
 	toPublicKey := randomPublicKey()
 	amount := models.MakeUint256(1)
 	fee := models.MakeUint256(1)
@@ -95,10 +94,10 @@ func sendC2T(client jsonrpc.RPCClient, wallet *bls.Wallet, from uint32, nonce mo
 	transfer := dto.Create2Transfer{
 		FromStateID: &from,
 		ToPublicKey: toPublicKey,
-		Amount: &amount,
-		Nonce: &nonce,
-		Fee: &fee,
-		Signature: nil,
+		Amount:      &amount,
+		Nonce:       &nonce,
+		Fee:         &fee,
+		Signature:   nil,
 	}
 
 	create2Transfer, err := api.SignCreate2Transfer(wallet, transfer)
@@ -131,8 +130,6 @@ func sendC2T(client jsonrpc.RPCClient, wallet *bls.Wallet, from uint32, nonce mo
 func benchmarkHubble(ctx *cli.Context) error {
 	// must be run against a state which has funds in this account
 	//  the genesis I deployed earlier has already funded this account
-
-	// pubkey = 0x29ad502a36f23029080830e662664db363359108d8b7a76a050fbdfcbba8b1702dc760cdb105fe9158bf05c8ed10a7813b527d873ffdaa2bcf51d8829790616516c0b3b6269c7467edae7fcc7da918a64a2668d9b94f0f9c0e62d8b5102f52bd0364a0199d181427a02af1d10462a8462c68739a96edefd3c866c2693afa2a43
 
 	// privateKey
 	privateKey := decodeHexString("4c7c9af5de8b5e5a5877d706d8a41faaf84aa3dd6e98b4a07d4eb7e44daf9c78")
@@ -179,9 +176,9 @@ func benchmarkHubble(ctx *cli.Context) error {
 	}
 
 	nonce := &userState.Nonce
-	i := 0
 
-	for {
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
 		txHash := sendC2T(client, wallet, fromStateID, *nonce)
 		log.Infof(
 			"Sent C2T txHash=%s", txHash,
@@ -189,12 +186,6 @@ func benchmarkHubble(ctx *cli.Context) error {
 
 		one := models.MakeUint256(1)
 		nonce = nonce.Add(&one)
-
-		i += 1
-
-		if i > 2000 {
-			break
-		}
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -48,7 +49,7 @@ func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	err = s.cmd.syncTokens(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 
 	syncedToken, err := s.cmd.storage.RegisteredTokenStorage.GetRegisteredToken(models.MakeUint256(0))
@@ -60,9 +61,9 @@ func (s *RegisteredTokensTestSuite) TestSyncSingleToken() {
 func (s *RegisteredTokensTestSuite) TestSyncSingleToken_CanSyncTheSameBlocksTwice() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	err = s.cmd.syncTokens(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
-	err = s.cmd.syncTokens(0, *latestBlockNumber)
+	err = s.cmd.syncTokens(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 }
 

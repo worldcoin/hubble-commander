@@ -101,7 +101,12 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txsTracker, err = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
+	c.txsTracker, err = tracker.NewTrackerWithCounter(
+		c.client,
+		c.txsTrackingChannels.SentTxs,
+		c.txsTrackingChannels.Requests,
+		c.metrics.BlockchainGasSpend,
+	)
 	if err != nil {
 		return err
 	}

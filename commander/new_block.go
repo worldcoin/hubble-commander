@@ -26,6 +26,7 @@ func (c *Commander) newBlockLoop() error {
 		return err
 	}
 	log.WithFields(log.Fields{"latestBlockNumber": *latestBlockNumber}).Debug("Starting newBlockLoop")
+	c.metrics.LatestBlockNumber.Set(float64(*latestBlockNumber))
 
 	blocks := make(chan *types.Header, 5)
 	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
@@ -174,6 +175,7 @@ func (c *Commander) updateLatestBlockNumber() (*uint64, error) {
 		return nil, err
 	}
 	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	c.metrics.LatestBlockNumber.Set(float64(*latestBlockNumber))
 	return latestBlockNumber, nil
 }
 
@@ -192,6 +194,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, err
 	}
 
+	c.metrics.SyncedBlockNumber.Set(float64(endBlock))
 	err = c.storage.SetSyncedBlock(endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)

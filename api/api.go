@@ -16,10 +16,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 )
-
-var rpcTracer = otel.Tracer("rpc.call")
 
 type API struct {
 	cfg                     *config.APIConfig
