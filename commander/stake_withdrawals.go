@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -10,7 +12,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func (c *Commander) syncStakeWithdrawals(startBlock, endBlock uint64) error {
+func (c *Commander) syncStakeWithdrawals(ctx context.Context, startBlock, endBlock uint64) error {
+	_, span := rollupTracer.Start(ctx, "syncStakeWithdrawls")
+	defer span.End()
+
 	duration, err := metrics.MeasureDuration(func() (err error) {
 		err = c.unmeasuredSyncStakeWithdrawals(startBlock, endBlock)
 		return err

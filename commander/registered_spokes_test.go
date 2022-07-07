@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -49,7 +50,7 @@ func (s *RegisteredSpokesTestSuite) TestSyncSingleSpoke() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncSpokes(0, *latestBlockNumber)
+	err = s.cmd.syncSpokes(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 
 	syncedSpoke, err := s.cmd.storage.RegisteredSpokeStorage.GetRegisteredSpoke(registeredSpoke.ID)
@@ -63,9 +64,9 @@ func (s *RegisteredSpokesTestSuite) TestSyncSingleSpoke_CanSyncTheSameBlocksTwic
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncSpokes(0, *latestBlockNumber)
+	err = s.cmd.syncSpokes(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
-	err = s.cmd.syncSpokes(0, *latestBlockNumber)
+	err = s.cmd.syncSpokes(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 }
 

@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type IterationCallback func(tx models.GenericTransaction) error
@@ -30,6 +31,8 @@ type txCounts map[txtype.TransactionType]int
 type Mempool struct {
 	buckets  map[uint32]*txBucket
 	txCounts txCounts
+
+	sizeGauge prometheus.Gauge
 }
 
 type TxMempool struct {
@@ -87,9 +90,22 @@ func beginTransaction(m someMempool) (*TxController, *TxMempool) {
 
 func NewMempool() *Mempool {
 	return &Mempool{
-		buckets:  map[uint32]*txBucket{},
-		txCounts: make(txCounts),
+		buckets:   map[uint32]*txBucket{},
+		txCounts:  make(txCounts),
+		sizeGauge: nil,
 	}
+}
+
+func (m *Mempool) setGauge() {
+	if m.sizeGauge == nil {
+		return
+	}
+
+	size := 0
+	for _, v := range m.txCounts {
+		size += v
+	}
+	m.sizeGauge.Set(float64(size))
 }
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
@@ -326,10 +342,12 @@ func (m *Mempool) getTxCounts() *txCounts {
 
 func (m *Mempool) setTxCounts(counts *txCounts) {
 	m.txCounts = *counts
+	m.setGauge()
 }
 
 func (m *Mempool) changeTxCount(txType txtype.TransactionType, diff int) {
 	m.txCounts[txType] += diff
+	m.setGauge()
 }
 
 func (m *Mempool) TxCount(txType txtype.TransactionType) int {

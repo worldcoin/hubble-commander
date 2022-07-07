@@ -1,11 +1,14 @@
 package eth
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func (c *Client) SubmitDeposits(
@@ -13,6 +16,13 @@ func (c *Client) SubmitDeposits(
 	previous *models.CommitmentInclusionProof,
 	proof *models.SubtreeVacancyProof,
 ) (*types.Transaction, error) {
+	_, span := clientTracer.Start(context.Background(), "Rollup.SubmitDeposits")
+	defer span.End()
+
+	if batchID != nil {
+		span.SetAttributes(attribute.String("batchID", batchID.String()))
+	}
+
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.DepositBatchSubmissionGasLimit).
@@ -22,8 +32,14 @@ func (c *Client) SubmitDeposits(
 			*subtreeVacancyProofToCalldata(proof),
 		)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
 		return nil, err
 	}
+	if tx != nil {
+		span.SetAttributes(attribute.String("txHash", tx.Hash().Hex()))
+	}
+	span.SetStatus(codes.Ok, "")
 	return tx, nil
 }
 

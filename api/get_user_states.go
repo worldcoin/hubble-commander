@@ -8,16 +8,16 @@ import (
 	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/Worldcoin/hubble-commander/storage"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var getUserStatesAPIErrors = map[error]*APIError{
 	storage.AnyNotFoundError: NewAPIError(99003, "user states not found"),
 }
 
-func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
-	batch, err := a.unsafeGetUserStates(publicKey)
+func (a *API) GetUserStates(ctx context.Context, publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
+	batch, err := a.unsafeGetUserStates(ctx, publicKey)
 	if err != nil {
 		return nil, sanitizeError(err, getUserStatesAPIErrors)
 	}
@@ -25,9 +25,9 @@ func (a *API) GetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID,
 	return batch, nil
 }
 
-func (a *API) unsafeGetUserStates(publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
-	ctx, span := otel.Tracer("rpc.call").Start(context.Background(), "get_user_states")
-	defer span.End()
+func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("publicKey", publicKey.String()))
 
 	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting leaves for public key: %s", publicKey.String())
 

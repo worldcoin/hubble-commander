@@ -21,9 +21,12 @@ var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves 
 
 // TODO extract event filtering logic to eth.Client
 
-func (c *Commander) syncAccounts(start, end uint64) error {
+func (c *Commander) syncAccounts(ctx context.Context, start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
+
+	_, span := rollupTracer.Start(ctx, "syncAccounts")
+	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
 		newAccountsSingle, err = c.syncSingleAccounts(start, end)

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -65,7 +66,7 @@ func (s *StakeWithdrawalsTestSuite) TestSyncStakeWithdrawals() {
 	s.NoError(err)
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	err = s.cmd.syncStakeWithdrawals(0, *latestBlockNumber)
+	err = s.cmd.syncStakeWithdrawals(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 
 	err = s.cmd.storage.RemovePendingStakeWithdrawal(batchID)

@@ -53,12 +53,20 @@ func NewServer(
 		return nil, err
 	}
 
-	mux := http.NewServeMux()
-	if log.IsLevelEnabled(log.DebugLevel) {
-		mux.Handle("/", middleware.Logger(server, commanderMetrics))
-	} else {
-		mux.Handle("/", middleware.DefaultHandler(server, commanderMetrics))
+	var handler http.Handler = server
+
+	if cfg.Tracing.Enabled {
+		handler = middleware.OpenTelemetryHandler(handler)
 	}
+
+	if log.IsLevelEnabled(log.DebugLevel) {
+		handler = middleware.Logger(handler, commanderMetrics)
+	} else {
+		handler = middleware.DefaultHandler(handler, commanderMetrics)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
 	mux.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	}))

@@ -17,7 +17,10 @@ import (
 
 var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 
-func (c *Commander) syncBatches(startBlock, endBlock uint64) error {
+func (c *Commander) syncBatches(ctx context.Context, startBlock, endBlock uint64) error {
+	_, span := rollupTracer.Start(ctx, "syncBatches")
+	defer span.End()
+
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/contracts/spokeregistry"
@@ -15,7 +16,10 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (c *Commander) syncSpokes(startBlock, endBlock uint64) error {
+func (c *Commander) syncSpokes(ctx context.Context, startBlock, endBlock uint64) error {
+	_, span := rollupTracer.Start(ctx, "syncSpokes")
+	defer span.End()
+
 	duration, err := metrics.MeasureDuration(func() error {
 		return c.unmeasuredSyncSpokes(startBlock, endBlock)
 	})

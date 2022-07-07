@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+//nolint:funlen
 func main() {
 	app := &cli.App{
 		Name:  "hubble-commander",
@@ -69,6 +70,11 @@ func main() {
 						Required: true,
 					},
 				},
+			},
+			{
+				Name:   "benchmark",
+				Usage:  "run transactions against a commander",
+				Action: benchmarkHubble,
 			},
 			{
 				Name:  "deploy",

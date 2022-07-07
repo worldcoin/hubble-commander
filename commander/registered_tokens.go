@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
@@ -15,8 +16,11 @@ import (
 	bh "github.com/timshannon/badgerhold/v4"
 )
 
-func (c *Commander) syncTokens(startBlock, endBlock uint64) error {
+func (c *Commander) syncTokens(ctx context.Context, startBlock, endBlock uint64) error {
 	var newTokensCount *int
+
+	_, span := rollupTracer.Start(ctx, "syncTokens")
+	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
 		newTokensCount, err = c.unmeasuredSyncTokens(startBlock, endBlock)

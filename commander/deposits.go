@@ -1,6 +1,8 @@
 package commander
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/contracts/depositmanager"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -10,8 +12,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func (c *Commander) syncDeposits(start, end uint64) error {
+func (c *Commander) syncDeposits(ctx context.Context, start, end uint64) error {
 	var depositSubtrees []models.PendingDepositSubtree
+
+	_, span := rollupTracer.Start(ctx, "syncDeposits")
+	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() error {
 		var err error

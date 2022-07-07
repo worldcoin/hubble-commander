@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	stdErrors "errors"
 	"math/big"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -24,6 +26,7 @@ func (c *Commander) newBlockLoop() error {
 		return err
 	}
 	log.WithFields(log.Fields{"latestBlockNumber": *latestBlockNumber}).Debug("Starting newBlockLoop")
+	c.metrics.LatestBlockNumber.Set(float64(*latestBlockNumber))
 
 	blocks := make(chan *types.Header, 5)
 	blocks <- &types.Header{Number: new(big.Int).SetUint64(*latestBlockNumber)}
@@ -172,6 +175,7 @@ func (c *Commander) updateLatestBlockNumber() (*uint64, error) {
 		return nil, err
 	}
 	c.storage.SetLatestBlockNumber(uint32(*latestBlockNumber))
+	c.metrics.LatestBlockNumber.Set(float64(*latestBlockNumber))
 	return latestBlockNumber, nil
 }
 
@@ -190,6 +194,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 		return nil, err
 	}
 
+	c.metrics.SyncedBlockNumber.Set(float64(endBlock))
 	err = c.storage.SetSyncedBlock(endBlock)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -205,32 +210,39 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
 
-	err := c.syncAccounts(startBlock, endBlock)
+	ctx, span := rollupTracer.Start(context.Background(), "syncRange")
+	defer span.End()
+	span.SetAttributes(
+		attribute.Int("startBlock", int(startBlock)),
+		attribute.Int("endBlock", int(endBlock)),
+	)
+
+	err := c.syncAccounts(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncTokens(startBlock, endBlock)
+	err = c.syncTokens(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncSpokes(startBlock, endBlock)
+	err = c.syncSpokes(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncDeposits(startBlock, endBlock)
+	err = c.syncDeposits(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncBatches(startBlock, endBlock)
+	err = c.syncBatches(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = c.syncStakeWithdrawals(startBlock, endBlock)
+	err = c.syncStakeWithdrawals(ctx, startBlock, endBlock)
 	if err != nil {
 		return errors.WithStack(err)
 	}

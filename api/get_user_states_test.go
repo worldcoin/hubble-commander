@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
@@ -83,7 +84,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates() {
 		s.NoError(err)
 	}
 
-	userStates, err := s.api.GetUserStates(&accounts[0].PublicKey)
+	userStates, err := s.api.GetUserStates(context.Background(), &accounts[0].PublicKey)
 	s.NoError(err)
 
 	s.Len(userStates, 3)

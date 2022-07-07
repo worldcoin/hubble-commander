@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -11,24 +9,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
-	_, span := otel.Tracer("rpc.call").Start(context.Background(), "handle_transfer")
-	defer span.End()
-
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
 		a.countRejectedTx(txtype.Transfer)
-		span.SetAttributes(attribute.String("error", err.Error()))
 		return nil, err
 	}
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
 		a.countRejectedTx(txtype.Transfer)
-		span.SetAttributes(attribute.String("error", err.Error()))
 		return nil, vErr
 	}
 
@@ -43,11 +34,9 @@ func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
 
 	err = a.storage.AddTransaction(transfer)
 	if errors.Is(err, bh.ErrKeyExists) {
-		span.SetAttributes(attribute.String("error", err.Error()))
 		return a.updateDuplicatedTransaction(transfer)
 	}
 	if err != nil {
-		span.SetAttributes(attribute.String("error", err.Error()))
 		return nil, err
 	}
 

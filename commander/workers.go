@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -36,6 +37,7 @@ func (w *workers) startWorker(name string, fn func() error) {
 			}
 			if err != nil {
 				log.Errorf("%s worker failed with: %+v", name, err)
+				log.Errorf("stacktrace from failure: %s", debug.Stack())
 				w.stopWorkersContext()
 			}
 			w.workersWaitGroup.Done()

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -61,7 +62,7 @@ func (s *DepositsTestSuite) TestSyncDeposits() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	err = s.cmd.syncDeposits(0, *latestBlockNumber)
+	err = s.cmd.syncDeposits(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 
 	subtree, err := s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(1))
@@ -87,7 +88,7 @@ func (s *DepositsTestSuite) TestSyncDeposits_TwoSubtrees() {
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
 
-	err = s.cmd.syncDeposits(0, *latestBlockNumber)
+	err = s.cmd.syncDeposits(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 
 	firstSubtree, err := s.cmd.storage.GetPendingDepositSubtree(models.MakeUint256(1))

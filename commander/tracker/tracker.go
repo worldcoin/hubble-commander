@@ -5,6 +5,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Tracker struct {
@@ -15,6 +16,27 @@ type Tracker struct {
 	client       *eth.Client
 	txsChan      chan *types.Transaction
 	requestsChan chan *eth.TxSendingRequest
+
+	gasUsedCounter prometheus.Counter
+}
+
+func NewTrackerWithCounter(
+	client *eth.Client,
+	txsChan chan *types.Transaction,
+	requestsChan chan *eth.TxSendingRequest,
+	gasUsedCounter prometheus.Counter,
+) (*Tracker, error) {
+	tracker, err := NewTracker(
+		client,
+		txsChan,
+		requestsChan,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tracker.gasUsedCounter = gasUsedCounter
+	return tracker, nil
 }
 
 func NewTracker(client *eth.Client, txsChan chan *types.Transaction, requestsChan chan *eth.TxSendingRequest) (*Tracker, error) {

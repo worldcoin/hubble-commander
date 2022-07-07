@@ -9,6 +9,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,6 +28,20 @@ type txPool struct {
 	incomingTxsChan chan models.GenericTransaction
 
 	mutex sync.Mutex
+}
+
+func NewTxPoolWithGauge(storage *st.Storage, sizeGauge prometheus.Gauge) (*txPool, error) {
+	txPool, err := NewTxPool(storage)
+	if err != nil {
+		return txPool, err
+	}
+
+	if sizeGauge != nil {
+		sizeGauge.Set(0)
+	}
+
+	txPool.mempool.sizeGauge = sizeGauge
+	return txPool, nil
 }
 
 func NewTxPool(storage *st.Storage) (*txPool, error) {

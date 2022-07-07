@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v2"
+	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -33,6 +34,8 @@ var (
 	errInconsistentDBChainID     = NewInconsistentChainIDError("database")
 	errInconsistentFileChainID   = NewInconsistentChainIDError("chain spec file")
 	errInconsistentRemoteChainID = NewInconsistentChainIDError("fetched chain state")
+
+	rollupTracer = otel.Tracer("rollupLoop")
 )
 
 type Commander struct {
@@ -98,7 +101,12 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txsTracker, err = tracker.NewTracker(c.client, c.txsTrackingChannels.SentTxs, c.txsTrackingChannels.Requests)
+	c.txsTracker, err = tracker.NewTrackerWithCounter(
+		c.client,
+		c.txsTrackingChannels.SentTxs,
+		c.txsTrackingChannels.Requests,
+		c.metrics.BlockchainGasSpend,
+	)
 	if err != nil {
 		return err
 	}
@@ -108,7 +116,7 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txPool, err = mempool.NewTxPool(c.storage)
+	c.txPool, err = mempool.NewTxPoolWithGauge(c.storage, c.metrics.MempoolSize)
 	if err != nil {
 		return err
 	}
