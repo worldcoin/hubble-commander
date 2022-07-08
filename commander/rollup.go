@@ -8,9 +8,12 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func (c *Commander) manageRollupLoop(isProposer bool) {
@@ -65,17 +68,27 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 }
 
 func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
+	ctx, span := rollupTracer.Start(ctx, "rollup.iteration")
+	defer span.End()
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
 	err = c.unsafeRollupLoopIteration(ctx, currentBatchType)
+	if err != nil {
+		span.RecordError(err)
+	}
 	if errors.Is(err, executor.ErrNotEnoughDeposits) {
-		return c.unsafeRollupLoopIteration(ctx, currentBatchType)
+		err = c.unsafeRollupLoopIteration(ctx, currentBatchType)
+		if err != nil {
+			span.RecordError(err)
+		}
+		return err
 	}
 	return err
 }
 
 func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
+	span := trace.SpanFromContext(ctx)
 	err = validateStateRoot(c.storage)
 	if err != nil {
 		return err
@@ -90,6 +103,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
+	span.SetAttributes(attribute.String("batch_type", currentBatchType.String()))
 
 	var (
 		batch            *models.Batch
@@ -102,6 +116,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
+		span.RecordError(err)
 		rollupCtx.Rollback(&err)
 		return c.handleRollupError(rollupError, rollupCtx.GetErrorsToStore())
 	}
@@ -113,7 +128,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
 	})
 
-	logNewBatch(batch, *commitmentsCount, duration)
+	logNewBatch(ctx, batch, *commitmentsCount, duration)
 
 	err = rollupCtx.Commit()
 	if err != nil {
@@ -149,8 +164,8 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 	return c.txPool.RemoveFailedTxs(errorsToStore)
 }
 
-func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {
-	log.Printf(
+func logNewBatch(ctx context.Context, batch *models.Batch, commitmentsCount int, duration *time.Duration) {
+	log.WithFields(o11y.TraceFields(ctx)).Infof(
 		"Submitted a %s batch with %d commitment(s) on chain in %s. Batch ID: %d. Transaction hash: %v",
 		batch.Type.String(),
 		commitmentsCount,
