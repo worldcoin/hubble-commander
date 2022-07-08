@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-func extractMethod(r *http.Request) *string {
+func extractMethod(r *http.Request) string {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("API: failed to read request body: %s", err)
@@ -23,27 +23,19 @@ func extractMethod(r *http.Request) *string {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	var decoded payload
-
 	err = json.Unmarshal(body, &decoded)
 	if err != nil {
-		// TODO: this might be a batch request, we should try to interpret those
-		log.Warn("received JSON request without interpretable method, not creating a span")
-		return nil
+		return "hubble_unknown"
 	}
 
-	return &decoded.Method
+	return decoded.Method
 }
 
 func OpenTelemetryHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		method := extractMethod(r)
 
-		if method == nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		ctx, span := otel.Tracer("rpc.call").Start(r.Context(), *method)
+		ctx, span := otel.Tracer("rpc.call").Start(r.Context(), method)
 		defer span.End()
 		r = r.WithContext(ctx)
 
@@ -64,7 +56,7 @@ func OpenTelemetryHandler(next http.Handler) http.Handler {
 		if err != nil {
 			// TODO: should we annotate the span with an error here, to make
 			//       these easier to search for?
-			log.WithFields(o11y.TraceFields(ctx)).Warn("received uninterpretable JSON response, not annotating span with status")
+			log.WithFields(o11y.TraceFields(ctx)).WithError(err).Warn("received uninterpretable JSON response, not annotating span with status")
 			return
 		}
 
