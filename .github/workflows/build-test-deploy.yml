@@ -250,7 +250,6 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     needs: [ build-and-push, e2e-tests ]
-    if: github.ref == 'refs/heads/master'
     environment: prod
     permissions:
       id-token: write
