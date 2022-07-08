@@ -169,7 +169,7 @@ func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *model
 	)
 	defer depositsCtx.Rollback(nil)
 
-	batch, _, err := depositsCtx.CreateAndSubmitBatch()
+	batch, _, err := depositsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

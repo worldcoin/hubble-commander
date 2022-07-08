@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -167,13 +168,13 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
 		s.NoError(err)
 
-		commitments, err := txsCtx.CreateCommitments()
+		commitments, err := txsCtx.CreateCommitments(context.Background())
 		s.NoError(err)
 		s.Len(commitments, 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, commitments)
+		err = txsCtx.SubmitBatch(context.Background(), batch, commitments)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 	})

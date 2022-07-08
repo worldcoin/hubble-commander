@@ -32,13 +32,22 @@ func (c *Client) rollup() *rollupSessionBuilder {
 			Contract:     c.Rollup.Rollup,
 			TransactOpts: *c.Blockchain.GetAccount(),
 		},
-		contract: c.Rollup.Contract,
+		contract:   c.Rollup.Contract,
 		attributes: make([]attribute.KeyValue, 0),
-		ctx: context.Background(),
+		ctx:        context.Background(),
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
-		return c.packAndRequest(builder.ctx, &builder.contract, "Rollup", builder.attributes, &builder.TransactOpts, shouldTrackTx, method, data...)
+		return c.packAndRequest(
+			builder.ctx,
+			&builder.contract,
+			"Rollup",
+			builder.attributes,
+			&builder.TransactOpts,
+			shouldTrackTx,
+			method,
+			data...,
+		)
 	}
 
 	return &builder
@@ -177,9 +186,9 @@ func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 			Contract:     a.AccountRegistry.AccountRegistry,
 			TransactOpts: *a.Blockchain.GetAccount(),
 		},
-		contract: a.AccountRegistry.Contract,
+		contract:   a.AccountRegistry.Contract,
 		attributes: make([]attribute.KeyValue, 0),
-		ctx: context.Background(),
+		ctx:        context.Background(),
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {

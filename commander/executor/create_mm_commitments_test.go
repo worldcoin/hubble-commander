@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -43,7 +44,7 @@ func (s *MMCommitmentsTestSuite) TestCreateCommitments_ReturnsCorrectMetaAndWith
 
 	withdrawRoot := s.generateWithdrawRoot(massMigrations)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments, 1)

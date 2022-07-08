@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -496,7 +497,7 @@ func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *m
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	err = s.cmd.storage.AddCommitment(commitments[0].ToCommitment())
@@ -564,13 +565,13 @@ func submitInvalidTxsBatch(
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
 	modifier(storage, commitments[0].ToTxCommitmentWithTxs())
 
-	err = txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	return pendingBatch

@@ -118,7 +118,6 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
 	})
 
-	// time.Sleep(20*time.Second)
 	logNewBatch(batch, *commitmentsCount, duration)
 
 	err = func() error {

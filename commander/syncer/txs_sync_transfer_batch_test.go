@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -53,7 +54,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		s.addTx(txs[i])
 	}
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 2)
 	accountRoots := make([]common.Hash, len(commitments))
@@ -65,7 +66,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_TwoBatches() {
 		commitments[i].ToTxCommitmentWithTxs().ID.BatchID = pendingBatch.ID
 		commitments[i].ToTxCommitmentWithTxs().ID.IndexInBatch = 0
 
-		err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{commitments[i]})
+		err = s.txsCtx.SubmitBatch(context.Background(), pendingBatch, []models.CommitmentWithTxs{commitments[i]})
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 
@@ -166,7 +167,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() 
 	batch, commitments := s.createBatch(&tx2)
 	commitments[0].ToTxCommitmentWithTxs().PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -219,7 +220,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_NotValidBLSSignature() {
 	pendingBatch, commitments := s.createBatch(&tx)
 	commitments[0].ToTxCommitmentWithTxs().CombinedSignature = models.Signature{1, 2, 3}
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -303,7 +304,7 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_AddsSyncedTxsAsBatched() {
 		s.NoError(err)
 	}
 
-	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch()
+	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 	s.client.Backend.Commit()
 
@@ -378,7 +379,7 @@ func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *mo
 	commitment := commitments[0].ToTxCommitmentWithTxs()
 	commitments[0].ToTxCommitmentWithTxs().Transactions = bytes.Repeat(commitment.Transactions, 2)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

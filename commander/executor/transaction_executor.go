@@ -98,7 +98,11 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) SubmitBatch(ctx context.Context, batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (e *TransferExecutor) SubmitBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return e.client.SubmitTransfersBatch(batchID, commitments)
 }
 
@@ -193,7 +197,11 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
-func (e *C2TExecutor) SubmitBatch(ctx context.Context, batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (e *C2TExecutor) SubmitBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return e.client.SubmitCreate2TransfersBatch(ctx, batchID, commitments)
 }
 
@@ -281,7 +289,7 @@ func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitment
 }
 
 func (e *MassMigrationExecutor) SubmitBatch(
-	context context.Context,
+	ctx context.Context,
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {

@@ -149,13 +149,13 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
 	modifier(commitments)
 
-	err = txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -176,7 +176,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	)
 	defer txsCtx.Rollback(nil)
 
-	batch, _, err := txsCtx.CreateAndSubmitBatch()
+	batch, _, err := txsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

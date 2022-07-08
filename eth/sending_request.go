@@ -19,7 +19,7 @@ type TxSendingRequest struct {
 	ResultTxChan  chan SendResponse
 
 	// for creating spans
-	ctx    context.Context
+	ctx context.Context
 }
 
 type SendResponse struct {

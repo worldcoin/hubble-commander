@@ -82,7 +82,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMinTxsPerCommitme
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
@@ -100,7 +100,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_WithMoreThanMinTxsPer
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
@@ -136,7 +136,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitment
 	preRoot, err := s.txsCtx.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 3)
 	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, s.maxTxBytesInCommitment)
@@ -162,7 +162,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 
 	s.preparePendingTransfers(0)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 
@@ -184,7 +184,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorWhenThere
 
 	s.preparePendingTransfers(2)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 }
@@ -197,7 +197,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitme
 	s.NoError(err)
 
 	expectedTxsLength := encoder.TransferLength * int(transfersCount)
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
@@ -212,7 +212,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresCorrectCommitme
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsManyCommitmentsAsSpecifiedInConfig() {
 	s.preparePendingTransfers(5)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 }
@@ -220,7 +220,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CreatesMaximallyAsMan
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsIncludedInCommitment() {
 	transfers := s.preparePendingTransfers(4)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -240,7 +240,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx()
 
 	s.initTxs(validTxs.AppendOne(nonceTooHighTx))
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -268,7 +268,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitme
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 }
@@ -287,7 +287,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReadyTransactionSkips
 	}
 	s.initTxs(models.TransferArray{validTransfer})
 
-	batchData, err := s.txsCtx.CreateCommitments()
+	batchData, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.NotNil(batchData)
 }
@@ -302,7 +302,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
 	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 }
@@ -314,7 +314,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	invalidTransfer := testutils.MakeTransfer(1, 1234, 0, 100)
 	s.initTxs(models.TransferArray{invalidTransfer})
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 	s.Len(s.txsCtx.txErrorsToStore, 1)
@@ -335,7 +335,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWh
 	preStateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 
@@ -369,7 +369,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 	)
 	initTxs(s.Assertions, tempTxsCtx, validTransfers[:2])
 
-	commitments, err := tempTxsCtx.CreateCommitments()
+	commitments, err := tempTxsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -386,7 +386,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 
 	s.initTxs(validTransfers.AppendOne(&invalidTransfer))
 
-	commitments, err = s.txsCtx.CreateCommitments()
+	commitments, err = s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -407,7 +407,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 
 	s.initTxs(models.TransferArray{transfer, higherFeeTransfer})
 
-	_, err := s.txsCtx.CreateCommitments()
+	_, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 
 	minedHigherFeeTransfer, err := s.storage.GetTransfer(higherFeeTransfer.Hash)

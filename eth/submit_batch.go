@@ -26,7 +26,11 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 	return tx, nil
 }
 
-func (c *Client) SubmitCreate2TransfersBatch(ctx context.Context, batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (c *Client) SubmitCreate2TransfersBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).

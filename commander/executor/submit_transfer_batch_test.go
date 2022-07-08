@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -26,7 +27,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_SubmitsCommitmentsOnChain
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
+	err = s.txsCtx.SubmitBatch(context.Background(), pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -43,7 +44,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_StoresPendingBatchRecord(
 	commitment := baseCommitment
 	commitment.ID.BatchID = pendingBatch.ID
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, []models.CommitmentWithTxs{&commitment})
+	err = s.txsCtx.SubmitBatch(context.Background(), pendingBatch, []models.CommitmentWithTxs{&commitment})
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
@@ -60,7 +61,7 @@ func (s *SubmitTransferBatchTestSuite) TestSubmitBatch_AddsCommitments() {
 	s.NoError(err)
 	commitments := getTxCommitments(2, pendingBatch.ID, batchtype.Transfer)
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	batch, err := s.storage.GetBatch(models.MakeUint256(1))
