@@ -45,6 +45,7 @@ func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database
 func (d *Database) ExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) error {
 	err := d.unsafeExecuteInTransaction(opts, fn)
 	if errors.Is(err, bdg.ErrConflict) {
+		log.Debug("ExecuteInTransaction transaction conflicted, trying again")
 		return d.ExecuteInTransaction(opts, fn)
 	}
 	return err

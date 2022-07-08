@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (c *Commander) manageRollupLoop(isProposer bool) {
@@ -76,6 +77,9 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 }
 
 func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
+	spanCtx, span := rollupTracer.Start(ctx, "unsafeRollupLoopIteration")
+	defer span.End()
+
 	err = validateStateRoot(c.storage)
 	if err != nil {
 		return err
@@ -86,17 +90,18 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 
 	switchBatchType(currentBatchType)
+	span.SetAttributes(attribute.String("batchType", currentBatchType.String()))
 
 	var (
 		batch            *models.Batch
 		commitmentsCount *int
 	)
 	duration, err := metrics.MeasureDuration(func() error {
-		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch()
+		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch(spanCtx)
 		return err
 	})
 
@@ -113,9 +118,15 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		"type": metrics.BatchTypeToMetricsBatchType(batch.Type),
 	})
 
+	// time.Sleep(20*time.Second)
 	logNewBatch(batch, *commitmentsCount, duration)
 
-	err = rollupCtx.Commit()
+	err = func() error {
+		_, span := rollupTracer.Start(spanCtx, "rollupCtx.commit")
+		defer span.End()
+
+		return rollupCtx.Commit()
+	}()
 	if err != nil {
 		return err
 	}

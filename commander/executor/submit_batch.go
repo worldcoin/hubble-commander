@@ -1,19 +1,25 @@
 package executor
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/models"
+	"go.opentelemetry.io/otel"
 )
 
 var ErrRollupContextCanceled = NewLoggableRollupError("rollup context canceled")
 
-func (c *TxsContext) SubmitBatch(batch *models.Batch, commitments []models.CommitmentWithTxs) error {
+func (c *TxsContext) SubmitBatch(ctx context.Context, batch *models.Batch, commitments []models.CommitmentWithTxs) error {
+	spanCtx, span := otel.Tracer("txsContext").Start(ctx, "SubmitBatch")
+	defer span.End()
+
 	select {
 	case <-c.ctx.Done():
 		return ErrRollupContextCanceled
 	default:
 	}
 
-	tx, err := c.Executor.SubmitBatch(&batch.ID, commitments)
+	tx, err := c.Executor.SubmitBatch(spanCtx, &batch.ID, commitments)
 	if err != nil {
 		return err
 	}

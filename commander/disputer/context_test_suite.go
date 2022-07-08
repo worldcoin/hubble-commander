@@ -1,6 +1,8 @@
 package disputer
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
@@ -139,7 +141,7 @@ func (s *testSuiteWithContexts) rollback() {
 func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *models.Batch {
 	s.addTxs(models.MakeGenericArray(tx))
 
-	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch()
+	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

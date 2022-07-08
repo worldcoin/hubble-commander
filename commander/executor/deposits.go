@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -10,7 +12,7 @@ import (
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
 
-func (c *DepositsContext) CreateAndSubmitBatch() (*models.Batch, *int, error) {
+func (c *DepositsContext) CreateAndSubmitBatch(ctx context.Context) (*models.Batch, *int, error) {
 	batch, err := c.NewPendingBatch(batchtype.Deposit)
 	if err != nil {
 		return nil, nil, err

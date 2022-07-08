@@ -12,12 +12,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
 	ErrIncompleteBlockRangeSync = stdErrors.New("syncing of a block range was stopped prematurely")
 	ErrRollbackInProgress       = stdErrors.New("rollback is in progress")
+
+	newBlockTracer = otel.Tracer("newBlockLoop")
 )
 
 func (c *Commander) newBlockLoop() error {
@@ -210,7 +213,7 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	logSyncedBlocks(startBlock, endBlock)
 
-	ctx, span := rollupTracer.Start(context.Background(), "syncRange")
+	ctx, span := newBlockTracer.Start(context.Background(), "syncRange")
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int("startBlock", int(startBlock)),

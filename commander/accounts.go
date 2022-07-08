@@ -25,7 +25,7 @@ func (c *Commander) syncAccounts(ctx context.Context, start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
 
-	_, span := rollupTracer.Start(ctx, "syncAccounts")
+	_, span := newBlockTracer.Start(ctx, "syncAccounts")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {

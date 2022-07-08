@@ -74,7 +74,7 @@ func (c *RPCConnection) GetLatestBlockNumber() (*uint64, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ref.Uint64(blockNumber), nil
+	return ref.Uint64(blockNumber-10), nil
 }
 
 func (c *RPCConnection) SubscribeNewHead(ch chan<- *types.Header) (ethereum.Subscription, error) {

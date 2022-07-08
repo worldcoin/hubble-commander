@@ -19,7 +19,7 @@ import (
 func (c *Commander) syncTokens(ctx context.Context, startBlock, endBlock uint64) error {
 	var newTokensCount *int
 
-	_, span := rollupTracer.Start(ctx, "syncTokens")
+	_, span := newBlockTracer.Start(ctx, "syncTokens")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {

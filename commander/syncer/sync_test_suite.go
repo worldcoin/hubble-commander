@@ -1,6 +1,8 @@
 package syncer
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
 	"github.com/Worldcoin/hubble-commander/config"
@@ -140,7 +142,7 @@ func (s *syncTestSuite) getAccountTreeRoot() common.Hash {
 func (s *syncTestSuite) submitBatch(tx models.GenericTransaction) []models.CommitmentWithTxs {
 	pendingBatch, commitments := s.createBatch(tx)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -153,7 +155,7 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 

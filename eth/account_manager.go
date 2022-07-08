@@ -1,6 +1,7 @@
 package eth
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type AccountManager struct {
@@ -42,13 +44,25 @@ func NewAccountManager(blockchain chain.Connection, params *AccountManagerParams
 }
 
 func (a *AccountManager) packAndRequest(
+	ctx context.Context,
 	contract *Contract,
+	attributes []attribute.KeyValue,
 	opts *bind.TransactOpts,
 	shouldTrackTx bool,
 	method string,
 	data ...interface{},
 ) (*types.Transaction, error) {
-	return packAndRequest(a.txsChannels, contract, opts, shouldTrackTx, method, data...)
+	return packAndRequest(
+		ctx,
+		a.txsChannels,
+		contract,
+		"AccountManager",
+		attributes,
+		opts,
+		shouldTrackTx,
+		method,
+		data...,
+	)
 }
 
 type AccountManagerParams struct {

@@ -45,7 +45,7 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return storedLeaf.ToModelsStateLeaf(), nil
 }
