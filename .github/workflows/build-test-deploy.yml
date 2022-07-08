@@ -270,6 +270,6 @@ jobs:
           --name ${{ secrets.AWS_PROD_CLUSTER }}
       - name: Helm install
         run: helm upgrade "${{ github.event.repository.name }}" ./deploy/hubble
-          --install --atomic --timeout 120s
+          --install
           --namespace "${{ github.event.repository.name }}"
           --set image.tag="${{ github.sha }}"
