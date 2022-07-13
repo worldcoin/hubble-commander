@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,7 +28,7 @@ func (c *Client) DisputeSignatureTransfer(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}
@@ -52,7 +53,7 @@ func (c *Client) DisputeSignatureCreate2Transfer(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}
@@ -77,7 +78,7 @@ func (c *Client) DisputeSignatureMassMigration(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}

@@ -190,6 +190,11 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	startBlock := *syncedBlock + 1
 	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
+	log.WithFields(log.Fields{
+		"startBlock":  startBlock,
+		"endBlock":    endBlock,
+		"latestBlock": latestBlockNumber,
+	}).Info("syncing forward")
 	duration, err := metrics.MeasureDuration(func() error {
 		return c.syncRange(startBlock, endBlock)
 	})
@@ -211,14 +216,15 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 }
 
 func (c *Commander) syncRange(startBlock, endBlock uint64) error {
-	logSyncedBlocks(startBlock, endBlock)
-
 	ctx, span := newBlockTracer.Start(context.Background(), "syncRange")
 	defer span.End()
 	span.SetAttributes(
 		attribute.Int("hubble.startBlock", int(startBlock)),
 		attribute.Int("hubble.endBlock", int(endBlock)),
 	)
+
+	// TODO: each of these errors.WithStack calls ought to be unnecessary, because
+	//       these methods should return errors which are already wrapped.
 
 	err := c.syncAccounts(ctx, startBlock, endBlock)
 	if err != nil {
@@ -269,14 +275,6 @@ func (c *Commander) withdrawRemainingStakes(currentBlock uint64) error {
 		}
 	}
 	return nil
-}
-
-func logSyncedBlocks(startBlock, endBlock uint64) {
-	if startBlock == endBlock {
-		log.Printf("Syncing block %d", startBlock)
-	} else {
-		log.Printf("Syncing blocks from %d to %d", startBlock, endBlock)
-	}
 }
 
 func min(x, y uint64) uint64 {

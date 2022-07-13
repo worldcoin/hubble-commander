@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/result"
@@ -52,8 +51,6 @@ func (s *TxsBatchesTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txPool, err = mempool.NewTxPool(s.storage.Storage)
-	s.NoError(err)
 
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, s.cfg.Rollup)
 	s.txsCtx, err = executor.NewTestTxsContext(executionCtx, batchtype.Transfer)
@@ -419,6 +416,9 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenA
 	s.Equal(result.InvalidTokenAmount, getDisputeResult(s.Assertions, s.client))
 }
 
+// TODO: what is this test testing? It claims to confirm we can send to
+//       nonexistent receivers but why would that be okay? And we call a method
+//       which creates the receiver(!) before doing anything.
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
 	tx := s.submitTransferToNonexistentReceiver()
 
@@ -491,7 +491,7 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *models.Batch {
 	err := s.cmd.storage.AddTransaction(tx)
 	s.NoError(err)
-	_, err = s.txsCtx.Mempool.AddOrReplace(s.cmd.storage, tx)
+	err = s.cmd.storage.AddMempoolTx(tx)
 	s.NoError(err)
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
@@ -559,7 +559,8 @@ func submitInvalidTxsBatch(
 ) *models.Batch {
 	err := storage.AddTransaction(tx)
 	s.NoError(err)
-	_, err = txsCtx.Mempool.AddOrReplace(storage, tx)
+
+	err = storage.AddMempoolTx(tx)
 	s.NoError(err)
 
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)

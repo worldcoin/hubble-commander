@@ -60,7 +60,7 @@ func (s *AccountTree) Root() (*common.Hash, error) {
 func (s *AccountTree) Leaf(pubKeyID uint32) (*models.AccountLeaf, error) {
 	var leaf models.AccountLeaf
 	err := s.database.Badger.Get(pubKeyID, &leaf)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("account leaf"))
 	}
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *AccountTree) SetSingle(leaf *models.AccountLeaf) error {
 
 	return s.executeInTransaction(TxOptions{}, func(accountTree *AccountTree) error {
 		_, err := accountTree.unsafeSet(leaf)
-		if err == bh.ErrKeyExists {
+		if errors.Is(err, bh.ErrKeyExists) {
 			return errors.WithStack(NewAccountAlreadyExistsError(leaf))
 		}
 		return err
@@ -113,7 +113,7 @@ func (s *AccountTree) SetInBatch(leaves ...models.AccountLeaf) error {
 				return errors.WithStack(NewInvalidPubKeyIDError(leaves[i].PubKeyID))
 			}
 			_, err := accountTree.unsafeSet(&leaves[i])
-			if err == bh.ErrKeyExists {
+			if errors.Is(err, bh.ErrKeyExists) {
 				return errors.WithStack(NewAccountBatchAlreadyExistsError(leaves))
 			}
 			if err != nil {

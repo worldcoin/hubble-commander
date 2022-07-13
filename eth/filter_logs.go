@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/pkg/errors"
 )
 
 type Iterator interface {
@@ -20,7 +21,7 @@ func (c *Client) FilterLogs(contract *bind.BoundContract, eventName string, opts
 
 	duration, err := metrics.MeasureDuration(func() error {
 		logs, sub, err = contract.FilterLogs(opts, eventName)
-		return err
+		return errors.WithStack(err)
 	})
 	if err != nil {
 		return err

@@ -25,7 +25,7 @@ type CoreCommanderE2ETestSuite struct {
 }
 
 func (s *CoreCommanderE2ETestSuite) SetupTest() {
-	cfg := config.GetConfig()
+	cfg := config.GetCommanderConfigAndSetupLogger()
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1
@@ -201,6 +201,7 @@ func (s *CoreCommanderE2ETestSuite) testMaxBatchDelay(startNonce uint64) {
 	time.Sleep(1 * time.Second)
 
 	txReceipt := s.GetTransaction(txHash)
+	s.NotNil(txReceipt)
 	s.NotEqual(txReceipt.Status, txstatus.Mined)
 
 	log.Warn("Delayed tx is not yet in batch, waiting..")

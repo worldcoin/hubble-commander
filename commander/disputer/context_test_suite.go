@@ -153,7 +153,7 @@ func (s *testSuiteWithContexts) addTxs(txs models.GenericTransactionArray) {
 	s.NoError(err)
 
 	for i := 0; i < txs.Len(); i++ {
-		_, err = s.txsCtx.Mempool.AddOrReplace(s.disputeCtx.storage, txs.At(i))
+		err = s.disputeCtx.storage.AddMempoolTx(txs.At(i))
 		s.NoError(err)
 	}
 }

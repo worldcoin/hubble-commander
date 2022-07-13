@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -52,7 +51,6 @@ func (s *SendMassMigrationTestSuite) SetupTest() {
 		storage:                 s.storage.Storage,
 		client:                  eth.DomainOnlyTestClient,
 		commanderMetrics:        metrics.NewCommanderMetrics(),
-		txPool:                  mempool.NewTestTxPool(),
 		isAcceptingTransactions: true,
 	}
 
@@ -197,29 +195,6 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_AddsMassMigrationToStor
 	transfer, err := s.api.storage.GetMassMigration(*hash)
 	s.NoError(err)
 	s.NotNil(transfer)
-}
-
-func (s *SendMassMigrationTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-
-	err = s.storage.SetTransactionErrors(models.TxError{
-		TxHash:       *originalHash,
-		ErrorMessage: "some error",
-	})
-	s.NoError(err)
-
-	originalTx, err := s.storage.GetMassMigration(*originalHash)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-	s.Equal(*originalHash, *hash)
-
-	tx, err := s.storage.GetMassMigration(*originalHash)
-	s.NoError(err)
-	s.Nil(tx.ErrorMessage)
-	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
 }
 
 func TestSendMassMigrationTestSuite(t *testing.T) {

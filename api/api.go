@@ -10,7 +10,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -24,7 +23,6 @@ type API struct {
 	client                  *eth.Client
 	mockSignature           models.Signature
 	commanderMetrics        *metrics.CommanderMetrics
-	txPool                  mempool.TxPool
 	disableSignatures       bool
 	isAcceptingTransactions bool
 	isMigrating             func() bool
@@ -35,7 +33,6 @@ func NewServer(
 	storage *st.Storage,
 	client *eth.Client,
 	commanderMetrics *metrics.CommanderMetrics,
-	txPool mempool.TxPool,
 	enableBatchCreation func(enable bool),
 	isMigrating func() bool,
 ) (*http.Server, error) {
@@ -44,7 +41,6 @@ func NewServer(
 		storage,
 		client,
 		commanderMetrics,
-		txPool,
 		cfg.Rollup.DisableSignatures,
 		enableBatchCreation,
 		isMigrating,
@@ -75,12 +71,25 @@ func NewServer(
 	return &http.Server{Addr: addr, Handler: mux}, nil
 }
 
+func NewTestAPI(
+	storage *st.Storage,
+	client *eth.Client,
+) *API {
+	return &API{
+		cfg:                     &config.APIConfig{},
+		storage:                 storage,
+		client:                  client,
+		commanderMetrics:        metrics.NewCommanderMetrics(),
+		disableSignatures:       true,
+		isAcceptingTransactions: true,
+	}
+}
+
 func getAPIServer(
 	cfg *config.APIConfig,
 	storage *st.Storage,
 	client *eth.Client,
 	commanderMetrics *metrics.CommanderMetrics,
-	txPool mempool.TxPool,
 	disableSignatures bool,
 	enableBatchCreation func(enable bool),
 	isMigrating func() bool,
@@ -90,7 +99,6 @@ func getAPIServer(
 		storage:                 storage,
 		client:                  client,
 		commanderMetrics:        commanderMetrics,
-		txPool:                  txPool,
 		disableSignatures:       disableSignatures,
 		isAcceptingTransactions: true,
 		isMigrating:             isMigrating,

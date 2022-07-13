@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -54,7 +55,7 @@ func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
 	s.NoError(err)
 
 	batchID := models.MakeUint256(1)
-	_, err = s.depositsCtx.createCommitment(batchID)
+	_, err = s.depositsCtx.createCommitment(context.Background(), batchID)
 	s.NoError(err)
 
 	root, err := s.storage.StateTree.Root()
@@ -74,7 +75,7 @@ func (s *DepositsTestSuite) TestCreateCommitment_AddsCommitment() {
 }
 
 func (s *DepositsTestSuite) TestCreateCommitment_NotEnoughDeposits() {
-	vacancyProof, err := s.depositsCtx.createCommitment(models.MakeUint256(1))
+	vacancyProof, err := s.depositsCtx.createCommitment(context.Background(), models.MakeUint256(1))
 	s.ErrorIs(err, ErrNotEnoughDeposits)
 	s.Nil(vacancyProof)
 }

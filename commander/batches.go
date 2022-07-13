@@ -40,11 +40,6 @@ func (c *Commander) syncBatches(ctx context.Context, startBlock, endBlock uint64
 }
 
 func (c *Commander) unsafeSyncBatches(ctx context.Context, startBlock, endBlock uint64) error {
-	err := c.txPool.UpdateMempool()
-	if err != nil {
-		return err
-	}
-
 	latestBatchID, err := c.getLatestBatchID()
 	if err != nil {
 		return err
@@ -131,7 +126,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch eth.DecodedBatch) error
 }
 
 func (c *Commander) syncBatch(remoteBatch eth.DecodedBatch) (err error) {
-	syncCtx := syncer.NewContext(c.storage, c.client, c.txPool.Mempool(), c.cfg.Rollup, remoteBatch.GetBase().Type)
+	syncCtx := syncer.NewContext(c.storage, c.client, c.cfg.Rollup, remoteBatch.GetBase().Type)
 	defer syncCtx.Rollback(&err)
 
 	err = syncCtx.SyncBatch(remoteBatch)

@@ -27,7 +27,10 @@ type CommanderMetrics struct {
 	BlockchainGasSpend     prometheus.Counter
 
 	// Mempool
-	MempoolSize prometheus.Gauge
+	MempoolSize                prometheus.Gauge
+	MempoolSizeTransfer        prometheus.Gauge
+	MempoolSizeCreate2Transfer prometheus.Gauge
+	MempoolSizeMassMigration   prometheus.Gauge
 }
 
 func NewCommanderMetrics() *CommanderMetrics {
@@ -46,6 +49,27 @@ func NewCommanderMetrics() *CommanderMetrics {
 		Help:      "number of pending transactions",
 	})
 	commanderMetrics.registry.MustRegister(commanderMetrics.MempoolSize)
+
+	commanderMetrics.MempoolSizeTransfer = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "mempool_size_transfer",
+		Help:      "number of pending transfers",
+	})
+	commanderMetrics.registry.MustRegister(commanderMetrics.MempoolSizeTransfer)
+
+	commanderMetrics.MempoolSizeCreate2Transfer = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "mempool_size_create2transfer",
+		Help:      "number of pending create2transfers",
+	})
+	commanderMetrics.registry.MustRegister(commanderMetrics.MempoolSizeCreate2Transfer)
+
+	commanderMetrics.MempoolSizeMassMigration = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "mempool_size_massmigration",
+		Help:      "number of pending massmigrations",
+	})
+	commanderMetrics.registry.MustRegister(commanderMetrics.MempoolSizeMassMigration)
 
 	commanderMetrics.LatestBlockNumber = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,

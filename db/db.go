@@ -37,14 +37,18 @@ func newConfiguredDatabase(opts *badger.Options) (*Database, error) {
 
 	store, err := bh.Open(bhOptions)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &Database{store: store}, nil
 }
 
 func (d *Database) Close() error {
-	return d.store.Close()
+	err := d.store.Close()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) TriggerGC() error {
@@ -61,7 +65,11 @@ func (d *Database) TriggerGC() error {
 	// record. 0.5 is the recommended value and it seems fine, worth revisiting this
 	// number if we end up using too much disk space or if we're doing too much disk
 	// I/O.
-	return d.store.Badger().RunValueLogGC(0.5)
+	err := d.store.Badger().RunValueLogGC(0.5)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) duringTransaction() bool {
@@ -94,28 +102,56 @@ func (d *Database) RawUpdate(fn func(txn *badger.Txn) error) error {
 	if d.duringUpdateTransaction() {
 		return fn(d.txn)
 	}
-	return d.store.Badger().Update(fn)
+	err := d.store.Badger().Update(fn)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) Count(result interface{}, query *bh.Query) (uint64, error) {
 	if d.duringTransaction() {
-		return d.store.TxCount(d.txn, result, query)
+		count, err := d.store.TxCount(d.txn, result, query)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		return count, nil
 	}
-	return d.store.Count(result, query)
+	count, err := d.store.Count(result, query)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	return count, nil
 }
 
 func (d *Database) Find(result interface{}, query *bh.Query) error {
 	if d.duringTransaction() {
-		return d.store.TxFind(d.txn, result, query)
+		err := d.store.TxFind(d.txn, result, query)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Find(result, query)
+	err := d.store.Find(result, query)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) FindOne(result interface{}, query *bh.Query) error {
 	if d.duringTransaction() {
-		return d.store.TxFindOne(d.txn, result, query)
+		err := d.store.TxFindOne(d.txn, result, query)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.FindOne(result, query)
+	err := d.store.FindOne(result, query)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // The BadgerHold implementation of FindOne does not use indexes, this is a bit of a hack
@@ -133,10 +169,10 @@ func (d *Database) FindOneUsingIndex(result, key interface{}, index string) erro
 		bh.Where(index).Eq(key).Index(index).Limit(1),
 	)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	if valResults.Elem().Len() == 0 {
-		return bh.ErrNotFound
+		return errors.WithStack(bh.ErrNotFound)
 	}
 
 	valResult := reflect.ValueOf(result)
@@ -146,9 +182,17 @@ func (d *Database) FindOneUsingIndex(result, key interface{}, index string) erro
 
 func (d *Database) Get(key, result interface{}) error {
 	if d.duringTransaction() {
-		return d.store.TxGet(d.txn, key, result)
+		err := d.store.TxGet(d.txn, key, result)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Get(key, result)
+	err := d.store.Get(key, result)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) Insert(key, data interface{}) error {
@@ -156,9 +200,20 @@ func (d *Database) Insert(key, data interface{}) error {
 		panic("Insert called during ReadOnly transaction")
 	}
 	if d.duringUpdateTransaction() {
-		return d.store.TxInsert(d.txn, key, data)
+		err := d.store.TxInsert(d.txn, key, data)
+		if errors.Is(err, bh.ErrKeyExists) {
+			return errors.Wrapf(err, "duplicate key: %x", key)
+		}
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Insert(key, data)
+	err := d.store.Insert(key, data)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) Upsert(key, data interface{}) error {
@@ -166,9 +221,17 @@ func (d *Database) Upsert(key, data interface{}) error {
 		panic("Upsert called during ReadOnly transaction")
 	}
 	if d.duringUpdateTransaction() {
-		return d.store.TxUpsert(d.txn, key, data)
+		err := d.store.TxUpsert(d.txn, key, data)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Upsert(key, data)
+	err := d.store.Upsert(key, data)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) Update(key, data interface{}) error {
@@ -176,9 +239,17 @@ func (d *Database) Update(key, data interface{}) error {
 		panic("Update called during ReadOnly transaction")
 	}
 	if d.duringUpdateTransaction() {
-		return d.store.TxUpdate(d.txn, key, data)
+		err := d.store.TxUpdate(d.txn, key, data)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Update(key, data)
+	err := d.store.Update(key, data)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) Delete(key, dataType interface{}) error {
@@ -186,9 +257,17 @@ func (d *Database) Delete(key, dataType interface{}) error {
 		panic("Delete called during ReadOnly transaction")
 	}
 	if d.duringUpdateTransaction() {
-		return d.store.TxDelete(d.txn, key, dataType)
+		err := d.store.TxDelete(d.txn, key, dataType)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
-	return d.store.Delete(key, dataType)
+	err := d.store.Delete(key, dataType)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (d *Database) BeginTransaction(update bool) (*TxController, *Database) {
@@ -205,5 +284,9 @@ func (d *Database) BeginTransaction(update bool) (*TxController, *Database) {
 }
 
 func (d *Database) Prune() error {
-	return d.store.Badger().DropAll()
+	err := d.store.Badger().DropAll()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }

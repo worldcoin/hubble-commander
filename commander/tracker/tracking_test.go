@@ -79,7 +79,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_TracksSubmittedTransfers() {
 	commitments := getCommitments(batchtype.Transfer)
 
 	for i := 0; i < len(txs); i++ {
-		tx, err := s.client.SubmitTransfersBatch(models.NewUint256(uint64(i+1)), commitments)
+		tx, err := s.client.SubmitTransfersBatch(context.Background(), models.NewUint256(uint64(i+1)), commitments)
 		s.NoError(err)
 		txs[i] = tx
 	}

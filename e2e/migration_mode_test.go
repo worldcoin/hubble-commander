@@ -34,7 +34,7 @@ type MigrationModeE2ETestSuite struct {
 }
 
 func (s *MigrationModeE2ETestSuite) SetupTest() {
-	cfg := config.GetConfig()
+	cfg := config.GetCommanderConfigAndSetupLogger()
 	cfg.Rollup.MinTxsPerCommitment = 4
 	cfg.Rollup.MaxTxsPerCommitment = 10
 	cfg.Rollup.MinCommitmentsPerBatch = 1
@@ -73,14 +73,6 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		s.startMiningBlocks()
 	}()
 
-	// Invalid tx
-	s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(999), // Non-existent receiver
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(8),
-	})
 	// Some valid txs
 	s.SendNTransactions(4, dto.Transfer{
 		FromStateID: ref.Uint32(1),
@@ -88,14 +80,6 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		Amount:      models.NewUint256(90),
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(4),
-	})
-	// Another invalid tx
-	s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(2),
-		ToStateID:   ref.Uint32(999), // Non-existent receiver
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
 	})
 
 	s.WaitForBatchStatus(2, batchstatus.Submitted)
@@ -240,7 +224,6 @@ func (s *MigrationModeE2ETestSuite) prepareMigrationCommander() (*setup.InProces
 }
 
 func (s *MigrationModeE2ETestSuite) validateSuccessfulMigration() {
-	s.validateFailedTxs()
 	s.validatePendingTxs()
 	s.validatePendingBatches()
 }
@@ -250,13 +233,6 @@ func (s *MigrationModeE2ETestSuite) validatePendingTxs() {
 	err := s.RPCClient.CallFor(&pendingTxs, "admin_getPendingTransactions")
 	s.NoError(err)
 	s.Len(pendingTxs, 8)
-}
-
-func (s *MigrationModeE2ETestSuite) validateFailedTxs() {
-	failedTxs := make([]admintypes.Transaction, 0)
-	err := s.RPCClient.CallFor(&failedTxs, "admin_getFailedTransactions")
-	s.NoError(err)
-	s.Len(failedTxs, 2)
 }
 
 func (s *MigrationModeE2ETestSuite) validatePendingBatches() {

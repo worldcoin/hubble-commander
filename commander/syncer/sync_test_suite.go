@@ -115,7 +115,6 @@ func (s *syncTestSuite) syncAllBatches() {
 		err = s.syncCtx.SyncBatch(newRemoteBatches[i])
 		s.NoError(err)
 	}
-	s.syncCtx.batchCtx.Commit()
 }
 
 func (s *syncTestSuite) recreateDatabase() {
@@ -165,6 +164,6 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 func (s *syncTestSuite) addTx(tx models.GenericTransaction) {
 	err := s.storage.AddTransaction(tx)
 	s.NoError(err)
-	_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
+	err = s.storage.AddMempoolTx(tx)
 	s.NoError(err)
 }

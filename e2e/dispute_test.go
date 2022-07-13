@@ -20,7 +20,7 @@ type DisputesE2ETestSuite struct {
 }
 
 func (s *DisputesE2ETestSuite) SetupTest() {
-	cfg := config.GetConfig()
+	cfg := config.GetCommanderConfigAndSetupLogger()
 	cfg.Rollup.MinTxsPerCommitment = 32
 	cfg.Rollup.MaxTxsPerCommitment = 32
 	cfg.Rollup.MinCommitmentsPerBatch = 1

@@ -15,9 +15,14 @@ import (
 
 type SubmitBatchFunc func() (*types.Transaction, error)
 
-func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (c *Client) SubmitTransfersBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
+		WithContext(ctx).
 		WithGasLimit(*c.config.TransferBatchSubmissionGasLimit).
 		SubmitTransfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 	if err != nil {
@@ -59,7 +64,7 @@ func (c *Client) SubmitMassMigrationsBatch(
 
 func (c *Client) SubmitTransfersBatchAndWait(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
-		return c.SubmitTransfersBatch(batchID, commitments)
+		return c.SubmitTransfersBatch(context.TODO(), batchID, commitments)
 	})
 }
 func (c *Client) SubmitCreate2TransfersBatchAndWait(

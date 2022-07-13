@@ -121,6 +121,9 @@ func GetTestConfig() *Config {
 			PrivateKey:  "ee79b5f6e221356af78cf4c36f4f7885a11b67dfcc81c34d80249947330c0f82",
 			MineTimeout: DefaultEthereumMineTimeout,
 		},
+		Tracing: &TracingConfig{
+			Enabled: false,
+		},
 	}
 }
 

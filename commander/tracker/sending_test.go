@@ -87,7 +87,7 @@ func (s *TxsSendingTestSuite) TestSendRequestedTxs_SetsConsecutiveNoncesForTxsSe
 		var err error
 		commitments := getCommitments(batchtype.Transfer)
 		<-start
-		resultTxs[1], err = s.client.SubmitTransfersBatch(batchID, commitments)
+		resultTxs[1], err = s.client.SubmitTransfersBatch(context.Background(), batchID, commitments)
 		s.NoError(err)
 		waitGroup.Done()
 	}()

@@ -12,5 +12,15 @@ func (a *API) GetPendingTransactions(ctx context.Context) (models.GenericTransac
 		return nil, err
 	}
 
-	return a.storage.GetAllPendingTransactions()
+	mempoolTxs, err := a.storage.GetAllMempoolTransactions()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]models.GenericTransaction, len(mempoolTxs))
+	for i := range mempoolTxs {
+		result[i] = mempoolTxs[i].ToGenericTransaction()
+	}
+
+	return models.MakeGenericArray(result...), nil
 }

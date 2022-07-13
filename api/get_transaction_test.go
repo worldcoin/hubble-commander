@@ -7,7 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -44,7 +43,6 @@ func (s *GetTransactionTestSuite) SetupTest() {
 		storage:                 s.storage.Storage,
 		client:                  eth.DomainOnlyTestClient,
 		commanderMetrics:        metrics.NewCommanderMetrics(),
-		txPool:                  mempool.NewTestTxPool(),
 		disableSignatures:       false,
 		isAcceptingTransactions: true,
 	}
@@ -64,6 +62,14 @@ func (s *GetTransactionTestSuite) SetupTest() {
 		PubKeyID: 123,
 		TokenID:  models.MakeUint256(1),
 		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 123,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
 		Nonce:    models.MakeUint256(0),
 	})
 	s.NoError(err)

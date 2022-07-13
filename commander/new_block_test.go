@@ -11,7 +11,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/test/customtoken"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -52,7 +51,6 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 	s.cmd = NewCommander(s.cfg, s.client.Blockchain)
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
-	s.cmd.txPool, err = mempool.NewTxPool(s.storage.Storage)
 	s.NoError(err)
 
 	err = s.cmd.addGenesisBatch()
@@ -165,7 +163,7 @@ func (s *NewBlockLoopTestSuite) submitTransferBatchInTransaction(tx *models.Tran
 	s.runInTransaction(func(txStorage *st.Storage, txsCtx *executor.TxsContext) {
 		err := txStorage.AddTransaction(tx)
 		s.NoError(err)
-		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
+		err = txStorage.AddMempoolTx(tx)
 		s.NoError(err)
 
 		commitments, err := txsCtx.CreateCommitments(context.Background())
@@ -270,7 +268,7 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 	_, err = storage.StateTree.Set(1, &models.UserState{
 		PubKeyID: 1,
 		TokenID:  models.MakeUint256(0),
-		Balance:  models.MakeUint256(0),
+		Balance:  models.MakeUint256(200),
 		Nonce:    models.MakeUint256(0),
 	})
 	require.NoError(t, err)

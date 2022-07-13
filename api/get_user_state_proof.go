@@ -11,6 +11,14 @@ var getUserStateProofAPIErrors = map[error]*APIError{
 }
 
 func (a *API) GetUserStateProof(id uint32) (*dto.StateMerkleProof, error) {
+	// TODO: Rework the interface here. This witness does not include the state root,
+	//       and the response does not give any indication as to *which* state root
+	//       this proof was built off of.
+	//
+	//       Also, this method gives results which are inconsistent with
+	//       hubble_getUserState, which reads from the pending state, while this
+	//       builds a proof off of the batched state.
+
 	if !a.cfg.EnableProofMethods {
 		return nil, APIErrProofMethodsDisabled
 	}

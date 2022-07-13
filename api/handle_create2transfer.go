@@ -2,14 +2,14 @@ package api
 
 import (
 	"context"
-	"errors"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
-	bh "github.com/timshannon/badgerhold/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -31,11 +31,6 @@ func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.
 		attribute.Int64("hubble.tx.nonce", int64(create2Transfer.Nonce.Uint64())),
 	)
 
-	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
-		a.countRejectedTx(txtype.Create2Transfer)
-		return nil, vErr
-	}
-
 	hash, err := encoder.HashCreate2Transfer(create2Transfer)
 	if err != nil {
 		return nil, err
@@ -45,15 +40,33 @@ func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.
 
 	defer logReceivedTransaction(*hash, create2TransferDTO)
 
-	err = a.storage.AddTransaction(create2Transfer)
-	if errors.Is(err, bh.ErrKeyExists) {
-		return a.updateDuplicatedTransaction(create2Transfer)
-	}
+	signatureDomain, err := a.client.GetDomain()
 	if err != nil {
 		return nil, err
 	}
 
-	a.txPool.Send(create2Transfer)
+	err = a.storage.ExecuteInReadWriteTransaction(func(txStorage *storage.Storage) error {
+		// see notes in api/handle_transfer.go
+
+		var mockSignature *models.Signature
+		if a.disableSignatures {
+			mockSignature = &a.mockSignature
+		} else {
+			mockSignature = nil
+		}
+
+		if innerErr := validateCreate2Transfer(txStorage, create2Transfer, signatureDomain, mockSignature); innerErr != nil {
+			a.countRejectedTx(txtype.Create2Transfer)
+			return innerErr
+		}
+
+		return txStorage.AddMempoolTx(create2Transfer)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: make this a method on a.metrics for slightly better readability
 	a.countAcceptedTx(create2Transfer.TxType)
 	return &create2Transfer.Hash, nil
 }
@@ -92,7 +105,12 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Creat
 		nil
 }
 
-func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) error {
+func validateCreate2Transfer(
+	txStorage *storage.Storage,
+	create2Transfer *models.Create2Transfer,
+	signatureDomain *bls.Domain,
+	mockSignature *models.Signature,
+) error {
 	if vErr := validateAmount(&create2Transfer.Amount); vErr != nil {
 		return vErr
 	}
@@ -100,15 +118,17 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return vErr
 	}
 
-	senderState, err := a.storage.StateTree.Leaf(create2Transfer.FromStateID)
+	// TODO: validateMM and validateT both check for and return ErrNonexistentSender
+	//       we should do the same here for consistency
+	senderState, err := txStorage.StateTree.Leaf(create2Transfer.FromStateID)
 	if err != nil {
 		return err
 	}
 
-	if vErr := a.validateNonce(&create2Transfer.TransactionBase, &senderState.UserState.Nonce); vErr != nil {
+	if vErr := validateNonce(txStorage, &create2Transfer.TransactionBase, create2Transfer.FromStateID); vErr != nil {
 		return vErr
 	}
-	if vErr := validateBalance(&create2Transfer.Amount, &create2Transfer.Fee, &senderState.UserState); vErr != nil {
+	if vErr := validateBalance(txStorage, &create2Transfer.Amount, &create2Transfer.Fee, create2Transfer.FromStateID); vErr != nil {
 		return vErr
 	}
 	encodedCreate2Transfer, err := encoder.EncodeCreate2TransferForSigning(create2Transfer)
@@ -116,9 +136,16 @@ func (a *API) validateCreate2Transfer(create2Transfer *models.Create2Transfer) e
 		return err
 	}
 
-	if a.disableSignatures {
-		create2Transfer.Signature = a.mockSignature
+	if mockSignature != nil {
+		create2Transfer.Signature = *mockSignature
 		return nil
 	}
-	return a.validateSignature(encodedCreate2Transfer, &create2Transfer.Signature, &senderState.UserState)
+
+	return validateSignature(
+		txStorage,
+		encodedCreate2Transfer,
+		&create2Transfer.Signature,
+		&senderState.UserState,
+		signatureDomain,
+	)
 }

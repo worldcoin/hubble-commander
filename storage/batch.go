@@ -34,7 +34,7 @@ func (s *BatchStorage) AddBatch(batch *models.Batch) error {
 func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 	var storedBatch stored.Batch
 	err := s.database.Badger.Get(batchID, &storedBatch)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *BatchStorage) GetBatch(batchID models.Uint256) (*models.Batch, error) {
 
 func (s *BatchStorage) UpdateBatch(batch *models.Batch) error {
 	err := s.database.Badger.Update(batch.ID, *stored.NewBatchFromModelsBatch(batch))
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return errors.WithStack(NewNotFoundError("batch"))
 	}
 	return err
@@ -65,7 +65,7 @@ func (s *BatchStorage) GetMinedBatch(batchID models.Uint256) (*models.Batch, err
 func (s *BatchStorage) GetBatchByHash(batchHash common.Hash) (*models.Batch, error) {
 	var batch stored.Batch
 	err := s.database.Badger.FindOneUsingIndex(&batch, &batchHash, "Hash")
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("batch"))
 	}
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *BatchStorage) RemoveBatches(batchIDs ...models.Uint256) error {
 		storedBatch := stored.Batch{}
 		for i := range batchIDs {
 			err := txDatabase.Badger.Delete(batchIDs[i], storedBatch)
-			if err == bh.ErrNotFound {
+			if errors.Is(err, bh.ErrNotFound) {
 				return errors.WithStack(NewNotFoundError("batch"))
 			}
 			if err != nil {

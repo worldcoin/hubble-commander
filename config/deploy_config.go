@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const DefaultBlocksToFinalise = uint32(7 * 24 * 60 * 4)
+const DefaultBlocksToFinalise = uint32(1 * 24 * 60 * 4) // there are 4 eth blocks / min
 
 func GetDeployerConfig() *DeployerConfig {
 	setupViper("deployer-config")

@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -98,14 +99,12 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 		txs.At(i).GetBase().Hash = *hashTransfer
 	}
 
-	removedTxsHashes := c.mempoolCtx.Mempool.RemoveSyncedTxs(txs)
-	err := c.storage.RemovePendingTransactions(removedTxsHashes...)
-	if err != nil {
-		return err
-	}
-	err = c.storage.RemoveFailedTransactions(txs)
-	if err != nil {
-		return err
-	}
+	// TODO: We have just received a batch which includes transactions. Those
+	//       transactions no longer belong in the mempool, the copies we have in our
+	//       mempool are now duplicates and should be removed!
+	log.WithFields(log.Fields{
+		"commitmentID": commitmentID,
+	}).Errorf("Unimplemented: synced transactions not removed from mempool.")
+
 	return c.storage.BatchUpsertTransaction(txs)
 }

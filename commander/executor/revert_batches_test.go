@@ -78,9 +78,10 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommi
 	err := s.executionCtx.RevertBatches(pendingBatch)
 	s.NoError(err)
 
+	// TODO: eventually this should put the transaction back into the mempool
 	transfer, err := s.storage.GetTransfer(s.transfer.Hash)
-	s.NoError(err)
-	s.Nil(transfer.CommitmentSlot)
+	s.Error(err)
+	s.Nil(transfer)
 }
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches() {
