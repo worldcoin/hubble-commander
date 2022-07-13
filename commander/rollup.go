@@ -92,9 +92,11 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 
 	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
-
-	switchBatchType(currentBatchType)
 	span.SetAttributes(attribute.String("batchType", currentBatchType.String()))
+
+	// this chooses the type of the next batch, currentBatchType is not read once
+	// the rollupCtx has been created.
+	switchBatchType(currentBatchType)
 
 	var (
 		batch            *models.Batch
