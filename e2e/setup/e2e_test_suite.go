@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/ybbus/jsonrpc/v2"
@@ -44,7 +45,7 @@ func (s *E2ETestSuite) SetupSuite() {
 
 func (s *E2ETestSuite) SetupTestEnvironment(commanderCfg *config.Config, deployerConfig *config.DeployerConfig) {
 	if commanderCfg == nil {
-		commanderCfg = config.GetConfig()
+		commanderCfg = config.GetCommanderConfigAndSetupLogger()
 	}
 
 	s.Cfg = commanderCfg
@@ -103,12 +104,15 @@ func (s *E2ETestSuite) GetNetworkInfo() dto.NetworkInfo {
 	return networkInfo
 }
 
-func (s *E2ETestSuite) GetTransaction(txHash common.Hash) dto.TransactionReceipt {
+func (s *E2ETestSuite) GetTransaction(txHash common.Hash) *dto.TransactionReceipt {
 	var txReceipt dto.TransactionReceipt
 	err := s.RPCClient.CallFor(&txReceipt, "hubble_getTransaction", []interface{}{txHash})
-	s.NoError(err)
+	if err != nil {
+		log.Debug("error in hubble_getTransaction: ", err)
+		return nil
+	}
 	s.Equal(txHash, txReceipt.Hash)
-	return txReceipt
+	return &txReceipt
 }
 
 func (s *E2ETestSuite) GetAllBatches() []dto.Batch {
@@ -186,7 +190,7 @@ func (s *E2ETestSuite) WaitForBatchStatus(batchID uint64, status batchstatus.Bat
 func (s *E2ETestSuite) WaitForTxToBeIncludedInBatch(txHash common.Hash) {
 	s.Eventually(func() bool {
 		receipt := s.GetTransaction(txHash)
-		return receipt.Status == txstatus.Mined
+		return receipt != nil && receipt.Status == txstatus.Mined
 	}, 30*time.Second, testutils.TryInterval)
 }
 

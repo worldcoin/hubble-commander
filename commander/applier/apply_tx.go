@@ -28,11 +28,16 @@ func (a *Applier) ApplyTx(
 
 	appError = a.validateSenderTokenID(senderLeaf, commitmentTokenID)
 	if appError != nil {
+		// TODO: why is this an appError? It means this transaction is impossible
+		//       to process and will not become processable in the future.
+		//       It might even be better as a panic, we absolutely should not be
+		//       creating any senders with a nonzero tokenID
 		return nil, appError
 	}
 
 	appError = a.validateReceiverTokenID(receiverLeaf, commitmentTokenID)
 	if appError != nil {
+		// TODO: same question as above
 		return nil, appError
 	}
 
@@ -154,6 +159,8 @@ func calculateStateAfterTx(
 		return nil, nil, err
 	}
 
+	// TODO: the api rejects self-sends, we don't need to check for them here?
+	//       what do the contracts say?
 	if tx.GetFromStateID() == *tx.GetToStateID() {
 		newReceiverState = calculateReceiverStateAfterTx(*newSenderState.Copy(), tx)
 	} else {

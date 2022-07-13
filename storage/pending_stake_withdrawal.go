@@ -32,7 +32,7 @@ func (s *PendingStakeWithdrawalStorage) AddPendingStakeWithdrawal(stake *models.
 func (s *PendingStakeWithdrawalStorage) RemovePendingStakeWithdrawal(batchID models.Uint256) error {
 	var stake models.PendingStakeWithdrawal
 	err := s.database.Badger.Delete(batchID, &stake)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return errors.WithStack(NewNotFoundError("pending stake withdrawal"))
 	}
 	if err != nil {

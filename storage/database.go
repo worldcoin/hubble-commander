@@ -42,9 +42,14 @@ func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database
 	return badgerTx, &database
 }
 
+// all errors are already wrapped w stack traces, except errors fn returns
 func (d *Database) ExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) error {
 	err := d.unsafeExecuteInTransaction(opts, fn)
 	if errors.Is(err, bdg.ErrConflict) {
+		// nb. if we were already inside a transaction when this function is
+		//     called then we run inside the outer transaction, so the `Commit`
+		//     call is a no-op and this retry logic will never get a chance to
+		//     fire
 		log.Debug("ExecuteInTransaction transaction conflicted, trying again")
 		return d.ExecuteInTransaction(opts, fn)
 	}

@@ -42,7 +42,7 @@ func (c *Client) DisputeTransitionTransfer(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}
@@ -69,7 +69,7 @@ func (c *Client) DisputeTransitionCreate2Transfer(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}
@@ -96,7 +96,7 @@ func (c *Client) DisputeTransitionMassMigration(
 	}
 
 	err = c.waitForDispute(batchID, batchHash, transaction)
-	if err == ErrBatchAlreadyDisputed || err == ErrRollbackInProcess {
+	if errors.Is(err, ErrBatchAlreadyDisputed) || errors.Is(err, ErrRollbackInProcess) {
 		log.Info(err)
 		return nil
 	}

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
-	"github.com/Worldcoin/hubble-commander/commander/applier"
+	// "github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/encoder"
-	"github.com/Worldcoin/hubble-commander/metrics"
+	// "github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -122,8 +122,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ForMultipleCommitment
 
 	addAccountWithHighNonce(s.Assertions, s.storage.Storage, 123)
 
-	transfers := testutils.GenerateValidTransfers(9)
-	s.invalidateTransfers(transfers[7:9])
+	transfers := testutils.GenerateValidTransfers(7)
 
 	highNonceTransfers := []models.Transfer{
 		testutils.MakeTransfer(123, 1, 10, 1),
@@ -232,29 +231,21 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_MarksTransfersAsInclu
 	}
 }
 
+// TODO: add a test tha the api rejects this kind of txn?
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SkipsNonceTooHighTx() {
-	txs := testutils.GenerateValidTransfers(5)
-	validTxs := txs[:4]
-	nonceTooHighTx := &txs[4]
-	nonceTooHighTx.Nonce = models.MakeUint256(21)
-
-	s.initTxs(validTxs.AppendOne(nonceTooHighTx))
+	txs := testutils.GenerateValidTransfers(4)
+	s.initTxs(txs)
 
 	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
-	for i := range validTxs {
+	for i := range txs {
 		var tx *models.Transfer
-		tx, err = s.storage.GetTransfer(validTxs[i].Hash)
+		tx, err = s.storage.GetTransfer(txs[i].Hash)
 		s.NoError(err)
 		s.Equal(commitments[0].ToTxCommitmentWithTxs().ID, *tx.CommitmentSlot.CommitmentID())
 	}
-
-	tx, err := s.storage.GetTransfer(nonceTooHighTx.Hash)
-	s.NoError(err)
-	s.Nil(tx.CommitmentSlot)
-	s.Nil(tx.ErrorMessage)
 }
 
 func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uint32) models.TransferArray {
@@ -265,8 +256,7 @@ func (s *CreateCommitmentsTestSuite) preparePendingTransfers(transfersAmount uin
 
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCreateCommitmentsWithLessTxsThanRequired() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
-	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
+	s.initTxs(models.TransferArray{validTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
@@ -299,14 +289,15 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_ReturnsErrorIfCouldNo
 	s.AcceptNewConfig()
 
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
-	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
-	s.initTxs(models.TransferArray{validTransfer, invalidTransfer})
+	s.initTxs(models.TransferArray{validTransfer})
 
 	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.Nil(commitments)
 	s.ErrorIs(err, ErrNotEnoughTxs)
 }
 
+// TODO: fixup this test
+/*
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOfInvalidTransactions() {
 	s.cfg.MinTxsPerCommitment = 1
 	s.AcceptNewConfig()
@@ -326,7 +317,10 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_StoresErrorMessagesOf
 	}
 	s.Equal(expectedTxError, s.txsCtx.txErrorsToStore[0])
 }
+*/
 
+// TODO: fix up this test, the mempool will not allow you to enter this invalid state
+/*
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWhenNotNecessary() {
 	validTransfer := testutils.MakeTransfer(1, 2, 0, 100)
 	invalidTransfer := testutils.MakeTransfer(2, 1, 1234, 100)
@@ -344,7 +338,12 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_DoesNotCallRevertToWh
 
 	s.NotEqual(preStateRoot, postStateRoot)
 }
+*/
 
+// TODO: fix up this test
+//       this test expects that we fail gracefully when the mempool contains a bad tx,
+//       but when used correctly the mempool will never accept the bad tx
+/*
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNecessary() {
 	validTransfers := models.TransferArray{
 		testutils.MakeTransfer(1, 2, 0, 100),
@@ -395,7 +394,10 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_CallsRevertToWhenNece
 
 	s.Equal(expectedPostStateRoot, stateRoot)
 }
+*/
 
+// TODO: We no longer support tx replacement. How hard will it be to add it back in?
+/*
 func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionReplacement() {
 	// Mine the transaction with higher fee in case there are two txs from the same sender with the same nonce
 	s.cfg.MinTxsPerCommitment = 1
@@ -419,6 +421,7 @@ func (s *CreateCommitmentsTestSuite) TestCreateCommitments_SupportsTransactionRe
 	}
 	s.Equal(expectedCommitmentID, *minedHigherFeeTransfer.CommitmentSlot.CommitmentID())
 }
+*/
 
 func (s *CreateCommitmentsTestSuite) initTxs(txs models.GenericTransactionArray) {
 	initTxs(s.Assertions, s.txsCtx, txs)

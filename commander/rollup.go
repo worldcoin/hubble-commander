@@ -85,12 +85,13 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	err = c.txPool.UpdateMempool()
-	if err != nil {
-		return err
-	}
+	/*
+	log.WithFields(log.Fields{
+		"batchType": *currentBatchType,
+	}).Debug("rollupLoopIteration")
+	*/
 
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 	span.SetAttributes(attribute.String("hubble.batchType", currentBatchType.String()))
 
@@ -139,7 +140,12 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
-	return c.txPool.RemoveFailedTxs(rollupCtx.GetErrorsToStore())
+
+	return nil
+
+	// TODO: _after_ we commit we try to store errors on these transactions?
+	//       this calls txPool.storage.SetTransactionErrors(...)
+	// return c.txPool.RemoveFailedTxs(rollupCtx.GetErrorsToStore())
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -166,7 +172,10 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 		return err
 	}
 
-	return c.txPool.RemoveFailedTxs(errorsToStore)
+	return nil
+
+	// TODO: what did this do?
+	// return c.txPool.RemoveFailedTxs(errorsToStore)
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {

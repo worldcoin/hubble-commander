@@ -128,6 +128,13 @@ func (s *TransactionStorage) unsafeReplaceFailedTransaction(tx models.GenericTra
 	return nil
 }
 
+// TODO: a bunch of tests fail because this does not add pendingTx to the mempool
+//       this is a bad interface right? It should not be so easy to mess up!
+//       is there a situation where you would ever not want to add this to the mempool?
+// 
+//       Even better... should this fail if you give it a pendingTx?
+//       Throwing those into the mempool is enough to ensure we have them, don't need
+//       to store them twice...
 func (s *TransactionStorage) AddTransaction(tx models.GenericTransaction) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		return txStorage.unsafeAddTransaction(tx)
@@ -263,6 +270,7 @@ func (s *TransactionStorage) AddFailedTransactions(txs models.GenericTransaction
 	return s.addTxsInMultipleDBTransactions(txs, "failed")
 }
 
+// TODO: drop?
 func (s *TransactionStorage) AddPendingTransactions(txs models.GenericTransactionArray) error {
 	return s.addTxsInMultipleDBTransactions(txs, "pending")
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -8,7 +9,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.Hash, error) {
@@ -18,11 +18,6 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 		return nil, err
 	}
 
-	if vErr := a.validateMassMigration(massMigration); vErr != nil {
-		a.countRejectedTx(txtype.MassMigration)
-		return nil, vErr
-	}
-
 	hash, err := encoder.HashMassMigration(massMigration)
 	if err != nil {
 		return nil, err
@@ -30,17 +25,43 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 	massMigration.Hash = *hash
 	massMigration.SetReceiveTime()
 
-	defer logReceivedTransaction(*hash, massMigrationDTO)
-
-	err = a.storage.AddTransaction(massMigration)
-	if errors.Is(err, bh.ErrKeyExists) {
-		return a.updateDuplicatedTransaction(massMigration)
-	}
+	signatureDomain, err := a.client.GetDomain()
 	if err != nil {
+		// TODO: count rejected tx? Why is that only on some branches?
 		return nil, err
 	}
 
-	a.txPool.Send(massMigration)
+	err = a.storage.ExecuteInReadWriteTransaction(func (txStorage *storage.Storage) error {
+		// this wrapper will make sure api handlers which touch the same state
+		// are serialized; if we read some state and another txn changes that
+		// state before we can commit then this function will fail and
+		// automatically be retried.
+
+		// CAUTION: do not touch a.storage anywhere in this method,
+		//          all accesses should use txStorage.
+
+		var mockSignature *models.Signature
+		if a.disableSignatures {
+			mockSignature = &a.mockSignature
+		} else {
+			mockSignature = nil
+		}
+
+		// TODO: this needs to read from txStorage, so we need to refactor?
+		if err := validateMassMigration(txStorage, massMigration, signatureDomain, mockSignature); err != nil {
+			a.countRejectedTx(massMigration.TxType)
+			return err
+		}
+
+		return txStorage.AddMempoolTx(massMigration)
+	})
+	if err != nil {
+		// TODO: count rejected tx?
+		return nil, err
+	}
+
+	defer logReceivedTransaction(*hash, massMigrationDTO)
+
 	a.countAcceptedTx(massMigration.TxType)
 	return &massMigration.Hash, nil
 }
@@ -78,18 +99,18 @@ func sanitizeMassMigration(massMigration dto.MassMigration) (*models.MassMigrati
 	}, nil
 }
 
-func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
+func validateMassMigration(txStorage *storage.Storage, massMigration *models.MassMigration, signatureDomain *bls.Domain, mockSignature *models.Signature) error {
 	if vErr := validateAmount(&massMigration.Amount); vErr != nil {
 		return vErr
 	}
 	if vErr := validateFee(&massMigration.Fee); vErr != nil {
 		return vErr
 	}
-	if vErr := a.validateSpokeExists(massMigration.SpokeID); vErr != nil {
+	if vErr := validateSpokeExists(txStorage, massMigration.SpokeID); vErr != nil {
 		return vErr
 	}
 
-	senderState, err := a.storage.StateTree.Leaf(massMigration.FromStateID)
+	senderState, err := txStorage.StateTree.Leaf(massMigration.FromStateID)
 	if storage.IsNotFoundError(err) {
 		return errors.WithStack(ErrNonexistentSender)
 	}
@@ -97,24 +118,31 @@ func (a *API) validateMassMigration(massMigration *models.MassMigration) error {
 		return err
 	}
 
-	if vErr := a.validateNonce(&massMigration.TransactionBase, &senderState.UserState.Nonce); vErr != nil {
+	if vErr := validateNonce(txStorage, &massMigration.TransactionBase, massMigration.FromStateID); vErr != nil {
 		return vErr
 	}
-	if vErr := validateBalance(&massMigration.Amount, &massMigration.Fee, &senderState.UserState); vErr != nil {
+	if vErr := validateBalance(txStorage, &massMigration.Amount, &massMigration.Fee, massMigration.FromStateID); vErr != nil {
 		return vErr
 	}
 	encodedTransfer := encoder.EncodeMassMigrationForSigning(massMigration)
 
-	if a.disableSignatures {
-		massMigration.Signature = a.mockSignature
+	if mockSignature != nil {
+		massMigration.Signature = *mockSignature
 		return nil
 	}
-	return a.validateSignature(encodedTransfer, &massMigration.Signature, &senderState.UserState)
+
+	return validateSignature(
+		txStorage,
+		encodedTransfer,
+		&massMigration.Signature,
+		&senderState.UserState,
+		signatureDomain,
+	)
 }
 
-func (a *API) validateSpokeExists(spokeID uint32) error {
+func validateSpokeExists(txStorage *storage.Storage, spokeID uint32) error {
 	uint256SpokeID := models.MakeUint256(uint64(spokeID))
-	_, err := a.storage.GetRegisteredSpoke(uint256SpokeID)
+	_, err := txStorage.GetRegisteredSpoke(uint256SpokeID)
 	if storage.IsNotFoundError(err) {
 		return errors.WithStack(ErrSpokeDoesNotExist)
 	}

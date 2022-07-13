@@ -68,6 +68,14 @@ func (s *GetTransactionTestSuite) SetupTest() {
 	})
 	s.NoError(err)
 
+	_, err = s.storage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 123,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
+	s.NoError(err)
+
 	s.transfer = s.signTransfer(transferWithoutSignature)
 	s.create2Transfer = s.signCreate2Transfer(create2TransferWithoutSignature)
 	s.massMigration = s.signMassMigration(massMigrationWithoutSignature)

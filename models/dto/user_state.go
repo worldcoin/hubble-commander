@@ -16,15 +16,10 @@ type UserStateWithID struct {
 	UserState
 }
 
-func MakeUserStateWithID(stateLeaf *models.StateLeaf) UserStateWithID {
+func MakeUserStateWithID(stateID uint32, userState *models.UserState) UserStateWithID {
 	return UserStateWithID{
-		StateID: stateLeaf.StateID,
-		UserState: UserState{
-			PubKeyID: stateLeaf.UserState.PubKeyID,
-			TokenID:  stateLeaf.UserState.TokenID,
-			Balance:  stateLeaf.UserState.Balance,
-			Nonce:    stateLeaf.UserState.Nonce,
-		},
+		StateID: stateID,
+		UserState: MakeUserState(userState),
 	}
 }
 
@@ -35,9 +30,4 @@ func MakeUserState(userState *models.UserState) UserState {
 		Balance:  userState.Balance,
 		Nonce:    userState.Nonce,
 	}
-}
-
-func NewUserStateWithID(stateLeaf *models.StateLeaf) *UserStateWithID {
-	userState := MakeUserStateWithID(stateLeaf)
-	return &userState
 }

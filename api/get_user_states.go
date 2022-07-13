@@ -38,9 +38,20 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 		return nil, err
 	}
 
+	// TODO: we're not opening a transaction so there's no guarantee this is a
+	//       consistent snapshot. You might temporarily lose or gain money if you're
+	//       sending money between your accounts. We should open a txn!
+
 	userStates := make([]dto.UserStateWithID, 0, len(leaves))
 	for i := range leaves {
-		userStates = append(userStates, dto.MakeUserStateWithID(&leaves[i]))
+		stateID := leaves[i].StateID
+
+		pendingState, err := a.storage.GetPendingUserState(stateID)
+		if err != nil {
+			return nil, err
+		}
+
+		userStates = append(userStates, dto.MakeUserStateWithID(stateID, pendingState))
 	}
 
 	return userStates, nil

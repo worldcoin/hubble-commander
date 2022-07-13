@@ -302,6 +302,8 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_AddsSyncedTxsAsBatched() {
 		s.NoError(err)
 		_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, txs[i])
 		s.NoError(err)
+		err = s.storage.AddMempoolTx(txs[i])
+		s.NoError(err)
 	}
 
 	pendingBatch, _, err := s.txsCtx.CreateAndSubmitBatch(context.Background())
@@ -323,6 +325,10 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_AddsSyncedTxsAsBatched() {
 
 	_, err = s.txsCtx.Mempool.AddOrReplace(s.storage.Storage, txs[0])
 	s.NoError(err)
+
+	err = s.storage.AddMempoolTx(txs[0])
+	s.NoError(err)
+
 	ctx := s.syncCtx.batchCtx.(*TxsContext)
 	ctx.mempoolCtx = NewMempoolContext(s.txsCtx.Mempool)
 

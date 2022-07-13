@@ -15,12 +15,17 @@ import (
 
 var (
 	ErrFeeTooLow               = fmt.Errorf("fee must be greater than 0")
+
+	// TODO: is there a way to merge these and tell you the expected nonce?
+	//       see storage/error.go:24 NewNotFoundError
 	ErrNonceTooLow             = fmt.Errorf("nonce too low")
+	ErrNonceTooHigh             = fmt.Errorf("nonce too high")
 	ErrNotEnoughBalance        = fmt.Errorf("not enough balance")
 	ErrTransferToSelf          = fmt.Errorf("transfer to the same state id")
 	ErrInvalidAmount           = fmt.Errorf("amount must be positive")
 	ErrUnsupportedTxType       = fmt.Errorf("unsupported transaction type")
 	ErrNonexistentSender       = fmt.Errorf("sender state ID does not exist")
+	ErrNonexistentReceiver     = fmt.Errorf("receiver state ID does not exist")
 	ErrSpokeDoesNotExist       = fmt.Errorf("spoke with given ID does not exist")
 	ErrAlreadyMinedTransaction = fmt.Errorf("transaction already mined")
 	ErrPendingTransaction      = fmt.Errorf("transaction already exists")
@@ -37,6 +42,10 @@ var (
 	APIErrNonceTooLow = NewAPIError(
 		10004,
 		"nonce too low",
+	)
+	APIErrNonceTooHigh = NewAPIError(
+		10005,
+		"nonce too high",
 	)
 	APIErrNotEnoughBalance = NewAPIError(
 		10006,
@@ -66,6 +75,10 @@ var (
 		10012,
 		"sender with given ID does not exist",
 	)
+	APIReceiverDoesNotExistError = NewAPIError(
+		10013,
+		"receiver with given ID does not exist",
+	)
 	APIErrMinedTransaction = NewAPIError(
 		10014,
 		"cannot update mined transaction",
@@ -85,11 +98,15 @@ var (
 )
 
 var sendTransactionAPIErrors = map[error]*APIError{
+	// TODO: something about this wrapping throws away information about _which_ field
+	//       is missing
 	AnyMissingFieldError:                  APIErrAnyMissingField,
 	AnyInvalidSignatureError:              APIErrInvalidSignature,
 	ErrNonexistentSender:                  APISenderDoesNotExistError,
+	ErrNonexistentReceiver:                APIReceiverDoesNotExistError,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
+	ErrNonceTooHigh:                        APIErrNonceTooHigh,
 	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
 	ErrInvalidAmount:                      APIErrInvalidAmount,
 	ErrFeeTooLow:                          APIErrFeeTooLow,
@@ -149,30 +166,40 @@ func validateFee(fee *models.Uint256) error {
 	return nil
 }
 
-func (a *API) validateNonce(transaction *models.TransactionBase, senderNonce *models.Uint256) error {
+func validateNonce(txStorage *storage.Storage, transaction *models.TransactionBase, senderStateID uint32) error {
+	senderNonce, err := txStorage.GetPendingNonce(senderStateID)
+	if err != nil {
+		return err
+	}
+
 	if transaction.Nonce.Cmp(senderNonce) < 0 {
 		return errors.WithStack(ErrNonceTooLow)
+	}
+
+	if transaction.Nonce.Cmp(senderNonce) > 0 {
+		return errors.WithStack(ErrNonceTooHigh)
 	}
 	return nil
 }
 
-func validateBalance(transactionAmount, transactionFee *models.Uint256, senderState *models.UserState) error {
-	if transactionAmount.Add(transactionFee).Cmp(&senderState.Balance) > 0 {
+func validateBalance(txStorage *storage.Storage, transactionAmount, transactionFee *models.Uint256, senderStateID uint32) error {
+	senderBalance, err := txStorage.GetPendingBalance(senderStateID)
+	if err != nil {
+		return err
+	}
+
+	if transactionAmount.Add(transactionFee).Cmp(senderBalance) > 0 {
 		return errors.WithStack(ErrNotEnoughBalance)
 	}
 	return nil
 }
 
-func (a *API) validateSignature(encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState) error {
-	senderAccount, err := a.storage.AccountTree.Leaf(senderState.PubKeyID)
+func validateSignature(txStorage *storage.Storage, encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState, domain *bls.Domain) error {
+	senderAccount, err := txStorage.AccountTree.Leaf(senderState.PubKeyID)
 	if err != nil {
 		return errors.WithStack(NewInvalidSignatureError(err.Error()))
 	}
 
-	domain, err := a.client.GetDomain()
-	if err != nil {
-		return err
-	}
 	signature, err := bls.NewSignatureFromBytes(transactionSignature.Bytes(), *domain)
 	if err != nil {
 		return errors.WithStack(NewInvalidSignatureError(err.Error()))
@@ -189,6 +216,8 @@ func (a *API) validateSignature(encodedTransaction []byte, transactionSignature 
 }
 
 func (a *API) updateDuplicatedTransaction(tx models.GenericTransaction) (*common.Hash, error) {
+	// TODO: rename this method: it only lets you replace failed transactions
+
 	txHash := &tx.GetBase().Hash
 	logDuplicateTransaction(txHash)
 	err := a.storage.ReplaceFailedTransaction(tx)

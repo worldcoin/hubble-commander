@@ -32,7 +32,7 @@ func (s *StoredMerkleTree) keyFor(path models.MerklePath) models.NamespacedMerkl
 func (s *StoredMerkleTree) Get(path models.MerklePath) (*models.MerkleTreeNode, error) {
 	node := models.MerkleTreeNode{MerklePath: path}
 	err := s.database.Badger.Get(s.keyFor(path), &node)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return s.newZeroNode(&path), nil
 	}
 	if err != nil {

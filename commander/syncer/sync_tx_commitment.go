@@ -98,12 +98,8 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 		txs.At(i).GetBase().Hash = *hashTransfer
 	}
 
-	removedTxsHashes := c.mempoolCtx.Mempool.RemoveSyncedTxs(txs)
-	err := c.storage.RemovePendingTransactions(removedTxsHashes...)
-	if err != nil {
-		return err
-	}
-	err = c.storage.RemoveFailedTransactions(txs)
+	// TODO: remove these from our mempool!
+	err := c.storage.RemoveFailedTransactions(txs)
 	if err != nil {
 		return err
 	}

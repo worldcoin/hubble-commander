@@ -2,18 +2,18 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(mempoolHeap *storage.MempoolHeap, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for tx := c.heap.Peek(); tx != nil; tx = c.heap.Peek() {
+	peekFn := mempoolHeap.PeekHighestFeeExecutableTx
+	for tx := peekFn(); tx != nil; tx = peekFn() {
 		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
@@ -23,8 +23,9 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			return nil, appError
 		}
 		if txError != nil {
-			c.handleTxError(txMempool, returnStruct, tx, txError)
-			c.heap.Pop()
+			// TODO: throw a big error here, if this happens something has
+			//       gone terribly wrong, we might even want to take downtime
+			// c.handleTxError(txMempool, returnStruct, tx, txError)
 			continue
 		}
 
@@ -33,7 +34,7 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			return nil, err
 		}
 
-		err = c.updateHeap(txMempool, tx)
+		err = mempoolHeap.DropHighestFeeExecutableTx()
 		if err != nil {
 			return nil, err
 		}
@@ -53,28 +54,15 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 	return returnStruct, nil
 }
 
-func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, tx models.GenericTransaction) error {
-	nextTx, err := txMempool.GetNextExecutableTx(txtype.TransactionType(c.BatchType), tx.GetFromStateID())
-	if err != nil {
-		return err
-	}
-	if nextTx != nil {
-		c.heap.Replace(nextTx)
-		return nil
-	}
-
-	c.heap.Pop()
-	return nil
-}
-
-func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		panic("got ErrNonceTooHigh in ExecuteTxs; this should never happen")
 	}
-	removeErr := txMempool.RemoveFailedTx(tx.GetFromStateID())
-	if removeErr != nil {
-		panic(removeErr) // should never happen
-	}
+
+	// TODO: Why does this happen? What could cause a transaction which we previously
+	//       accepted to fail? If this happens we need to scan through the mempool and
+	//       cascade the failure to other txns which were relying on our successful
+	//       execution.
 
 	log.WithField("txHash", tx.GetBase().Hash.String()).
 		Errorf("%s failed: %s", tx.Type().String(), err)

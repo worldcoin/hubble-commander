@@ -5,6 +5,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	bh "github.com/timshannon/badgerhold/v4"
+	"github.com/pkg/errors"
 )
 
 func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {
@@ -78,7 +79,7 @@ func (s *CommitmentStorage) UpdateCommitments(commitments []models.Commitment) e
 			}
 
 			err := txDatabase.Badger.Update(commitments[i].GetCommitmentBase().ID, commitment)
-			if err == bh.ErrNotFound {
+			if errors.Is(err, bh.ErrNotFound) {
 				return NewNotFoundError("commitment")
 			}
 			if err != nil {

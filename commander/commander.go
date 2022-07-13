@@ -15,7 +15,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/eth/chain"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -51,7 +50,6 @@ type Commander struct {
 	client        *eth.Client
 	apiServer     *http.Server
 	metricsServer *http.Server
-	txPool        mempool.TxPool
 
 	stateMutex     sync.Mutex
 	invalidBatchID *models.Uint256
@@ -116,14 +114,9 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
-	c.txPool, err = mempool.NewTxPoolWithGauge(c.storage, c.metrics.MempoolSize)
-	if err != nil {
-		return err
-	}
-
 	c.metricsServer = c.metrics.NewServer(c.cfg.Metrics)
 
-	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics, c.txPool, c.EnableBatchCreation, c.isMigrating)
+	c.apiServer, err = api.NewServer(c.cfg, c.storage, c.client, c.metrics, c.EnableBatchCreation, c.isMigrating)
 	if err != nil {
 		return err
 	}
@@ -157,7 +150,6 @@ func (c *Commander) Start() (err error) {
 	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
 	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
 	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
-	c.startWorker("Tx Pool", func() error { return c.txPool.ReadTxs(c.workersContext) })
 
 	go c.handleWorkerError()
 

@@ -3,13 +3,13 @@ package executor
 import (
 	"testing"
 
-	"github.com/Worldcoin/hubble-commander/commander/applier"
+	// "github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
-	"github.com/Worldcoin/hubble-commander/testutils"
+	// "github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -81,6 +81,7 @@ func (s *ExecuteTransfersTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+/*
 func (s *ExecuteTransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidTransfers(3)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
@@ -161,6 +162,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)
 }
+*/
 
 func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
 	initTxs(s, txsCtx, txs)
@@ -181,6 +183,9 @@ func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransa
 
 	for i := 0; i < txs.Len(); i++ {
 		_, err = txsCtx.Mempool.AddOrReplace(txsCtx.storage, txs.At(i))
+		s.NoError(err)
+
+		err = txsCtx.storage.AddMempoolTx(txs.At(i))
 		s.NoError(err)
 	}
 }
