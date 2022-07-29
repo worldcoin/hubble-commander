@@ -23,12 +23,12 @@ func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.
 
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
-		attribute.String("txType", "create2Transfer"),
-		attribute.Int64("fromStateID", int64(create2Transfer.FromStateID)),
-		attribute.String("toPublicKey", create2Transfer.ToPublicKey.String()),
-		attribute.String("amount", create2Transfer.Amount.String()),
-		attribute.String("fee", create2Transfer.Fee.String()),
-		attribute.Int64("nonce", int64(create2Transfer.Nonce.Uint64())),
+		attribute.String("tx.type", "create2Transfer"),
+		attribute.Int64("tx.fromStateID", int64(create2Transfer.FromStateID)),
+		attribute.String("tx.toPublicKey", create2Transfer.ToPublicKey.String()),
+		attribute.String("tx.amount", create2Transfer.Amount.String()),
+		attribute.String("tx.fee", create2Transfer.Fee.String()),
+		attribute.Int64("tx.nonce", int64(create2Transfer.Nonce.Uint64())),
 	)
 
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {

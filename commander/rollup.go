@@ -77,7 +77,7 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 }
 
 func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
-	spanCtx, span := rollupTracer.Start(ctx, "unsafeRollupLoopIteration")
+	spanCtx, span := rollupTracer.Start(ctx, "RollupLoop")
 	defer span.End()
 
 	err = validateStateRoot(c.storage)
@@ -106,6 +106,13 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch(spanCtx)
 		return err
 	})
+	if errors.Is(err, executor.ErrNotEnoughTxs) || errors.Is(err, executor.ErrNotEnoughDeposits) {
+		// tell datadog to ignore this trace, we didn't do anything
+		// this requires custom configuration of the dd agent:
+		//  apm_config.filter_tags.reject = ["manual.drop:true"]
+		// if we don't do this then ~ every 500µs we emit a new trace
+		span.SetAttributes(attribute.Bool("manual.drop", true))
+	}
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
