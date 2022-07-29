@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 )
 
 const (
@@ -23,7 +22,7 @@ var (
 )
 
 func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicKey) ([]uint32, error) {
-	tx, err := a.RegisterBatchAccount(publicKeys)
+	tx, err := a.RegisterBatchAccount(context.Background(), publicKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -36,15 +35,10 @@ func (a *AccountManager) RegisterBatchAccountAndWait(publicKeys []models.PublicK
 	return a.retrieveRegisteredPubKeyIDs(receipt)
 }
 
-func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*types.Transaction, error) {
+func (a *AccountManager) RegisterBatchAccount(ctx context.Context, publicKeys []models.PublicKey) (*types.Transaction, error) {
 	if len(publicKeys) != accountBatchSize {
 		return nil, errors.WithStack(ErrInvalidPubKeysLength)
 	}
-
-	_, span := clientTracer.Start(context.Background(), "AccountRegistry.RegisterBatchAccount")
-	defer span.End()
-
-	span.SetAttributes(attribute.Int("publicKeysLen", len(publicKeys)))
 
 	var pubKeys [accountBatchSize][4]*big.Int
 	for i := range publicKeys {
@@ -53,19 +47,10 @@ func (a *AccountManager) RegisterBatchAccount(publicKeys []models.PublicKey) (*t
 
 	tx, err := a.accountRegistry().
 		WithGasLimit(a.batchAccountRegistrationGasLimit).
+		WithAttribute(attribute.Int("publicKeysLen", len(publicKeys))).
+		WithContext(ctx).
 		RegisterBatch(pubKeys)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "")
-		return nil, errors.WithStack(err)
-	}
-
-	if tx != nil {
-		span.SetAttributes(attribute.String("txHash", tx.Hash().Hex()))
-	}
-	span.SetStatus(codes.Ok, "")
-
-	return tx, nil
+	return tx, err
 }
 
 func (a *AccountManager) retrieveRegisteredPubKeyIDs(receipt *types.Receipt) ([]uint32, error) {

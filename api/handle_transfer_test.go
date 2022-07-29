@@ -126,7 +126,7 @@ func (s *SendTransferTestSuite) TearDownTest() {
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_ReturnsNonNilHash() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 }
@@ -138,7 +138,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesNonceTooLow_NoTrans
 	_, err := s.storage.StateTree.Set(1, userStateWithIncreasedNonce)
 	s.NoError(err)
 
-	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrNonceTooLow, err)
 }
 
@@ -146,7 +146,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesFeeValue() {
 	transferWithZeroFee := s.transfer
 	transferWithZeroFee.Fee = models.NewUint256(0)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroFee))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transferWithZeroFee))
 	s.Equal(APIErrFeeTooLow, err)
 }
 
@@ -154,7 +154,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesFeeEncodability() {
 	transferWithBadFee := s.transfer
 	transferWithBadFee.Fee = models.NewUint256(66666666)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadFee))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transferWithBadFee))
 	s.Equal(APINotDecimalEncodableFeeError, err)
 }
 
@@ -162,7 +162,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesAmountEncodability(
 	transferWithBadAmount := s.transfer
 	transferWithBadAmount.Amount = models.NewUint256(66666666)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithBadAmount))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transferWithBadAmount))
 	s.Equal(APINotDecimalEncodableAmountError, err)
 }
 
@@ -170,7 +170,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesAmountValue() {
 	transferWithZeroAmount := s.transfer
 	transferWithZeroAmount.Amount = models.NewUint256(0)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithZeroAmount))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transferWithZeroAmount))
 	s.Equal(APIErrInvalidAmount, err)
 }
 
@@ -178,7 +178,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesBalance() {
 	transferWithHugeAmount := s.transfer
 	transferWithHugeAmount.Amount = models.NewUint256(500)
 
-	_, err := s.api.SendTransaction(dto.MakeTransaction(transferWithHugeAmount))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transferWithHugeAmount))
 	s.Equal(APIErrNotEnoughBalance, err)
 }
 
@@ -191,7 +191,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature() {
 	transfer := transferWithoutSignature
 	transfer.Signature = fakeSignature.ModelsSignature()
 
-	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
+	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(transfer))
 	s.Equal(APIErrInvalidSignature, err)
 }
 
@@ -206,12 +206,12 @@ func (s *SendTransferTestSuite) TestSendTransaction_ValidatesSignature_DisabledS
 	transfer := transferWithoutSignature
 	transfer.Signature = fakeSignature.ModelsSignature()
 
-	_, err = s.api.SendTransaction(dto.MakeTransaction(transfer))
+	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(transfer))
 	s.NoError(err)
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 
@@ -221,7 +221,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
 	err = s.storage.SetTransactionErrors(models.TxError{
@@ -233,7 +233,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
 	originalTx, err := s.storage.GetTransfer(*originalHash)
 	s.NoError(err)
 
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 	s.Equal(*originalHash, *hash)
 
@@ -244,15 +244,15 @@ func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdatePendingTransfer() {
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
-	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrPendingTransaction, err)
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
 	tx, err := s.storage.GetTransfer(*hash)
@@ -261,13 +261,13 @@ func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer()
 	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{*tx}, &models.CommitmentID{BatchID: models.MakeUint256(1)})
 	s.NoError(err)
 
-	_, err = s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrMinedTransaction, err)
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() {
 	s.api.isAcceptingTransactions = false
-	_, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.Equal(APIErrSendTxMethodDisabled, err)
 }
 
@@ -279,7 +279,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_SendsTxToTxPool() {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
 	wg.Add(1)

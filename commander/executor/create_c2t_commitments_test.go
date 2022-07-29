@@ -37,7 +37,7 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_UpdatesTransactions() {
 	transfers := testutils.GenerateValidCreate2Transfers(2)
 	s.initTxs(transfers)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
@@ -55,7 +55,7 @@ func (s *C2TCommitmentsTestSuite) TestCreateCommitments_RegistersAccounts() {
 	s.initTxs(transfers)
 
 	expectedTxsLength := encoder.Create2TransferLength * len(transfers)
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	s.Len(commitments[0].ToTxCommitmentWithTxs().Transactions, expectedTxsLength)
@@ -75,7 +75,7 @@ func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_RegistersAccountsA
 		}
 	}
 
-	err := s.txsCtx.registerPendingAccounts(pendingAccounts)
+	err := s.txsCtx.registerPendingAccounts(context.Background(), pendingAccounts)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -105,7 +105,7 @@ func (s *C2TCommitmentsTestSuite) TestRegisterPendingAccounts_FillsMissingAccoun
 		},
 	}
 
-	err := s.txsCtx.registerPendingAccounts(pendingAccounts)
+	err := s.txsCtx.registerPendingAccounts(context.Background(), pendingAccounts)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 

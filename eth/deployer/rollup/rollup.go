@@ -33,7 +33,7 @@ import (
 const (
 	DefaultMaxDepositSubtreeDepth = 2
 	DefaultGenesisStateRoot       = "cf277fb80a82478460e8988570b718f1e083ceb76f7e271a1a1497e5975f53ae"
-	DefaultStakeAmount            = 1e17
+	DefaultStakeAmount            = 1e15
 	DefaultMinGasLeft             = 10_000
 	DefaultMaxTxsPerCommit        = 32
 

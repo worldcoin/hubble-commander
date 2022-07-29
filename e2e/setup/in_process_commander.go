@@ -22,7 +22,7 @@ type InProcessCommander struct {
 
 func DeployAndCreateInProcessCommander(commanderConfig *config.Config, deployerConfig *config.DeployerConfig) (*InProcessCommander, error) {
 	if commanderConfig == nil {
-		commanderConfig = config.GetConfig()
+		commanderConfig = config.GetCommanderConfigAndSetupLogger()
 	}
 
 	commanderConfig.Badger.Path += "_e2e"

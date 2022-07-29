@@ -13,19 +13,20 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var ErrSyncedFraudulentBatch = errors.New("commander synced fraudulent batch")
 
 func (c *Commander) syncBatches(ctx context.Context, startBlock, endBlock uint64) error {
-	_, span := rollupTracer.Start(ctx, "syncBatches")
+	spanCtx, span := newBlockTracer.Start(ctx, "syncBatches")
 	defer span.End()
 
 	c.stateMutex.Lock()
 	defer c.stateMutex.Unlock()
 
 	duration, err := metrics.MeasureDuration(func() error {
-		return c.unsafeSyncBatches(startBlock, endBlock)
+		return c.unsafeSyncBatches(spanCtx, startBlock, endBlock)
 	})
 	if err != nil {
 		return err
@@ -38,7 +39,7 @@ func (c *Commander) syncBatches(ctx context.Context, startBlock, endBlock uint64
 	return nil
 }
 
-func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
+func (c *Commander) unsafeSyncBatches(ctx context.Context, startBlock, endBlock uint64) error {
 	err := c.txPool.UpdateMempool()
 	if err != nil {
 		return err
@@ -65,17 +66,20 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 		return true
 	}
 
-	newRemoteBatches, err := c.client.GetBatches(&eth.BatchesFilters{
-		StartBlockInclusive: startBlock,
-		EndBlockInclusive:   &endBlock,
-		FilterByBatchID:     filter,
-	})
+	newRemoteBatches, err := c.client.GetBatches(
+		ctx,
+		&eth.BatchesFilters{
+			StartBlockInclusive: startBlock,
+			EndBlockInclusive:   &endBlock,
+			FilterByBatchID:     filter,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
 	for _, remoteBatch := range newRemoteBatches {
-		err = c.syncRemoteBatch(remoteBatch)
+		err = c.syncRemoteBatch(ctx, remoteBatch)
 		if err != nil {
 			return err
 		}
@@ -95,8 +99,18 @@ func (c *Commander) unsafeSyncBatches(startBlock, endBlock uint64) error {
 	return nil
 }
 
-func (c *Commander) syncRemoteBatch(remoteBatch eth.DecodedBatch) error {
+func (c *Commander) syncRemoteBatch(ctx context.Context, remoteBatch eth.DecodedBatch) error {
 	var icError *syncer.InconsistentBatchError
+
+	_, span := newBlockTracer.Start(ctx, "syncRemoteBatch")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.Int64("hubble.batchID", int64(remoteBatch.GetBase().ID.Uint64())),
+		attribute.String("hubble.batchType", remoteBatch.GetBase().Type.String()),
+		attribute.String("hubble.batchHash", remoteBatch.GetBase().Hash.String()),
+		attribute.Int("hubble.commitmentCount", remoteBatch.GetCommitmentsLength()),
+	)
 
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
 	if errors.As(err, &icError) {

@@ -122,9 +122,12 @@ func (c *Client) waitForDispute(batchID *models.Uint256, batchHash *common.Hash,
 	}
 	err = c.GetRevertMessage(tx, receipt)
 	if err != nil {
-		return NewDisputeTxRevertedError(batchID.Uint64(), err.Error())
+		// one day in the far future it would be nice to stitch the solidity
+		// stack/call trace onto the other end of this one
+		result := NewDisputeTxRevertedError(batchID.Uint64(), err.Error())
+		return errors.WithStack(result)
 	}
-	return NewUnknownDisputeTxRevertedError(batchID.Uint64())
+	return errors.WithStack(NewUnknownDisputeTxRevertedError(batchID.Uint64()))
 }
 
 func (c *Client) isBatchAlreadyDisputed(batchID *models.Uint256, batchHash *common.Hash) error {

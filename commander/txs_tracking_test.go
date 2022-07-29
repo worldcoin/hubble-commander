@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -110,7 +111,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_MassMigrationTransaction() {
 func (s *TxsTrackingTestSuite) TestTrackSentTxs_BatchAccountRegistrationTransaction() {
 	s.setupTestWithClientConfig(&eth.ClientConfig{BatchAccountRegistrationGasLimit: ref.Uint64(lowGasLimit)})
 	publicKeys := make([]models.PublicKey, st.AccountBatchSize)
-	_, err := s.client.Client.RegisterBatchAccount(publicKeys)
+	_, err := s.client.Client.RegisterBatchAccount(context.Background(), publicKeys)
 	s.NoError(err)
 }
 
@@ -134,7 +135,7 @@ func (s *TxsTrackingTestSuite) TestTrackSentTxs_SubmitDepositBatch() {
 	executionCtx := executor.NewTestExecutionContext(s.storage.Storage, s.client.Client, nil)
 	depositsCtx := executor.NewTestDepositsContext(executionCtx)
 
-	_, _, err = depositsCtx.CreateAndSubmitBatch()
+	_, _, err = depositsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 }
 
@@ -163,7 +164,7 @@ func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchTy
 	_, err = txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
 	s.NoError(err)
 
-	batch, _, err := txsCtx.CreateAndSubmitBatch()
+	batch, _, err := txsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 	s.client.Backend.Commit()
 	return batch

@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -120,13 +121,13 @@ func (s *SyncStakeWithdrawalsTestSuite) submitTransferBatchInTransaction(tx *mod
 		_, err = txsCtx.Mempool.AddOrReplace(txStorage, tx)
 		s.NoError(err)
 
-		batchData, err := txsCtx.CreateCommitments()
+		batchData, err := txsCtx.CreateCommitments(context.Background())
 		s.NoError(err)
 		s.Len(batchData, 1)
 
 		batch, err := txsCtx.NewPendingBatch(batchtype.Transfer)
 		s.NoError(err)
-		err = txsCtx.SubmitBatch(batch, batchData)
+		err = txsCtx.SubmitBatch(context.Background(), batch, batchData)
 		s.NoError(err)
 		s.client.GetBackend().Commit()
 	})

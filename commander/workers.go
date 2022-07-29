@@ -29,6 +29,8 @@ func (w *workers) startWorker(name string, fn func() error) {
 		var err error
 		defer func() {
 			if recoverErr := recover(); recoverErr != nil {
+				log.Errorf("stacktrace from worker panic: %s", debug.Stack())
+
 				var ok bool
 				err, ok = recoverErr.(error)
 				if !ok {
@@ -37,7 +39,6 @@ func (w *workers) startWorker(name string, fn func() error) {
 			}
 			if err != nil {
 				log.Errorf("%s worker failed with: %+v", name, err)
-				log.Errorf("stacktrace from failure: %s", debug.Stack())
 				w.stopWorkersContext()
 			}
 			w.workersWaitGroup.Done()

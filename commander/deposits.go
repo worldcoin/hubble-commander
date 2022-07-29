@@ -15,7 +15,7 @@ import (
 func (c *Commander) syncDeposits(ctx context.Context, start, end uint64) error {
 	var depositSubtrees []models.PendingDepositSubtree
 
-	_, span := rollupTracer.Start(ctx, "syncDeposits")
+	_, span := newBlockTracer.Start(ctx, "syncDeposits")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() error {

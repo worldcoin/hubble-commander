@@ -1,6 +1,7 @@
 package disputer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/commander/syncer"
@@ -50,12 +51,12 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs models.GenericTransa
 	s.NoError(err)
 	fmt.Println(*pendingBatch.PrevStateRoot)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 
 	commitments[len(commitments)-1].ToCommitment().GetCommitmentBase().PostStateRoot = common.Hash{1, 2, 3}
 
-	err = s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

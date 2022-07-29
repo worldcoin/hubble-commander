@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (c *Commander) manageRollupLoop(isProposer bool) {
@@ -76,6 +77,9 @@ func (c *Commander) rollupLoopIteration(ctx context.Context, currentBatchType *b
 }
 
 func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchType *batchtype.BatchType) (err error) {
+	spanCtx, span := rollupTracer.Start(ctx, "RollupLoop")
+	defer span.End()
+
 	err = validateStateRoot(c.storage)
 	if err != nil {
 		return err
@@ -86,9 +90,12 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), ctx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
+	span.SetAttributes(attribute.String("hubble.batchType", currentBatchType.String()))
 
+	// this chooses the type of the next batch, currentBatchType is not read once
+	// the rollupCtx has been created.
 	switchBatchType(currentBatchType)
 
 	var (
@@ -96,9 +103,17 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		commitmentsCount *int
 	)
 	duration, err := metrics.MeasureDuration(func() error {
-		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch()
+		batch, commitmentsCount, err = rollupCtx.CreateAndSubmitBatch(spanCtx)
 		return err
 	})
+	if errors.Is(err, executor.ErrNotEnoughTxs) || errors.Is(err, executor.ErrNotEnoughDeposits) {
+		// tell datadog to ignore this trace, we didn't do anything
+		// this requires custom configuration of the dd agent:
+		//  apm_config.filter_tags.reject = ["manual.drop:true"]
+		// if we don't do this then ~ every 500µs we emit a new trace
+		// https://docs.datadoghq.com/tracing/guide/ignoring_apm_resources/?tab=datadogyaml#ignoring-based-on-span-tags
+		span.SetAttributes(attribute.Bool("manual.drop", true))
+	}
 
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
@@ -115,7 +130,12 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 
 	logNewBatch(batch, *commitmentsCount, duration)
 
-	err = rollupCtx.Commit()
+	err = func() error {
+		_, span := rollupTracer.Start(spanCtx, "rollupCtx.commit")
+		defer span.End()
+
+		return rollupCtx.Commit()
+	}()
 	if err != nil {
 		return err
 	}

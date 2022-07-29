@@ -15,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var ErrAccountLeavesInconsistency = fmt.Errorf("inconsistency in account leaves between the database and the contract")
@@ -25,7 +27,7 @@ func (c *Commander) syncAccounts(ctx context.Context, start, end uint64) error {
 	var newAccountsSingle *int
 	var newAccountsBatch *int
 
-	_, span := rollupTracer.Start(ctx, "syncAccounts")
+	spanCtx, span := newBlockTracer.Start(ctx, "syncAccounts")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {
@@ -33,7 +35,7 @@ func (c *Commander) syncAccounts(ctx context.Context, start, end uint64) error {
 		if err != nil {
 			return err
 		}
-		newAccountsBatch, err = c.syncBatchAccounts(start, end)
+		newAccountsBatch, err = c.syncBatchAccounts(spanCtx, start, end)
 		if err != nil {
 			return err
 		}
@@ -90,7 +92,7 @@ func (c *Commander) syncSingleAccounts(start, end uint64) (newAccountsCount *int
 	return newAccountsCount, it.Error()
 }
 
-func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int, err error) {
+func (c *Commander) syncBatchAccounts(ctx context.Context, start, end uint64) (newAccountsCount *int, err error) {
 	it, err := c.getBatchPubKeyRegisteredIterator(start, end)
 	if err != nil {
 		return nil, err
@@ -100,30 +102,69 @@ func (c *Commander) syncBatchAccounts(start, end uint64) (newAccountsCount *int,
 	newAccountsCount = ref.Int(0)
 
 	for it.Next() {
-		tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), it.Event.Raw.TxHash)
+		count, err := c.syncBatchAccountsTx(ctx, it.Event)
 		if err != nil {
 			return nil, err
 		}
-
-		if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["registerBatch"].ID) {
-			continue // TODO handle internal transactions
-		}
-
-		accounts, err := c.client.ExtractAccountsBatch(tx.Data(), it.Event)
-		if err != nil {
-			return nil, err
-		}
-
-		isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
-		if err != nil {
-			return nil, err
-		}
-		if *isNewAccount {
-			*newAccountsCount += len(accounts)
-		}
+		*newAccountsCount += count
 	}
 
 	return newAccountsCount, it.Error()
+}
+
+func (c *Commander) syncBatchAccountsTx(
+	ctx context.Context,
+	event *accountregistry.AccountRegistryBatchPubkeyRegistered,
+) (newAccountsCount int, err error) {
+	_, span := newBlockTracer.Start(ctx, "syncBatchAccountsTx")
+	defer span.End()
+
+	tx, _, err := c.client.Blockchain.GetBackend().TransactionByHash(context.Background(), event.Raw.TxHash)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return 0, err
+	}
+
+	span.SetAttributes(
+		attribute.String("hubble.ethTx.hash", tx.Hash().String()),
+		attribute.Int64("hubble.ethTx.nonce", int64(tx.Nonce())),
+	)
+
+	if !bytes.Equal(tx.Data()[:4], c.client.AccountRegistry.ABI.Methods["registerBatch"].ID) {
+		// so we can alert if any of these appear
+		span.SetAttributes(
+			attribute.Bool("hubble.wasInternalTx", true),
+		)
+		span.SetStatus(codes.Error, "unhandled: internal account")
+		return 0, nil // TODO handle internal transactions
+	}
+
+	accounts, err := c.client.ExtractAccountsBatch(tx.Data(), event)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return 0, err
+	}
+
+	span.SetAttributes(
+		attribute.Int("hubble.accountCount", len(accounts)),
+	)
+
+	isNewAccount, err := saveSyncedBatchAccounts(c.storage.AccountTree, accounts)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return 0, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+
+	if *isNewAccount {
+		return len(accounts), nil
+	} else {
+		return 0, nil
+	}
 }
 
 func (c *Commander) getSinglePubKeyRegisteredIterator(start, end uint64) (*accountregistry.SinglePubKeyRegisteredIterator, error) {

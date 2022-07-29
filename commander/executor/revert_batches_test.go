@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/config"
@@ -129,7 +130,7 @@ func (s *RevertBatchesTestSuite) addTxBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 
 	err = s.storage.AddBatch(pendingBatch)

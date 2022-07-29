@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"time"
 
 	"github.com/Worldcoin/hubble-commander/mempool"
@@ -11,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
 )
 
 var ErrNotEnoughTxs = NewRollupError("not enough transactions")
@@ -20,7 +22,10 @@ type FeeReceiver struct {
 	TokenID models.Uint256
 }
 
-func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
+func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.CommitmentWithTxs, error) {
+	spanCtx, span := otel.Tracer("txsContext").Start(ctx, "CreateCommitments")
+	defer span.End()
+
 	err := c.newHeap()
 	if err != nil {
 		return nil, err
@@ -67,7 +72,7 @@ func (c *TxsContext) CreateCommitments() ([]models.CommitmentWithTxs, error) {
 	default:
 	}
 
-	err = c.registerPendingAccounts(pendingAccounts)
+	err = c.registerPendingAccounts(spanCtx, pendingAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +203,10 @@ func (c *TxsContext) getCommitmentFeeReceiver() (*FeeReceiver, error) {
 	}, nil
 }
 
-func (c *TxsContext) registerPendingAccounts(accounts []models.AccountLeaf) error {
+func (c *TxsContext) registerPendingAccounts(ctx context.Context, accounts []models.AccountLeaf) error {
+	spanCtx, span := otel.Tracer("txsContext").Start(ctx, "registerPendingAccounts")
+	defer span.End()
+
 	accounts, err := c.fillMissingAccounts(accounts)
 	if err != nil {
 		return err
@@ -207,7 +215,7 @@ func (c *TxsContext) registerPendingAccounts(accounts []models.AccountLeaf) erro
 	for i := range accounts {
 		publicKeys = append(publicKeys, accounts[i].PublicKey)
 		if len(publicKeys) == st.AccountBatchSize {
-			tx, err := c.client.RegisterBatchAccount(publicKeys)
+			tx, err := c.client.RegisterBatchAccount(spanCtx, publicKeys)
 			if err != nil {
 				return err
 			}

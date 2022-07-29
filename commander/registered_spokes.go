@@ -17,7 +17,7 @@ import (
 )
 
 func (c *Commander) syncSpokes(ctx context.Context, startBlock, endBlock uint64) error {
-	_, span := rollupTracer.Start(ctx, "syncSpokes")
+	_, span := newBlockTracer.Start(ctx, "syncSpokes")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() error {

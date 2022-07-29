@@ -1,6 +1,7 @@
 package syncer
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -125,7 +126,7 @@ func (s *SyncMMBatchTestSuite) submitInvalidBatch(tx models.GenericTransaction, 
 
 	modifier(commitments)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

@@ -88,7 +88,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBlockNumber() {
 	batch2, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(2), []models.CommitmentWithTxs{&s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&BatchesFilters{
+	batches, err := s.client.GetBatches(context.Background(), &BatchesFilters{
 		StartBlockInclusive: uint64(*batch1.FinalisationBlock - uint32(*finalisationBlocks) + 1),
 	})
 	s.NoError(err)
@@ -104,7 +104,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 	batch2, err := s.client.SubmitTransfersBatchAndWait(models.NewUint256(2), []models.CommitmentWithTxs{&s.commitments[1]})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&BatchesFilters{
+	batches, err := s.client.GetBatches(context.Background(), &BatchesFilters{
 		FilterByBatchID: func(batchID *models.Uint256) bool {
 			return batchID.CmpN(0) > 0 && batchID.Cmp(&batch2.ID) < 0
 		},

@@ -69,7 +69,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.NoError(err)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -92,7 +92,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithMismatchedTota
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -110,7 +110,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidWithdra
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -128,7 +128,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenID
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -149,13 +149,13 @@ func (s *MMBatchesTestSuite) submitInvalidBatch(tx *models.MassMigration, modifi
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
 	modifier(commitments)
 
-	err = txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()
@@ -176,7 +176,7 @@ func (s *MMBatchesTestSuite) submitBatch(storage *st.Storage) *models.Batch {
 	)
 	defer txsCtx.Rollback(nil)
 
-	batch, _, err := txsCtx.CreateAndSubmitBatch()
+	batch, _, err := txsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

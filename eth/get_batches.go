@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const MsgInvalidBatchID = "execution reverted: Batch id greater than total number of batches, invalid batch id"
@@ -31,15 +32,22 @@ type BatchesFilters struct {
 }
 
 func (c *TestClient) GetAllBatches() ([]DecodedBatch, error) {
-	return c.GetBatches(&BatchesFilters{})
+	return c.GetBatches(context.Background(), &BatchesFilters{})
 }
 
-func (c *Client) GetBatches(filters *BatchesFilters) ([]DecodedBatch, error) {
+func (c *Client) GetBatches(ctx context.Context, filters *BatchesFilters) ([]DecodedBatch, error) {
+	_, span := clientTracer.Start(ctx, "GetBatches")
+	defer span.End()
+
 	batchEvents, depositEvents, err := c.getBatchEvents(filters)
 	if err != nil {
 		return nil, err
 	}
 	logBatchesCount(len(batchEvents))
+
+	span.SetAttributes(
+		attribute.Int("hubble.batchEventCount", len(batchEvents)),
+	)
 
 	var rolledBackBatchID *models.Uint256
 	depositIndex := 0

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -9,14 +10,26 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/ethereum/go-ethereum/common"
 	bh "github.com/timshannon/badgerhold/v4"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func (a *API) handleCreate2Transfer(create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
+func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.Create2Transfer) (*common.Hash, error) {
 	create2Transfer, err := sanitizeCreate2Transfer(create2TransferDTO)
 	if err != nil {
 		a.countRejectedTx(txtype.Create2Transfer)
 		return nil, err
 	}
+
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(
+		attribute.String("hubble.tx.type", "create2Transfer"),
+		attribute.Int64("hubble.tx.fromStateID", int64(create2Transfer.FromStateID)),
+		attribute.String("hubble.tx.toPublicKey", create2Transfer.ToPublicKey.String()),
+		attribute.String("hubble.tx.amount", create2Transfer.Amount.String()),
+		attribute.String("hubble.tx.fee", create2Transfer.Fee.String()),
+		attribute.Int64("hubble.tx.nonce", int64(create2Transfer.Nonce.Uint64())),
+	)
 
 	if vErr := a.validateCreate2Transfer(create2Transfer); vErr != nil {
 		a.countRejectedTx(txtype.Create2Transfer)

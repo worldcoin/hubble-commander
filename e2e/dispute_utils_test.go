@@ -281,7 +281,7 @@ func (s *DisputesE2ETestSuite) sendC2TCommitment(encodedTransfer []byte, batchID
 }
 
 func (s *DisputesE2ETestSuite) submitC2TBatch(commitments []models.CommitmentWithTxs, batchID uint64) {
-	transaction, err := s.ETHClient.SubmitCreate2TransfersBatch(models.NewUint256(batchID), commitments)
+	transaction, err := s.ETHClient.SubmitCreate2TransfersBatch(context.Background(), models.NewUint256(batchID), commitments)
 	s.NoError(err)
 
 	s.waitForSubmittedBatch(transaction, batchID)

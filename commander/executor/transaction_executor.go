@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/eth"
@@ -20,7 +22,7 @@ type TransactionExecutor interface {
 	AddPendingAccount(result applier.ApplySingleTxResult) error
 	NewCreateCommitmentResult(result ExecuteTxsForCommitmentResult, commitment models.CommitmentWithTxs) CreateCommitmentResult
 	ApplyTx(tx models.GenericTransaction, commitmentTokenID models.Uint256) (result applier.ApplySingleTxResult, txError, appError error)
-	SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
+	SubmitBatch(ctx context.Context, batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error)
 	GenerateMetaAndWithdrawRoots(commitment models.CommitmentWithTxs, result CreateCommitmentResult) error
 	NewCommitment(
 		commitmentID *models.CommitmentID,
@@ -96,7 +98,11 @@ func (e *TransferExecutor) ApplyTx(tx models.GenericTransaction, commitmentToken
 	return e.applier.ApplyTransfer(tx, commitmentTokenID)
 }
 
-func (e *TransferExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (e *TransferExecutor) SubmitBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	return e.client.SubmitTransfersBatch(batchID, commitments)
 }
 
@@ -191,8 +197,12 @@ func (e *C2TExecutor) ApplyTx(tx models.GenericTransaction, commitmentTokenID mo
 	return e.applier.ApplyCreate2Transfer(tx.ToCreate2Transfer(), commitmentTokenID)
 }
 
-func (e *C2TExecutor) SubmitBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
-	return e.client.SubmitCreate2TransfersBatch(batchID, commitments)
+func (e *C2TExecutor) SubmitBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
+	return e.client.SubmitCreate2TransfersBatch(ctx, batchID, commitments)
 }
 
 func (e *C2TExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {
@@ -279,6 +289,7 @@ func (e *MassMigrationExecutor) ApplyTx(tx models.GenericTransaction, commitment
 }
 
 func (e *MassMigrationExecutor) SubmitBatch(
+	ctx context.Context,
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {

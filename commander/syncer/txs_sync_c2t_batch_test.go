@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/encoder"
@@ -62,7 +63,7 @@ func (s *SyncC2TBatchTestSuite) TestSyncBatch_InvalidCommitmentStateRoot() {
 	batch, commitments := s.createBatch(&tx2)
 	commitments[0].ToTxCommitmentWithTxs().PostStateRoot = utils.RandomHash()
 
-	err := s.txsCtx.SubmitBatch(batch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), batch, commitments)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -186,7 +187,7 @@ func (s *SyncC2TBatchTestSuite) submitInvalidBatch(tx *models.Create2Transfer) {
 	commitment := commitments[0].ToTxCommitmentWithTxs()
 	commitment.Transactions = bytes.Repeat(commitment.Transactions, 2)
 
-	err := s.txsCtx.SubmitBatch(pendingBatch, commitments)
+	err := s.txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

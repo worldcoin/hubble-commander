@@ -208,7 +208,7 @@ func (s *CoreCommanderE2ETestSuite) testMaxBatchDelay(startNonce uint64) {
 	s.Eventually(func() bool {
 		txReceipt = s.GetTransaction(txHash)
 		return txReceipt.Status == txstatus.Mined
-	}, 10*time.Second, testutils.TryInterval)
+	}, 20*time.Second, testutils.TryInterval)
 }
 
 func (s *CoreCommanderE2ETestSuite) testUserStateAfterTransfers(

@@ -2,6 +2,7 @@
 package eth
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Worldcoin/hubble-commander/contracts/accountregistry"
@@ -11,6 +12,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/contracts/tokenregistry"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/ethereum/go-ethereum/core/types"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type packAndRequestFunc func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error)
@@ -19,6 +21,9 @@ type rollupSessionBuilder struct {
 	rollup.RollupSession
 	contract       Contract
 	packAndRequest packAndRequestFunc
+
+	attributes []attribute.KeyValue
+	ctx        context.Context
 }
 
 func (c *Client) rollup() *rollupSessionBuilder {
@@ -27,14 +32,35 @@ func (c *Client) rollup() *rollupSessionBuilder {
 			Contract:     c.Rollup.Rollup,
 			TransactOpts: *c.Blockchain.GetAccount(),
 		},
-		contract: c.Rollup.Contract,
+		contract:   c.Rollup.Contract,
+		attributes: make([]attribute.KeyValue, 0),
+		ctx:        context.Background(),
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
-		return c.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+		return c.packAndRequest(
+			builder.ctx,
+			&builder.contract,
+			"Rollup",
+			builder.attributes,
+			&builder.TransactOpts,
+			shouldTrackTx,
+			method,
+			data...,
+		)
 	}
 
 	return &builder
+}
+
+func (b *rollupSessionBuilder) WithAttribute(kv attribute.KeyValue) *rollupSessionBuilder {
+	b.attributes = append(b.attributes, kv)
+	return b
+}
+
+func (b *rollupSessionBuilder) WithContext(ctx context.Context) *rollupSessionBuilder {
+	b.ctx = ctx
+	return b
 }
 
 func (b *rollupSessionBuilder) WithValue(value *models.Uint256) *rollupSessionBuilder {
@@ -149,6 +175,9 @@ type accountRegistrySessionBuilder struct {
 	accountregistry.AccountRegistrySession
 	contract       Contract
 	packAndRequest packAndRequestFunc
+
+	attributes []attribute.KeyValue
+	ctx        context.Context
 }
 
 func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
@@ -157,14 +186,34 @@ func (a *AccountManager) accountRegistry() *accountRegistrySessionBuilder {
 			Contract:     a.AccountRegistry.AccountRegistry,
 			TransactOpts: *a.Blockchain.GetAccount(),
 		},
-		contract: a.AccountRegistry.Contract,
+		contract:   a.AccountRegistry.Contract,
+		attributes: make([]attribute.KeyValue, 0),
+		ctx:        context.Background(),
 	}
 
 	builder.packAndRequest = func(shouldTrackTx bool, method string, data ...interface{}) (*types.Transaction, error) {
-		return a.packAndRequest(&builder.contract, &builder.TransactOpts, shouldTrackTx, method, data...)
+		return a.packAndRequest(
+			builder.ctx,
+			&builder.contract,
+			builder.attributes,
+			&builder.TransactOpts,
+			shouldTrackTx,
+			method,
+			data...,
+		)
 	}
 
 	return &builder
+}
+
+func (b *accountRegistrySessionBuilder) WithContext(ctx context.Context) *accountRegistrySessionBuilder {
+	b.ctx = ctx
+	return b
+}
+
+func (b *accountRegistrySessionBuilder) WithAttribute(kv attribute.KeyValue) *accountRegistrySessionBuilder {
+	b.attributes = append(b.attributes, kv)
+	return b
 }
 
 func (b *accountRegistrySessionBuilder) WithValue(value *models.Uint256) *accountRegistrySessionBuilder {

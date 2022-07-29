@@ -131,7 +131,7 @@ func fillWithDefaults(c *ClientConfig) {
 		c.TxMineTimeout = ref.Duration(config.DefaultEthereumMineTimeout)
 	}
 	if c.StakeAmount == nil {
-		c.StakeAmount = models.NewUint256(1e17) // default 0.1 ether
+		c.StakeAmount = models.NewUint256(1e15) // default 0.001 ether
 	}
 	if c.TransferBatchSubmissionGasLimit == nil {
 		c.TransferBatchSubmissionGasLimit = ref.Uint64(config.DefaultTransferBatchSubmissionGasLimit)

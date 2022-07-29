@@ -2,6 +2,8 @@ package db
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 type rawController interface {
@@ -31,7 +33,11 @@ func (t *TxController) Rollback(cause *error) {
 func (t *TxController) Commit() error {
 	if !t.isLocked {
 		t.isLocked = true
-		return t.tx.Commit()
+		err := t.tx.Commit()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
 	}
 	return nil
 }

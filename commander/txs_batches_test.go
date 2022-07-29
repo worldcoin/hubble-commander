@@ -1,6 +1,7 @@
 package commander
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -121,7 +122,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_ReplaceLocalBatchWithRemoteOne
 	s.Len(batches, 1)
 	remoteBatch := batches[0]
 
-	err = s.cmd.syncRemoteBatch(remoteBatch)
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatch)
 	s.NoError(err)
 
 	// Correct batch stored
@@ -175,7 +176,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithTooManyTxs() 
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -192,7 +193,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidPostSt
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -210,7 +211,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentBatchWithSel
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -231,7 +232,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidS
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -250,7 +251,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithSignatur
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -271,7 +272,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_RemovesExistingBatchAndDispute
 	s.Len(remoteBatches, 1)
 	remoteBatch := remoteBatches[0]
 
-	err = s.cmd.syncRemoteBatch(remoteBatch)
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatch)
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatch.GetID())
@@ -291,7 +292,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesFraudulentCommitmentAf
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -308,7 +309,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithInvalidF
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -325,7 +326,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithoutTrans
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -345,7 +346,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesCommitmentWithNonexist
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -389,7 +390,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesC2TWithNonRegisteredRe
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -411,7 +412,7 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenA
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -483,7 +484,7 @@ func (s *TxsBatchesTestSuite) syncAllBlocks() {
 	latestBlockNumber, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
 
-	err = s.cmd.unsafeSyncBatches(0, *latestBlockNumber)
+	err = s.cmd.unsafeSyncBatches(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 }
 
@@ -496,7 +497,7 @@ func (s *TxsBatchesTestSuite) createTransferBatchLocally(tx *models.Transfer) *m
 	pendingBatch, err := s.txsCtx.NewPendingBatch(batchtype.Transfer)
 	s.NoError(err)
 
-	commitments, err := s.txsCtx.CreateCommitments()
+	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 	err = s.cmd.storage.AddCommitment(commitments[0].ToCommitment())
@@ -564,13 +565,13 @@ func submitInvalidTxsBatch(
 	pendingBatch, err := txsCtx.NewPendingBatch(txsCtx.BatchType)
 	s.NoError(err)
 
-	commitments, err := txsCtx.CreateCommitments()
+	commitments, err := txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)
 	s.Len(commitments, 1)
 
 	modifier(storage, commitments[0].ToTxCommitmentWithTxs())
 
-	err = txsCtx.SubmitBatch(pendingBatch, commitments)
+	err = txsCtx.SubmitBatch(context.Background(), pendingBatch, commitments)
 	s.NoError(err)
 
 	return pendingBatch

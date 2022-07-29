@@ -91,7 +91,7 @@ func (s *DepositBatchesTestSuite) TestSyncRemoteBatch_SyncsDepositBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.NoError(err)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -111,7 +111,7 @@ func (s *DepositBatchesTestSuite) TestUnsafeSyncBatches_OmitsRolledBackBatch() {
 	s.NoError(err)
 
 	// trigger dispute on fraudulent batch
-	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
+	err = s.cmd.unsafeSyncBatches(context.Background(), 0, *latestBlock)
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	depositBatch := s.submitDepositBatch(s.storage.Storage)
@@ -119,7 +119,7 @@ func (s *DepositBatchesTestSuite) TestUnsafeSyncBatches_OmitsRolledBackBatch() {
 	s.NoError(err)
 
 	// try syncing already rolled back batch
-	err = s.cmd.unsafeSyncBatches(0, *latestBlock)
+	err = s.cmd.unsafeSyncBatches(context.Background(), 0, *latestBlock)
 	s.NoError(err)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -169,7 +169,7 @@ func (s *DepositBatchesTestSuite) submitDepositBatch(storage *st.Storage) *model
 	)
 	defer depositsCtx.Rollback(nil)
 
-	batch, _, err := depositsCtx.CreateAndSubmitBatch()
+	batch, _, err := depositsCtx.CreateAndSubmitBatch(context.Background())
 	s.NoError(err)
 
 	s.client.GetBackend().Commit()

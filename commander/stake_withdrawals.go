@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Commander) syncStakeWithdrawals(ctx context.Context, startBlock, endBlock uint64) error {
-	_, span := rollupTracer.Start(ctx, "syncStakeWithdrawls")
+	_, span := newBlockTracer.Start(ctx, "syncStakeWithdrawls")
 	defer span.End()
 
 	duration, err := metrics.MeasureDuration(func() (err error) {

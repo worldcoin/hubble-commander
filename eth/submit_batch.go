@@ -1,6 +1,8 @@
 package eth
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/contracts/rollup"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -8,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type SubmitBatchFunc func() (*types.Transaction, error)
@@ -23,10 +26,16 @@ func (c *Client) SubmitTransfersBatch(batchID *models.Uint256, commitments []mod
 	return tx, nil
 }
 
-func (c *Client) SubmitCreate2TransfersBatch(batchID *models.Uint256, commitments []models.CommitmentWithTxs) (*types.Transaction, error) {
+func (c *Client) SubmitCreate2TransfersBatch(
+	ctx context.Context,
+	batchID *models.Uint256,
+	commitments []models.CommitmentWithTxs,
+) (*types.Transaction, error) {
 	tx, err := c.rollup().
 		WithValue(c.config.StakeAmount).
 		WithGasLimit(*c.config.C2TBatchSubmissionGasLimit).
+		WithContext(ctx).
+		WithAttribute(attribute.String("batchID", batchID.String())).
 		SubmitCreate2Transfer(encoder.CommitmentsToTransferAndC2TSubmitBatchFields(batchID, commitments))
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -58,7 +67,7 @@ func (c *Client) SubmitCreate2TransfersBatchAndWait(
 	commitments []models.CommitmentWithTxs,
 ) (*models.Batch, error) {
 	return c.submitBatchAndWait(func() (*types.Transaction, error) {
-		return c.SubmitCreate2TransfersBatch(batchID, commitments)
+		return c.SubmitCreate2TransfersBatch(context.TODO(), batchID, commitments)
 	})
 }
 
