@@ -20,7 +20,7 @@ RUN touch empty-file
 
 ################################################################################
 # Create minimal docker image for our app
-FROM scratch
+FROM alpine:latest
 WORKDIR /
 
 # Drop priviliges
