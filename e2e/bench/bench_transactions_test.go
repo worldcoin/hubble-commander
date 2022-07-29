@@ -65,6 +65,7 @@ func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchSyncCommander() {
+	time.Sleep(time.Second * 15) // give the NewBlockLoop a change to notice the spoke
 	s.sendTransactionsWithDistribution(TxTypeDistribution{
 		txtype.Transfer:        0.75,
 		txtype.Create2Transfer: 0.2,
