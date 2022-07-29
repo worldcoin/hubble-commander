@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -104,7 +105,7 @@ func (s *GetTransactionTestSuite) TearDownTest() {
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
 	receipt, err := s.api.GetTransaction(*hash)
@@ -115,7 +116,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Transfer() {
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.create2Transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.create2Transfer))
 	s.NoError(err)
 
 	receipt, err := s.api.GetTransaction(*hash)
@@ -126,7 +127,7 @@ func (s *GetTransactionTestSuite) TestGetTransaction_Create2Transfer() {
 }
 
 func (s *GetTransactionTestSuite) TestGetTransaction_MassMigration() {
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(s.massMigration))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.massMigration))
 	s.NoError(err)
 
 	receipt, err := s.api.GetTransaction(*hash)

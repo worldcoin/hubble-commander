@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/bls"
@@ -100,12 +101,12 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrSendTxMethodDisabled:               APIErrSendTxMethodDisabled,
 }
 
-func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
+func (a *API) SendTransaction(ctx context.Context, tx dto.Transaction) (*common.Hash, error) {
 	if !a.isAcceptingTransactions {
 		return nil, sanitizeError(ErrSendTxMethodDisabled, sendTransactionAPIErrors)
 	}
 
-	transactionHash, err := a.unsafeSendTransaction(tx)
+	transactionHash, err := a.unsafeSendTransaction(ctx, tx)
 	if err != nil {
 		return nil, sanitizeError(err, sendTransactionAPIErrors)
 	}
@@ -113,10 +114,10 @@ func (a *API) SendTransaction(tx dto.Transaction) (*common.Hash, error) {
 	return transactionHash, nil
 }
 
-func (a *API) unsafeSendTransaction(tx dto.Transaction) (*common.Hash, error) {
+func (a *API) unsafeSendTransaction(ctx context.Context, tx dto.Transaction) (*common.Hash, error) {
 	switch t := tx.Parsed.(type) {
 	case dto.Transfer:
-		return a.handleTransfer(t)
+		return a.handleTransfer(ctx, t)
 	case dto.Create2Transfer:
 		return a.handleCreate2Transfer(t)
 	case dto.MassMigration:

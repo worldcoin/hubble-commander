@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -9,14 +11,26 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	bh "github.com/timshannon/badgerhold/v4"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func (a *API) handleTransfer(transferDTO dto.Transfer) (*common.Hash, error) {
+func (a *API) handleTransfer(ctx context.Context, transferDTO dto.Transfer) (*common.Hash, error) {
 	transfer, err := sanitizeTransfer(transferDTO)
 	if err != nil {
 		a.countRejectedTx(txtype.Transfer)
 		return nil, err
 	}
+
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(
+		attribute.String("txType", "transfer"),
+		attribute.Int64("fromStateID", int64(transfer.FromStateID)),
+		attribute.Int64("toStateID", int64(transfer.ToStateID)),
+		attribute.String("amount", transfer.Amount.String()),
+		attribute.String("fee", transfer.Fee.String()),
+		attribute.Int64("nonce", int64(transfer.Nonce.Uint64())),
+	)
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {
 		a.countRejectedTx(txtype.Transfer)
