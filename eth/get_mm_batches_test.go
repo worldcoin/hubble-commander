@@ -57,7 +57,7 @@ func (s *GetMMBatchesTestSuite) TestGetBatches() {
 	batch, err := s.client.SubmitMassMigrationsBatchAndWait(models.NewUint256(1), []models.CommitmentWithTxs{s.commitment})
 	s.NoError(err)
 
-	batches, err := s.client.GetBatches(&BatchesFilters{
+	batches, err := s.client.GetBatches(context.Background(), &BatchesFilters{
 		FilterByBatchID: func(batchID *models.Uint256) bool {
 			return batchID.CmpN(0) > 0
 		},
