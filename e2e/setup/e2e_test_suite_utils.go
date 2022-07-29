@@ -53,7 +53,7 @@ func (s *E2ETestSuite) newEthClient(privateKey string) *eth.Client {
 		GenesisAccounts:                chainSpec.GenesisAccounts,
 	}
 
-	cfg := config.GetConfig()
+	cfg := config.GetCommanderConfigAndSetupLogger()
 	cfg.Ethereum.PrivateKey = privateKey
 	blockchain, err := chain.NewRPCConnection(cfg.Ethereum)
 	s.NoError(err)

@@ -51,10 +51,12 @@ func (s *BenchmarkTransactionsSuite) TestBenchCreate2TransfersCommander() {
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchMassMigrationsCommander() {
+	time.Sleep(time.Second * 15)  // give the NewBlockLoop a change to notice the spoke
 	s.sendTransactionsWithDistribution(TxTypeDistribution{txtype.MassMigration: 1.0})
 }
 
 func (s *BenchmarkTransactionsSuite) TestBenchMixedCommander() {
+	time.Sleep(time.Second * 15)  // give the NewBlockLoop a change to notice the spoke
 	s.sendTransactionsWithDistribution(TxTypeDistribution{
 		txtype.Transfer:        0.75,
 		txtype.Create2Transfer: 0.2,
