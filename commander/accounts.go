@@ -112,7 +112,10 @@ func (c *Commander) syncBatchAccounts(ctx context.Context, start, end uint64) (n
 	return newAccountsCount, it.Error()
 }
 
-func (c *Commander) syncBatchAccountsTx(ctx context.Context, event *accountregistry.AccountRegistryBatchPubkeyRegistered) (newAccountsCount int, err error) {
+func (c *Commander) syncBatchAccountsTx(
+	ctx context.Context,
+	event *accountregistry.AccountRegistryBatchPubkeyRegistered,
+) (newAccountsCount int, err error) {
 	_, span := newBlockTracer.Start(ctx, "syncBatchAccountsTx")
 	defer span.End()
 
