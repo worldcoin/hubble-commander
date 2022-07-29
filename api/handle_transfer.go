@@ -24,12 +24,12 @@ func (a *API) handleTransfer(ctx context.Context, transferDTO dto.Transfer) (*co
 
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
-		attribute.String("tx.type", "transfer"),
-		attribute.Int64("tx.fromStateID", int64(transfer.FromStateID)),
-		attribute.Int64("tx.toStateID", int64(transfer.ToStateID)),
-		attribute.String("tx.amount", transfer.Amount.String()),
-		attribute.String("tx.fee", transfer.Fee.String()),
-		attribute.Int64("tx.nonce", int64(transfer.Nonce.Uint64())),
+		attribute.String("hubble.tx.type", "transfer"),
+		attribute.Int64("hubble.tx.fromStateID", int64(transfer.FromStateID)),
+		attribute.Int64("hubble.tx.toStateID", int64(transfer.ToStateID)),
+		attribute.String("hubble.tx.amount", transfer.Amount.String()),
+		attribute.String("hubble.tx.fee", transfer.Fee.String()),
+		attribute.Int64("hubble.tx.nonce", int64(transfer.Nonce.Uint64())),
 	)
 
 	if vErr := a.validateTransfer(transfer); vErr != nil {

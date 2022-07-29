@@ -85,7 +85,7 @@ func packAndRequest(
 	qualifiedName := contractName + "." + method
 	attributes = append(
 		attributes,
-		attribute.String("method", qualifiedName),
+		attribute.String("hubble.method", qualifiedName),
 	)
 	span.SetAttributes(attributes...)
 
@@ -107,7 +107,7 @@ func (c *TxSendingRequest) Send(nonce uint64) (*types.Transaction, error) {
 	_, span := clientTracer.Start(c.ctx, "TxSendingRequest.Send")
 	defer span.End()
 
-	span.SetAttributes(attribute.Int64("nonce", int64(nonce)))
+	span.SetAttributes(attribute.Int64("hubble.nonce", int64(nonce)))
 
 	c.opts.Nonce = big.NewInt(int64(nonce))
 	tx, err := c.contract.RawTransact(&c.opts, c.input)
@@ -117,7 +117,7 @@ func (c *TxSendingRequest) Send(nonce uint64) (*types.Transaction, error) {
 	}
 
 	if tx != nil {
-		span.SetAttributes(attribute.String("txHash", tx.Hash().String()))
+		span.SetAttributes(attribute.String("hubble.txHash", tx.Hash().String()))
 	}
 
 	if err != nil {

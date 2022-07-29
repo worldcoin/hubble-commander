@@ -216,8 +216,8 @@ func (c *Commander) syncRange(startBlock, endBlock uint64) error {
 	ctx, span := newBlockTracer.Start(context.Background(), "syncRange")
 	defer span.End()
 	span.SetAttributes(
-		attribute.Int("startBlock", int(startBlock)),
-		attribute.Int("endBlock", int(endBlock)),
+		attribute.Int("hubble.startBlock", int(startBlock)),
+		attribute.Int("hubble.endBlock", int(endBlock)),
 	)
 
 	err := c.syncAccounts(ctx, startBlock, endBlock)

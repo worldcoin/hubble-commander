@@ -92,7 +92,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 
 	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
-	span.SetAttributes(attribute.String("batchType", currentBatchType.String()))
+	span.SetAttributes(attribute.String("hubble.batchType", currentBatchType.String()))
 
 	// this chooses the type of the next batch, currentBatchType is not read once
 	// the rollupCtx has been created.
@@ -111,6 +111,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		// this requires custom configuration of the dd agent:
 		//  apm_config.filter_tags.reject = ["manual.drop:true"]
 		// if we don't do this then ~ every 500µs we emit a new trace
+		// https://docs.datadoghq.com/tracing/guide/ignoring_apm_resources/?tab=datadogyaml#ignoring-based-on-span-tags
 		span.SetAttributes(attribute.Bool("manual.drop", true))
 	}
 

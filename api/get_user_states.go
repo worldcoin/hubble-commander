@@ -27,13 +27,13 @@ func (a *API) GetUserStates(ctx context.Context, publicKey *models.PublicKey) ([
 
 func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicKey) ([]dto.UserStateWithID, error) {
 	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.String("publicKey", publicKey.String()))
+	span.SetAttributes(attribute.String("hubble.publicKey", publicKey.String()))
 
 	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting leaves for public key: %s", publicKey.String())
 
 	leaves, err := a.storage.GetStateLeavesByPublicKey(publicKey)
 	if err != nil {
-		span.SetAttributes(attribute.String("error", err.Error()))
+		span.SetAttributes(attribute.String("hubble.error", err.Error()))
 		log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
 		return nil, err
 	}

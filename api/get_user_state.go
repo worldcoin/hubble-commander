@@ -17,7 +17,7 @@ var getUserStateAPIErrors = map[error]*APIError{
 
 func (a *API) GetUserState(ctx context.Context, id uint32) (*dto.UserStateWithID, error) {
 	span := trace.SpanFromContext(ctx)
-	span.SetAttributes(attribute.Int64("stateID", int64(id)))
+	span.SetAttributes(attribute.Int64("hubble.stateID", int64(id)))
 
 	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting state for id: %d", id)
 

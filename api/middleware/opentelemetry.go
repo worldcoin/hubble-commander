@@ -63,7 +63,7 @@ func OpenTelemetryHandler(next http.Handler) http.Handler {
 		if response.Error != nil {
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
-			span.SetAttributes(attribute.Int("errorCode", response.Error.Code))
+			span.SetAttributes(attribute.Int("hubble.errorCode", response.Error.Code))
 		} else {
 			span.SetStatus(codes.Ok, "")
 		}

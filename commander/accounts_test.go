@@ -76,7 +76,7 @@ func (s *AccountsTestSuite) TestSyncBatchAccounts() {
 
 	latestBlockNumber, err := s.testClient.GetLatestBlockNumber()
 	s.NoError(err)
-	newAccountsCount, err := s.cmd.syncBatchAccounts(0, *latestBlockNumber)
+	newAccountsCount, err := s.cmd.syncBatchAccounts(context.Background(), 0, *latestBlockNumber)
 	s.NoError(err)
 	s.Equal(ref.Int(st.AccountBatchSize), newAccountsCount)
 
