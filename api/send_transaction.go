@@ -119,7 +119,7 @@ func (a *API) unsafeSendTransaction(ctx context.Context, tx dto.Transaction) (*c
 	case dto.Transfer:
 		return a.handleTransfer(ctx, t)
 	case dto.Create2Transfer:
-		return a.handleCreate2Transfer(t)
+		return a.handleCreate2Transfer(ctx, t)
 	case dto.MassMigration:
 		return a.handleMassMigration(t)
 	default:
