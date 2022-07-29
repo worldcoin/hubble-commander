@@ -69,7 +69,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_SyncsBatch() {
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.NoError(err)
 
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
@@ -92,7 +92,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithMismatchedTota
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -110,7 +110,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidWithdra
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
@@ -128,7 +128,7 @@ func (s *MMBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenID
 	s.NoError(err)
 	s.Len(remoteBatches, 1)
 
-	err = s.cmd.syncRemoteBatch(remoteBatches[0])
+	err = s.cmd.syncRemoteBatch(context.Background(), remoteBatches[0])
 	s.ErrorIs(err, ErrRollbackInProgress)
 
 	checkBatchAfterDispute(s.Assertions, s.cmd, remoteBatches[0].GetID())
