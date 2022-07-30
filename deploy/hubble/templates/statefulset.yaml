@@ -64,7 +64,7 @@ spec:
           command: [ 'sh', '-c', "ls -l /volume && ls -l /volume/config" ]
           volumeMounts:
             - name: hubble-storage
-              mountPath: "/volume"g
+              mountPath: "/volume"
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
