@@ -1,4 +1,4 @@
-name: Build, Test & Deploy
+name: Deploy stage contracts
 
 on: workflow_dispatch
 
