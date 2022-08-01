@@ -103,6 +103,8 @@ spec:
             {{- if eq .Values.environment "prod" }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /volume/config/chain-spec.yaml
+            - name: HUBBLE_ROLLUP_DISABLE_SIGNATURES
+              value: "true"
             {{- else }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
