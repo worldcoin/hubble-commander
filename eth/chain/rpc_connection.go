@@ -74,6 +74,18 @@ func (c *RPCConnection) GetLatestBlockNumber() (*uint64, error) {
 	if err != nil {
 		return nil, err
 	}
+	// This is a hack, meant to compensate for a bug. Badger provides serializability,
+	// and in order to do so it fails your transaction when you call Commit() if it
+	// detects a transaction which modified state your transaction read from. Every
+	// component which uses badger must be aware of the possibility of this failure,
+	// but the Rollup Loop is not and cannot tolerate conflicts. So, until that is
+	// fixed we need to ensure the Rollup Loop will never experience a conflict. The
+	// Rollup Loop holds its tranactions open for a very long time. Without this
+	// 10-block delay it is possible for the New Block Loop to pick up eth
+	// transactions the Rollup Loop has submitted to the chain before the Rollup Loop
+	// has committed its transaction. Technically with the 10 block delay that is
+	// still possible but it gives us a 150 second window which is sufficient in
+	// practice to avoid the race condition.
 	return ref.Uint64(blockNumber - 10), nil
 }
 
