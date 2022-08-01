@@ -650,7 +650,8 @@ func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 		return err
 	}
 
-	if nextTxForID != nil {
+	// TODO: add a test that we don't insert txs with the wrong type here
+	if nextTxForID != nil && nextTxForID.TxType == mh.txType {
 		// TODO: make a helper method for pushes and use it in the constructor?
 		mh.heap.Push(*nextTxForID)
 		mh.lastTx[nextTxForID.FromStateID] = nextTxForID.Nonce.Uint64()
