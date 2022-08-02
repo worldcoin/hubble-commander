@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -35,7 +34,6 @@ func (s *GetUserStateTestSuite) SetupTest() {
 	s.api = NewTestAPI(
 		testStorage.Storage,
 		eth.DomainOnlyTestClient,
-		mempool.NewTestTxPool(),
 	)
 }
 
@@ -104,7 +102,7 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 		Signature:   &models.Signature{},
 	}
 
-	hash, err := s.api.SendTransaction(dto.MakeTransaction(transfer))
+	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 

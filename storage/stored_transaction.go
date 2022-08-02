@@ -253,12 +253,9 @@ func (s *TransactionStorage) GetTransactionIDsByBatchIDs(batchIDs ...models.Uint
 	return ids, nil
 }
 
-// TODO: this method also needs to talk to the mempool, it should be moved to
-//       storage/mempool.go
+// TODO: can all our callers just call Storage.GetAllMempoolTransactions()
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
-	var pendingTxs []stored.PendingTx
-
-	err := s.database.Badger.Find(&pendingTxs, bh.Where("TxType").Eq(txType))
+	pendingTxs, err := s.tsGetAllMempoolTransactions()
 	if err != nil {
 		return nil, err
 	}
@@ -270,24 +267,6 @@ func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionTyp
 
 	return models.MakeGenericArray(txs...), nil
 }
-
-// TODO: delete this method entirely, don't just comment it out
-/*
-func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericArray, error) {
-	var pendingTxs []stored.PendingTx
-	err := s.database.Badger.Find(&pendingTxs, &bh.Query{})
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]models.GenericTransaction, len(pendingTxs))
-	for i := range pendingTxs {
-		txs[i] = pendingTxs[i].ToGenericTransaction()
-	}
-
-	return models.MakeGenericArray(txs...), nil
-}
-*/
 
 func (s *TransactionStorage) GetAllFailedTransactions() (models.GenericArray, error) {
 	var failedTxs []stored.FailedTx
@@ -398,6 +377,14 @@ func (s *TransactionStorage) tsGetMempoolTransactionByHash(hash common.Hash) (*s
 		return nil, err
 	}
 	return storage.GetMempoolTransactionByHash(hash)
+}
+
+func (s *TransactionStorage) tsGetAllMempoolTransactions() ([]stored.PendingTx, error) {
+	storage, err := newStorageFromDatabase(s.database)
+	if err != nil {
+		return nil, err
+	}
+	return storage.GetAllMempoolTransactions()
 }
 
 func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.GenericTransaction, error) {

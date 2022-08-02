@@ -18,7 +18,7 @@ type UserStateWithID struct {
 
 func MakeUserStateWithID(stateID uint32, userState *models.UserState) UserStateWithID {
 	return UserStateWithID{
-		StateID: stateID,
+		StateID:   stateID,
 		UserState: MakeUserState(userState),
 	}
 }
