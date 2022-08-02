@@ -138,7 +138,7 @@ func (m *TxMempool) GetNextExecutableTx(txType txtype.TransactionType, stateID u
 
 func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.GenericTransaction {
 	firstTx := bucket.txs[0]
-	log.Infof("XXX: executable first transaction, batchType: %s, bucket: %d, txBase: %v", txType.String(), bucket.nonce, *firstTx.GetBase())
+	log.Infof("XXX: executable first transaction, batchType: %s, buckeNonce: %d, txNonce: %d, txType: %s", txType.String(), bucket.nonce, firstTx.GetNonce(), firstTx.GetBase().TxType.String())
 
 	firstTxBase := firstTx.GetBase()
 	if firstTxBase.TxType == txType && firstTxBase.Nonce.EqN(bucket.nonce) {
