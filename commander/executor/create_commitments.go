@@ -159,10 +159,13 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
+
+	count := c.Mempool.TxCount(txtype.TransactionType(c.BatchType))
 	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
-		log.Info("XXX:not enough tx point 1")
+		log.Infof("XXX:not enough tx point 1, count: %d", count)
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
+	log.Infof("XXX: transaction count: %d", c.Mempool.TxCount(txtype.TransactionType(c.BatchType)))
 
 	txController, commitmentMempool := batchMempool.BeginTransaction()
 	defer txController.Rollback()
