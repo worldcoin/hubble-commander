@@ -68,6 +68,7 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	}
 	log.WithFields(o11y.TraceFields(ctx)).Info("Created all commitments")
 	if len(commitments) < int(c.minCommitmentsPerBatch) {
+		log.WithFields(o11y.TraceFields(ctx)).Infof("Not enough commitments per batch, %s", len(commitments))
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
@@ -157,6 +158,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	err error,
 ) {
 	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
+		log.Info("XXX:not enough tx point 1")
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
@@ -169,6 +171,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	}
 
 	if executeTxsResult.AppliedTxs().Len() < int(c.minTxsPerCommitment) {
+		log.Info("XXX:not enough tx point 2")
 		return nil, ErrNotEnoughTxs
 	}
 
