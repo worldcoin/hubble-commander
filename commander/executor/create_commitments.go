@@ -71,8 +71,11 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
+	log.WithFields(o11y.TraceFields(ctx)).Info("Enough commitments per batch")
+
 	select {
 	case <-c.ctx.Done():
+		log.WithFields(o11y.TraceFields(ctx)).Info("Rollup context cancelled")
 		return nil, errors.WithStack(ErrRollupContextCanceled)
 	default:
 	}
