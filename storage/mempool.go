@@ -389,6 +389,8 @@ func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (*
 	var oldestTime *models.Timestamp
 	var result stored.PendingTx
 
+	foundPendingTx := false
+
 	for i := range pendingTxs {
 		tx := pendingTxs[i]
 
@@ -407,10 +409,15 @@ func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (*
 		if (oldestTime == nil) || txTime.Before(*oldestTime) {
 			oldestTime = txTime
 			result = tx
+			foundPendingTx = true
 		}
 	}
 
-	return &result, nil
+	if foundPendingTx {
+		return &result, nil
+	} else {
+		return nil, nil
+	}
 }
 
 // fetches, for each account with a pending tx, the pending tx with the lowest nonce
