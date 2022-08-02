@@ -246,16 +246,16 @@ func (s *CoreCommanderE2ETestSuite) testCommanderRestart(startNonce uint64) {
 
 	// TODO: re-enable this test
 	/*
-	txHash := s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(2),
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(startNonce),
-	})
+		txHash := s.SendTransaction(dto.Transfer{
+			FromStateID: ref.Uint32(1),
+			ToStateID:   ref.Uint32(2),
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(startNonce),
+		})
 
-	txReceipt := s.GetTransaction(txHash)
-	s.Equal(txReceipt.Status, txstatus.Pending)
+		txReceipt := s.GetTransaction(txHash)
+		s.Equal(txReceipt.Status, txstatus.Pending)
 	*/
 }
 

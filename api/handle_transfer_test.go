@@ -295,6 +295,7 @@ func (s *SendTransferTestSuite) TestSendTransaction_SendsTxToTxPool() {
 	s.Equal(uint32(1), count)
 
 	txs, err := s.api.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
 	s.Equal(1, txs.Len())
 	s.Equal(*hash, txs[0].GetBase().Hash)
 }

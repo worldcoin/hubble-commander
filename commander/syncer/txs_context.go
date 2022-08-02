@@ -8,11 +8,11 @@ import (
 )
 
 type TxsContext struct {
-	cfg        *config.RollupConfig
-	storage    *st.Storage
-	client     *eth.Client
-	Syncer     TransactionSyncer
-	TxType     txtype.TransactionType
+	cfg     *config.RollupConfig
+	storage *st.Storage
+	client  *eth.Client
+	Syncer  TransactionSyncer
+	TxType  txtype.TransactionType
 }
 
 func NewTestTxsContext(
@@ -31,10 +31,10 @@ func newTxsContext(
 	txType txtype.TransactionType,
 ) *TxsContext {
 	return &TxsContext{
-		cfg:        cfg,
-		storage:    storage,
-		client:     client,
-		Syncer:     NewTransactionSyncer(storage, txType),
-		TxType:     txType,
+		cfg:     cfg,
+		storage: storage,
+		client:  client,
+		Syncer:  NewTransactionSyncer(storage, txType),
+		TxType:  txType,
 	}
 }

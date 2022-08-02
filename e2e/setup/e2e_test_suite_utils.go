@@ -14,7 +14,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
-	// "github.com/Worldcoin/hubble-commander/models/enums/txstatus"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -125,8 +124,8 @@ func (s *E2ETestSuite) sendNTransfers(n int, transfer dto.Transfer) common.Hash 
 	firstTxHash := s.sendTransfer(transfer)
 	// TODO fix this and add it back in
 	/*
-	firstTxReceipt := s.GetTransaction(firstTxHash)
-	s.Equal(txstatus.Pending, firstTxReceipt.Status)
+		firstTxReceipt := s.GetTransaction(firstTxHash)
+		s.Equal(txstatus.Pending, firstTxReceipt.Status)
 	*/
 	for i := 1; i < n; i++ {
 		transfer.Nonce = transfer.Nonce.AddN(1)
@@ -139,8 +138,8 @@ func (s *E2ETestSuite) sendNTransfers(n int, transfer dto.Transfer) common.Hash 
 func (s *E2ETestSuite) sendNCreate2Transfers(n int, transfer dto.Create2Transfer) common.Hash {
 	firstTxHash := s.sendCreate2Transfer(transfer)
 	/*
-	firstTxReceipt := s.GetTransaction(firstTxHash)
-	s.Equal(txstatus.Pending, firstTxReceipt.Status)
+		firstTxReceipt := s.GetTransaction(firstTxHash)
+		s.Equal(txstatus.Pending, firstTxReceipt.Status)
 	*/
 	for i := 1; i < n; i++ {
 		transfer.Nonce = transfer.Nonce.AddN(1)
@@ -153,8 +152,8 @@ func (s *E2ETestSuite) sendNCreate2Transfers(n int, transfer dto.Create2Transfer
 func (s *E2ETestSuite) sendNMassMigrations(n int, massMigration dto.MassMigration) common.Hash {
 	firstTxHash := s.sendMassMigration(massMigration)
 	/*
-	firstTxReceipt := s.GetTransaction(firstTxHash)
-	s.Equal(txstatus.Pending, firstTxReceipt.Status)
+		firstTxReceipt := s.GetTransaction(firstTxHash)
+		s.Equal(txstatus.Pending, firstTxReceipt.Status)
 	*/
 
 	for i := 1; i < n; i++ {

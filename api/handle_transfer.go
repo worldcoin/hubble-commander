@@ -46,7 +46,7 @@ func (a *API) handleTransfer(ctx context.Context, transferDTO dto.Transfer) (*co
 		return nil, err
 	}
 
-	err = a.storage.ExecuteInReadWriteTransaction(func (txStorage *storage.Storage) error {
+	err = a.storage.ExecuteInReadWriteTransaction(func(txStorage *storage.Storage) error {
 		// this wrapper will make sure api handlers which touch the same state
 		// are serialized; if we read some state and another txn changes that
 		// state before we can commit then this function will fail and
@@ -63,9 +63,9 @@ func (a *API) handleTransfer(ctx context.Context, transferDTO dto.Transfer) (*co
 		}
 
 		// TODO: this needs to read from txStorage, so we need to refactor?
-		if err := validateTransfer(txStorage, transfer, signatureDomain, mockSignature); err != nil {
+		if innerErr := validateTransfer(txStorage, transfer, signatureDomain, mockSignature); innerErr != nil {
 			a.countRejectedTx(txtype.Transfer)
-			return err
+			return innerErr
 		}
 
 		return txStorage.AddMempoolTx(transfer)
@@ -114,7 +114,12 @@ func sanitizeTransfer(transfer dto.Transfer) (*models.Transfer, error) {
 	}, nil
 }
 
-func validateTransfer(txStorage *storage.Storage, transfer *models.Transfer, signatureDomain *bls.Domain, mockSignature *models.Signature) error {
+func validateTransfer(
+	txStorage *storage.Storage,
+	transfer *models.Transfer,
+	signatureDomain *bls.Domain,
+	mockSignature *models.Signature,
+) error {
 	if vErr := validateAmount(&transfer.Amount); vErr != nil {
 		return vErr
 	}

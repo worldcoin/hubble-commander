@@ -4,8 +4,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
-	bh "github.com/timshannon/badgerhold/v4"
 	"github.com/pkg/errors"
+	bh "github.com/timshannon/badgerhold/v4"
 )
 
 func (s *CommitmentStorage) AddCommitment(commitment models.Commitment) error {

@@ -74,14 +74,14 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 	}()
 
 	/*
-	// Invalid tx
-	s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(1),
-		ToStateID:   ref.Uint32(999), // Non-existent receiver
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(8),
-	})
+		// Invalid tx
+		s.SendTransaction(dto.Transfer{
+			FromStateID: ref.Uint32(1),
+			ToStateID:   ref.Uint32(999), // Non-existent receiver
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(8),
+		})
 	*/
 	// Some valid txs
 	s.SendNTransactions(4, dto.Transfer{
@@ -92,16 +92,16 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		Nonce:       models.NewUint256(4),
 	})
 	/*
-	these are no longer allowed by the API, what was this testing?
+		these are no longer allowed by the API, what was this testing?
 
-	// Another invalid tx
-	s.SendTransaction(dto.Transfer{
-		FromStateID: ref.Uint32(2),
-		ToStateID:   ref.Uint32(999), // Non-existent receiver
-		Amount:      models.NewUint256(90),
-		Fee:         models.NewUint256(10),
-		Nonce:       models.NewUint256(0),
-	})
+		// Another invalid tx
+		s.SendTransaction(dto.Transfer{
+			FromStateID: ref.Uint32(2),
+			ToStateID:   ref.Uint32(999), // Non-existent receiver
+			Amount:      models.NewUint256(90),
+			Fee:         models.NewUint256(10),
+			Nonce:       models.NewUint256(0),
+		})
 	*/
 
 	s.WaitForBatchStatus(2, batchstatus.Submitted)

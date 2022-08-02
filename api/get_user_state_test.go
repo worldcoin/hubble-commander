@@ -43,7 +43,6 @@ func (s *GetUserStateTestSuite) TearDownTest() {
 }
 
 func (s *GetUserStateTestSuite) TestGetUserState() {
-
 	err := s.api.storage.AccountTree.SetSingle(&models.AccountLeaf{
 		PubKeyID:  1,
 		PublicKey: models.PublicKey{1, 2, 3},

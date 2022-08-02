@@ -85,12 +85,6 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	/*
-	log.WithFields(log.Fields{
-		"batchType": *currentBatchType,
-	}).Debug("rollupLoopIteration")
-	*/
-
 	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 	span.SetAttributes(attribute.String("hubble.batchType", currentBatchType.String()))

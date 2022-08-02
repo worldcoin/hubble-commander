@@ -191,8 +191,8 @@ func (c *Commander) syncForward(latestBlockNumber uint64) (*uint64, error) {
 	endBlock := min(latestBlockNumber, startBlock+uint64(c.cfg.Rollup.SyncSize))
 
 	log.WithFields(log.Fields{
-		"startBlock": startBlock,
-		"endBlock": endBlock,
+		"startBlock":  startBlock,
+		"endBlock":    endBlock,
 		"latestBlock": latestBlockNumber,
 	}).Info("syncing forward")
 	duration, err := metrics.MeasureDuration(func() error {

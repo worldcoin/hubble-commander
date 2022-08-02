@@ -270,7 +270,7 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
 		}
 	}
 
-	res, err := s.storage.GetAllPendingTransactions()
+	res, err := s.storage.GetAllMempoolTransactions()
 	s.NoError(err)
 	s.Len(res, 6)
 	for _, expectedTx := range expectedTxs {
@@ -279,7 +279,7 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
 }
 
 func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransactions() {
-	txs, err := s.storage.GetAllPendingTransactions()
+	txs, err := s.storage.GetAllMempoolTransactions()
 	s.NoError(err)
 	s.Len(txs, 0)
 }

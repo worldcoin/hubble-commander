@@ -30,8 +30,8 @@ func (s *APIConsistencySuite) SetupSuite() {
 	s.Assertions = require.New(s.T())
 }
 
-func (s *APIConsistencySuite) TestConsistency () {
-
+//nolint:funlen
+func (s *APIConsistencySuite) TestConsistency() {
 	// a bunch of setup
 
 	testStorage, err := st.NewTestStorage()
@@ -119,7 +119,7 @@ func (s *APIConsistencySuite) TestConsistency () {
 	s.Equal(fetchedState.Nonce, models.MakeUint256(0))
 	s.Equal(fetchedState.Balance, models.MakeUint256(420))
 
-	hash, err := theapi.SendTransaction(dto.MakeTransaction(*create2Transfer))
+	hash, err := theapi.SendTransaction(context.Background(), dto.MakeTransaction(*create2Transfer))
 	s.NoError(err)
 	s.NotNil(hash)
 

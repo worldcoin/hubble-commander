@@ -167,32 +167,16 @@ func (c *TxsContext) executeTxsForCommitment(mempoolHeap *st.MempoolHeap, feeRec
 	result ExecuteTxsForCommitmentResult,
 	err error,
 ) {
-	// TODO: replace this w our own?
-	/*
-	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
+	// This block is an optimization, if we don't include it we'll instead fail inside
+	// ExecuteTxs when we try and fail to pull more txns. It's okay if this gives
+	// false negatives, but it should not give false positives.
+	count, err := c.storage.CountPendingTxsOfType(txtype.TransactionType(c.BatchType))
+	if err != nil {
+		return nil, err
+	}
+	if count < c.minTxsPerCommitment {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
-	*/
-
-	// TODO: we open this transaction so that our fetched txs will be not be taken
-	// from the mempool in the event that we fail to build a complete commitment.
-	// (I) this appears to be redundant w the transaction opened by
-	//     commander/executor/create_commitments.go:48
-	// (II) during rollbacks we don't appear to put the txns back onto c.heap? I think
-	//      this might be a bug.
-
-	// I think both are fine?
-	// - if we return an exceptional error then everything is getting unwound anyway,
-	//   the heap may be in a bad state but it's never used again
-	// - if we fail because we run out of txs then this commitment will not be added
-	//   to the batch and the heap will be in a bad state, but we never read from the
-	//   heap again because we've moved on to bundling the successful commitments into
-	//   a batch.
-
-	// Actually, here's why it's not redundant: we actually want the nested txn! If we
-	// fail by running out of txns then the incomplete commitment will be thrown away,
-	// we do not want those txns to be pulled from the mempool when the batchMempool
-	// commits.
 
 	executeTxsResult, err := c.ExecuteTxs(mempoolHeap, feeReceiver)
 	if err != nil {
@@ -204,9 +188,11 @@ func (c *TxsContext) executeTxsForCommitment(mempoolHeap *st.MempoolHeap, feeRec
 	}
 
 	// there were enough txs so we were able to successfully build this commitment.
-	// Savepoint() removes these pendingTxs from the badger transaction, when
-	// badger commits they will be removed from the mempool.
-	mempoolHeap.Savepoint()
+	// Savepoint() deletes these pendingTxs from badger
+	err = mempoolHeap.Savepoint()
+	if err != nil {
+		return nil, err
+	}
 
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
@@ -229,19 +215,14 @@ func (c *TxsContext) verifyTxsCount() error {
 		return err
 	}
 	if oldestTxn == nil {
-		/*
-		log.WithFields(log.Fields{
-			"txType": txType,
-		}).Debug("quitting loop, no txs of desired type")
-		*/
 		return errors.WithStack(ErrNotEnoughTxs)
 	}
 
 	if time.Since(oldestTxn.ReceiveTime.Time) > c.cfg.MaxTxnDelay {
 		log.WithFields(log.Fields{
-			"hash": oldestTxn.Hash,
-			"from": oldestTxn.FromStateID,
-			"nonce": oldestTxn.Nonce.Uint64(),
+			"hash":        oldestTxn.Hash,
+			"from":        oldestTxn.FromStateID,
+			"nonce":       oldestTxn.Nonce.Uint64(),
 			"receiveTime": oldestTxn.ReceiveTime,
 		}).Debug("Forcing a batch because a transaction is older than MaxTxnDelay")
 		c.minTxsPerCommitment = 1

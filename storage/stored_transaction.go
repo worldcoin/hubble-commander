@@ -302,8 +302,8 @@ func (s *TransactionStorage) unsafeMarkTransactionAsIncluded(
 	hash := tx.GetBase().Hash
 	addressableValue := tx.GetNonce()
 	log.WithFields(log.Fields{
-		"hash": hash,
-		"from": tx.GetFromStateID(),
+		"hash":  hash,
+		"from":  tx.GetFromStateID(),
 		"nonce": addressableValue.Uint64(),
 	}).Debug("marking transaction as included")
 

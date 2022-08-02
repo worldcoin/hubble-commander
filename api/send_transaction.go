@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	ErrFeeTooLow               = fmt.Errorf("fee must be greater than 0")
+	ErrFeeTooLow = fmt.Errorf("fee must be greater than 0")
 
 	// TODO: is there a way to merge these and tell you the expected nonce?
 	//       see storage/error.go:24 NewNotFoundError
 	ErrNonceTooLow             = fmt.Errorf("nonce too low")
-	ErrNonceTooHigh             = fmt.Errorf("nonce too high")
+	ErrNonceTooHigh            = fmt.Errorf("nonce too high")
 	ErrNotEnoughBalance        = fmt.Errorf("not enough balance")
 	ErrTransferToSelf          = fmt.Errorf("transfer to the same state id")
 	ErrInvalidAmount           = fmt.Errorf("amount must be positive")
@@ -106,7 +106,7 @@ var sendTransactionAPIErrors = map[error]*APIError{
 	ErrNonexistentReceiver:                APIReceiverDoesNotExistError,
 	ErrTransferToSelf:                     APIErrTransferToSelf,
 	ErrNonceTooLow:                        APIErrNonceTooLow,
-	ErrNonceTooHigh:                        APIErrNonceTooHigh,
+	ErrNonceTooHigh:                       APIErrNonceTooHigh,
 	ErrNotEnoughBalance:                   APIErrNotEnoughBalance,
 	ErrInvalidAmount:                      APIErrInvalidAmount,
 	ErrFeeTooLow:                          APIErrFeeTooLow,
@@ -194,7 +194,13 @@ func validateBalance(txStorage *storage.Storage, transactionAmount, transactionF
 	return nil
 }
 
-func validateSignature(txStorage *storage.Storage, encodedTransaction []byte, transactionSignature *models.Signature, senderState *models.UserState, domain *bls.Domain) error {
+func validateSignature(
+	txStorage *storage.Storage,
+	encodedTransaction []byte,
+	transactionSignature *models.Signature,
+	senderState *models.UserState,
+	domain *bls.Domain,
+) error {
 	senderAccount, err := txStorage.AccountTree.Leaf(senderState.PubKeyID)
 	if err != nil {
 		return errors.WithStack(NewInvalidSignatureError(err.Error()))
@@ -213,22 +219,4 @@ func validateSignature(txStorage *storage.Storage, encodedTransaction []byte, tr
 		return errors.WithStack(NewInvalidSignatureError("the signature hasn't passed the verification process"))
 	}
 	return nil
-}
-
-func (a *API) updateDuplicatedTransaction(tx models.GenericTransaction) (*common.Hash, error) {
-	// TODO: rename this method: it only lets you replace failed transactions
-
-	txHash := &tx.GetBase().Hash
-	logDuplicateTransaction(txHash)
-	err := a.storage.ReplaceFailedTransaction(tx)
-	if errors.Is(err, storage.ErrAlreadyMinedTransaction) {
-		return nil, errors.WithStack(ErrAlreadyMinedTransaction)
-	}
-	if storage.IsNotFoundError(err) {
-		return nil, errors.WithStack(ErrPendingTransaction)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return txHash, nil
 }

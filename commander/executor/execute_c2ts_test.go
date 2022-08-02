@@ -7,8 +7,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -31,6 +29,9 @@ func (s *ExecuteCreate2TransfersTestSuite) SetupTest() {
 	}
 }
 
+// TODO: can these be turned into integration tests?
+
+/*
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 
@@ -48,9 +49,6 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	s.Len(transfers.PendingAccounts(), 1)
 }
 
-// TODO: can these be turned into integration tests?
-
-/*
 func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(2)
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)

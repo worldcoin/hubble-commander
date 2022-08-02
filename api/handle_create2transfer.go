@@ -45,7 +45,7 @@ func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.
 		return nil, err
 	}
 
-	err = a.storage.ExecuteInReadWriteTransaction(func (txStorage *storage.Storage) error {
+	err = a.storage.ExecuteInReadWriteTransaction(func(txStorage *storage.Storage) error {
 		// see notes in api/handle_transfer.go
 
 		var mockSignature *models.Signature
@@ -55,9 +55,9 @@ func (a *API) handleCreate2Transfer(ctx context.Context, create2TransferDTO dto.
 			mockSignature = nil
 		}
 
-		if err := validateCreate2Transfer(txStorage, create2Transfer, signatureDomain, mockSignature); err != nil {
+		if innerErr := validateCreate2Transfer(txStorage, create2Transfer, signatureDomain, mockSignature); innerErr != nil {
 			a.countRejectedTx(txtype.Create2Transfer)
-			return err
+			return innerErr
 		}
 
 		return txStorage.AddMempoolTx(create2Transfer)
@@ -105,7 +105,12 @@ func sanitizeCreate2Transfer(create2Transfer dto.Create2Transfer) (*models.Creat
 		nil
 }
 
-func validateCreate2Transfer(txStorage *storage.Storage, create2Transfer *models.Create2Transfer, signatureDomain *bls.Domain, mockSignature *models.Signature) error {
+func validateCreate2Transfer(
+	txStorage *storage.Storage,
+	create2Transfer *models.Create2Transfer,
+	signatureDomain *bls.Domain,
+	mockSignature *models.Signature,
+) error {
 	if vErr := validateAmount(&create2Transfer.Amount); vErr != nil {
 		return vErr
 	}

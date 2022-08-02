@@ -31,7 +31,7 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 		return nil, err
 	}
 
-	err = a.storage.ExecuteInReadWriteTransaction(func (txStorage *storage.Storage) error {
+	err = a.storage.ExecuteInReadWriteTransaction(func(txStorage *storage.Storage) error {
 		// this wrapper will make sure api handlers which touch the same state
 		// are serialized; if we read some state and another txn changes that
 		// state before we can commit then this function will fail and
@@ -48,9 +48,9 @@ func (a *API) handleMassMigration(massMigrationDTO dto.MassMigration) (*common.H
 		}
 
 		// TODO: this needs to read from txStorage, so we need to refactor?
-		if err := validateMassMigration(txStorage, massMigration, signatureDomain, mockSignature); err != nil {
+		if innerErr := validateMassMigration(txStorage, massMigration, signatureDomain, mockSignature); innerErr != nil {
 			a.countRejectedTx(massMigration.TxType)
-			return err
+			return innerErr
 		}
 
 		return txStorage.AddMempoolTx(massMigration)
@@ -99,7 +99,12 @@ func sanitizeMassMigration(massMigration dto.MassMigration) (*models.MassMigrati
 	}, nil
 }
 
-func validateMassMigration(txStorage *storage.Storage, massMigration *models.MassMigration, signatureDomain *bls.Domain, mockSignature *models.Signature) error {
+func validateMassMigration(
+	txStorage *storage.Storage,
+	massMigration *models.MassMigration,
+	signatureDomain *bls.Domain,
+	mockSignature *models.Signature,
+) error {
 	if vErr := validateAmount(&massMigration.Amount); vErr != nil {
 		return vErr
 	}

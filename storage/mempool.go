@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"fmt"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"fmt"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -12,8 +12,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
-	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO: make sure you wrap all errors whenever you talk to badger
@@ -24,7 +24,7 @@ import (
 /// These are used by the API
 
 var pendingStatePrefix = []byte("PendingAccountState")
-var pendingTxPrefix   = []byte("PendingTxs")
+var pendingTxPrefix = []byte("PendingTxs")
 
 var ErrBalanceTooLow = fmt.Errorf("balance too low")
 
@@ -33,7 +33,7 @@ func pendingTxStateIDPrefix(stateID uint32) []byte {
 	binary.BigEndian.PutUint32(encodedStateID, stateID)
 
 	return bytes.Join(
-		[][]byte{ pendingTxPrefix, encodedStateID },
+		[][]byte{pendingTxPrefix, encodedStateID},
 		[]byte(":"),
 	)
 }
@@ -45,7 +45,7 @@ func pendingTxKey(stateID uint32, nonce uint64) []byte {
 	binary.BigEndian.PutUint64(encodedNonce, nonce)
 
 	return bytes.Join(
-		[][]byte{ prefix, encodedNonce },
+		[][]byte{prefix, encodedNonce},
 		[]byte(":"),
 	)
 }
@@ -55,12 +55,12 @@ func pendingStateKey(stateID uint32) []byte {
 	binary.BigEndian.PutUint32(encodedStateID, stateID)
 
 	return bytes.Join(
-		[][]byte{ pendingStatePrefix, encodedStateID },
+		[][]byte{pendingStatePrefix, encodedStateID},
 		[]byte(":"),
 	)
 }
 
-func encodePendingState(nonce models.Uint256, balance models.Uint256) []byte {
+func encodePendingState(nonce, balance models.Uint256) []byte {
 	var result bytes.Buffer
 	result.Grow(64)
 	result.Write(nonce.Bytes())
@@ -69,7 +69,7 @@ func encodePendingState(nonce models.Uint256, balance models.Uint256) []byte {
 	return result.Bytes()
 }
 
-func decodePendingState(data []byte) (nonce models.Uint256, balance models.Uint256) {
+func decodePendingState(data []byte) (nonce, balance models.Uint256) {
 	if len(data) != 64 {
 		panic("corrupted database")
 	}
@@ -83,13 +83,13 @@ func decodePendingState(data []byte) (nonce models.Uint256, balance models.Uint2
 
 func (s *Storage) rawLookup(key []byte) (value []byte, err error) {
 	err = s.database.Badger.RawUpdate(func(txn *badger.Txn) error {
-		item, err := txn.Get(key)
-		if err != nil {
-			return errors.WithStack(err)
+		item, innerErr := txn.Get(key)
+		if innerErr != nil {
+			return errors.WithStack(innerErr)
 		}
 
-		value, err = item.ValueCopy(nil)
-		return errors.WithStack(err)
+		value, innerErr = item.ValueCopy(nil)
+		return errors.WithStack(innerErr)
 	})
 	if err != nil {
 		value = nil
@@ -115,7 +115,6 @@ func (s *Storage) getPendingState(stateID uint32) (
 	balance *models.Uint256,
 	err error,
 ) {
-
 	// TODO: not confident this does the right thing, this wants some tests
 
 	key := pendingStateKey(stateID)
@@ -127,9 +126,9 @@ func (s *Storage) getPendingState(stateID uint32) (
 	}
 
 	if errors.Is(err, badger.ErrKeyNotFound) {
-		state, err := s.StateTree.Leaf(stateID)
-		if err != nil {
-			return nil, nil, err
+		state, innerErr := s.StateTree.Leaf(stateID)
+		if innerErr != nil {
+			return nil, nil, innerErr
 		}
 
 		nonce = &state.UserState.Nonce
@@ -178,11 +177,11 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 		return nil, err
 	}
 
-	return &models.UserState {
+	return &models.UserState{
 		PubKeyID: leaf.UserState.PubKeyID,
 		TokenID:  leaf.UserState.TokenID,
-		Balance: *pendingBalance,
-		Nonce: *pendingNonce,
+		Balance:  *pendingBalance,
+		Nonce:    *pendingNonce,
 	}, nil
 }
 
@@ -205,7 +204,6 @@ func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {
 // - checks that the txn cleanly applies to the pending state but assumes all other
 //   validation has already been done (e.g. the signature check)
 func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
-
 	// (I) Validate the txn against the pending state
 
 	fromStateID := tx.GetFromStateID()
@@ -250,7 +248,7 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 	}
 
 	if tx.Type() == txtype.Transfer {
-		toStateID := *tx.GetToStateID()  // will not panic, transfers have this
+		toStateID := *tx.GetToStateID() // will not panic, transfers have this
 		err = s.addToPendingBalance(toStateID, txTotal)
 		if err != nil {
 			return err
@@ -278,8 +276,8 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 
 type MempoolHeap struct {
 	storage *Storage
-	txType txtype.TransactionType
-	heap *TxHeap
+	txType  txtype.TransactionType
+	heap    *TxHeap
 
 	// stateID -> nonce, the nonce of the last tx we added to the heap for this ID
 	lastTx map[uint32]uint64
@@ -305,7 +303,7 @@ func (mh *MempoolHeap) nextTxForAccount(stateID uint32) (
 
 	// We want to check whether the next txn exists, but we are absolutely not allowed
 	// to do the following:
-        //   nextKey := pendingTxKey(stateID, lastNonce + 1)
+	//   nextKey := pendingTxKey(stateID, lastNonce + 1)
 	//   _, doesNotExistError := txn.Get(nextKey)
 	// This code would add `nextKey` to our read set. If the txn did not exist but
 	// an API handler inserts it before we commit then the rollup loop will crash when
@@ -363,28 +361,6 @@ func (mh *MempoolHeap) nextTxForAccount(stateID uint32) (
 	return pendingTx, err
 }
 
-func (s *Storage) firstExecutableTx() (pendingTx *stored.PendingTx, err error) {
-	err = s.database.Badger.RawUpdate(func(txn *badger.Txn) error {
-		iter := txn.NewIterator(db.PrefetchIteratorOpts)
-		defer iter.Close()
-
-		iter.Seek(pendingTxPrefix)
-
-		// this is now in our read set. Badger txns cannot see anything committed
-		// after the iter was created, so no api handler is able to cause us to
-		// conflict by inserting this item
-		item := iter.Item()
-		innerPendingTx, innerErr := itemToPendingTx(item)
-		if innerErr != nil {
-			return innerErr
-		}
-
-		pendingTx = innerPendingTx
-		return nil
-	})
-	return pendingTx, err
-}
-
 func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
 	value, err := item.ValueCopy(nil)
 	if err != nil {
@@ -403,21 +379,25 @@ func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
 
 // TODO: I know the mempool is small but does it really make sense to scan the entire
 //       thing every loop?
-func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (oldestTxn *stored.PendingTx, err error) {
+// TODO: add a test for this method, lint showed me a bug in it
+func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (*stored.PendingTx, error) {
 	pendingTxs, err := s.lowestNoncePendingTxs()
 	if err != nil {
 		return nil, err
 	}
 
 	var oldestTime *models.Timestamp
+	var result stored.PendingTx
 
-	for _, tx := range pendingTxs {
+	for i := range pendingTxs {
+		tx := pendingTxs[i]
+
 		txTime := tx.ReceiveTime
 		if txTime == nil {
 			continue
 		}
 		// TODO: create a helper for this filter, we do it in two different places
-		isExecutable, err := s.txIsExecutable(txType, tx)
+		isExecutable, err := s.txIsExecutable(txType, &tx)
 		if err != nil {
 			return nil, err
 		}
@@ -426,11 +406,11 @@ func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (o
 		}
 		if (oldestTime == nil) || txTime.Before(*oldestTime) {
 			oldestTime = txTime
-			oldestTxn = &tx
+			result = tx
 		}
 	}
 
-	return oldestTxn, nil
+	return &result, nil
 }
 
 // fetches, for each account with a pending tx, the pending tx with the lowest nonce
@@ -467,7 +447,7 @@ func (s *Storage) lowestNoncePendingTxs() ([]stored.PendingTx, error) {
 	return result, nil
 }
 
-func (s *Storage) forEachMempoolTransaction(fun func (*stored.PendingTx) error) error {
+func (s *Storage) forEachMempoolTransaction(fun func(*stored.PendingTx) error) error {
 	return s.database.Badger.View(func(txn *badger.Txn) error {
 		iter := txn.NewIterator(db.PrefetchIteratorOpts)
 		defer iter.Close()
@@ -504,9 +484,9 @@ func (s *Storage) GetMempoolTransactionByHash(hash common.Hash) (*stored.Pending
 		return nil, err
 	}
 
-	for _, tx := range allPendingTxs {
-		if tx.Hash == hash {
-			return &tx, nil
+	for i := range allPendingTxs {
+		if allPendingTxs[i].Hash == hash {
+			return &allPendingTxs[i], nil
 		}
 	}
 
@@ -516,7 +496,7 @@ func (s *Storage) GetMempoolTransactionByHash(hash common.Hash) (*stored.Pending
 func (s *Storage) GetAllMempoolTransactions() ([]stored.PendingTx, error) {
 	result := make([]stored.PendingTx, 0)
 
-	err := s.forEachMempoolTransaction(func (pendingTx *stored.PendingTx) error {
+	err := s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
 		result = append(result, *pendingTx)
 		return nil
 	})
@@ -530,7 +510,7 @@ func (s *Storage) GetAllMempoolTransactions() ([]stored.PendingTx, error) {
 func (s *Storage) CountPendingTxsOfType(txType txtype.TransactionType) (uint32, error) {
 	result := uint32(0)
 
-	err := s.forEachMempoolTransaction(func (pendingTx *stored.PendingTx) error {
+	err := s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
 		if pendingTx.TxType == txType {
 			result += 1
 		}
@@ -544,7 +524,11 @@ func (s *Storage) CountPendingTxsOfType(txType txtype.TransactionType) (uint32, 
 }
 
 // TODO: should this accept a pointer to a PendingTx?
-func (s *Storage) txIsExecutable(txType txtype.TransactionType, tx stored.PendingTx) (bool, error) {
+func (s *Storage) txIsExecutable(txType txtype.TransactionType, tx *stored.PendingTx) (bool, error) {
+	if tx == nil {
+		panic("txIsExecutable must be given a tx")
+	}
+
 	if tx.TxType != txType {
 		return false, nil
 	}
@@ -578,7 +562,7 @@ func (s *Storage) txIsExecutable(txType txtype.TransactionType, tx stored.Pendin
 	txTotal := tx.Amount.Add(&tx.Fee)
 	if currentBalance.Cmp(txTotal) < 0 {
 		// If you don't have enough money to pay for your next transaction then
-		// we hold onto the transaction until you do. The API would only have 
+		// we hold onto the transaction until you do. The API would only have
 		// accepted this transaction if your pending balance was high enough to
 		// pay, so there is guaranteed to be an inbound transfer which will pay
 		// for this, eventually.
@@ -591,16 +575,24 @@ func (s *Storage) txIsExecutable(txType txtype.TransactionType, tx stored.Pendin
 // caution: assumes you are running inside a tx
 // caution: there can be only one
 func (s *Storage) NewMempoolHeap(txType txtype.TransactionType) (*MempoolHeap, error) {
+	lastTx := make(map[uint32]uint64)
+	mh := &MempoolHeap{
+		storage:     s,
+		txType:      txType,
+		heap:        NewTxHeap(),
+		lastTx:      lastTx,
+		toBeDeleted: make([][]byte, 0),
+	}
+
 	pendingTxs, err := s.lowestNoncePendingTxs()
 	if err != nil {
 		return nil, err
 	}
 
-	lastTx := make(map[uint32]uint64)
+	for i := range pendingTxs {
+		tx := pendingTxs[i]
 
-	executableTxs := make([]stored.PendingTx, 0)
-	for _, tx := range pendingTxs {
-		isExecutable, err := s.txIsExecutable(txType, tx)
+		isExecutable, err := s.txIsExecutable(txType, &tx)
 		if err != nil {
 			return nil, err
 		}
@@ -608,17 +600,10 @@ func (s *Storage) NewMempoolHeap(txType txtype.TransactionType) (*MempoolHeap, e
 			continue
 		}
 
-		executableTxs = append(executableTxs, tx)
-		lastTx[tx.FromStateID] = tx.Nonce.Uint64()
+		mh.pushTx(&tx)
 	}
 
-	return &MempoolHeap{
-		storage: s,
-		txType:  txType,
-		heap:    NewTxHeap(executableTxs...),
-		lastTx:  lastTx,
-		toBeDeleted: make([][]byte, 0),
-	}, nil
+	return mh, nil
 }
 
 func (mh *MempoolHeap) PeekHighestFeeExecutableTx() models.GenericTransaction {
@@ -629,8 +614,23 @@ func (mh *MempoolHeap) PeekHighestFeeExecutableTx() models.GenericTransaction {
 	return nil
 }
 
+// TODO: use this in our constructor
+func (mh *MempoolHeap) pushTx(tx *stored.PendingTx) {
+	if tx == nil {
+		panic("pushTx must be given a tx")
+	}
+
+	if tx.TxType != mh.txType {
+		panic("unexpected txType")
+	}
+
+	mh.heap.Push(*tx)
+	mh.lastTx[tx.FromStateID] = tx.Nonce.Uint64()
+}
+
 // Caution: assumes the pendingTx which we are about to drop has been applied to the state
 //          in mh.storage
+//nolint:gocyclo  // TODO: consider doing what it says
 func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 	pendingTx := mh.heap.Pop()
 	if pendingTx == nil {
@@ -652,9 +652,7 @@ func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 
 	// TODO: add a test that we don't insert txs with the wrong type here
 	if nextTxForID != nil && nextTxForID.TxType == mh.txType {
-		// TODO: make a helper method for pushes and use it in the constructor?
-		mh.heap.Push(*nextTxForID)
-		mh.lastTx[nextTxForID.FromStateID] = nextTxForID.Nonce.Uint64()
+		mh.pushTx(nextTxForID)
 	}
 
 	// (II) if this was a transfer then we might have given funds to an account which
@@ -685,16 +683,15 @@ func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 		// this account has a pendingTx but that tx was never added to the heap,
 		// it must have been blocked by something
 
-		isExecutable, err := mh.storage.txIsExecutable(mh.txType, *nextTx)
-		if err != nil {
-			return err
+		isExecutable, innerErr := mh.storage.txIsExecutable(mh.txType, nextTx)
+		if innerErr != nil {
+			return innerErr
 		}
 
 		if isExecutable {
 			// good chance it was blocked on our transfer, let's throw it in
-			mh.heap.Push(*nextTx)
-			mh.lastTx[nextTx.FromStateID] = nextTx.Nonce.Uint64()
-		} else {
+			mh.pushTx(nextTx)
+		} else { //nolint:staticcheck // lint does not like empty branches, I do
 			// it is still not executable, probably we didn't give it enough
 			// additional balance, it will have to wait a little longer
 		}
@@ -722,14 +719,13 @@ func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 		return nil
 	}
 
-	isExecutable, err := mh.storage.txIsExecutable(mh.txType, *nextTx)
+	isExecutable, err := mh.storage.txIsExecutable(mh.txType, nextTx)
 	if err != nil {
 		return err
 	}
 
 	if isExecutable {
-		mh.heap.Push(*nextTx)
-		mh.lastTx[nextTx.FromStateID] = nextTx.Nonce.Uint64()
+		mh.pushTx(nextTx)
 		return nil
 	}
 
@@ -789,16 +785,13 @@ func (h *TxHeap) Peek() *stored.PendingTx {
 	return h.toPendingTx(h.heap.Peek())
 }
 
+//nolint:gocritic // TODO: slightly improve performance by doing what it wants
 func (h *TxHeap) Push(tx stored.PendingTx) {
 	h.heap.Push(tx)
 }
 
 func (h *TxHeap) Pop() *stored.PendingTx {
 	return h.toPendingTx(h.heap.Pop())
-}
-
-func (h *TxHeap) Replace(tx stored.PendingTx) *stored.PendingTx {
-	return h.toPendingTx(h.heap.Replace(tx))
 }
 
 func (h *TxHeap) Size() int {

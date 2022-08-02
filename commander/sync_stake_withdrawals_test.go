@@ -204,8 +204,7 @@ func (s *SyncStakeWithdrawalsTestSuite) setupCommander() {
 	s.cmd.client = s.client.Client
 	s.cmd.storage = s.storage.Storage
 
-	var err error
-	err = s.cmd.addGenesisBatch()
+	err := s.cmd.addGenesisBatch()
 	s.NoError(err)
 
 	s.setAccountsAndChainState()

@@ -5,10 +5,10 @@ import (
 
 	// "github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/config"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+
 	// "github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -164,27 +164,16 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 }
 */
 
-func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
-	initTxs(s, txsCtx, txs)
-	err := txsCtx.newHeap()
-	s.NoError(err)
-
-	_, txMempool := txsCtx.Mempool.BeginTransaction()
-	return txMempool
-}
-
 func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
 	if txs.Len() == 0 {
 		return
 	}
 
+	// TODO: this should add to the mempool, right?
 	err := txsCtx.storage.BatchAddTransaction(txs)
 	s.NoError(err)
 
 	for i := 0; i < txs.Len(); i++ {
-		_, err = txsCtx.Mempool.AddOrReplace(txsCtx.storage, txs.At(i))
-		s.NoError(err)
-
 		err = txsCtx.storage.AddMempoolTx(txs.At(i))
 		s.NoError(err)
 	}

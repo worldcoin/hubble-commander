@@ -15,7 +15,7 @@ import (
 type MempoolTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	storage   *TestStorage
+	storage *TestStorage
 }
 
 func (s *MempoolTestSuite) SetupSuite() {
@@ -84,7 +84,7 @@ func (s *MempoolTestSuite) TestMempool_UsesPendingBalance() {
 }
 
 func (s *MempoolTestSuite) TestMempool_LowestNoncePendingTxs() {
-	txs := []*models.Transfer {
+	txs := []*models.Transfer{
 		testutils.NewTransfer(1, 2, 0, 10),
 		testutils.NewTransfer(1, 2, 1, 10),
 		testutils.NewTransfer(2, 1, 0, 10),
@@ -127,8 +127,8 @@ func TestMempoolTestSuite(t *testing.T) {
 type ConflictTestSuite struct {
 	*require.Assertions
 	suite.Suite
-	rollupStorage   *Storage
-	apiStorage      *Storage
+	rollupStorage *Storage
+	apiStorage    *Storage
 }
 
 func (s *ConflictTestSuite) SetupSuite() {
@@ -139,7 +139,7 @@ func (s *ConflictTestSuite) SetupTest() {
 	memoryDB, err := db.NewInMemoryDatabase()
 	s.NoError(err)
 
-	database := &Database {
+	database := &Database{
 		Badger: memoryDB,
 	}
 
@@ -181,15 +181,6 @@ func (s *ConflictTestSuite) SetupTest() {
 	s.Equal(models.MakeUint256(100), leaf.UserState.Balance)
 }
 
-func (s *ConflictTestSuite) insertTxs(txs []models.GenericTransaction) {
-	for _, tx := range txs {
-		s.NotNil(tx)
-
-		err := s.apiStorage.AddMempoolTx(tx)
-		s.NoError(err)
-	}
-}
-
 func (s *ConflictTestSuite) TestConflict_ConflictsWithGet() {
 	// nextTxForAccount goes to some lengths to not call txn.Get() in order to avoid
 	// badger.ErrConflict, this tests confirms that is a real concern.
@@ -202,19 +193,19 @@ func (s *ConflictTestSuite) TestConflict_ConflictsWithGet() {
 
 	// (II) open apiTx and insert a transaction
 
-	apiTxController, txApiStorage := s.apiStorage.BeginTransaction(TxOptions{})
+	apiTxController, txAPIStorage := s.apiStorage.BeginTransaction(TxOptions{})
 	s.NotNil(apiTxController)
-	s.NotNil(txApiStorage)
+	s.NotNil(txAPIStorage)
 
 	transfer := testutils.NewTransfer(1, 2, 0, 10)
-	err := txApiStorage.unsafeAddMempoolTx(transfer)  // the safe version Commit()s
+	err := txAPIStorage.unsafeAddMempoolTx(transfer) // the safe version Commit()s
 	s.NoError(err)
 
 	// (III) txn.Get() in rollupTx
 
 	key := pendingTxKey(1, 0)
 	_, err = txRollupStorage.rawLookup(key)
-	s.ErrorIs(err, badger.ErrKeyNotFound)  // the API has not yet Commit()
+	s.ErrorIs(err, badger.ErrKeyNotFound) // the API has not yet Commit()
 
 	// (IV) do a write so that badger knows to try to fail this tx in case of conflict
 	key = pendingTxKey(10, 10)
@@ -251,9 +242,9 @@ func (s *ConflictTestSuite) TestConflict_NoConflict() {
 
 	// (II)  we start the apiTx
 
-	apiTxController, txApiStorage := s.apiStorage.BeginTransaction(TxOptions{})
+	apiTxController, txAPIStorage := s.apiStorage.BeginTransaction(TxOptions{})
 	s.NotNil(apiTxController)
-	s.NotNil(txApiStorage)
+	s.NotNil(txAPIStorage)
 
 	// (III) we read out some transactions in the rollup loop
 
@@ -266,17 +257,19 @@ func (s *ConflictTestSuite) TestConflict_NoConflict() {
 	s.Equal(uint32(1), firstTx.GetFromStateID())
 
 	// this attempts to read out txns from both accounts
-	mempoolHeap.DropHighestFeeExecutableTx()
-	mempoolHeap.Savepoint()
+	err = mempoolHeap.DropHighestFeeExecutableTx()
+	s.NoError(err)
+	err = mempoolHeap.Savepoint()
+	s.NoError(err)
 
 	// (IV)  we insert some new txns from the api
 
 	transfer = testutils.NewTransfer(1, 2, 1, 10)
-	err = txApiStorage.AddMempoolTx(transfer)
+	err = txAPIStorage.AddMempoolTx(transfer)
 	s.NoError(err)
 
 	transfer = testutils.NewTransfer(2, 1, 1, 10)
-	err = txApiStorage.AddMempoolTx(transfer)
+	err = txAPIStorage.AddMempoolTx(transfer)
 	s.NoError(err)
 
 	err = apiTxController.Commit()

@@ -101,7 +101,7 @@ func (c *Commander) addPendingTxs(txs models.GenericTransactionArray) error {
 		nonce := tx.GetNonce()
 		log.WithFields(log.Fields{
 			"nonce": nonce.Uint64(),
-			"from": tx.GetFromStateID(),
+			"from":  tx.GetFromStateID(),
 		}).Debug("tx: ", tx)
 	}
 
