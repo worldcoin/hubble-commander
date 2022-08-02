@@ -165,7 +165,7 @@ func (s *ExecuteTransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() {
 
 func newMempool(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) *mempool.TxMempool {
 	initTxs(s, txsCtx, txs)
-	err := txsCtx.newHeap()
+	err := txsCtx.newHeap(context.Background())
 	s.NoError(err)
 
 	_, txMempool := txsCtx.Mempool.BeginTransaction()

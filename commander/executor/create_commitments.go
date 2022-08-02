@@ -27,7 +27,7 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	spanCtx, span := otel.Tracer("txsContext").Start(ctx, "CreateCommitments")
 	defer span.End()
 
-	err := c.newHeap()
+	err := c.newHeap(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -199,13 +199,15 @@ func (c *TxsContext) verifyTxsCount() error {
 	return errors.WithStack(ErrNotEnoughTxs)
 }
 
-func (c *TxsContext) newHeap() error {
+func (c *TxsContext) newHeap(ctx context.Context) error {
 	err := c.verifyTxsCount()
 	if err != nil {
 		return err
 	}
 
 	txs := c.Mempool.GetExecutableTxs(txtype.TransactionType(c.BatchType))
+	log.WithFields(o11y.TraceFields(ctx)).Info("executable transactions counts: %d", len(txs))
+
 	c.heap = mempool.NewTxHeap(txs...)
 	return nil
 }
