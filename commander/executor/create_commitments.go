@@ -51,6 +51,8 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 		commitmentID.IndexInBatch = i
 
 		result, err = c.createCommitment(batchMempool, commitmentID)
+		log.WithFields(o11y.TraceFields(ctx)).Info("CommitmentID: %v, %s", commitmentID)
+
 		if errors.Is(err, ErrNotEnoughTxs) {
 			break
 		}
