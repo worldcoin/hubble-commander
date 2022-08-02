@@ -50,7 +50,7 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 		var result CreateCommitmentResult
 		commitmentID.IndexInBatch = i
 
-		result, err = c.createCommitment(batchMempool, commitmentID)
+		result, err = c.createCommitment(ctx, batchMempool, commitmentID)
 		log.WithFields(o11y.TraceFields(ctx)).Info("CommitmentID: %v, %s", commitmentID)
 
 		if errors.Is(err, ErrNotEnoughTxs) {
@@ -97,9 +97,7 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	return commitments, nil
 }
 
-func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmentID *models.CommitmentID) (
-	CreateCommitmentResult, error,
-) {
+func (c *TxsContext) createCommitment(ctx context.Context, batchMempool *mempool.TxMempool, commitmentID *models.CommitmentID) (CreateCommitmentResult, error) {
 	var commitment models.CommitmentWithTxs
 	var executeResult ExecuteTxsForCommitmentResult
 
@@ -114,9 +112,9 @@ func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmen
 			return err
 		}
 
-		log.Info("XXX:before executing txs for commitment")
-		executeResult, err = c.executeTxsForCommitment(batchMempool, feeReceiver)
-		log.Info("XXX:executed txs for commitment, error: %s", err)
+		log.WithFields(o11y.TraceFields(ctx)).Info("XXX:before executing txs for commitment")
+		executeResult, err = c.executeTxsForCommitment(ctx, batchMempool, feeReceiver)
+		log.WithFields(o11y.TraceFields(ctx)).Info("XXX:executed txs for commitment, error: %s", err)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			if uint32(commitmentID.IndexInBatch+1) <= c.minCommitmentsPerBatch {
 				return err // No need to revert the StateTree in this case as the DB tx will be rolled back anyway
@@ -155,16 +153,13 @@ func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmen
 	return c.Executor.NewCreateCommitmentResult(executeResult, commitment), nil
 }
 
-func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (
-	result ExecuteTxsForCommitmentResult,
-	err error,
-) {
+func (c *TxsContext) executeTxsForCommitment(ctx context.Context, batchMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (result ExecuteTxsForCommitmentResult, err error) {
 	count := c.Mempool.TxCount(txtype.TransactionType(c.BatchType))
 
-	log.Infof("XXX: transaction count: %d, batch: %s", c.Mempool.TxCount(txtype.TransactionType(c.BatchType)), c.BatchType.String())
+	log.WithFields(o11y.TraceFields(ctx)).Infof("XXX: transaction count: %d, batch: %s", c.Mempool.TxCount(txtype.TransactionType(c.BatchType)), c.BatchType.String())
 
 	if c.Mempool.TxCount(txtype.TransactionType(c.BatchType)) < int(c.minTxsPerCommitment) {
-		log.Infof("XXX:not enough tx point 1, count: %d", count)
+		log.WithFields(o11y.TraceFields(ctx)).Infof("XXX:not enough tx point 1, count: %d", count)
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
 
@@ -177,7 +172,7 @@ func (c *TxsContext) executeTxsForCommitment(batchMempool *mempool.TxMempool, fe
 	}
 
 	if executeTxsResult.AppliedTxs().Len() < int(c.minTxsPerCommitment) {
-		log.Info("XXX:not enough tx point 2")
+		log.WithFields(o11y.TraceFields(ctx)).Info("XXX:not enough tx point 2")
 		return nil, ErrNotEnoughTxs
 	}
 
