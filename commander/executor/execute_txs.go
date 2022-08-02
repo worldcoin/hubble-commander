@@ -16,17 +16,21 @@ func (c *TxsContext) ExecuteTxs(ctx context.Context, txMempool *mempool.TxMempoo
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
+	log.WithFields(o11y.TraceFields(ctx)).Infof("heap size: %d", c.heap.Size())
 	for tx := c.heap.Peek(); tx != nil; tx = c.heap.Peek() {
+		log.WithFields(o11y.TraceFields(ctx)).Infof("heap processing tx")
 		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
 
 		applyResult, txError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
-		log.WithFields(o11y.TraceFields(ctx)).Infof("applied transaction: txError: %s, appError: %s", txError, appError)
+
 		if appError != nil {
+			log.WithFields(o11y.TraceFields(ctx)).Infof("applied transaction: appError: %s", appError)
 			return nil, appError
 		}
 		if txError != nil {
+			log.WithFields(o11y.TraceFields(ctx)).Infof("applied transaction: txError: %s", txError)
 			c.handleTxError(txMempool, returnStruct, tx, txError)
 			c.heap.Pop()
 			continue
