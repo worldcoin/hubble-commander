@@ -1,15 +1,18 @@
 package executor
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/commander/applier"
 	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(ctx context.Context, txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
@@ -19,6 +22,7 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 		}
 
 		applyResult, txError, appError := c.Executor.ApplyTx(tx, feeReceiver.TokenID)
+		log.WithFields(o11y.TraceFields(ctx)).Infof("applied transaction: txError: %s, appError: %s", txError, appError)
 		if appError != nil {
 			return nil, appError
 		}
@@ -28,15 +32,18 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			continue
 		}
 
+		log.WithFields(o11y.TraceFields(ctx)).Infof("before adding pending account")
 		err := c.Executor.AddPendingAccount(applyResult)
 		if err != nil {
 			return nil, err
 		}
 
+		log.WithFields(o11y.TraceFields(ctx)).Infof("before updating heap")
 		err = c.updateHeap(txMempool, tx)
 		if err != nil {
 			return nil, err
 		}
+		log.WithFields(o11y.TraceFields(ctx)).Infof("updated heap")
 
 		returnStruct.AddApplied(applyResult)
 		fee := applyResult.AppliedTx().GetFee()

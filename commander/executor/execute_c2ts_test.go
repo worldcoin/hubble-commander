@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/commander/applier"
@@ -34,7 +35,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AllValid() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -48,7 +49,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SomeValid() {
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 2)
@@ -61,7 +62,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_ExecutesNoMoreThanLimi
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(7)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 6)
@@ -75,7 +76,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SavesTxErrors() {
 	generatedTransfers = append(generatedTransfers, testutils.GenerateInvalidCreate2Transfers(3, 1)...)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	result, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	result, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(result.AppliedTxs(), 3)
@@ -96,7 +97,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AppliesFee() {
 	generatedTransfers := testutils.GenerateValidCreate2Transfers(3)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	_, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	_, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	feeReceiverState, err := s.executionCtx.storage.StateTree.Leaf(s.feeReceiver.StateID)
@@ -111,7 +112,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_AddsAccountsToAccountT
 	generatedTransfers[2].ToPublicKey = models.PublicKey{3, 3, 3}
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	transfers, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	transfers, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(transfers.AppliedTxs(), 3)
@@ -132,7 +133,7 @@ func (s *ExecuteCreate2TransfersTestSuite) TestExecuteTxs_SkipsNonceTooHighTx() 
 	generatedTransfers[1].Nonce = models.MakeUint256(21)
 	txMempool := newMempool(s.Assertions, s.txsCtx, generatedTransfers)
 
-	executeTxsResult, err := s.txsCtx.ExecuteTxs(txMempool, s.feeReceiver)
+	executeTxsResult, err := s.txsCtx.ExecuteTxs(context.Background(), txMempool, s.feeReceiver)
 	s.NoError(err)
 
 	s.Len(executeTxsResult.AppliedTxs(), 1)

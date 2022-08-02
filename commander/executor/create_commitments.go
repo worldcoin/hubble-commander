@@ -166,7 +166,7 @@ func (c *TxsContext) executeTxsForCommitment(ctx context.Context, batchMempool *
 	txController, commitmentMempool := batchMempool.BeginTransaction()
 	defer txController.Rollback()
 
-	executeTxsResult, err := c.ExecuteTxs(commitmentMempool, feeReceiver)
+	executeTxsResult, err := c.ExecuteTxs(ctx, commitmentMempool, feeReceiver)
 	if err != nil {
 		return nil, err
 	}
