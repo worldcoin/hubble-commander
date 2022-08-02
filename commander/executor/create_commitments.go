@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/o11y"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -30,8 +31,12 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	if err != nil {
 		return nil, err
 	}
+
+	log.WithFields(o11y.TraceFields(ctx)).Info("Pre transaction")
 	txController, batchMempool := c.Mempool.BeginTransaction()
 	defer txController.Rollback()
+
+	log.WithFields(o11y.TraceFields(ctx)).Info("Started transaction")
 
 	commitmentID, err := c.NextCommitmentID()
 	if err != nil {
@@ -61,7 +66,7 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 		}
 		pendingAccounts = append(pendingAccounts, result.PendingAccounts()...)
 	}
-
+	log.WithFields(o11y.TraceFields(ctx)).Info("Created all commitments")
 	if len(commitments) < int(c.minCommitmentsPerBatch) {
 		return nil, errors.WithStack(ErrNotEnoughTxs)
 	}
@@ -72,12 +77,17 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	default:
 	}
 
+	log.WithFields(o11y.TraceFields(ctx)).Info("Before registering accounts")
 	err = c.registerPendingAccounts(spanCtx, pendingAccounts)
 	if err != nil {
 		return nil, err
 	}
 
+	log.WithFields(o11y.TraceFields(ctx)).Info("Registered accounts")
+
+	log.WithFields(o11y.TraceFields(ctx)).Info("Before commit")
 	txController.Commit()
+	log.WithFields(o11y.TraceFields(ctx)).Info("Committed transaction")
 	return commitments, nil
 }
 
@@ -98,7 +108,9 @@ func (c *TxsContext) createCommitment(batchMempool *mempool.TxMempool, commitmen
 			return err
 		}
 
+		log.Info("XXX:before executing txs for commitment")
 		executeResult, err = c.executeTxsForCommitment(batchMempool, feeReceiver)
+		log.Info("XXX:executed txs for commitment, error: %s", err)
 		if errors.Is(err, ErrNotEnoughTxs) {
 			if uint32(commitmentID.IndexInBatch+1) <= c.minCommitmentsPerBatch {
 				return err // No need to revert the StateTree in this case as the DB tx will be rolled back anyway
