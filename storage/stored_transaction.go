@@ -115,15 +115,15 @@ func (s *TransactionStorage) unsafeMarkTransactionAsPending(txSlot *models.Commi
 	storedTxDTO := dto.MakeTransactionForCommitment(
 		batchedTx.PendingTx.ToGenericTransaction(),
 	)
-	storedTxJson, err := json.Marshal(storedTxDTO)
+	storedTxJSON, err := json.Marshal(storedTxDTO)
 	if err != nil {
-		storedTxJson = []byte("")
+		storedTxJSON = []byte("")
 	}
 
 	log.WithFields(log.Fields{
 		"txHash":     batchedTx.Hash,
 		"serialized": storedTxHex,
-		"dto":        string(storedTxJson),
+		"dto":        string(storedTxJSON),
 	}).Error("Unimplemented: Batch reverted but transaction not returned to mempool.")
 
 	return nil

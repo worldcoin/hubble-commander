@@ -137,7 +137,7 @@ func (s *TransactionStorage) unsafeAddTransaction(tx models.GenericTransaction) 
 		// This is a PendingTx
 
 		return errors.WithStack(
-			fmt.Errorf("Use AddMempoolTx to insert pending txns"),
+			fmt.Errorf("use AddMempoolTx to insert pending txns"),
 		)
 	}
 }

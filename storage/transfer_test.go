@@ -53,7 +53,7 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
-	transfer := models.Transfer{
+	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Transfer,
@@ -71,12 +71,12 @@ func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
 		ToStateID: 2,
 	}
 
-	err := s.storage.AddTransaction(&transfer)
+	err := s.storage.AddTransaction(&transfer1)
 	s.NoError(err)
 
-	expected := transfer
+	expected := transfer1
 
-	res, err := s.storage.GetTransfer(transfer.Hash)
+	res, err := s.storage.GetTransfer(transfer1.Hash)
 	s.NoError(err)
 	s.Equal(expected, *res)
 }

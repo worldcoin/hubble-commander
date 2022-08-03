@@ -242,7 +242,8 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions() {
 	res, err := s.storage.GetAllMempoolTransactions()
 	s.NoError(err)
 	s.Len(res, 3)
-	for _, expectedTx := range expectedTxs {
+	for i := range expectedTxs {
+		expectedTx := expectedTxs[i]
 		s.Contains(res, expectedTx)
 	}
 }
@@ -294,7 +295,7 @@ func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions_NoTransactions
 }
 
 func (s *StoredTransactionTestSuite) populatePendingTransactions() []stored.PendingTx {
-	transfer := models.Transfer{
+	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Transfer,
@@ -306,10 +307,10 @@ func (s *StoredTransactionTestSuite) populatePendingTransactions() []stored.Pend
 		},
 		ToStateID: 2,
 	}
-	err := s.storage.AddMempoolTx(&transfer)
+	err := s.storage.AddMempoolTx(&transfer1)
 	s.NoError(err)
 
-	create2Transfer := models.Create2Transfer{
+	create2Transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        common.BigToHash(big.NewInt(1234)),
 			TxType:      txtype.Create2Transfer,
@@ -321,10 +322,10 @@ func (s *StoredTransactionTestSuite) populatePendingTransactions() []stored.Pend
 		},
 		ToPublicKey: account2.PublicKey,
 	}
-	err = s.storage.AddMempoolTx(&create2Transfer)
+	err = s.storage.AddMempoolTx(&create2Transfer1)
 	s.NoError(err)
 
-	massMigration := models.MassMigration{
+	massMigration1 := models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.MassMigration,
@@ -336,18 +337,18 @@ func (s *StoredTransactionTestSuite) populatePendingTransactions() []stored.Pend
 		},
 		SpokeID: 5,
 	}
-	err = s.storage.AddMempoolTx(&massMigration)
+	err = s.storage.AddMempoolTx(&massMigration1)
 	s.NoError(err)
 
 	return []stored.PendingTx{
-		*stored.NewPendingTx(&transfer),
-		*stored.NewPendingTx(&create2Transfer),
-		*stored.NewPendingTx(&massMigration),
+		*stored.NewPendingTx(&transfer1),
+		*stored.NewPendingTx(&create2Transfer1),
+		*stored.NewPendingTx(&massMigration1),
 	}
 }
 
 func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransactionArray {
-	transfer := models.Transfer{
+	transfer1 := models.Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.Transfer,
@@ -367,7 +368,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 
 	transfers := make([]models.Transfer, 3)
 	for i := range transfers {
-		transfers[i] = transfer
+		transfers[i] = transfer1
 		transfers[i].Hash = utils.RandomHash()
 	}
 	transfers[1].CommitmentSlot = &models.CommitmentSlot{BatchID: models.MakeUint256(2)}
@@ -377,7 +378,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 	err := s.storage.BatchAddTransaction(models.MakeTransferArray(transfers...))
 	s.NoError(err)
 
-	create2Transfer := models.Create2Transfer{
+	create2Transfer1 := models.Create2Transfer{
 		TransactionBase: models.TransactionBase{
 			Hash:        common.BigToHash(big.NewInt(1234)),
 			TxType:      txtype.Create2Transfer,
@@ -397,7 +398,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 
 	create2Transfers := make([]models.Create2Transfer, 3)
 	for i := range create2Transfers {
-		create2Transfers[i] = create2Transfer
+		create2Transfers[i] = create2Transfer1
 		create2Transfers[i].Hash = utils.RandomHash()
 	}
 
@@ -408,7 +409,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 	err = s.storage.BatchAddTransaction(models.MakeCreate2TransferArray(create2Transfers...))
 	s.NoError(err)
 
-	massMigration := models.MassMigration{
+	massMigration1 := models.MassMigration{
 		TransactionBase: models.TransactionBase{
 			Hash:        utils.RandomHash(),
 			TxType:      txtype.MassMigration,
@@ -428,7 +429,7 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 
 	massMigrations := make([]models.MassMigration, 3)
 	for i := range massMigrations {
-		massMigrations[i] = massMigration
+		massMigrations[i] = massMigration1
 		massMigrations[i].Hash = utils.RandomHash()
 	}
 	massMigrations[1].CommitmentSlot = &models.CommitmentSlot{BatchID: models.MakeUint256(6)}

@@ -333,7 +333,6 @@ func (s *SyncTransferBatchTestSuite) TestSyncBatch_AddsSyncedTxsAsBatched() {
 	s.syncAllBatches()
 	s.checkBatchedTxs(pendingBatch, txs)
 }
-*/
 
 func (s *SyncTransferBatchTestSuite) checkBatchedTxs(pendingBatch *models.Batch, txs []*models.Transfer) {
 	failedTxs, err := s.storage.GetAllFailedTransactions()
@@ -374,6 +373,7 @@ func (s *SyncTransferBatchTestSuite) checkBatchedTxs(pendingBatch *models.Batch,
 	s.Equal(batchedTxs.Len(), 1)
 	s.Contains(hashes, batchedTxs.At(0).GetBase().Hash)
 }
+*/
 
 func (s *SyncTransferBatchTestSuite) submitInvalidBatch(tx *models.Transfer) *models.Batch {
 	pendingBatch, commitments := s.createBatch(tx)

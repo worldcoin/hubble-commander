@@ -69,12 +69,12 @@ func (c *TxsContext) handleTxError(
 	//       failure to other txns which were relying on our successful execution.
 
 	log.WithFields(log.Fields{
-		"tx.Hash": tx.GetBase().Hash.String(),
+		"tx.Hash":        tx.GetBase().Hash.String(),
 		"tx.FromStateID": tx.GetBase().FromStateID,
-		"tx.Nonce": tx.GetBase().Nonce.Uint64(),
-		"tx.Type": tx.Type().String(),
-		"errMessage": err.Error(),
-		"err": err,
+		"tx.Nonce":       tx.GetBase().Nonce.Uint64(),
+		"tx.Type":        tx.Type().String(),
+		"errMessage":     err.Error(),
+		"err":            err,
 	}).Errorf("Unimplemented: failed to batch transaction. State might be inconsistent")
 	result.AddInvalidTx(tx)
 }

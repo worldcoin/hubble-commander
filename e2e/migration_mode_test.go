@@ -73,16 +73,6 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		s.startMiningBlocks()
 	}()
 
-	/*
-		// Invalid tx
-		s.SendTransaction(dto.Transfer{
-			FromStateID: ref.Uint32(1),
-			ToStateID:   ref.Uint32(999), // Non-existent receiver
-			Amount:      models.NewUint256(90),
-			Fee:         models.NewUint256(10),
-			Nonce:       models.NewUint256(8),
-		})
-	*/
 	// Some valid txs
 	s.SendNTransactions(4, dto.Transfer{
 		FromStateID: ref.Uint32(1),
@@ -91,18 +81,6 @@ func (s *MigrationModeE2ETestSuite) TestCommanderMigrationMode() {
 		Fee:         models.NewUint256(10),
 		Nonce:       models.NewUint256(4),
 	})
-	/*
-		these are no longer allowed by the API, what was this testing?
-
-		// Another invalid tx
-		s.SendTransaction(dto.Transfer{
-			FromStateID: ref.Uint32(2),
-			ToStateID:   ref.Uint32(999), // Non-existent receiver
-			Amount:      models.NewUint256(90),
-			Fee:         models.NewUint256(10),
-			Nonce:       models.NewUint256(0),
-		})
-	*/
 
 	s.WaitForBatchStatus(2, batchstatus.Submitted)
 
@@ -246,10 +224,7 @@ func (s *MigrationModeE2ETestSuite) prepareMigrationCommander() (*setup.InProces
 }
 
 func (s *MigrationModeE2ETestSuite) validateSuccessfulMigration() {
-	// these no longer exist or need to by synced
-	// s.validateFailedTxs()
-	// these still exist, and should probably be synced once we support migration
-	// s.validatePendingTxs()
+	s.validatePendingTxs()
 	s.validatePendingBatches()
 }
 
@@ -258,13 +233,6 @@ func (s *MigrationModeE2ETestSuite) validatePendingTxs() {
 	err := s.RPCClient.CallFor(&pendingTxs, "admin_getPendingTransactions")
 	s.NoError(err)
 	s.Len(pendingTxs, 8)
-}
-
-func (s *MigrationModeE2ETestSuite) validateFailedTxs() {
-	failedTxs := make([]admintypes.Transaction, 0)
-	err := s.RPCClient.CallFor(&failedTxs, "admin_getFailedTransactions")
-	s.NoError(err)
-	s.Len(failedTxs, 2)
 }
 
 func (s *MigrationModeE2ETestSuite) validatePendingBatches() {
