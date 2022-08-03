@@ -71,6 +71,34 @@ func (s *ExecutePendingTxBatchTestSuite) TearDownTest() {
 	s.NoError(err)
 }
 
+func setInitialUserStates(s *require.Assertions, storage *st.Storage) {
+	senderState := models.UserState{
+		PubKeyID: 1,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(420),
+		Nonce:    models.MakeUint256(0),
+	}
+	receiverState := models.UserState{
+		PubKeyID: 2,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	}
+	feeReceiverState := models.UserState{
+		PubKeyID: 3,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(1000),
+		Nonce:    models.MakeUint256(0),
+	}
+
+	_, err := storage.StateTree.Set(1, &senderState)
+	s.NoError(err)
+	_, err = storage.StateTree.Set(2, &receiverState)
+	s.NoError(err)
+	_, err = storage.StateTree.Set(3, &feeReceiverState)
+	s.NoError(err)
+}
+
 func (s *ExecutePendingTxBatchTestSuite) TestExecutePendingBatch_UpdatesUserBalances() {
 	tx := testutils.MakeTransfer(1, 2, 0, 100)
 	tx.CommitmentSlot = models.NewCommitmentSlot(s.pendingBatch.Commitments[0].GetCommitmentBase().ID, 0)

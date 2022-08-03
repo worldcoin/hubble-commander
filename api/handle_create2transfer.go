@@ -118,22 +118,6 @@ func validateCreate2Transfer(
 		return vErr
 	}
 
-	// TODO: This is where we should read the state from the mempool.
-	//       In order to accept this c2t we only need to know that its nonce
-	//       matches txPool.Mempool().getBucket(FromStateID).nonce and that its
-	//       amount + fee is less than getBucket(FromStateID).Balance
-
-	// TODO: by the time this function returns the mempool needs to know about this
-	//       transaction, so that future api calls will reject txns which spend the
-	//       same balance or reuse this nonce
-
-	// TODO: we also need to update the validate checks for the other two tx types
-
-	// TODO: what if they're trying to replace a transaction w the same nonce?
-	//       we have to be very careful about which txns we replace. If you want
-	//       to bump the fee you pay then we might invalidate later accepted
-	//       transactions by taking away a balance they rely on.
-
 	// TODO: validateMM and validateT both check for and return ErrNonexistentSender
 	//       we should do the same here for consistency
 	senderState, err := txStorage.StateTree.Leaf(create2Transfer.FromStateID)

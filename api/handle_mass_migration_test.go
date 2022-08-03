@@ -197,32 +197,6 @@ func (s *SendMassMigrationTestSuite) TestSendTransaction_AddsMassMigrationToStor
 	s.NotNil(transfer)
 }
 
-// TODO: figure out what to do about this test
-/*
-func (s *SendMassMigrationTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-
-	err = s.storage.SetTransactionErrors(models.TxError{
-		TxHash:       *originalHash,
-		ErrorMessage: "some error",
-	})
-	s.NoError(err)
-
-	originalTx, err := s.storage.GetMassMigration(*originalHash)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.massMigration))
-	s.NoError(err)
-	s.Equal(*originalHash, *hash)
-
-	tx, err := s.storage.GetMassMigration(*originalHash)
-	s.NoError(err)
-	s.Nil(tx.ErrorMessage)
-	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
-}
-*/
-
 func TestSendMassMigrationTestSuite(t *testing.T) {
 	suite.Run(t, new(SendMassMigrationTestSuite))
 }

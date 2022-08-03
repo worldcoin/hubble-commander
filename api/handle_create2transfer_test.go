@@ -188,32 +188,6 @@ func (s *SendCreate2TransferTestSuite) TestSendTransaction_AddsTransferToStorage
 	s.NotNil(transfer)
 }
 
-// TODO: figure out what to do about this test, do we have failed txns anymore?
-/*
-func (s *SendCreate2TransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.create2Transfer))
-	s.NoError(err)
-
-	err = s.storage.SetTransactionErrors(models.TxError{
-		TxHash:       *originalHash,
-		ErrorMessage: "some error",
-	})
-	s.NoError(err)
-
-	originalTx, err := s.storage.GetCreate2Transfer(*originalHash)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.create2Transfer))
-	s.NoError(err)
-	s.Equal(*originalHash, *hash)
-
-	tx, err := s.storage.GetCreate2Transfer(*originalHash)
-	s.NoError(err)
-	s.Nil(tx.ErrorMessage)
-	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
-}
-*/
-
 func TestSendCreate2TransferTestSuite(t *testing.T) {
 	suite.Run(t, new(SendCreate2TransferTestSuite))
 }

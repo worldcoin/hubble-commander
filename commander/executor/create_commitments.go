@@ -30,22 +30,6 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 		return nil, err
 	}
 
-	// TODO: so here we open a transaction and do not update any of the buckets until
-	//       we have registered the pending accounts and are about to return a
-	//       commitment.
-	//       (I) What happens if there is an error in SubmitBatch?
-	//           we are caled by commander/executor/create_batch.go:23
-	//           if the call to SubmitBatch fails then we will have dropped our txns
-	//           from the mempool without saving the batch to the chain or the db.
-	//           - we should commit to the db first, then commit the mempool changes
-	//       (II) What happens if the api adds some transactions while the txn is
-	//            open? The rollup loop will overwrite any changes made to these
-	//            buckets since it opened its txn. With the right data layout that
-	//            could be okay. Locking will not save us, because the rollup loop
-	//            will keep the txn open for much longer than we should block API
-	//            requests.
-
-	// TODO: we are already inside a transaction, right?
 	txType := txtype.TransactionType(c.BatchType)
 	mempoolHeap, err := c.storage.NewMempoolHeap(txType)
 	if err != nil {

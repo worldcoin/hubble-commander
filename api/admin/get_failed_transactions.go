@@ -12,8 +12,5 @@ func (a *API) GetFailedTransactions(ctx context.Context) (models.GenericTransact
 		return nil, err
 	}
 
-	// TODO: should this inspect the mempool? As an admin_ method it's not user-facing
-	//       so no need to get this perfect on the first pass
-
 	return a.storage.GetAllFailedTransactions()
 }

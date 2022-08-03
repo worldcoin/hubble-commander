@@ -54,6 +54,17 @@ func (s *CreateCommitmentsTestSuite) SetupTest() {
 	s.NoError(err)
 }
 
+func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransactionArray) {
+	if txs.Len() == 0 {
+		return
+	}
+
+	for i := 0; i < txs.Len(); i++ {
+		err := txsCtx.storage.AddMempoolTx(txs.At(i))
+		s.NoError(err)
+	}
+}
+
 func populateAccounts(storage *st.Storage, balances []models.Uint256) error {
 	for i := uint32(0); i < uint32(len(balances)); i++ {
 		_, err := storage.StateTree.Set(i, &models.UserState{

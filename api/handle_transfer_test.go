@@ -224,62 +224,6 @@ func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 	s.NotNil(transfer)
 }
 
-// we no longer support updating transactions, they are no longer allowed to fail
-/*
-func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	err = s.storage.SetTransactionErrors(models.TxError{
-		TxHash:       *originalHash,
-		ErrorMessage: "some error",
-	})
-	s.NoError(err)
-
-	originalTx, err := s.storage.GetTransfer(*originalHash)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-	s.Equal(*originalHash, *hash)
-
-	tx, err := s.storage.GetTransfer(*originalHash)
-	s.NoError(err)
-	s.Nil(tx.ErrorMessage)
-	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
-}
-*/
-
-// we no longer support updating transactions
-/*
-func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdatePendingTransfer() {
-	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.Equal(APIErrPendingTransaction, err)
-}
-*/
-
-// TODO: what do we do about this test?
-//       we no longer support updating transactions, if you try this it will fail with
-//       "nonce too low", since we already have a txn for the given nonce
-/*
-func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer() {
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	tx, err := s.storage.GetTransfer(*hash)
-	s.NoError(err)
-
-	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{*tx}, &models.CommitmentID{BatchID: models.MakeUint256(1)})
-	s.NoError(err)
-
-	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.Equal(APIErrMinedTransaction, err)
-}
-*/
-
 func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() {
 	s.api.isAcceptingTransactions = false
 	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
