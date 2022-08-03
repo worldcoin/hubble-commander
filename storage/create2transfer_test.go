@@ -22,8 +22,8 @@ var (
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 			CommitmentSlot: &models.CommitmentSlot{
-				BatchID: models.MakeUint256(1),
-				IndexInBatch: 0,
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
 				IndexInCommitment: 0,
 			},
 		},

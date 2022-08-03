@@ -16,7 +16,6 @@ type RollupLoopContext interface {
 	ExecutePendingBatch(batch *models.PendingBatch) error
 	Rollback(cause *error)
 	Commit() error
-	GetErrorsToStore() []models.TxError
 }
 
 func NewRollupLoopContext(

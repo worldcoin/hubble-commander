@@ -113,7 +113,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		rollupCtx.Rollback(&err)
-		return c.handleRollupError(rollupError, rollupCtx.GetErrorsToStore())
+		return c.handleRollupError(rollupError)
 	}
 	if err != nil {
 		return err
@@ -136,10 +136,6 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	}
 
 	return nil
-
-	// TODO: _after_ we commit we try to store errors on these transactions?
-	//       this calls txPool.storage.SetTransactionErrors(...)
-	// return c.txPool.RemoveFailedTxs(rollupCtx.GetErrorsToStore())
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -157,7 +153,7 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore []models.TxError) error {
+func (c *Commander) handleRollupError(err *executor.RollupError) error {
 	if err.IsLoggable {
 		log.Warnf("%+v", err)
 	}
@@ -167,9 +163,6 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 	}
 
 	return nil
-
-	// TODO: what did this do?
-	// return c.txPool.RemoveFailedTxs(errorsToStore)
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/common"
@@ -253,11 +253,10 @@ func (s *StoredTransactionTestSuite) TestGetAllPendingTransactions_NoTransaction
 	s.Len(txs, 0)
 }
 
-func First(txs []models.GenericTransaction, pred func(tx models.GenericTransaction) bool) *models.GenericTransaction {
+func First(txs []models.GenericTransaction, pred func(tx models.GenericTransaction) bool) models.GenericTransaction {
 	for i := range txs {
 		if pred(txs[i]) {
-			result := txs[i]
-			return &result
+			return txs[i]
 		}
 	}
 
@@ -278,13 +277,13 @@ func (s *StoredTransactionTestSuite) TestGetAllFailedTransactions() {
 	s.NoError(err)
 	s.Len(res, 3)
 
-	transfer := *First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.Transfer } )
+	transfer := First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.Transfer })
 	s.Equal(expectedTxs[0], transfer.ToTransfer())
 
-	c2t := *First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.Create2Transfer } )
+	c2t := First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.Create2Transfer })
 	s.Equal(expectedTxs[1], c2t.ToCreate2Transfer())
 
-	mm := *First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.MassMigration } )
+	mm := First(res, func(tx models.GenericTransaction) bool { return tx.Type() == txtype.MassMigration })
 	s.Equal(expectedTxs[2], mm.ToMassMigration())
 }
 
@@ -358,8 +357,8 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 			CommitmentSlot: &models.CommitmentSlot{
-				BatchID: models.MakeUint256(1),
-				IndexInBatch: 0,
+				BatchID:           models.MakeUint256(1),
+				IndexInBatch:      0,
 				IndexInCommitment: 0,
 			},
 		},
@@ -388,8 +387,8 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 			CommitmentSlot: &models.CommitmentSlot{
-				BatchID: models.MakeUint256(3),
-				IndexInBatch: 0,
+				BatchID:           models.MakeUint256(3),
+				IndexInBatch:      0,
 				IndexInCommitment: 0,
 			},
 		},
@@ -419,8 +418,8 @@ func (s *StoredTransactionTestSuite) populateTransactions() models.GenericTransa
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
 			CommitmentSlot: &models.CommitmentSlot{
-				BatchID: models.MakeUint256(5),
-				IndexInBatch: 0,
+				BatchID:           models.MakeUint256(5),
+				IndexInBatch:      0,
 				IndexInCommitment: 0,
 			},
 		},

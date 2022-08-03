@@ -169,12 +169,8 @@ func initTxs(s *require.Assertions, txsCtx *TxsContext, txs models.GenericTransa
 		return
 	}
 
-	// TODO: this should add to the mempool, right?
-	err := txsCtx.storage.BatchAddTransaction(txs)
-	s.NoError(err)
-
 	for i := 0; i < txs.Len(); i++ {
-		err = txsCtx.storage.AddMempoolTx(txs.At(i))
+		err := txsCtx.storage.AddMempoolTx(txs.At(i))
 		s.NoError(err)
 	}
 }

@@ -23,9 +23,10 @@ func (c *TxsContext) ExecuteTxs(mempoolHeap *storage.MempoolHeap, feeReceiver *F
 			return nil, appError
 		}
 		if txError != nil {
-			// TODO: throw a big error here, if this happens something has
-			//       gone terribly wrong, we might even want to take downtime
-			// c.handleTxError(txMempool, returnStruct, tx, txError)
+			// TODO: should we return an appError here? This is very bad, it
+			//       might be better to _not_ continue and mess up the state
+			//       any further.
+			c.handleTxError(returnStruct, tx, txError)
 			continue
 		}
 
@@ -54,22 +55,26 @@ func (c *TxsContext) ExecuteTxs(mempoolHeap *storage.MempoolHeap, feeReceiver *F
 	return returnStruct, nil
 }
 
-func (c *TxsContext) handleTxError(result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+// TODO: thread the context down here so we can attach this to the rollup span
+func (c *TxsContext) handleTxError(
+	result ExecuteTxsResult,
+	tx models.GenericTransaction,
+	err error,
+) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		panic("got ErrNonceTooHigh in ExecuteTxs; this should never happen")
 	}
 
-	// TODO: Why does this happen? What could cause a transaction which we previously
-	//       accepted to fail? If this happens we need to scan through the mempool and
-	//       cascade the failure to other txns which were relying on our successful
-	//       execution.
+	// TODO: If this happens we need to scan through the mempool and cascade the
+	//       failure to other txns which were relying on our successful execution.
 
-	log.WithField("txHash", tx.GetBase().Hash.String()).
-		Errorf("%s failed: %s", tx.Type().String(), err)
+	log.WithFields(log.Fields{
+		"tx.Hash": tx.GetBase().Hash.String(),
+		"tx.FromStateID": tx.GetBase().FromStateID,
+		"tx.Nonce": tx.GetBase().Nonce.Uint64(),
+		"tx.Type": tx.Type().String(),
+		"errMessage": err.Error(),
+		"err": err,
+	}).Errorf("Unimplemented: failed to batch transaction. State might be inconsistent")
 	result.AddInvalidTx(tx)
-	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{
-		TxHash:        tx.GetBase().Hash,
-		SenderStateID: tx.GetFromStateID(),
-		ErrorMessage:  err.Error(),
-	})
 }

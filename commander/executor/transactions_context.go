@@ -6,7 +6,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/metrics"
-	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -16,7 +15,6 @@ type TxsContext struct {
 	*ExecutionContext
 	Executor        TransactionExecutor
 	BatchType       batchtype.BatchType
-	txErrorsToStore []models.TxError
 
 	// saved here because the configuration might be overridden depending on the set
 	// of currently pending transactions
@@ -45,12 +43,7 @@ func newTxsContext(executionCtx *ExecutionContext, batchType batchtype.BatchType
 		ExecutionContext:       executionCtx,
 		Executor:               NewTransactionExecutor(executionCtx, txtype.TransactionType(batchType)),
 		BatchType:              batchType,
-		txErrorsToStore:        make([]models.TxError, 0),
 		minTxsPerCommitment:    executionCtx.cfg.MinTxsPerCommitment,
 		minCommitmentsPerBatch: executionCtx.cfg.MinCommitmentsPerBatch,
 	}
-}
-
-func (c *TxsContext) GetErrorsToStore() []models.TxError {
-	return c.txErrorsToStore
 }

@@ -7,9 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
-	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -189,12 +187,6 @@ func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions(
 func (s *TransactionTestSuite) TestBatchAdd_Nothing() {
 	err := s.storage.BatchAddTransaction(models.MakeMassMigrationArray())
 	s.ErrorIs(err, ErrNoRowsAffected)
-}
-
-func newFailedTransfer() *models.Transfer {
-	tx := testutils.NewTransfer(2, 1, 3, 10)
-	tx.ErrorMessage = ref.String("some message")
-	return tx
 }
 
 func TestTransactionTestSuite(t *testing.T) {
