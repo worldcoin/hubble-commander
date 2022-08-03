@@ -21,6 +21,11 @@ var (
 			Fee:         models.MakeUint256(100),
 			Nonce:       models.MakeUint256(0),
 			Signature:   models.MakeRandomSignature(),
+			CommitmentSlot: &models.CommitmentSlot{
+				BatchID: models.MakeUint256(1),
+				IndexInBatch: 0,
+				IndexInCommitment: 0,
+			},
 		},
 		ToStateID: 2,
 	}
@@ -48,6 +53,24 @@ func (s *TransferTestSuite) TearDownTest() {
 }
 
 func (s *TransferTestSuite) TestAddTransfer_AddAndRetrieve() {
+	transfer := models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+			CommitmentSlot: &models.CommitmentSlot{
+				BatchID: models.MakeUint256(1),
+				IndexInBatch: 0,
+				IndexInCommitment: 0,
+			},
+		},
+		ToStateID: 2,
+	}
+
 	err := s.storage.AddTransaction(&transfer)
 	s.NoError(err)
 
@@ -78,52 +101,6 @@ func (s *TransferTestSuite) TestGetTransfer_DifferentTxType() {
 
 	_, err = s.storage.GetTransfer(create2Transfer.Hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
-}
-
-func (s *TransferTestSuite) TestMarkTransfersAsIncluded() {
-	txs := make([]models.Transfer, 2)
-	for i := 0; i < len(txs); i++ {
-		txs[i] = transfer
-		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddTransaction(&txs[i])
-		s.NoError(err)
-	}
-
-	commitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 1,
-	}
-	err := s.storage.MarkTransfersAsIncluded(txs, &commitmentID)
-	s.NoError(err)
-
-	for i := range txs {
-		tx, err := s.storage.GetTransfer(txs[i].Hash)
-		s.NoError(err)
-		s.Equal(commitmentID, *tx.CommitmentSlot.CommitmentID())
-	}
-}
-
-func (s *TransferTestSuite) TestBatchAddTransfer() {
-	txs := make([]models.Transfer, 2)
-	txs[0] = transfer
-	txs[0].Hash = utils.RandomHash()
-	txs[1] = transfer
-	txs[1].Hash = utils.RandomHash()
-
-	err := s.storage.BatchAddTransfer(txs)
-	s.NoError(err)
-
-	transfer, err := s.storage.GetTransfer(txs[0].Hash)
-	s.NoError(err)
-	s.Equal(txs[0], *transfer)
-	transfer, err = s.storage.GetTransfer(txs[1].Hash)
-	s.NoError(err)
-	s.Equal(txs[1], *transfer)
-}
-
-func (s *TransferTestSuite) TestBatchAddTransfer_NoTransfers() {
-	err := s.storage.BatchAddTransfer([]models.Transfer{})
-	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
 func (s *TransferTestSuite) TestGetTransfer_NonexistentTransfer() {

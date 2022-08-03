@@ -25,14 +25,6 @@ func (c *TxsContext) CreateCommitments(ctx context.Context) ([]models.Commitment
 	spanCtx, span := otel.Tracer("txsContext").Start(ctx, "CreateCommitments")
 	defer span.End()
 
-	// TODO: here we create a heap which is populated from all the executable txs in
-	//       our mempool. We then call c.createCommitment a few times, which is just
-	//       a wrapper for c.executeTxsForCommitment, which is just a wrapper for
-	//       c.ExecuteTxs, which is the only place we ever interact with the heap.
-	//       Stashing the heap on this struct is very convenient but obscures the
-	//       dataflow, and means the heap lives longer than it should. The heap is
-	//       intimately related to the mempool, right? Why isn't it attached to that?
-
 	err := c.verifyTxsCount()
 	if err != nil {
 		return nil, err

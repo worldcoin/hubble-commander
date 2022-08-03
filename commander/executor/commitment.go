@@ -35,6 +35,7 @@ func (c *TxsContext) BuildCommitment(
 		return nil, err
 	}
 
+	// TODO: write a test which confirms this happens
 	err = c.storage.MarkTransactionsAsIncluded(executeResult.AppliedTxs(), commitmentID)
 	if err != nil {
 		return nil, err

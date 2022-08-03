@@ -7,10 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *TransactionStorage) BatchAddTransfer(txs []models.Transfer) error {
-	return s.BatchAddTransaction(models.MakeTransferArray(txs...))
-}
-
 // called by a large amount of tests, and nothing else
 func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, error) {
 	tx, err := s.getTransactionByHash(hash)
@@ -22,8 +18,4 @@ func (s *TransactionStorage) GetTransfer(hash common.Hash) (*models.Transfer, er
 	}
 	transfer := tx.ToTransfer()
 	return transfer, nil
-}
-
-func (s *TransactionStorage) MarkTransfersAsIncluded(txs []models.Transfer, commitmentID *models.CommitmentID) error {
-	return s.MarkTransactionsAsIncluded(models.MakeTransferArray(txs...), commitmentID)
 }

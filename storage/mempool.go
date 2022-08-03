@@ -188,6 +188,10 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 // TODO: this assumes the sender & receiver stateIDs are in the state tree,
 //       make sure all callers check for this? Maybe return a nice error?
 func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {
+	// TODO: should we check that this txn does not already exist as a batchedTx?
+	// TODO: should this accept a stored.PendingTx, so we do not accidentally accept
+	//       a tx which already has a CommitmentSlot?
+
 	// The caller should have opened a txn but doing it here just in case.
 
 	// The txn gives badger enough information to lock out conflicting API handlers

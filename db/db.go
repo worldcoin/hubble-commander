@@ -201,6 +201,9 @@ func (d *Database) Insert(key, data interface{}) error {
 	}
 	if d.duringUpdateTransaction() {
 		err := d.store.TxInsert(d.txn, key, data)
+		if errors.Is(err, bh.ErrKeyExists) {
+			return errors.Wrapf(err, "duplicate key: %x", key)
+		}
 		if err != nil {
 			return errors.WithStack(err)
 		}

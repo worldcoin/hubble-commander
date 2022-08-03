@@ -67,6 +67,8 @@ func (a *API) unsafeGetWithdrawProof(
 		return nil, errors.WithStack(err)
 	}
 
+	// TODO: I believe that time is now, they are being read out in sorted order,
+	//       removing this will allow us to remove commander/executor/tx_queue.go
 	// TODO remove when new primary key for transactions with transaction index is implement
 	txQueue := executor.NewTxQueue(unsortedTransactions)
 	massMigrations := txQueue.PickTxsForCommitment().ToMassMigrationArray()
