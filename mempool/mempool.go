@@ -141,7 +141,7 @@ func getExecutableTx(txType txtype.TransactionType, bucket *txBucket) models.Gen
 	log.Infof("XXX: executable first transaction, batchType: %s, buckeNonce: %d, txNonce: %d, txType: %s", txType.String(), bucket.nonce, firstTx.GetNonce(), firstTx.GetBase().TxType.String())
 
 	firstTxBase := firstTx.GetBase()
-	if firstTxBase.TxType == txType && firstTxBase.Nonce.EqN(bucket.nonce) {
+	if firstTxBase.TxType == txType {
 		return firstTx
 	}
 	return nil
