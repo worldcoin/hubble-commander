@@ -111,7 +111,8 @@ func (m *Mempool) setGauge() {
 
 func (m *Mempool) GetExecutableTxs(txType txtype.TransactionType) []models.GenericTransaction {
 	result := make([]models.GenericTransaction, 0)
-	for _, bucket := range m.buckets {
+	for bucketID, bucket := range m.buckets {
+		log.WithField("bucket_id", bucketID).Infof("XXX: bucket id: %d", bucketID)
 		tx := getExecutableTx(txType, bucket)
 		if tx != nil {
 			result = append(result, tx)
