@@ -149,7 +149,7 @@ spec:
               path: /health
               scheme: HTTP
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 1500
             timeoutSeconds: 3
             successThreshold: 1
             failureThreshold: 6
@@ -158,7 +158,7 @@ spec:
               path: /health
               scheme: HTTP
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 1500
             timeoutSeconds: 3
             successThreshold: 1
             failureThreshold: 2
