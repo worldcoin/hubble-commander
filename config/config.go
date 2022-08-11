@@ -54,7 +54,7 @@ func GetConfig() *Config {
 			StakeWithdrawalGasLimit:          getUint64("rollup.stake_withdrawal_gas_limit", DefaultStakeWithdrawalGasLimit),
 			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
-			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 30*time.Minute),
+			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 10*time.Minute),
 		},
 		API: &APIConfig{
 			Version:            "0.5.0-rc2",
