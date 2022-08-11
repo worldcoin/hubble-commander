@@ -6,9 +6,8 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
-	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/utils"
-	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -39,6 +38,39 @@ func (s *TransactionTestSuite) SetupTest() {
 
 	err = s.storage.AddBatch(s.batch)
 	s.NoError(err)
+
+	leaf := models.StateLeaf{
+		StateID: 0,
+		UserState: models.UserState{
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(2000),
+		},
+	}
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
+
+	leaf = models.StateLeaf{
+		StateID: 1,
+		UserState: models.UserState{
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(2000),
+		},
+	}
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
+
+	leaf = models.StateLeaf{
+		StateID: 2,
+		UserState: models.UserState{
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(2000),
+		},
+	}
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
 }
 
 func (s *TransactionTestSuite) TearDownTest() {
@@ -47,7 +79,20 @@ func (s *TransactionTestSuite) TearDownTest() {
 }
 
 func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_WithoutBatch() {
-	err := s.storage.AddTransaction(&transfer)
+	transfer = models.Transfer{
+		TransactionBase: models.TransactionBase{
+			Hash:        utils.RandomHash(),
+			TxType:      txtype.Transfer,
+			FromStateID: 1,
+			Amount:      models.MakeUint256(1000),
+			Fee:         models.MakeUint256(100),
+			Nonce:       models.MakeUint256(0),
+			Signature:   models.MakeRandomSignature(),
+		},
+		ToStateID: 2,
+	}
+
+	err := s.storage.AddMempoolTx(&transfer)
 	s.NoError(err)
 
 	expected := models.TransactionWithBatchDetails{
@@ -113,46 +158,6 @@ func (s *TransactionTestSuite) TestGetTransactionWithBatchDetails_MassMigration(
 	s.Equal(expected, *res)
 }
 
-func (s *TransactionTestSuite) TestReplaceFailedTransaction_UpdatesTx() {
-	failedTx := transfer
-	failedTx.ErrorMessage = ref.String("some message")
-	err := s.storage.AddTransaction(&failedTx)
-	s.NoError(err)
-
-	updatedTx := transfer
-	updatedTx.SetReceiveTime()
-	err = s.storage.ReplaceFailedTransaction(&updatedTx)
-	s.NoError(err)
-
-	res, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-	s.Equal(updatedTx, *res)
-}
-
-func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdateBatchedTx() {
-	tx := create2Transfer
-	tx.CommitmentSlot = &models.CommitmentSlot{
-		BatchID: models.MakeUint256(1),
-	}
-	err := s.storage.AddTransaction(&tx)
-	s.NoError(err)
-
-	updatedTx := create2Transfer
-	updatedTx.SetReceiveTime()
-	err = s.storage.ReplaceFailedTransaction(&updatedTx)
-	s.ErrorIs(err, ErrAlreadyMinedTransaction)
-}
-
-func (s *TransactionTestSuite) TestReplaceFailedTransaction_DoesNotUpdatePendingTx() {
-	err := s.storage.AddTransaction(&massMigration)
-	s.NoError(err)
-
-	updatedTx := massMigration
-	updatedTx.SetReceiveTime()
-	err = s.storage.ReplaceFailedTransaction(&updatedTx)
-	s.ErrorIs(err, NewNotFoundError("FailedTx"))
-}
-
 func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID() {
 	transfer1 := transfer
 	transfer1.CommitmentSlot = models.NewCommitmentSlot(txCommitment.ID, 0)
@@ -179,76 +184,9 @@ func (s *TransactionTestSuite) TestGetTransactionsByCommitmentID_NoTransactions(
 	s.Len(transfers, 0)
 }
 
-func (s *TransactionTestSuite) TestBatchUpsertTransaction() {
-	err := s.storage.AddTransaction(&transfer)
-	s.NoError(err)
-
-	txBeforeUpsert, err := s.storage.GetTransfer(transfer.Hash)
-	s.NoError(err)
-	s.Nil(txBeforeUpsert.CommitmentSlot)
-
-	txBeforeUpsert.CommitmentSlot = &models.CommitmentSlot{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 0,
-	}
-
-	err = s.storage.BatchUpsertTransaction(models.GenericArray{txBeforeUpsert})
-	s.NoError(err)
-
-	txAfterUpsert, err := s.storage.GetTransfer(txBeforeUpsert.Hash)
-	s.NoError(err)
-	s.Equal(txBeforeUpsert, txAfterUpsert)
-}
-
-func (s *TransactionTestSuite) TestRemovePendingTransactions_RemovesTxs() {
-	txs := models.GenericArray{
-		testutils.NewTransfer(0, 1, 0, 100),
-		testutils.NewTransfer(1, 2, 1, 100),
-	}
-	err := s.storage.BatchAddTransaction(txs)
-	s.NoError(err)
-
-	err = s.storage.RemovePendingTransactions(txs[0].GetBase().Hash, txs[1].GetBase().Hash)
-	s.NoError(err)
-
-	for _, tx := range txs {
-		_, err = s.storage.GetTransfer(tx.GetBase().Hash)
-		s.ErrorIs(err, NewNotFoundError("transaction"))
-	}
-}
-
-func (s *TransactionTestSuite) TestRemovePendingTransactions_NoTransactions() {
-	err := s.storage.RemovePendingTransactions(transfer.Hash)
-	s.ErrorIs(err, NewNotFoundError("transaction"))
-}
-
-func (s *TransactionTestSuite) TestRemoveFailedTransactions() {
-	txs := models.GenericArray{newFailedTransfer(), &transfer, newFailedTransfer()}
-	err := s.storage.BatchAddTransaction(txs)
-	s.NoError(err)
-
-	err = s.storage.RemoveFailedTransactions(txs)
-	s.NoError(err)
-
-	_, err = s.storage.GetTransfer(txs[0].GetBase().Hash)
-	s.True(IsNotFoundError(err))
-
-	_, err = s.storage.GetTransfer(txs[1].GetBase().Hash)
-	s.NoError(err)
-
-	_, err = s.storage.GetTransfer(txs[2].GetBase().Hash)
-	s.True(IsNotFoundError(err))
-}
-
-func (s *TransactionTestSuite) TestRemoveFailedTransactions_NoTransactions() {
-	err := s.storage.RemoveFailedTransactions(models.TransferArray{transfer})
-	s.NoError(err)
-}
-
-func newFailedTransfer() *models.Transfer {
-	tx := testutils.NewTransfer(2, 1, 3, 10)
-	tx.ErrorMessage = ref.String("some message")
-	return tx
+func (s *TransactionTestSuite) TestBatchAdd_Nothing() {
+	err := s.storage.BatchAddTransaction(models.MakeMassMigrationArray())
+	s.ErrorIs(err, ErrNoRowsAffected)
 }
 
 func TestTransactionTestSuite(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 func (s *Storage) GetFirstPubKeyID(publicKey *models.PublicKey) (*uint32, error) {
 	var account models.AccountLeaf
 	err := s.database.Badger.FindOneUsingIndex(&account, *publicKey, "PublicKey")
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("pub key id"))
 	}
 	if err != nil {

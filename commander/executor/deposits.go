@@ -8,6 +8,7 @@ import (
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
 )
 
 var ErrNotEnoughDeposits = NewRollupError("not enough deposits")
@@ -18,7 +19,7 @@ func (c *DepositsContext) CreateAndSubmitBatch(ctx context.Context) (*models.Bat
 		return nil, nil, err
 	}
 
-	vacancyProof, err := c.createCommitment(batch.ID)
+	vacancyProof, err := c.createCommitment(ctx, batch.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -31,7 +32,10 @@ func (c *DepositsContext) CreateAndSubmitBatch(ctx context.Context) (*models.Bat
 	return batch, ref.Int(1), nil
 }
 
-func (c *DepositsContext) createCommitment(batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
+func (c *DepositsContext) createCommitment(ctx context.Context, batchID models.Uint256) (*models.SubtreeVacancyProof, error) {
+	_, span := otel.Tracer("depositsContext").Start(ctx, "createCommitment")
+	defer span.End()
+
 	depositSubtree, err := c.storage.GetFirstPendingDepositSubtree()
 	if st.IsNotFoundError(err) {
 		return nil, errors.WithStack(ErrNotEnoughDeposits)

@@ -103,7 +103,7 @@ func (e *TransferExecutor) SubmitBatch(
 	batchID *models.Uint256,
 	commitments []models.CommitmentWithTxs,
 ) (*types.Transaction, error) {
-	return e.client.SubmitTransfersBatch(batchID, commitments)
+	return e.client.SubmitTransfersBatch(ctx, batchID, commitments)
 }
 
 func (e *TransferExecutor) GenerateMetaAndWithdrawRoots(_ models.CommitmentWithTxs, _ CreateCommitmentResult) error {

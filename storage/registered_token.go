@@ -30,7 +30,7 @@ func (s *RegisteredTokenStorage) AddRegisteredToken(registeredToken *models.Regi
 func (s *RegisteredTokenStorage) GetRegisteredToken(tokenID models.Uint256) (*models.RegisteredToken, error) {
 	var registeredToken models.RegisteredToken
 	err := s.database.Badger.Get(tokenID, &registeredToken)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("registered token"))
 	}
 	if err != nil {

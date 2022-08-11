@@ -40,6 +40,24 @@ func (s *MassMigrationTestSuite) SetupTest() {
 	var err error
 	s.storage, err = NewTestStorage()
 	s.NoError(err)
+
+	account := models.AccountLeaf{
+		PubKeyID:  1,
+		PublicKey: models.PublicKey{3, 4, 5},
+	}
+	err = s.storage.AccountTree.SetSingle(&account)
+	s.NoError(err)
+
+	leaf := models.StateLeaf{
+		StateID: 1,
+		UserState: models.UserState{
+			PubKeyID: 1,
+			TokenID:  models.MakeUint256(1),
+			Balance:  models.MakeUint256(2000),
+		},
+	}
+	_, err = s.storage.StateTree.Set(leaf.StateID, &leaf.UserState)
+	s.NoError(err)
 }
 
 func (s *MassMigrationTestSuite) TearDownTest() {
@@ -48,7 +66,7 @@ func (s *MassMigrationTestSuite) TearDownTest() {
 }
 
 func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieve() {
-	err := s.storage.AddTransaction(&massMigration)
+	err := s.storage.AddMempoolTx(&massMigration)
 	s.NoError(err)
 
 	expected := massMigration
@@ -72,57 +90,11 @@ func (s *MassMigrationTestSuite) TestAddMassMigration_AddAndRetrieveIncludedMass
 	s.Equal(includedMassMigration, *res)
 }
 
-func (s *MassMigrationTestSuite) TestBatchAddMassMigration() {
-	txs := make([]models.MassMigration, 2)
-	txs[0] = massMigration
-	txs[0].Hash = utils.RandomHash()
-	txs[1] = massMigration
-	txs[1].Hash = utils.RandomHash()
-
-	err := s.storage.BatchAddMassMigration(txs)
-	s.NoError(err)
-
-	massMigration, err := s.storage.GetMassMigration(txs[0].Hash)
-	s.NoError(err)
-	s.Equal(txs[0], *massMigration)
-	massMigration, err = s.storage.GetMassMigration(txs[1].Hash)
-	s.NoError(err)
-	s.Equal(txs[1], *massMigration)
-}
-
-func (s *MassMigrationTestSuite) TestBatchAddMassMigration_NoMassMigrations() {
-	err := s.storage.BatchAddMassMigration([]models.MassMigration{})
-	s.ErrorIs(err, ErrNoRowsAffected)
-}
-
 func (s *MassMigrationTestSuite) TestGetMassMigration_NonexistentMassMigration() {
 	hash := common.BytesToHash([]byte{1, 2, 3, 4, 5})
 	res, err := s.storage.GetMassMigration(hash)
 	s.ErrorIs(err, NewNotFoundError("transaction"))
 	s.Nil(res)
-}
-
-func (s *MassMigrationTestSuite) TestMarkMassMigrationsAsIncluded() {
-	txs := make([]models.MassMigration, 2)
-	for i := 0; i < len(txs); i++ {
-		txs[i] = massMigration
-		txs[i].Hash = utils.RandomHash()
-		err := s.storage.AddTransaction(&txs[i])
-		s.NoError(err)
-	}
-
-	commitmentID := models.CommitmentID{
-		BatchID:      models.MakeUint256(1),
-		IndexInBatch: 1,
-	}
-	err := s.storage.MarkMassMigrationsAsIncluded(txs, &commitmentID)
-	s.NoError(err)
-
-	for i := range txs {
-		tx, err := s.storage.GetMassMigration(txs[i].Hash)
-		s.NoError(err)
-		s.Equal(commitmentID, *tx.CommitmentSlot.CommitmentID())
-	}
 }
 
 func TestMassMigrationTestSuite(t *testing.T) {

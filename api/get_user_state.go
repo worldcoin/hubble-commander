@@ -33,9 +33,11 @@ func (a *API) GetUserState(ctx context.Context, id uint32) (*dto.UserStateWithID
 }
 
 func (a *API) unsafeGetUserState(id uint32) (*dto.UserStateWithID, error) {
-	leaf, err := a.storage.StateTree.Leaf(id)
+	userState, err := a.storage.GetPendingUserState(id)
 	if err != nil {
 		return nil, err
 	}
-	return dto.NewUserStateWithID(leaf), nil
+
+	addressibleValue := dto.MakeUserStateWithID(id, userState)
+	return &addressibleValue, nil
 }

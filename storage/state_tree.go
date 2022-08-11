@@ -41,7 +41,7 @@ func (s *StateTree) Root() (*common.Hash, error) {
 func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error) {
 	var storedLeaf stored.FlatStateLeaf
 	err = s.database.Badger.Get(stateID, &storedLeaf)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("state leaf"))
 	}
 	if err != nil {

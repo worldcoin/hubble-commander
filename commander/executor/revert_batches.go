@@ -75,9 +75,20 @@ func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.
 	if len(batchIDs) == 0 {
 		return nil
 	}
+
+	logIDs := make([]uint64, len(batchIDs))
+	for _, batchID := range batchIDs {
+		logIDs = append(logIDs, batchID.Uint64())
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"hubble.batches": logIDs,
+	}).Error("Rolling back batches, transactions not returned to the mempool")
+
 	slots, err := c.storage.GetTransactionIDsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
+
 	return c.storage.MarkTransactionsAsPending(slots)
 }

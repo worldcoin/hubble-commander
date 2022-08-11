@@ -15,7 +15,7 @@ func (s *DepositStorage) AddPendingDepositSubtree(subtree *models.PendingDeposit
 func (s *DepositStorage) GetPendingDepositSubtree(subtreeID models.Uint256) (*models.PendingDepositSubtree, error) {
 	var subtree models.PendingDepositSubtree
 	err := s.database.Badger.Get(subtreeID, &subtree)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("deposit sub tree"))
 	}
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *DepositStorage) RemovePendingDepositSubtrees(subtreeIDs ...models.Uint2
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
 		for i := range subtreeIDs {
 			err := txDatabase.Badger.Delete(subtreeIDs[i], models.PendingDepositSubtree{})
-			if err == bh.ErrNotFound {
+			if errors.Is(err, bh.ErrNotFound) {
 				return errors.WithStack(NewNotFoundError("deposit sub tree"))
 			}
 			if err != nil {

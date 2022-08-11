@@ -85,12 +85,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 		return err
 	}
 
-	err = c.txPool.UpdateMempool()
-	if err != nil {
-		return err
-	}
-
-	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), spanCtx, *currentBatchType)
+	rollupCtx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, spanCtx, *currentBatchType)
 	defer rollupCtx.Rollback(&err)
 	span.SetAttributes(attribute.String("hubble.batchType", currentBatchType.String()))
 
@@ -118,7 +113,7 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	var rollupError *executor.RollupError
 	if errors.As(err, &rollupError) {
 		rollupCtx.Rollback(&err)
-		return c.handleRollupError(rollupError, rollupCtx.GetErrorsToStore())
+		return c.handleRollupError(rollupError)
 	}
 	if err != nil {
 		return err
@@ -139,7 +134,8 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
-	return c.txPool.RemoveFailedTxs(rollupCtx.GetErrorsToStore())
+
+	return nil
 }
 
 func switchBatchType(batchType *batchtype.BatchType) {
@@ -157,7 +153,7 @@ func switchBatchType(batchType *batchtype.BatchType) {
 	}
 }
 
-func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore []models.TxError) error {
+func (c *Commander) handleRollupError(err *executor.RollupError) error {
 	if err.IsLoggable {
 		log.Warnf("%+v", err)
 	}
@@ -166,7 +162,7 @@ func (c *Commander) handleRollupError(err *executor.RollupError, errorsToStore [
 		return err
 	}
 
-	return c.txPool.RemoveFailedTxs(errorsToStore)
+	return nil
 }
 
 func logNewBatch(batch *models.Batch, commitmentsCount int, duration *time.Duration) {

@@ -116,7 +116,7 @@ func (s *GetBatchesTestSuite) TestGetBatches_FiltersByBatchID() {
 
 func (s *GetBatchesTestSuite) TestGetTxBatch() {
 	batchID := models.MakeUint256(1)
-	tx, err := s.client.SubmitTransfersBatch(&batchID, []models.CommitmentWithTxs{&s.commitments[0], &s.commitments[1]})
+	tx, err := s.client.SubmitTransfersBatch(context.Background(), &batchID, []models.CommitmentWithTxs{&s.commitments[0], &s.commitments[1]})
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -138,7 +138,12 @@ func (s *GetBatchesTestSuite) TestGetTxBatch() {
 }
 
 func (s *GetBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenBatchDoesNotExist() {
-	tx, err := s.client.SubmitTransfersBatch(models.NewUint256(1), []models.CommitmentWithTxs{&s.commitments[0], &s.commitments[1]})
+	tx, err := s.client.SubmitTransfersBatch(
+		context.Background(),
+		models.NewUint256(1),
+		[]models.CommitmentWithTxs{&s.commitments[0],
+			&s.commitments[1]},
+	)
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 
@@ -158,7 +163,7 @@ func (s *GetBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenBatchDoesNotExist()
 
 func (s *GetBatchesTestSuite) TestGetTxBatch_ReturnsErrorWhenCurrentBatchHasDifferentHash() {
 	batchID := models.NewUint256(1)
-	tx, err := s.client.SubmitTransfersBatch(batchID, []models.CommitmentWithTxs{&s.commitments[0], &s.commitments[1]})
+	tx, err := s.client.SubmitTransfersBatch(context.Background(), batchID, []models.CommitmentWithTxs{&s.commitments[0], &s.commitments[1]})
 	s.NoError(err)
 	s.client.GetBackend().Commit()
 

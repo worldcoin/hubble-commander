@@ -4,7 +4,6 @@ import (
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
@@ -14,8 +13,6 @@ import (
 type batchContext interface {
 	SyncCommitments(batch eth.DecodedBatch) error
 	UpdateExistingBatch(batch eth.DecodedBatch, prevStateRoot common.Hash) error
-	Commit()
-	Rollback()
 }
 
 type Context struct {
@@ -28,12 +25,11 @@ type Context struct {
 func NewContext(
 	storage *st.Storage,
 	client *eth.Client,
-	pool *mempool.Mempool,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
 	tx, txStorage := storage.BeginTransaction(st.TxOptions{})
-	return newContext(txStorage, tx, client, pool, cfg, batchType)
+	return newContext(txStorage, tx, client, cfg, batchType)
 }
 
 func NewTestContext(
@@ -42,25 +38,20 @@ func NewTestContext(
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) (*Context, error) {
-	txPool, err := mempool.NewTxPool(storage)
-	if err != nil {
-		return nil, err
-	}
-	return newContext(storage, nil, client, txPool.Mempool(), cfg, batchType), nil
+	return newContext(storage, nil, client, cfg, batchType), nil
 }
 
 func newContext(
 	txStorage *st.Storage,
 	tx *db.TxController,
 	client *eth.Client,
-	pool *mempool.Mempool,
 	cfg *config.RollupConfig,
 	batchType batchtype.BatchType,
 ) *Context {
 	var batchCtx batchContext
 	switch batchType {
 	case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
-		batchCtx = newTxsContext(txStorage, client, pool, cfg, txtype.TransactionType(batchType))
+		batchCtx = newTxsContext(txStorage, client, cfg, txtype.TransactionType(batchType))
 	case batchtype.Deposit:
 		batchCtx = newDepositsContext(txStorage, client)
 	case batchtype.Genesis:
@@ -75,12 +66,10 @@ func newContext(
 }
 
 func (c *Context) Commit() error {
-	c.batchCtx.Commit()
 	return c.tx.Commit()
 }
 
 // nolint:gocritic
 func (c *Context) Rollback(cause *error) {
-	c.batchCtx.Rollback()
 	c.tx.Rollback(cause)
 }

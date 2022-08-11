@@ -33,7 +33,7 @@ func (s *ChainStateStorage) copyWithNewDatabase(database *Database) *ChainStateS
 func (s *ChainStateStorage) GetChainState() (*models.ChainState, error) {
 	var chainState models.ChainState
 	err := s.database.Badger.Get("ChainState", &chainState)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("chain state"))
 	}
 	if err != nil {

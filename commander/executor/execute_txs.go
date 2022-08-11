@@ -2,18 +2,18 @@ package executor
 
 import (
 	"github.com/Worldcoin/hubble-commander/commander/applier"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/models"
-	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/storage"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
+func (c *TxsContext) ExecuteTxs(mempoolHeap *storage.MempoolHeap, feeReceiver *FeeReceiver) (ExecuteTxsResult, error) {
 	returnStruct := c.Executor.NewExecuteTxsResult(c.cfg.MaxTxsPerCommitment)
 	combinedFee := models.MakeUint256(0)
 
-	for tx := c.heap.Peek(); tx != nil; tx = c.heap.Peek() {
+	peekFn := mempoolHeap.PeekHighestFeeExecutableTx
+	for tx := peekFn(); tx != nil; tx = peekFn() {
 		if returnStruct.AppliedTxs().Len() == int(c.cfg.MaxTxsPerCommitment) {
 			break
 		}
@@ -23,8 +23,10 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			return nil, appError
 		}
 		if txError != nil {
-			c.handleTxError(txMempool, returnStruct, tx, txError)
-			c.heap.Pop()
+			// TODO: should we return an appError here? This is very bad, it
+			//       might be better to _not_ continue and mess up the state
+			//       any further.
+			c.handleTxError(returnStruct, tx, txError)
 			continue
 		}
 
@@ -33,7 +35,7 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 			return nil, err
 		}
 
-		err = c.updateHeap(txMempool, tx)
+		err = mempoolHeap.DropHighestFeeExecutableTx()
 		if err != nil {
 			return nil, err
 		}
@@ -53,35 +55,26 @@ func (c *TxsContext) ExecuteTxs(txMempool *mempool.TxMempool, feeReceiver *FeeRe
 	return returnStruct, nil
 }
 
-func (c *TxsContext) updateHeap(txMempool *mempool.TxMempool, tx models.GenericTransaction) error {
-	nextTx, err := txMempool.GetNextExecutableTx(txtype.TransactionType(c.BatchType), tx.GetFromStateID())
-	if err != nil {
-		return err
-	}
-	if nextTx != nil {
-		c.heap.Replace(nextTx)
-		return nil
-	}
-
-	c.heap.Pop()
-	return nil
-}
-
-func (c *TxsContext) handleTxError(txMempool *mempool.TxMempool, result ExecuteTxsResult, tx models.GenericTransaction, err error) {
+// TODO: thread the context down here so we can attach this to the rollup span
+func (c *TxsContext) handleTxError(
+	result ExecuteTxsResult,
+	tx models.GenericTransaction,
+	err error,
+) {
 	if errors.Is(err, applier.ErrNonceTooHigh) {
 		panic("got ErrNonceTooHigh in ExecuteTxs; this should never happen")
 	}
-	removeErr := txMempool.RemoveFailedTx(tx.GetFromStateID())
-	if removeErr != nil {
-		panic(removeErr) // should never happen
-	}
 
-	log.WithField("txHash", tx.GetBase().Hash.String()).
-		Errorf("%s failed: %s", tx.Type().String(), err)
+	// TODO: If this happens we need to scan through the mempool and cascade the
+	//       failure to other txns which were relying on our successful execution.
+
+	log.WithFields(log.Fields{
+		"tx.Hash":        tx.GetBase().Hash.String(),
+		"tx.FromStateID": tx.GetBase().FromStateID,
+		"tx.Nonce":       tx.GetBase().Nonce.Uint64(),
+		"tx.Type":        tx.Type().String(),
+		"errMessage":     err.Error(),
+		"err":            err,
+	}).Errorf("Unimplemented: failed to batch transaction. State might be inconsistent")
 	result.AddInvalidTx(tx)
-	c.txErrorsToStore = append(c.txErrorsToStore, models.TxError{
-		TxHash:        tx.GetBase().Hash,
-		SenderStateID: tx.GetFromStateID(),
-		ErrorMessage:  err.Error(),
-	})
 }

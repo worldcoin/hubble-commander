@@ -1,11 +1,13 @@
 package storage
 
 import (
-	"fmt"
+	"encoding/hex"
+	"encoding/json"
 	"sync/atomic"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
@@ -80,6 +82,7 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 	return txCount, txController.Commit()
 }
 
+// TODO: rename to UnbatchTransactions
 func (s *TransactionStorage) MarkTransactionsAsPending(txIDs []models.CommitmentSlot) error {
 	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txIDs {
@@ -101,65 +104,43 @@ func (s *TransactionStorage) unsafeMarkTransactionAsPending(txSlot *models.Commi
 
 	s.decrementTransactionCount()
 
-	pendingTx := batchedTx.PendingTx
-	err = s.database.Badger.Insert(pendingTx.Hash, pendingTx)
+	// TODO: this should return the transactions back to the mempool by inserting them
+	//       at the beginning of their relative queues. This requires somehow avoiding
+	//       conflicts with the rollup loop, as well as being careful to ensure the
+	//       mempool is returned to a correct state.
+
+	storedTxBytes := batchedTx.PendingTx.Bytes()
+	storedTxHex := hex.EncodeToString(storedTxBytes)
+
+	storedTxDTO := dto.MakeTransactionForCommitment(
+		batchedTx.PendingTx.ToGenericTransaction(),
+	)
+	storedTxJSON, err := json.Marshal(storedTxDTO)
 	if err != nil {
-		return errors.WithStack(err)
+		storedTxJSON = []byte("")
 	}
+
+	log.WithFields(log.Fields{
+		"txHash":     batchedTx.Hash,
+		"serialized": storedTxHex,
+		"dto":        string(storedTxJSON),
+	}).Error("Unimplemented: Batch reverted but transaction not returned to mempool.")
+
 	return nil
-}
-
-func (s *TransactionStorage) SetTransactionError(txError models.TxError) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
-		var pendingTx stored.PendingTx
-		err := txStorage.getAndDelete(txError.TxHash, &pendingTx)
-		if err != nil {
-			return err
-		}
-
-		failedTx := stored.NewFailedTxFromError(&pendingTx, txError.ErrorMessage)
-		err = txStorage.database.Badger.Insert(txError.TxHash, *failedTx)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
 }
 
 // this must be called from inside a transaction
 func (s *TransactionStorage) getAndDelete(key, result interface{}) error {
 	err := s.database.Badger.Get(key, result)
 	if err != nil {
-		return fmt.Errorf("failed to Get item: %w", err)
+		return errors.Wrap(err, "failed to get stored transaction")
 	}
 
 	err = s.database.Badger.Delete(key, result)
 	if err != nil {
-		return fmt.Errorf("failed to Delete item: %w", err)
+		return errors.Wrap(err, "failed to delete item")
 	}
 
-	return nil
-}
-
-func (s *TransactionStorage) SetTransactionErrors(txErrors ...models.TxError) error {
-	errorsCount := len(txErrors)
-	if errorsCount == 0 {
-		return nil
-	}
-
-	operations := make([]dbOperation, errorsCount)
-	for i := range txErrors {
-		txError := txErrors[i]
-		operations[i] = func(txStorage *TransactionStorage) error {
-			return txStorage.SetTransactionError(txError)
-		}
-	}
-
-	dbTxsCount, err := s.updateInMultipleTransactions(operations)
-	if err != nil {
-		return errors.Wrapf(err, "storing %d tx error(s) failed during database transaction #%d", errorsCount, dbTxsCount)
-	}
-	log.Debugf("Stored %d tx error(s) in %d database transaction(s)", errorsCount, dbTxsCount)
 	return nil
 }
 
@@ -254,32 +235,19 @@ func (s *TransactionStorage) GetTransactionIDsByBatchIDs(batchIDs ...models.Uint
 	return ids, nil
 }
 
+// TODO: can all our callers just call Storage.GetAllMempoolTransactions()
+//       they sure can, this is only called by the test suite
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
-	var pendingTxs []stored.PendingTx
-
-	err := s.database.Badger.Find(&pendingTxs, bh.Where("TxType").Eq(txType))
+	pendingTxs, err := s.tsGetAllMempoolTransactions()
 	if err != nil {
 		return nil, err
 	}
 
-	txs := make([]models.GenericTransaction, len(pendingTxs))
+	txs := make([]models.GenericTransaction, 0)
 	for i := range pendingTxs {
-		txs[i] = pendingTxs[i].ToGenericTransaction()
-	}
-
-	return models.MakeGenericArray(txs...), nil
-}
-
-func (s *TransactionStorage) GetAllPendingTransactions() (models.GenericArray, error) {
-	var pendingTxs []stored.PendingTx
-	err := s.database.Badger.Find(&pendingTxs, &bh.Query{})
-	if err != nil {
-		return nil, err
-	}
-
-	txs := make([]models.GenericTransaction, len(pendingTxs))
-	for i := range pendingTxs {
-		txs[i] = pendingTxs[i].ToGenericTransaction()
+		if pendingTxs[i].TxType == txType {
+			txs = append(txs, pendingTxs[i].ToGenericTransaction())
+		}
 	}
 
 	return models.MakeGenericArray(txs...), nil
@@ -313,24 +281,29 @@ func (s *TransactionStorage) unsafeMarkTransactionAsIncluded(
 	tx models.GenericTransaction,
 	commitmentSlot *models.CommitmentSlot,
 ) error {
-	// note: the rest of the txn is ignored. We take the existing txn
-	//       in our database and record which commitment it belongs
-	//       to. We assume that the executed transaction does not
-	//       differ from our local records.
+	// TODO: this used to delete from the pendingTx table. was it a good idea to have
+	//       changed that behavior?
+
+	// TODO: should we at least check that this transaction is not in the mempool?
+
+	// TODO: write an integration test which confirms this happens and happens
+	//       correctly in commander/executor/commitment.go
+
 	hash := tx.GetBase().Hash
+	addressableValue := tx.GetNonce()
+	log.WithFields(log.Fields{
+		"hash":  hash,
+		"from":  tx.GetFromStateID(),
+		"nonce": addressableValue.Uint64(),
+	}).Debug("marking transaction as included")
 
-	var pendingTx stored.PendingTx
-	err := s.getAndDelete(hash, &pendingTx)
-	if err != nil {
-		return err
-	}
-
+	pendingTx := stored.NewPendingTx(tx)
 	// this body update is only needed for ToStateID
 	pendingTx.Body = stored.NewTxBody(tx)
 	batchedTx := stored.NewBatchedTxFromPendingAndCommitment(
-		&pendingTx, commitmentSlot,
+		pendingTx, commitmentSlot,
 	)
-	err = s.insertBatchedTx(batchedTx)
+	err := s.insertBatchedTx(batchedTx)
 	if err != nil {
 		return err
 	}
@@ -365,11 +338,7 @@ func (s *TransactionStorage) MarkTransactionsAsIncluded(
 
 func (s *TransactionStorage) insertBatchedTx(batchedTx *stored.BatchedTx) error {
 	key := batchedTx.ID
-	err := s.database.Badger.Insert(key, *batchedTx)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return s.database.Badger.Insert(key, *batchedTx)
 }
 
 func (s *TransactionStorage) getBatchedTxByHash(hash common.Hash) (*stored.BatchedTx, error) {
@@ -382,6 +351,28 @@ func (s *TransactionStorage) getBatchedTxByHash(hash common.Hash) (*stored.Batch
 	return &batchedTx, nil
 }
 
+func (s *TransactionStorage) tsGetMempoolTransactionByHash(hash common.Hash) (*stored.PendingTx, error) {
+	// a hack around the fact that GetMempoolTransactionByHash is defined on Storage,
+	// but not TransactionStorage. The long-term fix is to lift this method (and all
+	// dependencies) out of TransactionStorage and up into Storage; I don't understand
+	// why they were separated. Alt: everything in storage/mempool.go ought to be
+	// dropped into TransactionStorage
+
+	storage, err := newStorageFromDatabase(s.database)
+	if err != nil {
+		return nil, err
+	}
+	return storage.GetMempoolTransactionByHash(hash)
+}
+
+func (s *TransactionStorage) tsGetAllMempoolTransactions() ([]stored.PendingTx, error) {
+	storage, err := newStorageFromDatabase(s.database)
+	if err != nil {
+		return nil, err
+	}
+	return storage.GetAllMempoolTransactions()
+}
+
 func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.GenericTransaction, error) {
 	batchedTx, err := s.getBatchedTxByHash(hash)
 	if err == nil {
@@ -392,18 +383,17 @@ func (s *TransactionStorage) getTransactionByHash(hash common.Hash) (models.Gene
 		return nil, err
 	}
 
-	var pendingTx stored.PendingTx
-	err = s.database.Badger.Get(hash, &pendingTx)
-	if err == nil {
-		return pendingTx.ToGenericTransaction(), nil
-	}
-	if err != nil && !errors.Is(err, bh.ErrNotFound) {
+	pendingTx, err := s.tsGetMempoolTransactionByHash(hash)
+	if err != nil {
 		return nil, err
+	}
+	if pendingTx != nil {
+		return pendingTx.ToGenericTransaction(), nil
 	}
 
 	var failedTx stored.FailedTx
 	err = s.database.Badger.Get(hash, &failedTx)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("transaction"))
 	}
 	if err != nil {

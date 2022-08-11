@@ -19,7 +19,3 @@ func logReceivedTransaction(hash common.Hash, tx interface{}) {
 		log.WithField(txHashField, hash).Debugf("API: received new transaction: %s", string(jsonTx))
 	}
 }
-
-func logDuplicateTransaction(txHash *common.Hash) {
-	log.WithField(txHashField, txHash).Debug("API: received transaction already exists")
-}

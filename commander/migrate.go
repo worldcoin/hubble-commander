@@ -3,6 +3,7 @@ package commander
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/Worldcoin/hubble-commander/client"
 	"github.com/Worldcoin/hubble-commander/commander/executor"
@@ -26,12 +27,7 @@ func (c *Commander) migrate() error {
 }
 
 func (c *Commander) migrateCommanderData(hubble client.Hubble) error {
-	pendingTxsCount, err := c.syncPendingTxs(hubble)
-	if err != nil {
-		return err
-	}
-	log.Printf("Synced %d pending transaction(s)\n", pendingTxsCount)
-
+	// TODO: we probably don't need to sync these?
 	failedTxsCount, err := c.syncFailedTxs(hubble)
 	if err != nil {
 		return err
@@ -43,6 +39,15 @@ func (c *Commander) migrateCommanderData(hubble client.Hubble) error {
 		return err
 	}
 	log.Printf("Synced %d pending batch(es)\n", pendingBatchesCount)
+
+	// txns must be synced after pending batches, because the mempool is only
+	// guaranteed to cleanly apply to the pending state
+
+	pendingTxsCount, err := c.syncPendingTxs(hubble)
+	if err != nil {
+		return err
+	}
+	log.Printf("Synced %d pending transaction(s)\n", pendingTxsCount)
 
 	c.setMigrate(false)
 	return nil
@@ -62,14 +67,53 @@ func (c *Commander) syncPendingTxs(hubble client.Hubble) (int, error) {
 	return txs.Len(), nil
 }
 
+type byNonce struct {
+	array models.GenericTransactionArray
+}
+
+func (b byNonce) Len() int {
+	return b.array.Len()
+}
+
+func (b byNonce) Swap(i, j int) {
+	left, right := b.array.At(i), b.array.At(j)
+	b.array.Set(i, right)
+	b.array.Set(j, left)
+}
+
+func (b byNonce) Less(i, j int) bool {
+	left, right := b.array.At(i), b.array.At(j)
+	leftNonceAddressableValue := left.GetNonce()
+	rightNonceAddressableValue := right.GetNonce()
+	return leftNonceAddressableValue.Cmp(&rightNonceAddressableValue) <= 0
+}
+
 func (c *Commander) addPendingTxs(txs models.GenericTransactionArray) error {
-	err := c.storage.AddPendingTransactions(txs)
-	if err != nil {
-		return err
+	// these are given to us in a random order, but the mempool will only accept them
+	// in the correct order.
+	// TODO: this will fail if any transactions are funded by other transactions,
+	//       we need to throw them into a non-validating mempool and then read them
+	//       out??
+	sort.Sort(byNonce{txs})
+
+	for i := 0; i < txs.Len(); i += 1 {
+		tx := txs.At(i)
+		nonce := tx.GetNonce()
+		log.WithFields(log.Fields{
+			"nonce": nonce.Uint64(),
+			"from":  tx.GetFromStateID(),
+		}).Debug("tx: ", tx)
 	}
-	for i := 0; i < txs.Len(); i++ {
-		c.txPool.Send(txs.At(i))
+
+	for i := 0; i < txs.Len(); i += 1 {
+		tx := txs.At(i)
+		err := c.storage.AddMempoolTx(tx)
+		if err != nil {
+			// TODO: skip this tx if the error is not a badger error
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -104,7 +148,7 @@ func (c *Commander) syncPendingBatches(hubble client.Hubble) (int, error) {
 }
 
 func (c *Commander) syncPendingBatch(batch *models.PendingBatch) (err error) {
-	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, c.txPool.Mempool(), context.Background(), batch.Type)
+	ctx := executor.NewRollupLoopContext(c.storage, c.client, c.cfg.Rollup, c.metrics, context.Background(), batch.Type)
 	defer ctx.Rollback(&err)
 
 	err = ctx.ExecutePendingBatch(batch)

@@ -159,9 +159,12 @@ func (s *TxsTrackingTestSuite) submitBatch(tx models.GenericTransaction, batchTy
 	txsCtx, err := executor.NewTestTxsContext(executionCtx, batchType)
 	s.NoError(err)
 
+	// TODO: this is a bad design, we shouldn't need to call AddTransaction
+
 	err = s.storage.AddTransaction(tx)
 	s.NoError(err)
-	_, err = txsCtx.Mempool.AddOrReplace(s.storage.Storage, tx)
+
+	err = s.storage.AddMempoolTx(tx)
 	s.NoError(err)
 
 	batch, _, err := txsCtx.CreateAndSubmitBatch(context.Background())

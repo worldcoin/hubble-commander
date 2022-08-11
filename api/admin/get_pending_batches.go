@@ -52,6 +52,7 @@ func (a *API) getCommitments(batch *models.Batch) ([]dto.PendingCommitment, erro
 		}
 
 		if txs != nil {
+			// TODO: I believe this time is now
 			// TODO remove when new primary key for transactions with transaction index is implement
 			txQueue := executor.NewTxQueue(txs)
 			txs = txQueue.PickTxsForCommitment()

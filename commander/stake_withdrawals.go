@@ -42,6 +42,8 @@ func (c *Commander) unmeasuredSyncStakeWithdrawals(startBlock, endBlock uint64) 
 			continue
 		}
 
+		// TODO: why are we ignoring the cases where it is not found? Should we
+		//       at least log?
 		err = c.storage.RemovePendingStakeWithdrawal(models.MakeUint256FromBig(*it.Event.BatchID))
 		if err != nil && !storage.IsNotFoundError(err) {
 			return err

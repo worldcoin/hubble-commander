@@ -2,14 +2,11 @@ package api
 
 import (
 	"context"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/eth"
-	"github.com/Worldcoin/hubble-commander/mempool"
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
@@ -86,7 +83,6 @@ func (s *SendTransferTestSuite) SetupTest() {
 		storage:                 s.storage.Storage,
 		client:                  eth.DomainOnlyTestClient,
 		commanderMetrics:        metrics.NewCommanderMetrics(),
-		txPool:                  mempool.NewTestTxPool(),
 		isAcceptingTransactions: true,
 	}
 
@@ -109,6 +105,14 @@ func (s *SendTransferTestSuite) SetupTest() {
 	}
 
 	_, err = s.storage.StateTree.Set(1, s.userState)
+	s.NoError(err)
+
+	_, err = s.storage.StateTree.Set(2, &models.UserState{
+		PubKeyID: 123,
+		TokenID:  models.MakeUint256(1),
+		Balance:  models.MakeUint256(0),
+		Nonce:    models.MakeUint256(0),
+	})
 	s.NoError(err)
 
 	s.transfer = s.signTransfer(transferWithoutSignature)
@@ -220,51 +224,6 @@ func (s *SendTransferTestSuite) TestSendTransaction_AddsTransferToStorage() {
 	s.NotNil(transfer)
 }
 
-func (s *SendTransferTestSuite) TestSendTransaction_UpdatesFailedTransaction() {
-	originalHash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	err = s.storage.SetTransactionErrors(models.TxError{
-		TxHash:       *originalHash,
-		ErrorMessage: "some error",
-	})
-	s.NoError(err)
-
-	originalTx, err := s.storage.GetTransfer(*originalHash)
-	s.NoError(err)
-
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-	s.Equal(*originalHash, *hash)
-
-	tx, err := s.storage.GetTransfer(*originalHash)
-	s.NoError(err)
-	s.Nil(tx.ErrorMessage)
-	s.NotEqual(*originalTx.ReceiveTime, tx.ReceiveTime)
-}
-
-func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdatePendingTransfer() {
-	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.Equal(APIErrPendingTransaction, err)
-}
-
-func (s *SendTransferTestSuite) TestSendTransaction_DoesNotUpdateMinedTransfer() {
-	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.NoError(err)
-
-	tx, err := s.storage.GetTransfer(*hash)
-	s.NoError(err)
-
-	err = s.storage.MarkTransfersAsIncluded([]models.Transfer{*tx}, &models.CommitmentID{BatchID: models.MakeUint256(1)})
-	s.NoError(err)
-
-	_, err = s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
-	s.Equal(APIErrMinedTransaction, err)
-}
-
 func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() {
 	s.api.isAcceptingTransactions = false
 	_, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
@@ -272,36 +231,17 @@ func (s *SendTransferTestSuite) TestSendTransaction_DoesNotAcceptTransactions() 
 }
 
 func (s *SendTransferTestSuite) TestSendTransaction_SendsTxToTxPool() {
-	txPool, err := mempool.NewTxPool(s.storage.Storage)
-	s.NoError(err)
-	s.api.txPool = txPool
-
-	wg := &sync.WaitGroup{}
-	ctx, cancel := context.WithCancel(context.Background())
-
 	hash, err := s.api.SendTransaction(context.Background(), dto.MakeTransaction(s.transfer))
 	s.NoError(err)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err = s.api.txPool.ReadTxs(ctx)
-		s.NoError(err)
-	}()
+	count, err := s.api.storage.CountPendingTxsOfType(txtype.Transfer)
+	s.NoError(err)
+	s.Equal(uint32(1), count)
 
-	var txs []models.GenericTransaction
-	s.Eventually(func() bool {
-		err = s.api.txPool.UpdateMempool()
-		s.NoError(err)
-
-		txs = txPool.Mempool().GetExecutableTxs(txtype.Transfer)
-		return len(txs) == 1
-	}, 1*time.Second, 10*time.Millisecond)
-
+	txs, err := s.api.storage.GetPendingTransactions(txtype.Transfer)
+	s.NoError(err)
+	s.Equal(1, txs.Len())
 	s.Equal(*hash, txs[0].GetBase().Hash)
-
-	cancel()
-	wg.Wait()
 }
 
 func TestSendTransferTestSuite(t *testing.T) {

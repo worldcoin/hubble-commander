@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -137,7 +138,7 @@ func (s *SubmitDepositBatchTestSuite) submitBatch() *models.Batch {
 	pendingBatch, err := s.depositsCtx.NewPendingBatch(batchtype.Deposit)
 	s.NoError(err)
 
-	vacancyProof, err := s.depositsCtx.createCommitment(pendingBatch.ID)
+	vacancyProof, err := s.depositsCtx.createCommitment(context.Background(), pendingBatch.ID)
 	s.NoError(err)
 
 	err = s.depositsCtx.SubmitBatch(pendingBatch, vacancyProof)

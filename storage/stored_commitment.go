@@ -29,7 +29,7 @@ func (s *CommitmentStorage) copyWithNewDatabase(database *Database) *CommitmentS
 func (s *CommitmentStorage) getStoredCommitment(id *models.CommitmentID) (*stored.Commitment, error) {
 	storedCommitment := new(stored.Commitment)
 	err := s.database.Badger.Get(*id, storedCommitment)
-	if err == bh.ErrNotFound {
+	if errors.Is(err, bh.ErrNotFound) {
 		return nil, errors.WithStack(NewNotFoundError("commitment"))
 	}
 	if err != nil {
@@ -102,7 +102,7 @@ func decodeStoredCommitment(item *bdg.Item) (*stored.Commitment, error) {
 	var storedCommitment stored.Commitment
 	err := item.Value(storedCommitment.SetBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &storedCommitment, nil
 }

@@ -82,7 +82,7 @@ func (s *GetWithdrawProofTestSuite) SetupTest() {
 	stateRoot, err := s.storage.StateTree.Root()
 	s.NoError(err)
 
-	err = s.storage.BatchAddMassMigration(s.massMigrations)
+	err = s.storage.BatchAddTransaction(models.MakeMassMigrationArray(s.massMigrations...))
 	s.NoError(err)
 
 	accountTreeRoot := utils.RandomHash()

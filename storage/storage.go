@@ -123,6 +123,11 @@ func (s *Storage) BeginTransaction(opts TxOptions) (*db.TxController, *Storage) 
 	return txController, s.copyWithNewDatabase(txDatabase)
 }
 
+func (s *Storage) ExecuteInReadWriteTransaction(fn func(txStorage *Storage) error) error {
+	opts := TxOptions{ReadOnly: false}
+	return s.ExecuteInTransaction(opts, fn)
+}
+
 func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
