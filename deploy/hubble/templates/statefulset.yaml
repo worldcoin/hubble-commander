@@ -52,6 +52,14 @@ spec:
           volumeMounts:
             - name: hubble-storage
               mountPath: "/volume"
+        {{- if eq .Values.environment "prod" }}
+        - name: download-chain-spec
+          image: busybox:1.28
+          command: [ 'sh', '-c', "mkdir -p /volume/config && chmod -R 777 /volume/config && chown 10001:10001 /volume/config && wget -O /volume/config/chain-spec.yaml https://wld-hubble-migration-chain-spec.s3.amazonaws.com/chain-spec.2022-08-11.yaml" ]
+          volumeMounts:
+            - name: hubble-storage
+              mountPath: "/volume"
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -61,8 +69,10 @@ spec:
           volumeMounts:
             - name: hubble-storage
               mountPath: "/volume"
+            {{- if eq .Values.environment "stage" }}
             - name: chain-spec-config-volume
               mountPath: /config
+            {{- end }}
           env:
             - name: DD_AGENT_HOST
               valueFrom:
@@ -84,8 +94,19 @@ spec:
               value: {{ .Chart.Name }}
             - name: HUBBLE_TRACING_SERVICE
               value: {{ .Chart.Name }}
+            {{- if eq .Values.environment "prod" }}
+            - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
+              value: /volume/config/chain-spec.yaml
+            - name: HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT
+              value: "32"
+            - name: HUBBLE_ROLLUP_MIN_COMMITMENTS_PER_BATCH
+              value: "32"
+            - name: HUBBLE_ROLLUP_MAX_TXN_DELAY
+              value: "20m"
+            {{- else }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
+            {{- end }}
             - name: HUBBLE_ETHEREUM_RPC_URL
               valueFrom:
                 secretKeyRef:
