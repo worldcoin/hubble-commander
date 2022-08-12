@@ -97,8 +97,12 @@ spec:
             {{- if eq .Values.environment "prod" }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /volume/config/chain-spec.yaml
-            - name: HUBBLE_ROLLUP_DISABLE_SIGNATURES
-              value: "true"
+            - name: HUBBLE_ROLLUP_MIN_TXS_PER_COMMITMENT
+              value: "32"
+            - name: HUBBLE_ROLLUP_MIN_COMMITMENTS_PER_BATCH
+              value: "32"
+            - name: HUBBLE_ROLLUP_MAX_TXN_DELAY
+              value: "20m"
             {{- else }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
