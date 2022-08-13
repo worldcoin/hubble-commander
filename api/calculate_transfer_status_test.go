@@ -84,7 +84,8 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxInPendingBatch() {
 	batch := models.Batch{
-		ID: models.MakeUint256(1),
+		ID:            models.MakeUint256(1),
+		PrevStateRoot: utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&batch)
 	s.NoError(err)
@@ -101,11 +102,14 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_TxI
 }
 
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InBatch() {
+	root, err := s.storage.Storage.StateTree.Root()
+	s.NoError(err)
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(math.MaxUint32),
+		PrevStateRoot:     *root,
 	}
-	err := s.storage.AddBatch(&batch)
+	err = s.storage.AddBatch(&batch)
 	s.NoError(err)
 
 	s.transfer.CommitmentSlot = &models.CommitmentSlot{
@@ -122,9 +126,12 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)
+	prevStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
 	batch := models.Batch{
 		ID:                models.MakeUint256(1),
 		FinalisationBlock: ref.Uint32(uint32(*currentBlockNumber) + 1),
+		PrevStateRoot:     *prevStateRoot,
 	}
 	err = s.storage.AddBatch(&batch)
 	s.NoError(err)

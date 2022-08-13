@@ -140,6 +140,7 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(1234),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(batch)
 	s.NoError(err)

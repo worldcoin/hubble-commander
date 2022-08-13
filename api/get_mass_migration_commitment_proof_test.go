@@ -76,6 +76,7 @@ func (s *GetMassMigrationCommitmentProofTestSuite) SetupTest() {
 		Hash:              ref.Hash(utils.RandomHash()),
 		FinalisationBlock: ref.Uint32(10),
 		AccountTreeRoot:   &accountTreeRoot,
+		PrevStateRoot:     *stateRoot1,
 	}
 
 	err = s.storage.AddBatch(s.batch)
@@ -138,8 +139,9 @@ func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmen
 
 func (s *GetMassMigrationCommitmentProofTestSuite) TestGetMassMigrationCommitmentProof_NotMassMigrationCommitment() {
 	err := s.storage.AddBatch(&models.Batch{
-		ID:   models.MakeUint256(2),
-		Type: batchtype.Transfer,
+		ID:            models.MakeUint256(2),
+		Type:          batchtype.Transfer,
+		PrevStateRoot: utils.RandomHash(),
 	})
 	s.NoError(err)
 

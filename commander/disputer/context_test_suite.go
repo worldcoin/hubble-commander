@@ -100,7 +100,7 @@ func (s *testSuiteWithContexts) addGenesisBatch(root *common.Hash) {
 	s.NoError(err)
 
 	batch := contractBatch.ToModelBatch()
-	batch.PrevStateRoot = root
+	batch.PrevStateRoot = *root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
 }

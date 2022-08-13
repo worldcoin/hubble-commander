@@ -61,7 +61,7 @@ func logSyncSuccess(batch eth.DecodedBatch) {
 func (c *Context) syncExistingBatch(remoteDecodedBatch eth.DecodedBatch, localBatch *models.Batch) error {
 	remoteBatch := remoteDecodedBatch.GetBase()
 	if remoteBatch.TransactionHash == localBatch.TransactionHash {
-		err := c.batchCtx.UpdateExistingBatch(remoteDecodedBatch, *localBatch.PrevStateRoot)
+		err := c.batchCtx.UpdateExistingBatch(remoteDecodedBatch, localBatch.PrevStateRoot)
 		if err != nil {
 			return err
 		}

@@ -49,7 +49,7 @@ func (s *disputeTransitionTestSuite) submitInvalidBatch(txs models.GenericTransa
 
 	pendingBatch, err := s.txsCtx.NewPendingBatch(s.txsCtx.BatchType)
 	s.NoError(err)
-	fmt.Println(*pendingBatch.PrevStateRoot)
+	fmt.Println(pendingBatch.PrevStateRoot)
 
 	commitments, err := s.txsCtx.CreateCommitments(context.Background())
 	s.NoError(err)

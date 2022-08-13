@@ -49,6 +49,7 @@ func (s *GetCommitmentTestSuite) SetupTest() {
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(113),
 		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 
 	s.txCommitment = &models.TxCommitment{
