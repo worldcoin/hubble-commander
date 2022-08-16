@@ -103,6 +103,8 @@ spec:
               value: "32"
             - name: HUBBLE_ROLLUP_MAX_TXN_DELAY
               value: "20m"
+            - name: HUBBLE_ROLLUP_BATCH_LOOP_INTERVAL
+              value: "10m"
             {{- else }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
