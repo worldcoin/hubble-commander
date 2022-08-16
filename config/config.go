@@ -52,7 +52,7 @@ func GetConfig() *Config {
 			SignatureDisputeGasLimit:         getUint64("rollup.signature_dispute_gas_limit", DefaultSignatureDisputeGasLimit),
 			BatchAccountRegistrationGasLimit: getUint64("rollup.batch_account_registration_gas_limit", DefaultBatchAccountRegistrationGasLimit),
 			StakeWithdrawalGasLimit:          getUint64("rollup.stake_withdrawal_gas_limit", DefaultStakeWithdrawalGasLimit),
-			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 500*time.Millisecond),
+			BatchLoopInterval:                getDuration("rollup.batch_loop_interval", 10*time.Minute),
 			DisableSignatures:                getBool("rollup.disable_signatures", false),
 			MaxTxnDelay:                      getDuration("rollup.max_txn_delay", 30*time.Minute),
 		},
