@@ -253,7 +253,7 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 
 	if tx.Type() == txtype.Transfer {
 		toStateID := *tx.GetToStateID() // will not panic, transfers have this
-		err = s.addToPendingBalance(toStateID, txTotal)
+		err = s.addToPendingBalance(toStateID, &txAmount)
 		if err != nil {
 			return err
 		}

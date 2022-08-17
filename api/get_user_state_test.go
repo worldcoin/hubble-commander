@@ -62,8 +62,9 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 	s.NoError(err)
 
 	// sender
+	senderStateID := 1
 	_, err = s.api.storage.StateTree.Set(
-		1,
+		uint32(senderStateID),
 		&models.UserState{
 			PubKeyID: 1,
 			TokenID:  models.MakeUint256(1),
@@ -74,8 +75,9 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 	s.NoError(err)
 
 	// receiver
+	receiverStateID := 2
 	_, err = s.api.storage.StateTree.Set(
-		2,
+		uint32(receiverStateID),
 		&models.UserState{
 			PubKeyID: 1,
 			TokenID:  models.MakeUint256(1),
@@ -108,12 +110,19 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 	// the rollup loop is not running (it doesn't even exist) but the api immediately
 	// acts as if our transaction has been applied:
 
-	userState, err = s.api.GetUserState(context.Background(), 1)
+	userState, err = s.api.GetUserState(context.Background(), uint32(senderStateID))
 	s.NoError(err)
 
-	s.Equal(uint32(1), userState.StateID)
+	s.Equal(uint32(senderStateID), userState.StateID)
 	s.Equal(uint64(1), userState.UserState.Nonce.Int.Uint64())
 	s.Equal(uint64(40), userState.UserState.Balance.Int.Uint64())
+
+	userState, err = s.api.GetUserState(context.Background(), uint32(receiverStateID))
+	s.NoError(err)
+
+	s.Equal(uint32(receiverStateID), userState.StateID)
+	s.Equal(uint64(0), userState.UserState.Nonce.Int.Uint64())
+	s.Equal(uint64(50), userState.UserState.Balance.Int.Uint64())
 }
 
 func TestGetUserStateTestSuite(t *testing.T) {
