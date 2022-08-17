@@ -64,6 +64,11 @@ func NewServer(
 	mux := http.NewServeMux()
 	mux.Handle("/", handler)
 	mux.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := storage.GetPendingUserState(1)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
 		w.WriteHeader(200)
 	}))
 
