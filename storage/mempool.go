@@ -185,6 +185,45 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 	}, nil
 }
 
+// does not return the full list of states, only the pending c2ts
+func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserState, error) {
+	result := make([]models.UserState, 0)
+
+	maxUint32 := ^uint32(0)
+	pubKeyID := maxUint32
+
+	accounts, err := s.AccountTree.Leaves(pubkey)
+	if err == nil && len(accounts) > 0 {
+		// TODO: is this lookup really the right thing to do?
+		pubKeyID = accounts[0].PubKeyID
+	}
+
+	err = s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
+		if pendingTx.TxType != txtype.Create2Transfer {
+			return nil
+		}
+
+		c2t := pendingTx.ToCreate2Transfer()
+		if c2t.ToPublicKey != *pubkey {
+			return nil
+		}
+
+		result = append(result, models.UserState{
+			PubKeyID: pubKeyID,
+			TokenID:  models.MakeUint256(0),
+			Balance:  c2t.Amount,
+			Nonce:    models.MakeUint256(0),
+		})
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // TODO: this assumes the sender & receiver stateIDs are in the state tree,
 //       make sure all callers check for this? Maybe return a nice error?
 func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {

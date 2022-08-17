@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,10 +30,8 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("hubble.publicKey", publicKey.String()))
 
-	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting leaves for public key: %s", publicKey.String())
-
 	leaves, err := a.storage.GetStateLeavesByPublicKey(publicKey)
-	if err != nil {
+	if err != nil && !storage.IsNotFoundError(err) {
 		span.SetAttributes(attribute.String("hubble.error", err.Error()))
 		log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
 		return nil, err
@@ -52,6 +51,25 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 		}
 
 		userStates = append(userStates, dto.MakeUserStateWithID(stateID, pendingState))
+	}
+
+	pendingUserStates, err := a.storage.GetPendingUserStates(publicKey)
+	if err != nil {
+		return nil, err
+	}
+	for i := range pendingUserStates {
+		maxUint32 := ^uint32(0) // TODO: change the dto format
+		userStates = append(
+			userStates,
+			dto.MakeUserStateWithID(maxUint32, &pendingUserStates[i]),
+		)
+	}
+
+	if len(userStates) == 0 {
+		span.SetAttributes(attribute.String("hubble.error", "user states not found"))
+		return nil, errors.WithStack(
+			storage.NewNotFoundError("user states"),
+		)
 	}
 
 	return userStates, nil
