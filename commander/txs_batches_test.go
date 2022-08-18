@@ -417,8 +417,9 @@ func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_DisputesBatchWithInvalidTokenA
 }
 
 // TODO: what is this test testing? It claims to confirm we can send to
-//       nonexistent receivers but why would that be okay? And we call a method
-//       which creates the receiver(!) before doing anything.
+//
+//	nonexistent receivers but why would that be okay? And we call a method
+//	which creates the receiver(!) before doing anything.
 func (s *TxsBatchesTestSuite) TestSyncRemoteBatch_AllowsTransferToNonexistentReceiver() {
 	tx := s.submitTransferToNonexistentReceiver()
 

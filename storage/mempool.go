@@ -225,7 +225,8 @@ func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserS
 }
 
 // TODO: this assumes the sender & receiver stateIDs are in the state tree,
-//       make sure all callers check for this? Maybe return a nice error?
+//
+//	make sure all callers check for this? Maybe return a nice error?
 func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {
 	// TODO: should we check that this txn does not already exist as a batchedTx?
 	// TODO: should this accept a stored.PendingTx, so we do not accidentally accept
@@ -243,9 +244,9 @@ func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {
 	})
 }
 
-// - assumes we are currently inside a transaction
-// - checks that the txn cleanly applies to the pending state but assumes all other
-//   validation has already been done (e.g. the signature check)
+//   - assumes we are currently inside a transaction
+//   - checks that the txn cleanly applies to the pending state but assumes all other
+//     validation has already been done (e.g. the signature check)
 func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 	// (I) Validate the txn against the pending state
 
@@ -421,7 +422,9 @@ func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
 }
 
 // TODO: I know the mempool is small but does it really make sense to scan the entire
-//       thing every loop?
+//
+//	thing every loop?
+//
 // TODO: add a test for this method, lint showed me a bug in it
 func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (*stored.PendingTx, error) {
 	pendingTxs, err := s.lowestNoncePendingTxs()
@@ -526,8 +529,9 @@ func (s *Storage) forEachMempoolTransaction(fun func(*stored.PendingTx) error) e
 // This assumes that the mempool is relatively small, but we don't do anything to
 // guarantee that the mempool remains small.
 // TODO: Add some metrics which will warn us if this method (or its callers) start taking
-//       too long, and we can add some restrictions on how many pending trasnactions each
-//       account is allowed to have... or add an index
+//
+//	too long, and we can add some restrictions on how many pending trasnactions each
+//	account is allowed to have... or add an index
 func (s *Storage) GetMempoolTransactionByHash(hash common.Hash) (*stored.PendingTx, error) {
 	allPendingTxs, err := s.GetAllMempoolTransactions()
 	if err != nil {
@@ -679,7 +683,9 @@ func (mh *MempoolHeap) pushTx(tx *stored.PendingTx) {
 }
 
 // Caution: assumes the pendingTx which we are about to drop has been applied to the state
-//          in mh.storage
+//
+//	in mh.storage
+//
 //nolint:gocyclo  // TODO: consider doing what it says
 func (mh *MempoolHeap) DropHighestFeeExecutableTx() error {
 	pendingTx := mh.heap.Pop()

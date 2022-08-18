@@ -64,7 +64,8 @@ func (s *MempoolTestSuite) TearDownTest() {
 }
 
 // TODO: this should not be a unit test, this test belongs on the api/ directory
-//       the api test will test the exact same thing but make the code less brittle
+//
+//	the api test will test the exact same thing but make the code less brittle
 func (s *MempoolTestSuite) TestMempool_UsesPendingBalance() {
 	// stateID=2 starts with Balance=0, so the API does not accept any transfers
 	// from it until it receives some money

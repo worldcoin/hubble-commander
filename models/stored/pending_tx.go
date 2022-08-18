@@ -96,8 +96,9 @@ func takeSlice(data []byte, count int) (slice, rest []byte) {
 }
 
 // Careful: If there is a failure this will leave behind a partially-
-//          populated PendinTx. If this gives you an error throw away the
-//          PendingTx!
+//
+//	populated PendinTx. If this gives you an error throw away the
+//	PendingTx!
 func (t *PendingTx) SetBytes(data []byte) error {
 	if len(data) < sizePendingTxNoBody {
 		return models.ErrInvalidLength

@@ -12,9 +12,10 @@ import (
 
 var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value instead")
 
-//nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 // TODO shorten this function by using ByteEncoder interface
+//
+//nolint:gocyclo, funlen
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:

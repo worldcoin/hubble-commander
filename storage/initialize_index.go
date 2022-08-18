@@ -13,8 +13,9 @@ import (
 // If you don't index nil values the way we did for stored.TxReceipt.ToStateID it can be the case that there is some
 // stored.TxReceipt stored, but there is no index entry. To work around this we set an empty index entry.
 // See:
-// 	 * stored.TxReceipt Indexes() method
-//   * InitializeIndexTestSuite.TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil
+//   - stored.TxReceipt Indexes() method
+//   - InitializeIndexTestSuite.TestStoredTxReceipt_ToStateID_FindUsingIndexWorksWhenThereAreOnlyValuesWithThisFieldSetToNil
+//
 // Note, this does not create the index. In order to create the index we must implement
 // Indexes() on the relevant type.
 func initializeIndex(database *Database, typeName []byte, indexName string, zeroValue interface{}) error {

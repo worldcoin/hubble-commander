@@ -72,8 +72,9 @@ func (t *BatchedTx) ToMassMigration() *models.MassMigration {
 }
 
 // Careful: If there is a failure this will leave behind a partially-
-//          populated PendinTx. If this gives you an error throw away the
-//          PendingTx!
+//
+//	populated PendingTx. If this gives you an error throw away the
+//	PendingTx!
 func (t *BatchedTx) SetBytes(data []byte) error {
 	if len(data) < sizeBatchedTxNoBody {
 		// This prevents obvious errors but it is still possible for this []byte
@@ -98,14 +99,16 @@ func (t *BatchedTx) BytesLen() int {
 	return t.PendingTx.BytesLen() + sizeCommitmentSlot
 }
 
-//nolint:gocritic
 // Type implements badgerhold.Storer
+//
+//nolint:gocritic
 func (t BatchedTx) Type() string {
 	return string(BatchedTxName)
 }
 
-//nolint:gocritic
 // Indexes implements badgerhold.Storer
+//
+//nolint:gocritic
 func (t BatchedTx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"Hash": {

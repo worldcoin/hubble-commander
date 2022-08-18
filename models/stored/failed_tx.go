@@ -81,14 +81,16 @@ func (t *FailedTx) BytesLen() int {
 	return t.PendingTx.BytesLen() + len(t.ErrorMessage)
 }
 
-//nolint:gocritic
 // Type implements badgerhold.Storer
+//
+//nolint:gocritic
 func (t FailedTx) Type() string {
 	return string(FailedTxName)
 }
 
-//nolint:gocritic
 // Indexes implements badgerhold.Storer
+//
+//nolint:gocritic
 func (t FailedTx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"FromStateID:Nonce": {

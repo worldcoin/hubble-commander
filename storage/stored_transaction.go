@@ -236,7 +236,8 @@ func (s *TransactionStorage) GetTransactionIDsByBatchIDs(batchIDs ...models.Uint
 }
 
 // TODO: can all our callers just call Storage.GetAllMempoolTransactions()
-//       they sure can, this is only called by the test suite
+//
+//	they sure can, this is only called by the test suite
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
 	pendingTxs, err := s.tsGetAllMempoolTransactions()
 	if err != nil {
