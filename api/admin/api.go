@@ -29,3 +29,13 @@ func NewAPI(
 		enableTxsAcceptance: enableTxsAcceptance,
 	}
 }
+
+func NewTestAPI(
+	cfg *config.APIConfig,
+	storage *st.Storage,
+	client *eth.Client,
+) *API {
+	return NewAPI(
+		cfg, storage, client, nil, nil,
+	)
+}
