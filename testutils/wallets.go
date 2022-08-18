@@ -2,6 +2,8 @@ package testutils
 
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
+	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,4 +15,13 @@ func GenerateWallets(s *require.Assertions, domain *bls.Domain, walletsAmount in
 		wallets = append(wallets, *wallet)
 	}
 	return wallets
+}
+
+func RandomPublicKey() models.PublicKey {
+	publicKey := models.PublicKey{}
+	err := publicKey.SetBytes(utils.RandomBytes(models.PublicKeyLength))
+	if err != nil {
+		panic("unable to generate random pubkey")
+	}
+	return publicKey
 }

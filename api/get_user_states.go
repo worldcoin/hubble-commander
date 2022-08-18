@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,29 +30,50 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.String("hubble.publicKey", publicKey.String()))
 
-	log.WithFields(o11y.TraceFields(ctx)).Infof("Getting leaves for public key: %s", publicKey.String())
+	userStates := make([]dto.UserStateWithID, 0)
 
-	leaves, err := a.storage.GetStateLeavesByPublicKey(publicKey)
+	err := a.storage.ExecuteInReadWriteTransaction(func(txStorage *storage.Storage) error {
+		leaves, err := txStorage.GetStateLeavesByPublicKey(publicKey)
+		if err != nil && !storage.IsNotFoundError(err) {
+			span.SetAttributes(attribute.String("hubble.error", err.Error()))
+			log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
+			return err
+		}
+
+		for i := range leaves {
+			stateID := leaves[i].StateID
+
+			pendingState, innerErr := txStorage.GetPendingUserState(stateID)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			userStates = append(userStates, dto.MakeUserStateWithID(stateID, pendingState))
+		}
+
+		pendingUserStates, err := txStorage.GetPendingUserStates(publicKey)
+		if err != nil {
+			return err
+		}
+		for i := range pendingUserStates {
+			maxUint32 := ^uint32(0) // TODO: change the dto format
+			userStates = append(
+				userStates,
+				dto.MakeUserStateWithID(maxUint32, &pendingUserStates[i]),
+			)
+		}
+
+		return nil
+	})
 	if err != nil {
-		span.SetAttributes(attribute.String("hubble.error", err.Error()))
-		log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
 		return nil, err
 	}
 
-	// TODO: we're not opening a transaction so there's no guarantee this is a
-	//       consistent snapshot. You might temporarily lose or gain money if you're
-	//       sending money between your accounts. We should open a txn!
-
-	userStates := make([]dto.UserStateWithID, 0, len(leaves))
-	for i := range leaves {
-		stateID := leaves[i].StateID
-
-		pendingState, err := a.storage.GetPendingUserState(stateID)
-		if err != nil {
-			return nil, err
-		}
-
-		userStates = append(userStates, dto.MakeUserStateWithID(stateID, pendingState))
+	if len(userStates) == 0 {
+		span.SetAttributes(attribute.String("hubble.error", "user states not found"))
+		return nil, errors.WithStack(
+			storage.NewNotFoundError("user states"),
+		)
 	}
 
 	return userStates, nil
