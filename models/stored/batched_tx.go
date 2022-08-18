@@ -98,13 +98,13 @@ func (t *BatchedTx) BytesLen() int {
 	return t.PendingTx.BytesLen() + sizeCommitmentSlot
 }
 
-// nolint:gocritic
+//nolint:gocritic
 // Type implements badgerhold.Storer
 func (t BatchedTx) Type() string {
 	return string(BatchedTxName)
 }
 
-// nolint:gocritic
+//nolint:gocritic
 // Indexes implements badgerhold.Storer
 func (t BatchedTx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{

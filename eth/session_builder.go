@@ -1,4 +1,4 @@
-// nolint: gocritic
+//nolint: gocritic
 package eth
 
 import (

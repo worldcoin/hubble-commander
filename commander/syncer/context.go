@@ -69,7 +69,7 @@ func (c *Context) Commit() error {
 	return c.tx.Commit()
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (c *Context) Rollback(cause *error) {
 	c.tx.Rollback(cause)
 }

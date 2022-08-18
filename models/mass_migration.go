@@ -33,7 +33,7 @@ func (m *MassMigration) ToMassMigration() *MassMigration {
 	return m
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (m MassMigration) Copy() GenericTransaction {
 	return &m
 }

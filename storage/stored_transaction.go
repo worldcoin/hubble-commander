@@ -194,7 +194,7 @@ func (s *Storage) initBatchedTxsCounter() (err error) {
 func (s *TransactionStorage) getTransactionIDsByBatchID(batchID models.Uint256) ([]models.CommitmentSlot, error) {
 	slots := make([]models.CommitmentSlot, 0, 32)
 
-	// nolint: gocritic
+	//nolint: gocritic
 	seekPrefix := append(stored.BatchedTxPrefix, batchID.Bytes()...)
 
 	// BatchedTx are stored with CommitmentSlot as their primary key: BatchID is the

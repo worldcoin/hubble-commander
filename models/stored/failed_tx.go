@@ -81,13 +81,13 @@ func (t *FailedTx) BytesLen() int {
 	return t.PendingTx.BytesLen() + len(t.ErrorMessage)
 }
 
-// nolint:gocritic
+//nolint:gocritic
 // Type implements badgerhold.Storer
 func (t FailedTx) Type() string {
 	return string(FailedTxName)
 }
 
-// nolint:gocritic
+//nolint:gocritic
 // Indexes implements badgerhold.Storer
 func (t FailedTx) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{

@@ -20,7 +20,7 @@ func NewTxController(tx rawController, isLocked bool) *TxController {
 	return &TxController{tx, isLocked}
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (t *TxController) Rollback(cause *error) {
 	if !t.isLocked {
 		t.isLocked = true

@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 )
 
-// nolint:structcheck
+//nolint:structcheck
 type lifecycle struct {
 	mutex            sync.Mutex // protects Start method and startAndWaitChan
 	startAndWaitChan chan struct{}

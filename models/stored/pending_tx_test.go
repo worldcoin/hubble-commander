@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// nolint:gocritic
+//nolint:gocritic
 func (t PendingTx) Generate(rand *rand.Rand, size int) reflect.Value {
 	hashBytes := make([]byte, 32)
 	rand.Read(hashBytes)
@@ -51,7 +51,7 @@ func TestPendingTx_BytesLenMatchesBytes(t *testing.T) {
 	f := func() bool {
 		valuePendingTx, ok := quick.Value(
 			reflect.TypeOf(PendingTx{}),
-			// nolint:gosec
+			//nolint:gosec
 			rand.New(rand.NewSource(time.Now().Unix())),
 		)
 		require.True(t, ok)

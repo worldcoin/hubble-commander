@@ -61,7 +61,7 @@ func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentI
 	// serialization of the CommitmentSlot. This makes it easy to look for all
 	// BatchedTxs for `id`
 
-	// nolint: gocritic
+	//nolint: gocritic
 	seekPrefix := append(stored.BatchedTxPrefix, id.Bytes()...)
 
 	err := s.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {

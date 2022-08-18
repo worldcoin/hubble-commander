@@ -144,7 +144,7 @@ func validateTxNonce(senderState *models.UserState, txNonce models.Uint256) erro
 }
 
 func calculateStateAfterTx(
-	senderState, receiverState models.UserState, // nolint:gocritic
+	senderState, receiverState models.UserState, //nolint:gocritic
 	tx models.GenericTransaction,
 ) (
 	newSenderState, newReceiverState *models.UserState,
@@ -171,7 +171,7 @@ func calculateStateAfterTx(
 }
 
 func calculateSenderStateAfterTx(
-	senderState models.UserState, // nolint:gocritic
+	senderState models.UserState, //nolint:gocritic
 	tx models.GenericTransaction,
 ) (newSenderState *models.UserState, err error) {
 	fee := tx.GetFee()
@@ -195,7 +195,7 @@ func calculateSenderStateAfterTx(
 }
 
 func calculateReceiverStateAfterTx(
-	receiverState models.UserState, // nolint:gocritic
+	receiverState models.UserState, //nolint:gocritic
 	tx models.GenericTransaction,
 ) *models.UserState {
 	amount := tx.GetAmount()

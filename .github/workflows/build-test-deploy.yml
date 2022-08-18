@@ -15,7 +15,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.45.2
+          version: v1.48.0
           args: --timeout 5m --build-tags hardhat,e2e
           skip-build-cache: true
           skip-pkg-cache: true
