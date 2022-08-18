@@ -187,8 +187,9 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 }
 
 // TODO: This needs to be fixed.
-//       It used to take pending/failed transactions and add them to batches (as a result
-//       of the sync process.
+//
+//	It used to take pending/failed transactions and add them to batches (as a result
+//	of the sync process.
 func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactionArray) error {
 	if txs.Len() < 1 {
 		return errors.WithStack(ErrNoRowsAffected)
