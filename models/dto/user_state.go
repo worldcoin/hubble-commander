@@ -5,27 +5,52 @@ import (
 )
 
 type UserState struct {
-	PubKeyID uint32
+	PubKeyID int64
 	TokenID  models.Uint256
 	Balance  models.Uint256
 	Nonce    models.Uint256
 }
 
 type UserStateWithID struct {
-	StateID uint32
+	StateID int64
 	UserState
 }
 
 func MakeUserStateWithID(stateID uint32, userState *models.UserState) UserStateWithID {
 	return UserStateWithID{
-		StateID:   stateID,
+		StateID:   int64(stateID),
 		UserState: MakeUserState(userState),
+	}
+}
+
+func MakePendingUserStateWithID(userState *models.UserState) UserStateWithID {
+	return UserStateWithID{
+		StateID:   -1,
+		UserState: MakePendingUserState(userState),
 	}
 }
 
 func MakeUserState(userState *models.UserState) UserState {
 	return UserState{
-		PubKeyID: userState.PubKeyID,
+		PubKeyID: int64(userState.PubKeyID),
+		TokenID:  userState.TokenID,
+		Balance:  userState.Balance,
+		Nonce:    userState.Nonce,
+	}
+}
+
+func MakePendingUserState(userState *models.UserState) UserState {
+	maxUint32 := ^uint32(0)
+
+	var pubkeyToReturn int64
+	if userState.PubKeyID == maxUint32 {
+		pubkeyToReturn = -1
+	} else {
+		pubkeyToReturn = int64(userState.PubKeyID)
+	}
+
+	return UserState{
+		PubKeyID: pubkeyToReturn,
 		TokenID:  userState.TokenID,
 		Balance:  userState.Balance,
 		Nonce:    userState.Nonce,

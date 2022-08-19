@@ -124,7 +124,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates_ZipsBatchednAndPendingStates(
 		},
 	}, userStates[0])
 	s.Equal(dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: -1,
 		UserState: dto.UserState{
 			PubKeyID: 2,
 			TokenID:  models.MakeUint256(0),
@@ -174,9 +174,9 @@ func (s *GetUserStatesTestSuite) TestGetUserStates_HasPendingC2T() {
 	s.Len(userStates, 1)
 
 	s.Equal(userStates[0], dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: -1,
 		UserState: dto.UserState{
-			PubKeyID: ^uint32(0),
+			PubKeyID: -1,
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(50),
 			Nonce:    models.MakeUint256(0),

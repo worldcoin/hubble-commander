@@ -115,9 +115,9 @@ func (s *APIConsistencySuite) TestGetUserStatesPendingToBatched() {
 	s.NoError(err)
 	s.Len(fetchedStates, 1)
 	s.Equal(dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: -1,
 		UserState: dto.UserState{
-			PubKeyID: ^uint32(0),
+			PubKeyID: -1,
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(20),
 			Nonce:    models.MakeUint256(0),
@@ -138,7 +138,7 @@ func (s *APIConsistencySuite) TestGetUserStatesPendingToBatched() {
 	s.Equal(dto.UserStateWithID{
 		StateID: 2,
 		UserState: dto.UserState{
-			PubKeyID: *nextPubkeyID,
+			PubKeyID: int64(*nextPubkeyID),
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(20),
 			Nonce:    models.MakeUint256(0),

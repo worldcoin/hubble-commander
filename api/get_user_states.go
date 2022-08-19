@@ -56,10 +56,9 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 			return err
 		}
 		for i := range pendingUserStates {
-			maxUint32 := ^uint32(0) // TODO: change the dto format
 			userStates = append(
 				userStates,
-				dto.MakeUserStateWithID(maxUint32, &pendingUserStates[i]),
+				dto.MakePendingUserStateWithID(&pendingUserStates[i]),
 			)
 		}
 
