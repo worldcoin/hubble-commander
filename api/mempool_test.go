@@ -51,7 +51,7 @@ func (s *MempoolTestSuite) SetupTest() {
 	)
 }
 
-func contextWithAuthKey(authKeyValue string) context.Context {
+func contextWithAuthKey() context.Context {
 	return context.WithValue(context.Background(), rpc.AuthKey, authKeyValue)
 }
 
@@ -62,13 +62,13 @@ func (s *MempoolTestSuite) TearDownTest() {
 }
 
 func (s *MempoolTestSuite) TestGetPendingStates_EmptyMempool() {
-	result, err := s.adminAPI.GetPendingStates(contextWithAuthKey(authKeyValue), 0, 1000)
+	result, err := s.adminAPI.GetPendingStates(contextWithAuthKey(), 0, 1000)
 	s.NoError(err)
 	s.Len(result, 0)
 }
 
 // TODO: this is a good spot for a proptest!
-//nolint:funlen
+
 func (s *MempoolTestSuite) TestRecomputeState() {
 	// I. Setup: create some accounts
 
@@ -102,7 +102,7 @@ func (s *MempoolTestSuite) TestRecomputeState() {
 	// IV. With mutate=false the pending state should not be changed
 
 	doNotMutate := false
-	result, err := s.adminAPI.RecomputePendingState(contextWithAuthKey(authKeyValue), firstStateID, doNotMutate)
+	result, err := s.adminAPI.RecomputePendingState(contextWithAuthKey(), firstStateID, doNotMutate)
 	s.NoError(err)
 	s.Equal(&dto.RecomputePendingState{
 		OldNonce:   models.MakeUint256(0),
@@ -115,7 +115,7 @@ func (s *MempoolTestSuite) TestRecomputeState() {
 	// V. With mutate=true the pending state should be fixed!
 
 	pleaseMutate := true
-	result, err = s.adminAPI.RecomputePendingState(contextWithAuthKey(authKeyValue), firstStateID, pleaseMutate)
+	result, err = s.adminAPI.RecomputePendingState(contextWithAuthKey(), firstStateID, pleaseMutate)
 	s.NoError(err)
 	s.Equal(&dto.RecomputePendingState{
 		OldNonce:   models.MakeUint256(0),
@@ -125,7 +125,7 @@ func (s *MempoolTestSuite) TestRecomputeState() {
 	}, result)
 	s.assertAPIBalance(firstStateID, 70)
 
-	result, err = s.adminAPI.RecomputePendingState(contextWithAuthKey(authKeyValue), firstStateID, doNotMutate)
+	result, err = s.adminAPI.RecomputePendingState(contextWithAuthKey(), firstStateID, doNotMutate)
 	s.NoError(err)
 	s.Equal(&dto.RecomputePendingState{
 		OldNonce:   models.MakeUint256(2),
@@ -136,7 +136,7 @@ func (s *MempoolTestSuite) TestRecomputeState() {
 }
 
 func (s *MempoolTestSuite) assertPendingStates(startID, pageSize uint32, expected []dto.UserStateWithID) {
-	pendingStates, err := s.adminAPI.GetPendingStates(contextWithAuthKey(authKeyValue), startID, pageSize)
+	pendingStates, err := s.adminAPI.GetPendingStates(contextWithAuthKey(), startID, pageSize)
 	s.NoError(err)
 	s.Equal(expected, pendingStates)
 }

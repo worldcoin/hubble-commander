@@ -15,7 +15,7 @@ func (a *API) RecomputePendingState(ctx context.Context, stateID uint32, mutate 
 	return a.storage.RecomputePendingState(stateID, mutate)
 }
 
-func (a *API) GetPendingStates(ctx context.Context, startStateID uint32, pageSize uint32) ([]dto.UserStateWithID, error) {
+func (a *API) GetPendingStates(ctx context.Context, startStateID, pageSize uint32) ([]dto.UserStateWithID, error) {
 	err := a.verifyAuthKey(ctx)
 	if err != nil {
 		return nil, err
