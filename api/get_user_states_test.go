@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -124,7 +125,7 @@ func (s *GetUserStatesTestSuite) TestGetUserStates_ZipsBatchednAndPendingStates(
 		},
 	}, userStates[0])
 	s.Equal(dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: consts.PendingID,
 		UserState: dto.UserState{
 			PubKeyID: 2,
 			TokenID:  models.MakeUint256(0),
@@ -174,9 +175,9 @@ func (s *GetUserStatesTestSuite) TestGetUserStates_HasPendingC2T() {
 	s.Len(userStates, 1)
 
 	s.Equal(userStates[0], dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: consts.PendingID,
 		UserState: dto.UserState{
-			PubKeyID: ^uint32(0),
+			PubKeyID: consts.PendingID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(50),
 			Nonce:    models.MakeUint256(0),

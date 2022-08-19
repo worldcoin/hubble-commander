@@ -16,6 +16,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
 	st "github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -115,9 +116,9 @@ func (s *APIConsistencySuite) TestGetUserStatesPendingToBatched() {
 	s.NoError(err)
 	s.Len(fetchedStates, 1)
 	s.Equal(dto.UserStateWithID{
-		StateID: ^uint32(0),
+		StateID: consts.PendingID,
 		UserState: dto.UserState{
-			PubKeyID: ^uint32(0),
+			PubKeyID: consts.PendingID,
 			TokenID:  models.MakeUint256(0),
 			Balance:  models.MakeUint256(20),
 			Nonce:    models.MakeUint256(0),
