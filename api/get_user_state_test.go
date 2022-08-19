@@ -90,7 +90,7 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 	userState, err := s.api.GetUserState(context.Background(), 1)
 	s.NoError(err)
 
-	s.Equal(userState.StateID, uint32(1))
+	s.Equal(userState.StateID, int64(1))
 	s.Equal(userState.UserState.Nonce.Int.Uint64(), uint64(0))
 	s.Equal(userState.UserState.Balance.Int.Uint64(), uint64(100))
 
@@ -113,14 +113,14 @@ func (s *GetUserStateTestSuite) TestGetUserState() {
 	userState, err = s.api.GetUserState(context.Background(), uint32(senderStateID))
 	s.NoError(err)
 
-	s.Equal(uint32(senderStateID), userState.StateID)
+	s.Equal(int64(senderStateID), userState.StateID)
 	s.Equal(uint64(1), userState.UserState.Nonce.Int.Uint64())
 	s.Equal(uint64(40), userState.UserState.Balance.Int.Uint64())
 
 	userState, err = s.api.GetUserState(context.Background(), uint32(receiverStateID))
 	s.NoError(err)
 
-	s.Equal(uint32(receiverStateID), userState.StateID)
+	s.Equal(int64(receiverStateID), userState.StateID)
 	s.Equal(uint64(0), userState.UserState.Nonce.Int.Uint64())
 	s.Equal(uint64(50), userState.UserState.Balance.Int.Uint64())
 }

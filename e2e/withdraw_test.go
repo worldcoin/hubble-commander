@@ -59,7 +59,7 @@ func (s *WithdrawalsE2ETestSuite) SetupTest() {
 func (s *WithdrawalsE2ETestSuite) TestWithdrawals() {
 	newUserStates := s.makeDeposit()
 
-	targetMassMigrationHash := s.submitWithdrawBatch(newUserStates[0].StateID)
+	targetMassMigrationHash := s.submitWithdrawBatch(uint32(newUserStates[0].StateID))
 
 	s.testProcessWithdrawCommitment()
 
@@ -114,7 +114,7 @@ func (s *WithdrawalsE2ETestSuite) testClaimTokens(transactionHash common.Hash) {
 	message, err := s.senderWallet.Sign(s.transactor.From.Bytes())
 	s.NoError(err)
 
-	publicKeyProof := s.getPublicKeyProof(proof.UserState.PubKeyID)
+	publicKeyProof := s.getPublicKeyProof(uint32(proof.UserState.PubKeyID))
 
 	expectedBalanceDifference := *proof.UserState.Balance.MulN(consts.L2Unit)
 	s.testDoActionAndAssertTokenBalanceDifference(s.transactor.From, expectedBalanceDifference, func() {
@@ -215,11 +215,11 @@ func (s *WithdrawalsE2ETestSuite) sendMMFromWallet(wallet bls.Wallet, massMigrat
 func (s *WithdrawalsE2ETestSuite) userStatesDifference(a, b []dto.UserStateWithID) []dto.UserStateWithID {
 	mb := make(map[uint32]struct{}, len(b))
 	for _, x := range b {
-		mb[x.StateID] = struct{}{}
+		mb[uint32(x.StateID)] = struct{}{}
 	}
 	var diff []dto.UserStateWithID
 	for _, x := range a {
-		if _, found := mb[x.StateID]; !found {
+		if _, found := mb[uint32(x.StateID)]; !found {
 			diff = append(diff, x)
 		}
 	}
@@ -305,7 +305,7 @@ func (s *WithdrawalsE2ETestSuite) getPublicKeyProof(pubKeyID uint32) dto.PublicK
 func (s *WithdrawalsE2ETestSuite) withdrawProofToCalldata(proof *dto.WithdrawProof) withdrawmanager.TypesStateMerkleProofWithPath {
 	return withdrawmanager.TypesStateMerkleProofWithPath{
 		State: withdrawmanager.TypesUserState{
-			PubkeyID: big.NewInt(int64(proof.UserState.PubKeyID)),
+			PubkeyID: big.NewInt(proof.UserState.PubKeyID),
 			TokenID:  proof.UserState.TokenID.ToBig(),
 			Balance:  proof.UserState.Balance.ToBig(),
 			Nonce:    proof.UserState.Nonce.ToBig(),

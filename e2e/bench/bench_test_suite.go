@@ -137,10 +137,16 @@ func (s *benchmarkTestSuite) sendTransactions(
 				continue
 			}
 
-			s.stateIds = append(s.stateIds, state.StateID)
+			if state.StateID < 0 {
+				continue
+			}
+
+			stateID := uint32(state.StateID)
+
+			s.stateIds = append(s.stateIds, stateID)
 
 			s.waitGroup.Add(1)
-			go s.runForWallet(wallet, state.StateID, walletAction)
+			go s.runForWallet(wallet, stateID, walletAction)
 
 			workers += 1
 			if workers >= int(s.benchConfig.MaxConcurrentWorkers) {
