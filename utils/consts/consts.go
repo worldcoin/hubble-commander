@@ -5,6 +5,7 @@ import "github.com/ethereum/go-ethereum/common"
 const (
 	L2Unit        = 1e9
 	AuthKeyHeader = "Auth-Key"
+	PendingID     = uint32(0)
 )
 
 // ZeroHash is the same as keccak256(abi.encode(0))

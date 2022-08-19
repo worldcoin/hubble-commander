@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/o11y"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
@@ -56,10 +57,10 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 			return err
 		}
 		for i := range pendingUserStates {
-			maxUint32 := ^uint32(0) // TODO: change the dto format
+			// TODO: change the dto format
 			userStates = append(
 				userStates,
-				dto.MakeUserStateWithID(maxUint32, &pendingUserStates[i]),
+				dto.MakeUserStateWithID(consts.PendingID, &pendingUserStates[i]),
 			)
 		}
 

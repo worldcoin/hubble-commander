@@ -10,6 +10,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -189,8 +190,7 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserState, error) {
 	result := make([]models.UserState, 0)
 
-	maxUint32 := ^uint32(0)
-	pubKeyID := maxUint32
+	pubKeyID := consts.PendingID
 
 	accounts, err := s.AccountTree.Leaves(pubkey)
 	if err == nil && len(accounts) > 0 {
