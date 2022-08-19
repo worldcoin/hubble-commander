@@ -61,6 +61,11 @@ func pendingStateKey(stateID uint32) []byte {
 	)
 }
 
+func decodePendingStateKey(keyBytes []byte) uint32 {
+	lastFour := keyBytes[len(keyBytes)-4:]
+	return binary.BigEndian.Uint32(lastFour)
+}
+
 func encodePendingState(nonce, balance models.Uint256) []byte {
 	var result bytes.Buffer
 	result.Grow(64)
@@ -406,6 +411,16 @@ func (mh *MempoolHeap) nextTxForAccount(stateID uint32) (
 	return pendingTx, err
 }
 
+func itemToPendingState(item *badger.Item) (nonce, balance *models.Uint256, err error) {
+	value, err := item.ValueCopy(nil)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	decodedNonce, decodedBalance := decodePendingState(value)
+	return &decodedNonce, &decodedBalance, nil
+}
+
 func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
 	value, err := item.ValueCopy(nil)
 	if err != nil {
@@ -545,6 +560,68 @@ func (s *Storage) GetMempoolTransactionByHash(hash common.Hash) (*stored.Pending
 	return nil, nil
 }
 
+func (s *Storage) GetPendingStates(startStateID, pageSize uint32) (
+	result []dto.UserStateWithID,
+	err error,
+) {
+	err = s.ExecuteInReadWriteTransaction(func(txStorage *Storage) error {
+		innerResult, innerErr := txStorage.unsafeGetPendingStates(startStateID, pageSize)
+		result = innerResult
+		return innerErr
+	})
+	return result, err
+}
+
+func (s *Storage) unsafeGetPendingStates(startStateID, pageSize uint32) (
+	result []dto.UserStateWithID,
+	err error,
+) {
+	result = make([]dto.UserStateWithID, 0)
+
+	err = s.database.Badger.View(func(txn *badger.Txn) error {
+		iter := txn.NewIterator(db.PrefetchIteratorOpts)
+		defer iter.Close()
+
+		startKey := pendingStateKey(startStateID)
+		iter.Seek(startKey)
+
+		for iter.ValidForPrefix(pendingStatePrefix) {
+			item := iter.Item()
+			pendingNonce, pendingBalance, innerErr := itemToPendingState(item)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			keyBytes := item.Key()
+			stateID := decodePendingStateKey(keyBytes)
+
+			batchedState, innerErr := s.StateTree.Leaf(stateID)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			result = append(result, dto.MakeUserStateWithID(
+				stateID,
+				&models.UserState{
+					Nonce:    *pendingNonce,
+					Balance:  *pendingBalance,
+					PubKeyID: batchedState.PubKeyID,
+					TokenID:  batchedState.TokenID,
+				},
+			))
+
+			if len(result) >= int(pageSize) {
+				break
+			}
+
+			iter.Next()
+		}
+
+		return nil
+	})
+	return result, err
+}
+
 func (s *Storage) RecomputePendingState(stateID uint32, mutate bool) (
 	result *dto.RecomputePendingState,
 	err error,
@@ -585,7 +662,8 @@ func (s *Storage) unsafeRecomputePendingState(stateID uint32, mutate bool) (
 			one := models.MakeUint256(1)
 			newNonce = newNonce.Add(&one)
 
-			newBalance = newBalance.Sub(&pendingTx.Amount)
+			txTotal := pendingTx.Amount.Add(&pendingTx.Fee)
+			newBalance = newBalance.Sub(txTotal)
 
 			sentTxCount += 1
 		}
