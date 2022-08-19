@@ -8,6 +8,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/metrics"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/batchtype"
+	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -50,6 +51,9 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
+	updateMempoolTicker := time.NewTicker(time.Second * 10)
+	defer updateMempoolTicker.Stop()
+
 	currentBatchType := batchtype.Transfer
 
 	for {
@@ -58,6 +62,13 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 			return nil
 		case <-ticker.C:
 			err = c.rollupLoopIteration(ctx, &currentBatchType)
+			if err != nil {
+				return err
+			}
+		case <-updateMempoolTicker.C:
+			// TODO: a long rollupLoopIteration can starve this metric,
+			//       create a separate worker
+			err := c.updateMempoolMetrics()
 			if err != nil {
 				return err
 			}
@@ -134,6 +145,34 @@ func (c *Commander) unsafeRollupLoopIteration(ctx context.Context, currentBatchT
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *Commander) updateMempoolMetrics() error {
+	allMempoolTxs, err := c.storage.GetAllMempoolTransactions()
+	if err != nil {
+		return err
+	}
+
+	transferCount, c2tCount, mmCount := 0, 0, 0
+	for i := range allMempoolTxs {
+		switch allMempoolTxs[i].TxType {
+		case txtype.Transfer:
+			transferCount += 1
+		case txtype.Create2Transfer:
+			c2tCount += 1
+		case txtype.MassMigration:
+			mmCount += 1
+		default:
+			panic("unknown tx type")
+		}
+	}
+
+	c.metrics.MempoolSize.Set(float64(len(allMempoolTxs)))
+	c.metrics.MempoolSizeTransfer.Set(float64(transferCount))
+	c.metrics.MempoolSizeCreate2Transfer.Set(float64(c2tCount))
+	c.metrics.MempoolSizeMassMigration.Set(float64(mmCount))
 
 	return nil
 }

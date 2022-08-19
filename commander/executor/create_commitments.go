@@ -184,23 +184,6 @@ func (c *TxsContext) executeTxsForCommitment(mempoolHeap *st.MempoolHeap, feeRec
 	return c.Executor.NewExecuteTxsForCommitmentResult(executeTxsResult), nil
 }
 
-func (c *TxsContext) updateMempoolMetrics(allTxCount int, txTypeCount uint32) {
-	c.commanderMetrics.MempoolSize.Set(float64(allTxCount))
-
-	var gauge prometheus.Gauge
-
-	switch txtype.TransactionType(c.BatchType) {
-	case txtype.Transfer:
-		gauge = c.commanderMetrics.MempoolSizeTransfer
-	case txtype.Create2Transfer:
-		gauge = c.commanderMetrics.MempoolSizeCreate2Transfer
-	case txtype.MassMigration:
-		gauge = c.commanderMetrics.MempoolSizeMassMigration
-	}
-
-	gauge.Set(float64(txTypeCount))
-}
-
 func (c *TxsContext) verifyTxsCount() error {
 	txType := txtype.TransactionType(c.BatchType)
 
@@ -215,8 +198,6 @@ func (c *TxsContext) verifyTxsCount() error {
 			txCount += 1
 		}
 	}
-
-	c.updateMempoolMetrics(len(allMempoolTxs), txCount)
 
 	// TODO: add a test which exercises this branch
 	if txCount >= (c.cfg.MinCommitmentsPerBatch * c.cfg.MinTxsPerCommitment) {
