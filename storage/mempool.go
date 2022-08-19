@@ -7,6 +7,7 @@ import (
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -59,6 +60,11 @@ func pendingStateKey(stateID uint32) []byte {
 		[][]byte{pendingStatePrefix, encodedStateID},
 		[]byte(":"),
 	)
+}
+
+func decodePendingStateKey(keyBytes []byte) uint32 {
+	lastFour := keyBytes[len(keyBytes)-4:]
+	return binary.BigEndian.Uint32(lastFour)
 }
 
 func encodePendingState(nonce, balance models.Uint256) []byte {
@@ -140,7 +146,8 @@ func (s *Storage) getPendingState(stateID uint32) (
 	return nil, nil, err
 }
 
-func (s *Storage) setPendingState(stateID uint32, nonce, balance models.Uint256) error {
+// this is public so tests can call it, nobody else should call it.
+func (s *Storage) UnsafeSetPendingState(stateID uint32, nonce, balance models.Uint256) error {
 	key := pendingStateKey(stateID)
 	value := encodePendingState(nonce, balance)
 	return s.rawSet(key, value)
@@ -154,7 +161,7 @@ func (s *Storage) addToPendingBalance(stateID uint32, amount *models.Uint256) er
 
 	newBalance := pendingBalance.Add(amount)
 
-	return s.setPendingState(stateID, *pendingNonce, *newBalance)
+	return s.UnsafeSetPendingState(stateID, *pendingNonce, *newBalance)
 }
 
 func (s *Storage) GetPendingNonce(stateID uint32) (*models.Uint256, error) {
@@ -285,7 +292,7 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 	one := models.MakeUint256(1)
 	newPendingNonce := pendingNonce.Add(&one)
 
-	err = s.setPendingState(fromStateID, *newPendingNonce, *newPendingBalance)
+	err = s.UnsafeSetPendingState(fromStateID, *newPendingNonce, *newPendingBalance)
 	if err != nil {
 		return err
 	}
@@ -402,6 +409,16 @@ func (mh *MempoolHeap) nextTxForAccount(stateID uint32) (
 	})
 
 	return pendingTx, err
+}
+
+func itemToPendingState(item *badger.Item) (nonce, balance *models.Uint256, err error) {
+	value, err := item.ValueCopy(nil)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	decodedNonce, decodedBalance := decodePendingState(value)
+	return &decodedNonce, &decodedBalance, nil
 }
 
 func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
@@ -541,6 +558,162 @@ func (s *Storage) GetMempoolTransactionByHash(hash common.Hash) (*stored.Pending
 	}
 
 	return nil, nil
+}
+
+func (s *Storage) GetPendingStates(startStateID, pageSize uint32) (
+	result []dto.UserStateWithID,
+	err error,
+) {
+	err = s.ExecuteInReadWriteTransaction(func(txStorage *Storage) error {
+		innerResult, innerErr := txStorage.unsafeGetPendingStates(startStateID, pageSize)
+		result = innerResult
+		return innerErr
+	})
+	return result, err
+}
+
+func (s *Storage) unsafeGetPendingStates(startStateID, pageSize uint32) (
+	result []dto.UserStateWithID,
+	err error,
+) {
+	result = make([]dto.UserStateWithID, 0)
+
+	err = s.database.Badger.View(func(txn *badger.Txn) error {
+		iter := txn.NewIterator(db.PrefetchIteratorOpts)
+		defer iter.Close()
+
+		startKey := pendingStateKey(startStateID)
+		iter.Seek(startKey)
+
+		for iter.ValidForPrefix(pendingStatePrefix) {
+			item := iter.Item()
+			pendingNonce, pendingBalance, innerErr := itemToPendingState(item)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			keyBytes := item.Key()
+			stateID := decodePendingStateKey(keyBytes)
+
+			batchedState, innerErr := s.StateTree.Leaf(stateID)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			result = append(result, dto.MakeUserStateWithID(
+				stateID,
+				&models.UserState{
+					Nonce:    *pendingNonce,
+					Balance:  *pendingBalance,
+					PubKeyID: batchedState.PubKeyID,
+					TokenID:  batchedState.TokenID,
+				},
+			))
+
+			if len(result) >= int(pageSize) {
+				break
+			}
+
+			iter.Next()
+		}
+
+		return nil
+	})
+	return result, err
+}
+
+func (s *Storage) RecomputePendingState(stateID uint32, mutate bool) (
+	result *dto.RecomputePendingState,
+	err error,
+) {
+	err = s.ExecuteInReadWriteTransaction(func(txStorage *Storage) error {
+		innerResult, innerErr := txStorage.unsafeRecomputePendingState(stateID, mutate)
+		result = innerResult
+		return innerErr
+	})
+	return result, err
+}
+
+func (s *Storage) unsafeRecomputePendingState(stateID uint32, mutate bool) (
+	*dto.RecomputePendingState,
+	error,
+) {
+	oldNonce, oldBalance, err := s.getPendingState(stateID)
+	if err != nil {
+		return nil, err
+	}
+
+	batchedState, err := s.StateTree.Leaf(stateID)
+	if err != nil {
+		return nil, err
+	}
+
+	newNonce := &batchedState.UserState.Nonce
+	newBalance := &batchedState.UserState.Balance
+
+	receivedTxCount, sentTxCount := 0, 0
+
+	// forEachMempoolTransaction was written to avoid conflicting with any other
+	// writers. In this case we would like to conflict with other writers! That is achieved
+	// later in the method when we call `UnsafeSetPendingState`. And other api coros which add
+	// relevant txns to the mempool will also update our pending state, causing a retry.
+	err = s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
+		if pendingTx.FromStateID == stateID {
+			one := models.MakeUint256(1)
+			newNonce = newNonce.Add(&one)
+
+			txTotal := pendingTx.Amount.Add(&pendingTx.Fee)
+			newBalance = newBalance.Sub(txTotal)
+
+			sentTxCount += 1
+		}
+
+		if pendingTx.TxType != txtype.Transfer {
+			return nil
+		}
+
+		transfer := pendingTx.ToTransfer()
+		if transfer == nil {
+			panic("we just confirmed this is a transfer")
+		}
+
+		if transfer.ToStateID == stateID {
+			newBalance = newBalance.Add(&transfer.Amount)
+			receivedTxCount += 1
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	logFields := log.Fields{
+		"stateID":         stateID,
+		"oldNonce":        oldNonce,
+		"oldBalance":      oldBalance,
+		"newNonce":        newNonce,
+		"newBalance":      newBalance,
+		"sentTxCount":     sentTxCount,
+		"receivedTxCount": receivedTxCount,
+	}
+
+	if mutate {
+		err = s.UnsafeSetPendingState(stateID, *newNonce, *newBalance)
+		if err != nil {
+			return nil, err
+		}
+		log.WithFields(logFields).Info("computed and updated pending state")
+	} else {
+		log.WithFields(logFields).Info("computed new pending state")
+	}
+
+	return &dto.RecomputePendingState{
+		OldNonce:   *oldNonce,
+		OldBalance: *oldBalance,
+		NewNonce:   *newNonce,
+		NewBalance: *newBalance,
+	}, nil
 }
 
 func (s *Storage) GetAllMempoolTransactions() ([]stored.PendingTx, error) {
