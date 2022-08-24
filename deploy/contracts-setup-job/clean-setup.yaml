@@ -105,7 +105,7 @@ spec:
       initContainers:
         - name: clear-volume
           image: busybox:1.28
-          command: [ 'sh', '-c', "ls -l /volume" ]
+          command: [ 'sh', '-c', "rm -rf /volume/data" ]
           volumeMounts:
             - name: hubble-storage
               mountPath: "/volume"
