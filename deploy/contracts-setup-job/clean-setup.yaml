@@ -98,8 +98,17 @@ spec:
           configMap:
             name: genesis-config
         - name: ephemeral
-          emptyDir: {}
+          emptyDir: { }
+        - name: hubble-storage
+          persistentVolumeClaim:
+            claimName: { { include "hubble.fullname" . } }
       initContainers:
+        - name: clear-volume
+          image: busybox:1.28
+          command: [ 'sh', '-c', "ls -l /volume" ]
+          volumeMounts:
+            - name: hubble-storage
+              mountPath: "/volume"
         - name: create-chain-spec-file
           image: busybox:1.28
           command: [ 'sh', '-c', "touch /data/chain-spec.yaml && chmod -R 666 /data/chain-spec.yaml" ]
