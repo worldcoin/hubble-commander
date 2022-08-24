@@ -101,7 +101,7 @@ spec:
           emptyDir: { }
         - name: hubble-storage
           persistentVolumeClaim:
-            claimName: { { include "hubble.fullname" . } }
+            claimName: "hubble-commander"
       initContainers:
         - name: clear-volume
           image: busybox:1.28
