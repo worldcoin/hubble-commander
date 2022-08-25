@@ -119,8 +119,7 @@ func (c *Commander) syncOrDisputeRemoteBatch(remoteBatch eth.DecodedBatch) error
 
 	err := c.syncBatch(remoteBatch)
 	if errors.As(err, &disputableErr) {
-		logFraudulentBatch(&remoteBatch.GetBase().ID, disputableErr.Reason)
-		return c.disputeFraudulentBatch(remoteBatch.ToDecodedTxBatch(), disputableErr)
+		err = nil
 	}
 	return err
 }
