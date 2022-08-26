@@ -106,14 +106,6 @@ func (c *Commander) syncRemoteBatch(ctx context.Context, remoteBatch eth.Decoded
 		attribute.String("hubble.batchHash", remoteBatch.GetBase().Hash.String()),
 		attribute.Int("hubble.commitmentCount", remoteBatch.GetCommitmentsLength()),
 	)
-	log.WithFields(log.Fields{
-		"batchID":         remoteBatch.GetBase().ID.Uint64(),
-		"batchType":       remoteBatch.GetBase().Type.String(),
-		"batchHash":       remoteBatch.GetBase().Hash.String(),
-		"commitmentCount": remoteBatch.GetCommitmentsLength(),
-		"accountRoot":     remoteBatch.GetBase().AccountTreeRoot.Hex(),
-	}).Debug("Syncing batch")
-
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
 	if errors.As(err, &icError) {
 		return c.replaceBatch(icError.LocalBatch, remoteBatch)
