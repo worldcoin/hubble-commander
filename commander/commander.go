@@ -20,6 +20,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/Worldcoin/hubble-commander/tracing"
+	"github.com/Worldcoin/hubble-commander/utils"
+	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
@@ -307,6 +309,16 @@ func setGenesisStateAndCreateClient(
 	if err != nil {
 		return nil, err
 	}
+	stateRoot, err := storage.StateTree.Root()
+	if err != nil {
+		return nil, err
+	}
+	zeroHash := merkletree.GetZeroHash(0) // TODO: Is this level zero for both?
+	commitmentRoot := utils.HashTwo(utils.HashTwo(*stateRoot, zeroHash), zeroHash)
+	log.WithFields(log.Fields{
+		"stateRoot":      stateRoot.Hex(),
+		"commitmentRoot": commitmentRoot.Hex(),
+	}).Info("Initialized storage with chain spec")
 
 	initialSyncedBlock := getInitialSyncedBlock(chainState.AccountRegistryDeploymentBlock)
 	err = storage.SetSyncedBlock(initialSyncedBlock)
