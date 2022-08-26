@@ -106,6 +106,7 @@ func (c *Commander) syncRemoteBatch(ctx context.Context, remoteBatch eth.Decoded
 		attribute.String("hubble.batchHash", remoteBatch.GetBase().Hash.String()),
 		attribute.Int("hubble.commitmentCount", remoteBatch.GetCommitmentsLength()),
 	)
+
 	err := c.syncOrDisputeRemoteBatch(remoteBatch)
 	if errors.As(err, &icError) {
 		return c.replaceBatch(icError.LocalBatch, remoteBatch)
