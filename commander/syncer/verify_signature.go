@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -29,10 +30,11 @@ func (c *TxsContext) verifyTxSignature(commitment *encoder.DecodedCommitment, tx
 		}
 	}
 
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
+	return c.verifyCommitmentSignature(commitment, &commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
 func (c *TxsContext) verifyCommitmentSignature(
+	commitment *encoder.DecodedCommitment,
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -52,7 +54,15 @@ func (c *TxsContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
+		if commitment.ID.BatchID.CmpN(65) <= 0 {
+			// HACK: Signatures are screwed on the first 65 blocks.
+			log.WithFields(log.Fields{
+				"batchId": commitment.ID.BatchID,
+				"index":   commitment.ID.IndexInBatch,
+			}).Error("Invalid aggregate signature, pretending it is valid")
+		} else {
+			return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
+		}
 	}
 	return nil
 }
