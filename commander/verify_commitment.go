@@ -7,6 +7,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils"
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrInvalidCommitmentRoot = errors.New("invalid commitment root of batch #0")
@@ -21,8 +22,12 @@ func verifyCommitmentRoot(storage *st.Storage, client *eth.Client) error {
 		return err
 	}
 
-	zeroHash := merkletree.GetZeroHash(0)
+	zeroHash := merkletree.GetZeroHash(0) // TODO: Is this level zero for both?
 	commitmentRoot := utils.HashTwo(utils.HashTwo(*stateRoot, zeroHash), zeroHash)
+	log.WithFields(log.Fields{
+		"chainspec": commitmentRoot.Hex(),
+		"contract":  firstBatch.Hash.Hex(),
+	}).Info("Verifying genesis commitment root")
 	if firstBatch.Hash != commitmentRoot {
 		return ErrInvalidCommitmentRoot
 	}
