@@ -54,8 +54,8 @@ func (c *TxsContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		if commitment.ID.BatchID.CmpN(65) <= 0 {
-			// HACK: Signatures are screwed on the first 65 blocks. We just ignore this and continue processing.
+		if commitment.ID.BatchID.CmpN(65) <= 0 || commitment.ID.BatchID.CmpN(2022) == 0 || commitment.ID.BatchID.CmpN(2024) == 0 {
+			// HACK: Signatures are screwed on the first 65 blocks and block 2022. We just ignore these and continue processing.
 			log.WithFields(log.Fields{
 				"batchId": commitment.ID.BatchID,
 				"index":   commitment.ID.IndexInBatch,
