@@ -1,0 +1,18 @@
+environment: stage
+
+ingress:
+  host: "hubble.stage-crypto.worldcoin.dev"
+
+resources:
+  limits:
+    cpu: 4
+    memory: 6Gi
+  requests:
+    cpu: 3
+    memory: 4Gi
+
+persistentStorage:
+  size: 100Gi
+  volumeID: aws://us-east-1a/vol-065fd87c2124454e6 # example: aws://us-east-1c/vol-aabbcc123
+
+wipeDisk: false
