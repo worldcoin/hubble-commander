@@ -57,7 +57,7 @@ type StateUpdate struct {
 	PrevStateLeaf StateLeaf
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (s UserState) Copy() *UserState {
 	return &s
 }

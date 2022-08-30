@@ -13,7 +13,7 @@ const (
 	Pending   = TransactionStatus(0)
 	Submitted = TransactionStatus(bs.Submitted)
 	Mined     = TransactionStatus(bs.Mined)
-	Finalised = TransactionStatus(bs.Finalised) // nolint:misspell
+	Finalised = TransactionStatus(bs.Finalised) //nolint:misspell
 	Error     = TransactionStatus(4)
 )
 
@@ -21,7 +21,7 @@ var TransactionStatuses = map[TransactionStatus]string{
 	Pending:   "PENDING",
 	Submitted: bs.BatchStatuses[bs.Submitted],
 	Mined:     bs.BatchStatuses[bs.Mined],
-	Finalised: bs.BatchStatuses[bs.Finalised], // nolint:misspell
+	Finalised: bs.BatchStatuses[bs.Finalised], //nolint:misspell
 	Error:     "ERROR",
 }
 

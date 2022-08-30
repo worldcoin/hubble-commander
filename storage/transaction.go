@@ -61,7 +61,7 @@ func (s *TransactionStorage) GetTransactionsByCommitmentID(id models.CommitmentI
 	// serialization of the CommitmentSlot. This makes it easy to look for all
 	// BatchedTxs for `id`
 
-	// nolint: gocritic
+	//nolint: gocritic
 	seekPrefix := append(stored.BatchedTxPrefix, id.Bytes()...)
 
 	err := s.database.Badger.Iterator(seekPrefix, db.PrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
@@ -187,8 +187,9 @@ func (s *TransactionStorage) BatchAddTransaction(txs models.GenericTransactionAr
 }
 
 // TODO: This needs to be fixed.
-//       It used to take pending/failed transactions and add them to batches (as a result
-//       of the sync process.
+//
+//	It used to take pending/failed transactions and add them to batches (as a result
+//	of the sync process.
 func (s *TransactionStorage) BatchUpsertTransaction(txs models.GenericTransactionArray) error {
 	if txs.Len() < 1 {
 		return errors.WithStack(ErrNoRowsAffected)

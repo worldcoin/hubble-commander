@@ -15,7 +15,7 @@ func GetDeployerConfig() *DeployerConfig {
 
 	return &DeployerConfig{
 		Bootstrap: &DeployerBootstrapConfig{
-			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), // nolint:misspell
+			BlocksToFinalise: getUint32("bootstrap.blocks_to_finalise", DefaultBlocksToFinalise), //nolint:misspell
 			GenesisAccounts:  getGenesisAccounts(),
 			Chooser:          getAddressOrNil("chooser_address"),
 		},

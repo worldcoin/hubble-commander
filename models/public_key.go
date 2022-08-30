@@ -28,7 +28,7 @@ func MakePublicKeyFromInts(ints [4]*big.Int) PublicKey {
 	return publicKey
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (p PublicKey) Bytes() []byte {
 	return p[:]
 }
@@ -76,7 +76,7 @@ func (p *PublicKey) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return err
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (p PublicKey) MarshalText() ([]byte, error) {
 	return hexutil.Bytes(p[:]).MarshalText()
 }

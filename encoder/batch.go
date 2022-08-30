@@ -10,11 +10,12 @@ import (
 )
 
 // DecodeTransferBatchCalldata
-//   uint256 batchID
-//   bytes32[] stateRoots,
-//   uint256[2][] signatures,
-//   uint256[] feeReceivers,
-//   bytes[] txss
+//
+//	uint256 batchID
+//	bytes32[] stateRoots,
+//	uint256[2][] signatures,
+//	uint256[] feeReceivers,
+//	bytes[] txss
 func DecodeTransferBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedCommitment, error) {
 	unpacked, err := rollupABI.Methods["submitTransfer"].Inputs.Unpack(calldata[4:])
 	if err != nil {
@@ -47,12 +48,13 @@ func DecodeTransferBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]Decoded
 }
 
 // DecodeMMBatchCalldata
-//	 uint256 batchID,
-//	 bytes32[] stateRoots,
-//	 uint256[2][] signatures,
-//	 uint256[4][] meta,
-//	 bytes32[] withdrawRoots,
-//	 bytes[] txss
+//
+//	uint256 batchID,
+//	bytes32[] stateRoots,
+//	uint256[2][] signatures,
+//	uint256[4][] meta,
+//	bytes32[] withdrawRoots,
+//	bytes[] txss
 func DecodeMMBatchCalldata(rollupABI *abi.ABI, calldata []byte) ([]DecodedMMCommitment, error) {
 	unpacked, err := rollupABI.Methods["submitMassMigration"].Inputs.Unpack(calldata[4:])
 	if err != nil {

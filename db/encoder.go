@@ -12,9 +12,10 @@ import (
 
 var errPassedByPointer = fmt.Errorf("pointer was passed to Encode, pass by value instead")
 
-// nolint:gocyclo, funlen
 // Encode Remember to provide cases for both value and pointer types when adding new encoders
 // TODO shorten this function by using ByteEncoder interface
+//
+//nolint:gocyclo, funlen
 func Encode(value interface{}) ([]byte, error) {
 	switch v := value.(type) {
 	case models.AccountNode:
@@ -130,7 +131,7 @@ func Encode(value interface{}) ([]byte, error) {
 	}
 }
 
-// nolint:gocyclo, funlen
+//nolint:gocyclo, funlen
 func Decode(data []byte, value interface{}) error {
 	switch v := value.(type) {
 	case *models.AccountNode:
@@ -198,7 +199,7 @@ func Decode(data []byte, value interface{}) error {
 	}
 }
 
-// nolint: gocritic
+//nolint:gocritic
 func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error {
 	if len(data) == 32 {
 		return stored.DecodeHash(data, dst)
@@ -210,7 +211,7 @@ func decodeHashPointer(data []byte, value *interface{}, dst *common.Hash) error 
 	return nil
 }
 
-// nolint: gocritic
+//nolint:gocritic
 func decodeUint32Pointer(data []byte, value *interface{}, dst *uint32) error {
 	if len(data) == 4 {
 		return stored.DecodeUint32(data, dst)

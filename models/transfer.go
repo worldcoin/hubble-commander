@@ -33,7 +33,7 @@ func (t *Transfer) ToMassMigration() *MassMigration {
 	panic("Transfer cannot be cast to MassMigration")
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (t Transfer) Copy() GenericTransaction {
 	return &t
 }

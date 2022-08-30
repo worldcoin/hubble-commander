@@ -11,13 +11,13 @@ type BatchStatus uint
 const (
 	Submitted BatchStatus = iota + 1
 	Mined
-	Finalised // nolint:misspell
+	Finalised //nolint:misspell
 )
 
 var BatchStatuses = map[BatchStatus]string{
 	Submitted: "SUBMITTED",
 	Mined:     "MINED",
-	Finalised: "FINALISED", // nolint:misspell
+	Finalised: "FINALISED", //nolint:misspell
 }
 
 func (s BatchStatus) Ref() *BatchStatus {

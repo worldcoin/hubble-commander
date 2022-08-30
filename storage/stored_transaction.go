@@ -194,7 +194,7 @@ func (s *Storage) initBatchedTxsCounter() (err error) {
 func (s *TransactionStorage) getTransactionIDsByBatchID(batchID models.Uint256) ([]models.CommitmentSlot, error) {
 	slots := make([]models.CommitmentSlot, 0, 32)
 
-	// nolint: gocritic
+	//nolint: gocritic
 	seekPrefix := append(stored.BatchedTxPrefix, batchID.Bytes()...)
 
 	// BatchedTx are stored with CommitmentSlot as their primary key: BatchID is the
@@ -236,7 +236,8 @@ func (s *TransactionStorage) GetTransactionIDsByBatchIDs(batchIDs ...models.Uint
 }
 
 // TODO: can all our callers just call Storage.GetAllMempoolTransactions()
-//       they sure can, this is only called by the test suite
+//
+//	they sure can, this is only called by the test suite
 func (s *TransactionStorage) GetPendingTransactions(txType txtype.TransactionType) (models.GenericArray, error) {
 	pendingTxs, err := s.tsGetAllMempoolTransactions()
 	if err != nil {

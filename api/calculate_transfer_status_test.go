@@ -118,7 +118,7 @@ func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_InB
 	s.Equal(txstatus.Mined, *status)
 }
 
-// nolint:misspell
+//nolint:misspell
 func (s *CalculateTransactionStatusTestSuite) TestCalculateTransactionStatus_Finalised() {
 	currentBlockNumber, err := s.sim.GetLatestBlockNumber()
 	s.NoError(err)

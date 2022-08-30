@@ -98,7 +98,7 @@ func DeployRollup(c chain.ManualNonceConnection) (*RollupContracts, error) {
 	return DeployConfiguredRollup(c, &DeploymentConfig{})
 }
 
-// nolint:funlen,gocyclo
+//nolint:funlen,gocyclo
 func DeployConfiguredRollup(c chain.ManualNonceConnection, cfg *DeploymentConfig) (*RollupContracts, error) {
 	fillWithDefaults(&cfg.Params)
 

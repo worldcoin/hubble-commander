@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 )
 
-// nolint:structcheck
+//nolint:structcheck
 type rollupControls struct {
 	batchCreationEnabled bool
 	migrate              uint32

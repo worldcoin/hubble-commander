@@ -25,16 +25,18 @@ type AccountNode struct {
 	DataHash   common.Hash
 }
 
-// nolint:gocritic
 // Type implements badgerhold.Storer
+//
+//nolint:gocritic
 func (a AccountLeaf) Type() string {
 	return string(AccountLeafName)
 }
 
-// nolint:gocritic
 // Indexes implements badgerhold.Storer
 // We're adding a lot of Accounts with ZeroPublicKey to the database as a result of the way C2T processing is currently implemented.
 // See the usages of ZeroPublicKey for more context.
+//
+//nolint:gocritic
 func (a AccountLeaf) Indexes() map[string]bh.Index {
 	return map[string]bh.Index{
 		"PublicKey": {

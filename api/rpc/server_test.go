@@ -13,7 +13,7 @@ import (
 )
 
 type Result struct {
-	// nolint:revive,stylecheck
+	//nolint:revive,stylecheck
 	JsonRpc string      `json:"jsonrpc"`
 	ID      string      `json:"id"`
 	Result  interface{} `json:"result"`

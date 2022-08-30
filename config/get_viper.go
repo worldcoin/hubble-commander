@@ -57,7 +57,7 @@ func getUint64OrPanic(key string) uint64 {
 	return value
 }
 
-// nolint: unparam
+//nolint:unparam
 func getBool(key string, fallback bool) bool {
 	viper.SetDefault(key, fallback)
 	return viper.GetBool(key)

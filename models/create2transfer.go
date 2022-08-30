@@ -34,12 +34,12 @@ func (t *Create2Transfer) ToMassMigration() *MassMigration {
 	panic("Create2Transfer cannot be cast to MassMigration")
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (t Create2Transfer) Copy() GenericTransaction {
 	return &t
 }
 
-// nolint:gocritic
+//nolint:gocritic
 func (t Create2Transfer) Clone() *Create2Transfer {
 	return &t
 }
