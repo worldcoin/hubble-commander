@@ -35,10 +35,10 @@ ingress:
 resources:
   limits:
     cpu: 14
-    memory: 30Gi
+    memory: 8Gi
   requests:
-    cpu: 8
-    memory: 25Gi
+    cpu: 3
+    memory: 5Gi
 
 nameOverride: ""
 fullnameOverride: ""
