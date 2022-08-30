@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/api/admin"
 	"github.com/Worldcoin/hubble-commander/api/middleware"
@@ -73,7 +74,11 @@ func NewServer(
 	}))
 
 	addr := fmt.Sprintf(":%s", cfg.API.Port)
-	return &http.Server{Addr: addr, Handler: mux}, nil
+	return &http.Server{
+		ReadHeaderTimeout: time.Second * 5,
+		Addr:              addr,
+		Handler:           mux,
+	}, nil
 }
 
 func NewTestAPI(
