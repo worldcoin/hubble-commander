@@ -107,6 +107,8 @@ spec:
               value: "10m"
             - name: HUBBLE_HACK_SKIP_KNOWN_BAD_SIGNATURES
               value: "true"
+            - name: HUBBLE_SAFE_MODE
+              value: "true"
             {{- else }}
             - name: HUBBLE_BOOTSTRAP_CHAIN_SPEC_PATH
               value: /config/chain-spec.yaml
