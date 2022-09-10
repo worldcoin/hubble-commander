@@ -22,6 +22,12 @@ type Config struct {
 	API       *APIConfig
 	Badger    *BadgerConfig
 	Ethereum  *EthereumConfig
+
+	// Hubble is not yet stable but a lot of services rely on the commander being available
+	// at all times. When SafeMode=true Hubble only serves API requests, it does not attempt
+	// to create batches or sync against the chain.
+	// export HUBBLE_SAFE_MODE=true
+	SafeMode bool
 }
 
 type LogConfig struct {
