@@ -49,7 +49,7 @@ func (c *Commander) newBlockLoop() error {
 				log.WithFields(log.Fields{
 					"RemoteBlock": currentBlock.Number.Uint64(),
 					"LocalBlock":  c.storage.GetLatestBlockNumber(),
-				}).Warn("Possible unhandled reorg: recived an old block")
+				}).Warn("Possible unhandled reorg: received an old block")
 				continue
 			}
 
