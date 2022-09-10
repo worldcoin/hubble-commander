@@ -67,6 +67,7 @@ func GetConfig() *Config {
 			Path: getString("badger.path", "./db/data/hubble"),
 		},
 		Ethereum: getEthereumConfig(),
+		SafeMode: getBool("safe_mode", false),
 	}
 }
 
@@ -126,6 +127,7 @@ func GetTestConfig() *Config {
 		Tracing: &TracingConfig{
 			Enabled: false,
 		},
+		SafeMode: false,
 	}
 }
 
