@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/Worldcoin/hubble-commander/api"
 	"github.com/Worldcoin/hubble-commander/commander/tracker"
@@ -147,9 +148,16 @@ func (c *Commander) Start() (err error) {
 		}()
 	}
 
-	c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
-	c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
-	c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
+	if c.cfg.SafeMode {
+		log.Warn("Commander running in safe mode, most functions are disabled")
+	} else {
+		c.startWorker("Tracking Sent Txs", func() error { return c.txsTracker.TrackSentTxs(c.workersContext) })
+		c.startWorker("Sending Requested Txs", func() error { return c.txsTracker.SendRequestedTxs(c.workersContext) })
+		c.startWorker("New Block Loop", func() error { return c.newBlockLoop() })
+	}
+
+	c.startWorker("Mempool Metrics", func() error { return c.mempoolMetricsLoop() })
+	c.startWorker("Badger Garbage Colection", func() error { return c.badgerGCLoop() })
 
 	go c.handleWorkerError()
 
@@ -177,6 +185,45 @@ func (c *Commander) EnableBatchCreation(enable bool) {
 	c.batchCreationEnabled = enable
 	if !enable {
 		c.stopRollupLoop()
+	}
+}
+
+func (c *Commander) mempoolMetricsLoop() error {
+	ticker := time.NewTicker(time.Second * 10)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.workersContext.Done():
+			return nil
+		case <-ticker.C:
+			err := c.updateMempoolMetrics()
+			if err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func (c *Commander) badgerGCLoop() error {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.workersContext.Done():
+			return nil
+		case <-ticker.C:
+			log.Debug("Running GC in background")
+		again:
+			innerErr := c.storage.TriggerGC()
+			if innerErr == nil {
+				goto again
+			}
+			// this looks weird but we're ignoring the error because innerErr!=nil
+			// _if we successfully did nothing_
+			log.Debug("Finished Running GC: ", innerErr)
+		}
 	}
 }
 

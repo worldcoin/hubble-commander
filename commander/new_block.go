@@ -4,7 +4,6 @@ import (
 	"context"
 	stdErrors "errors"
 	"math/big"
-	"time"
 
 	"github.com/Worldcoin/hubble-commander/eth/chain"
 	"github.com/Worldcoin/hubble-commander/metrics"
@@ -39,26 +38,6 @@ func (c *Commander) newBlockLoop() error {
 	}
 	defer subscription.Unsubscribe()
 
-	go func() {
-		ticker := time.NewTicker(time.Minute)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-c.workersContext.Done():
-				return
-			case <-ticker.C:
-				log.Debug("Running GC in background")
-			again:
-				innerErr := c.storage.TriggerGC()
-				if innerErr == nil {
-					goto again
-				}
-				log.Debug("Finished Running GC: ", innerErr)
-			}
-		}
-	}()
-
 	for {
 		select {
 		case <-c.workersContext.Done():
@@ -67,6 +46,10 @@ func (c *Commander) newBlockLoop() error {
 			return err
 		case currentBlock := <-blocks:
 			if currentBlock.Number.Uint64() <= uint64(c.storage.GetLatestBlockNumber()) {
+				log.WithFields(log.Fields{
+					"RemoteBlock": currentBlock.Number.Uint64(),
+					"LocalBlock":  c.storage.GetLatestBlockNumber(),
+				}).Warn("Possible unhandled reorg: recived an old block")
 				continue
 			}
 
