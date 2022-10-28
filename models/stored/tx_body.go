@@ -96,6 +96,7 @@ func (t *TxCreate2TransferBody) Bytes() []byte {
 
 func (t *TxCreate2TransferBody) SetBytes(data []byte) error {
 	if len(data) < txCreate2TransferBodyLength {
+		// TODO: errors.WithStack
 		return models.ErrInvalidLength
 	}
 	t.ToStateID = decodeUint32Pointer(data[0:5])

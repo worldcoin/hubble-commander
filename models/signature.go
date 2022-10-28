@@ -40,6 +40,9 @@ func (s Signature) Bytes() []byte {
 
 func (s *Signature) SetBytes(data []byte) error {
 	if len(data) != SignatureLength {
+		// TODO: errors.WithStack
+		//       can't do it now because of the possibility that a caller is failing to use
+		//       errors.Is instead of strict equality
 		return ErrInvalidLength
 	}
 

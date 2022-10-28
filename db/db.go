@@ -43,6 +43,14 @@ func newConfiguredDatabase(opts *badger.Options) (*Database, error) {
 	return &Database{store: store}, nil
 }
 
+// returns a second database which references the same underlying badgerhold store
+// this allows us to open a second transaction
+func (d *Database) Clone() *Database {
+	return &Database{
+		store: d.store,
+	}
+}
+
 func (d *Database) Close() error {
 	err := d.store.Close()
 	if err != nil {

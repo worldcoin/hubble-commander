@@ -42,5 +42,6 @@ func (t *Timestamp) Bytes() []byte {
 }
 
 func (t *Timestamp) SetBytes(data []byte) error {
+	// TODO: errors.WithStack
 	return t.UnmarshalBinary(data)
 }

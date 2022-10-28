@@ -82,17 +82,26 @@ func (s *TransactionStorage) updateInMultipleTransactions(operations []dbOperati
 	return txCount, txController.Commit()
 }
 
-// TODO: rename to UnbatchTransactions
-func (s *TransactionStorage) MarkTransactionsAsPending(txIDs []models.CommitmentSlot) error {
-	return s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
+func (s *TransactionStorage) DeleteBatchedTxs(txIDs []models.CommitmentSlot) ([]stored.BatchedTx, error) {
+	txs := make([]stored.BatchedTx, len(txIDs))
+	err := s.executeInTransaction(TxOptions{}, func(txStorage *TransactionStorage) error {
 		for i := range txIDs {
-			err := txStorage.unsafeMarkTransactionAsPending(&txIDs[i])
+			txStorage.decrementTransactionCount()
+
+			var batchedTx stored.BatchedTx
+			err := txStorage.getAndDelete(txIDs[i], &batchedTx)
 			if err != nil {
 				return err
 			}
+
+			txs[i] = batchedTx
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return txs, nil
 }
 
 func (s *TransactionStorage) unsafeMarkTransactionAsPending(txSlot *models.CommitmentSlot) error {
@@ -108,6 +117,28 @@ func (s *TransactionStorage) unsafeMarkTransactionAsPending(txSlot *models.Commi
 	//       at the beginning of their relative queues. This requires somehow avoiding
 	//       conflicts with the rollup loop, as well as being careful to ensure the
 	//       mempool is returned to a correct state.
+
+	// TODO: Easiest way to avoid conflicts w the rollup loop is to take out a lock.
+	// - We should take out a lock _before_ we open the transaction which reverts this batch
+	//   We're called by the New BLock Loop, does anything bad happen if that loop is blocked for a long
+	//   time, waiting for the Rollup Loop to complete?
+
+	// assuming we've already taken out a lock and we are not going to conflict with the rollup loop:
+	// - TODO: we already are going to conflict, right? Like... there's no way the rollup loop is going
+	//         to do the right thing if it's running while we're trying to revert a batch. There might
+	//         alrady be a mutual exclusion mechanism in place?
+
+	// storage/mempool.go might have a new method: PrependMempoolTx(models.StoredTx)
+	// - inserting this tx must not create a nonce gap
+	//   - at this point c.storage.StateTree.RevertTo has already been called
+	//   - so our nonce is going to be higher than s.StateTree.Leaf(stateID).UserState.Nonce
+	//   - but out nonce will be one lower than the nonce of the first mempool tx for the StateID
+	// - this requires that MarkTransactionAsPending is called with the transactions in reverse order
+
+	// we also need to confirm that this tx does not spend too much money
+	// but here we run into a problem! The state tree has already been reverted!
+	// so probably the validation should happen *before* this method, and check all the transactions
+	//  from that batch at once.
 
 	storedTxBytes := batchedTx.PendingTx.Bytes()
 	storedTxHex := hex.EncodeToString(storedTxBytes)

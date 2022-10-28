@@ -57,7 +57,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 	s.NoError(err)
 
 	pendingBatch := s.addTxBatch(&s.transfer)
-	err = s.executionCtx.RevertBatches(pendingBatch)
+	err = s.storage.RevertBatches(pendingBatch)
 	s.NoError(err)
 
 	stateRoot, err := s.storage.StateTree.Root()
@@ -75,7 +75,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_RevertsState() {
 
 func (s *RevertBatchesTestSuite) TestRevertBatches_ExcludesTransactionsFromCommitments() {
 	pendingBatch := s.addTxBatch(&s.transfer)
-	err := s.executionCtx.RevertBatches(pendingBatch)
+	err := s.storage.RevertBatches(pendingBatch)
 	s.NoError(err)
 
 	// TODO: eventually this should put the transaction back into the mempool
@@ -98,7 +98,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_DeletesCommitmentsAndBatches(
 	s.NoError(err)
 	s.Equal(models.MakeUint256(2), latestCommitment.ID.BatchID)
 
-	err = s.executionCtx.RevertBatches(&pendingBatches[0])
+	err = s.storage.RevertBatches(&pendingBatches[0])
 	s.NoError(err)
 
 	_, err = s.executionCtx.storage.GetLatestCommitment()
@@ -116,7 +116,7 @@ func (s *RevertBatchesTestSuite) TestRevertBatches_AddsPendingDepositSubtree() {
 		Deposits: testutils.GetFourDeposits(),
 	}
 	pendingBatch := s.addDepositBatch(subtree)
-	err := s.executionCtx.RevertBatches(pendingBatch)
+	err := s.storage.RevertBatches(pendingBatch)
 	s.NoError(err)
 
 	depositSubtree, err := s.storage.GetPendingDepositSubtree(subtree.ID)

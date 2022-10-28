@@ -23,3 +23,12 @@ func (a *API) GetPendingStates(ctx context.Context, startStateID, pageSize uint3
 
 	return a.storage.GetPendingStates(startStateID, pageSize)
 }
+
+func (a *API) MempoolDropTransaction(ctx context.Context, stateID, nonce uint32) error {
+	err := a.verifyAuthKey(ctx)
+	if err != nil {
+		return err
+	}
+
+	return a.storage.MempoolDropTransaction(stateID, nonce)
+}

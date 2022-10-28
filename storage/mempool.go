@@ -29,6 +29,7 @@ var pendingStatePrefix = []byte("PendingAccountState")
 var pendingTxPrefix = []byte("PendingTxs")
 
 var ErrBalanceTooLow = fmt.Errorf("balance too low")
+var ErrUnexpectedNonce = fmt.Errorf("unexpected nonce")
 
 func pendingTxStateIDPrefix(stateID uint32) []byte {
 	encodedStateID := make([]byte, 4)
@@ -115,6 +116,35 @@ func (s *Storage) rawSet(key, value []byte) error {
 	})
 }
 
+func (s *Storage) rawDelete(key []byte) error {
+	err := s.database.Badger.RawUpdate(func(txn *badger.Txn) error {
+		return txn.Delete(key)
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+func (s *Storage) hasKey(key []byte) (bool, error) {
+	_, err := s.rawLookup(key)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return false, nil
+	}
+
+	return false, err
+}
+
+func (s *Storage) hasPendingState(stateID uint32) (bool, error) {
+	key := pendingStateKey(stateID)
+	return s.hasKey(key)
+}
+
 // It is possible that the account does not exist in our pending state and also does not
 // exist in the state tree. In that case this function will return a storage.NotFoundError
 func (s *Storage) getPendingState(stateID uint32) (
@@ -153,17 +183,6 @@ func (s *Storage) UnsafeSetPendingState(stateID uint32, nonce, balance models.Ui
 	return s.rawSet(key, value)
 }
 
-func (s *Storage) addToPendingBalance(stateID uint32, amount *models.Uint256) error {
-	pendingNonce, pendingBalance, err := s.getPendingState(stateID)
-	if err != nil {
-		return err
-	}
-
-	newBalance := pendingBalance.Add(amount)
-
-	return s.UnsafeSetPendingState(stateID, *pendingNonce, *newBalance)
-}
-
 func (s *Storage) GetPendingNonce(stateID uint32) (*models.Uint256, error) {
 	pendingNonce, _, err := s.getPendingState(stateID)
 	return pendingNonce, err
@@ -193,6 +212,94 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 	}, nil
 }
 
+func (s *Storage) UnbatchTransactions(txs []stored.BatchedTx) error {
+	// TODO: do I need to be careful about conflicts?
+	//       I think we're locking out the Rollup Loop, right?
+	//       At very least... we're locking it out during this hotfix!
+
+	expectedNonces := make(map[uint32]uint64, 0)
+	for i := range txs {
+		stateID := txs[i].FromStateID
+		if _, inMap := expectedNonces[stateID]; !inMap {
+			currentState, err := s.StateTree.Leaf(stateID)
+			if err != nil {
+				return err
+			}
+
+			expectedNonces[stateID] = currentState.Nonce.Uint64()
+		}
+	}
+
+	for i := range txs {
+		batchedTx := txs[i]
+		fromStateID := batchedTx.FromStateID
+
+		expectedNonce := expectedNonces[fromStateID]
+		if batchedTx.Nonce.Uint64() != expectedNonce {
+			return errors.Errorf("batched transaction does not cleanly apply hash=%x", batchedTx.Hash)
+		}
+
+		expectedNonces[fromStateID] = expectedNonce + 1
+
+		log.WithFields(log.Fields{
+			"FromStateID": batchedTx.FromStateID,
+			"Nonce":       batchedTx.Nonce.Uint64(),
+		}).Debug("inserting pending tx back into mempool")
+
+		s.UnsafeInsertPendingTx(&batchedTx.PendingTx)
+	}
+
+	// now that we have inserted all these transactions we need to confirm we didn't
+	// introduce any inconsistencies
+
+	// TOOD: this is rather inefficient, O(n*m), we scan through the entire mempool for each stateID
+	//       1) refactor to record the relevant part of the StateTree before we call RevertTo(), allowing
+	//          us to directly compare the result of applying these transactions to the previous batched state
+	//       or maybe:
+	//       2) refactor to allow us to apply transactions to an in-memory pending state which we can compare to
+	//          the badger pending state
+
+	for stateID := range expectedNonces {
+		alreadyHadState, err := s.hasPendingState(stateID)
+		if err != nil {
+			return err
+		}
+		if !alreadyHadState {
+			// there does not exist a pending state for us to compare our new answer to
+			// we ought to compare the state with what it was before StateTree.RevertTo() was called,
+			// but it's too late now.
+			// TODO: better validation here
+			continue
+		}
+
+		doNotMutate := false
+		recomputedState, err := s.unsafeRecomputePendingState(stateID, doNotMutate)
+		if err != nil {
+			return err
+		}
+
+		if recomputedState.OldNonce.Uint64() != recomputedState.NewNonce.Uint64() {
+			return errors.Errorf(
+				"batched transactions did not cleanly apply stateID=%d expectedNonce=%d newNonce=%d",
+				stateID,
+				recomputedState.OldNonce.Uint64(),
+				recomputedState.NewNonce.Uint64(),
+			)
+		}
+
+		if recomputedState.OldBalance != recomputedState.NewBalance {
+			return errors.Errorf(
+				"batched transactions did not cleanly apply stateID=%d expectedBalance=%d newBalance=%d",
+				stateID,
+				recomputedState.OldBalance.Uint64(),
+				recomputedState.NewBalance.Uint64(),
+			)
+		}
+	}
+
+	return nil
+}
+
 // does not return the full list of states, only the pending c2ts
 func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserState, error) {
 	result := make([]models.UserState, 0)
@@ -201,6 +308,7 @@ func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserS
 
 	accounts, err := s.AccountTree.Leaves(pubkey)
 	if err == nil && len(accounts) > 0 {
+
 		// TODO: is this lookup really the right thing to do?
 		pubKeyID = accounts[0].PubKeyID
 	}
@@ -250,67 +358,71 @@ func (s *Storage) AddMempoolTx(tx models.GenericTransaction) error {
 	})
 }
 
-// - assumes we are currently inside a transaction
-// - checks that the txn cleanly applies to the pending state but assumes all other
-//   validation has already been done (e.g. the signature check)
-func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
-	// (I) Validate the txn against the pending state
-
+func applyTxToState(ps PendingState, tx models.GenericTransaction) error {
 	fromStateID := tx.GetFromStateID()
 
-	pendingNonce, pendingBalance, err := s.getPendingState(fromStateID)
+	state, err := ps.GetPendingState(fromStateID)
 	if err != nil {
 		return err
 	}
 
 	txNonce := tx.GetNonce()
-	if txNonce.Cmp(pendingNonce) != 0 {
-		return errors.WithStack(
-			fmt.Errorf(
-				// TODO: how do we format this?
-				// TODO: how do we support errors.Is ?
-				//       you can fmt.Errorf("%v") to wrap the sentinel
-				"expected nonce %d, received nonce %d",
-				pendingNonce, txNonce.Uint64(),
-			),
+	if txNonce.Cmp(&state.Nonce) != 0 {
+		return errors.Wrapf(
+			ErrUnexpectedNonce,
+			"expected=%d, received=%d (stateID=%d)",
+			state.Nonce.Uint64(), txNonce.Uint64(),
+			fromStateID,
 		)
 	}
 
 	txAmount := tx.GetAmount()
 	txFee := tx.GetFee()
 	txTotal := (&txAmount).Add(&txFee)
-	if pendingBalance.Cmp(txTotal) < 0 {
-		return errors.WithStack(ErrBalanceTooLow)
+
+	helper := &StateHelper{ps}
+
+	err = helper.BalanceSub(fromStateID, txTotal)
+	if err != nil {
+		return err
 	}
 
-	// (II) Update the pending state
-
-	// TODO: also update the pending state of the fee receiver!
-
-	newPendingBalance := pendingBalance.Sub(txTotal)
-
-	one := models.MakeUint256(1)
-	newPendingNonce := pendingNonce.Add(&one)
-
-	err = s.UnsafeSetPendingState(fromStateID, *newPendingNonce, *newPendingBalance)
+	err = helper.NonceIncr(fromStateID)
 	if err != nil {
 		return err
 	}
 
 	if tx.Type() == txtype.Transfer {
 		toStateID := *tx.GetToStateID() // will not panic, transfers have this
-		err = s.addToPendingBalance(toStateID, &txAmount)
+		err = helper.BalanceAdd(toStateID, &txAmount)
 		if err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+// - assumes we are currently inside a transaction
+// - checks that the txn cleanly applies to the pending state but assumes all other
+//   validation has already been done (e.g. the signature check)
+func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
+
+	bps := MakeBadgerPendingState(s)
+	err := applyTxToState(bps, tx)
+	if err != nil {
+		return err
+	}
+
 	// (III) Add the received transaction to the relevant queue
-
 	pendingTx := stored.NewPendingTx(tx)
-	txKey := pendingTxKey(fromStateID, pendingNonce.Uint64())
+	return s.UnsafeInsertPendingTx(pendingTx)
+}
 
-	_, err = s.rawLookup(txKey)
+func (s *Storage) UnsafeInsertPendingTx(tx *stored.PendingTx) error {
+	txKey := pendingTxKey(tx.FromStateID, tx.Nonce.Uint64())
+
+	_, err := s.rawLookup(txKey)
 	if err == nil {
 		return errors.WithStack(fmt.Errorf("cannot replace transactions"))
 	}
@@ -318,7 +430,7 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 		return err
 	}
 
-	return s.rawSet(txKey, pendingTx.Bytes())
+	return s.rawSet(txKey, tx.Bytes())
 }
 
 /// These are used by the rollup loop:
@@ -480,6 +592,51 @@ func (s *Storage) FindOldestMempoolTransaction(txType txtype.TransactionType) (*
 	}
 }
 
+func (s *Storage) DiffPendingStateMaps(old map[uint32]dto.PendingState, new map[uint32]dto.PendingState) ([]dto.PendingStateDiff, error) {
+	result := make([]dto.PendingStateDiff, 0)
+
+	for stateID, state := range old {
+		state := state // the loop variable is reused, this copy stays on the heap
+		newState, present := new[stateID]
+		if present {
+			if state != newState {
+				result = append(result, dto.PendingStateDiff{
+					StateID:    stateID,
+					OldNonce:   &state.Nonce,
+					OldBalance: &state.Balance,
+					NewNonce:   &newState.Nonce,
+					NewBalance: &newState.Balance,
+				})
+			}
+		} else {
+			result = append(result, dto.PendingStateDiff{
+				StateID:    stateID,
+				OldNonce:   &state.Nonce,
+				OldBalance: &state.Balance,
+				NewNonce:   nil,
+				NewBalance: nil,
+			})
+		}
+	}
+
+	for stateID, state := range new {
+		_, present := old[stateID]
+		if present {
+			continue
+		}
+
+		result = append(result, dto.PendingStateDiff{
+			StateID:    stateID,
+			OldNonce:   nil,
+			OldBalance: nil,
+			NewNonce:   &state.Nonce,
+			NewBalance: &state.Balance,
+		})
+	}
+
+	return result, nil
+}
+
 // fetches, for each account with a pending tx, the pending tx with the lowest nonce
 func (s *Storage) lowestNoncePendingTxs() ([]stored.PendingTx, error) {
 	result := make([]stored.PendingTx, 0)
@@ -570,6 +727,176 @@ func (s *Storage) GetPendingStates(startStateID, pageSize uint32) (
 		return innerErr
 	})
 	return result, err
+}
+
+// this method is very likely to break the database, and should only be called
+// when the database is already broken and needs to be manually fixed
+func (s *Storage) MempoolDropTransaction(stateID, nonce uint32) error {
+	key := pendingTxKey(stateID, uint64(nonce))
+	return s.rawDelete(key)
+}
+
+// this function is called when we have synced a previously-unknown batch. We have already verified
+// the batch and applied it to our StateTree, now we need to adjust the mempool and pending state to
+// the new reality that {txs} are now canonical. This involves:
+// - for all (stateID, nonce) pairs in {txs}, removing the matching tx, if any, from the mempool
+// - recomputing the pending state by rerunning all mempool transactions
+func (s *Storage) MempoolDropBatchedTransactions(txs []stored.BatchedTx) error {
+	// TODO: open a transaction
+	//       (I) make sure it locks out the API (we will recompute the pending state)
+	//       (II) make sure it locks out the rollup loop (we will pop from the front of the mempool)
+
+	// for each (stateID, nonce) in these newly accepted transactions we should evict any matching
+	// transactions in our mempool
+
+	shouldRecomputePendingState := false
+
+	for i := range txs {
+		tx := txs[i]
+		stateID, nonce := tx.FromStateID, tx.Nonce.Uint64()
+		key := pendingTxKey(stateID, nonce)
+
+		log.WithFields(log.Fields{
+			"FromStateID": stateID,
+			"Nonce":       nonce,
+		}).Debug("considering a batched tx")
+
+		mempoolTxBytes, err := s.rawLookup(key)
+		if err != nil && errors.Is(err, badger.ErrKeyNotFound) {
+			log.WithFields(log.Fields{
+				"FromStateID": tx.FromStateID,
+				"Nonce":       tx.Nonce.Uint64(),
+				"Hash":        tx.Hash.String(),
+			}).Info("synced a never-before-seen tx from a batch")
+			shouldRecomputePendingState = true
+			continue
+		} else if err == nil {
+			var mempoolTx stored.PendingTx
+			err = mempoolTx.SetBytes(mempoolTxBytes)
+			if err != nil {
+				// TODO: this stack is not supposed to be necessary (we're calling our own code), but parts of
+				// this path do not yet include stacks for us
+				return errors.WithStack(err)
+			}
+
+			if tx.Hash != mempoolTx.Hash {
+				log.WithFields(log.Fields{
+					"FromStateID": tx.FromStateID,
+					"Nonce":       tx.Nonce.Uint64(),
+					"BatchedHash": tx.Hash.String(),
+					"MempoolHash": mempoolTx.Hash.String(),
+				}).Info("evicting an orphan transaction from the mempool")
+				shouldRecomputePendingState = true
+			} else {
+				// the batch contains exactly the expected tx, no need to spam the log
+			}
+		} else {
+			return err
+		}
+
+		err = s.rawDelete(key)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !shouldRecomputePendingState {
+		return nil
+	}
+
+	oldStateMap, err := MakeBadgerPendingState(s).AsMap()
+	if err != nil {
+		return err
+	}
+
+	// (I) construct a MemoryPendingState using the oldStateMap
+	// (II) for every mempool tx, attempt to apply it to the MemoryPendingState
+	//      - if a tx fails to apply then log an error and throw it away
+	// (III) now diff the newly created state against the old
+	// (IV) finally: write the newly created state to badger
+
+	// TODO: recompute the pending state and save changes
+	// the current architecture is extremely dumb
+
+	// we would like to rerun every mempool transaction against the current state
+	//  this this requires first clearing the pending state?
+
+	// I really don't want to write the "apply a txn" logic a third time...
+	// Currently we apply txns:
+	// - in unsafeRecomputePendingState
+	// - in unsafeAddMempoolTx
+	// - in txIsExecutable (kind of, here we use knowledge of how application works)
+
+	mps := MakeMemoryPendingState(s)
+
+	for stateID := range oldStateMap {
+		// this loop ensures our new pending state contains an entry for every account which might have
+		// been changed by these transactions, not just the accounts which have more txns in the mempool
+		_, err := mps.GetPendingState(stateID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = s.forEachMempoolTransaction(func(tx *stored.PendingTx) error {
+		genericTx := tx.ToGenericTransaction()
+
+		innerErr := applyTxToState(mps, genericTx)
+		if innerErr != nil {
+			// TODO: this is a problem, the new batch has invalidated previous transactions!
+			//       the user's wallet is showing a state which will never be reached
+			//       instead of quitting we should skip this tx and continue, marking the stateID
+			//       for manual recovery
+			return innerErr
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	newStateMap, err := mps.AsMap()
+	if err != nil {
+		return err
+	}
+
+	stateDiff, err := s.DiffPendingStateMaps(oldStateMap, newStateMap)
+	if err != nil {
+		return err
+	}
+	for i := range stateDiff {
+		diff := stateDiff[i]
+
+		fields := log.Fields{"StateID": diff.StateID}
+
+		if diff.OldNonce != nil {
+			fields["OldNonce"] = diff.OldNonce.Uint64()
+		}
+
+		if diff.OldBalance != nil {
+			fields["OldBalance"] = diff.OldBalance.Uint64()
+		}
+
+		if diff.NewNonce != nil {
+			fields["NewNonce"] = diff.NewNonce.Uint64()
+		}
+
+		if diff.NewBalance != nil {
+			fields["NewBalance"] = diff.NewBalance.Uint64()
+		}
+
+		log.WithFields(fields).Warn("synced batch caused changes to the mempool")
+	}
+
+	// finally we commit our changes
+
+	badgerPendingState := MakeBadgerPendingState(s)
+	for stateID, state := range newStateMap {
+		badgerPendingState.SetPendingState(stateID, state)
+	}
+
+	return nil
 }
 
 func (s *Storage) unsafeGetPendingStates(startStateID, pageSize uint32) (

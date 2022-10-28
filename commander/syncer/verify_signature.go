@@ -4,6 +4,8 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -29,10 +31,11 @@ func (c *TxsContext) verifyTxSignature(commitment *encoder.DecodedCommitment, tx
 		}
 	}
 
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
+	return c.verifyCommitmentSignature(commitment, &commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
 func (c *TxsContext) verifyCommitmentSignature(
+	commitment *encoder.DecodedCommitment,
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -52,6 +55,12 @@ func (c *TxsContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
+		if commitment.ID.BatchID.CmpN(2875) == 0 {
+			// HACK: our transactions were reordered so the chain received the wrong pubkeys for this batch
+			logrus.Error("skipping invalid sig for batch 2875")
+			return nil
+		}
+
 		return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
 	}
 	return nil
@@ -62,7 +71,7 @@ func (c *TxsContext) createDisputableSignatureError(reason string, txs models.Ge
 	if proofErr != nil {
 		return proofErr
 	}
-	return NewDisputableErrorWithProofs(Signature, reason, proofs)
+	return errors.WithStack(NewDisputableErrorWithProofs(Signature, reason, proofs))
 }
 
 func (c *TxsContext) StateMerkleProofs(txs models.GenericTransactionArray) ([]models.StateMerkleProof, error) {

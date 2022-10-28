@@ -83,3 +83,4 @@ linters:
 run:
   skip-dirs:
     - hubble-contracts
+    - e2e/geth-data/geth

@@ -58,13 +58,12 @@ func (s *StoredTransactionTestSuite) TearDownTest() {
 }
 
 func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
-	// this test fails and it should fail because the current behavior is a bug,
-	// transactions should be put back into the mempool when a batch reverts
-	s.T().Skip()
+	// this test checks that we can return batched transactions to the mempool
 
 	txs := make([]models.Transfer, 2)
 	for i := 0; i < len(txs); i++ {
 		txs[i] = transfer
+		txs[i].Nonce = models.MakeUint256(uint64(i))
 		txs[i].Hash = utils.RandomHash()
 		txs[i].CommitmentSlot = &models.CommitmentSlot{
 			BatchID:           models.MakeUint256(5),
@@ -75,9 +74,12 @@ func (s *StoredTransactionTestSuite) TestMarkTransactionsAsPending() {
 		s.NoError(err)
 	}
 
-	err := s.storage.MarkTransactionsAsPending([]models.CommitmentSlot{
-		*txs[0].CommitmentSlot, *txs[1].CommitmentSlot},
-	)
+	batchedTxs, err := s.storage.DeleteBatchedTxs([]models.CommitmentSlot{
+		*txs[0].CommitmentSlot, *txs[1].CommitmentSlot,
+	})
+	s.NoError(err)
+
+	err = s.storage.UnbatchTransactions(batchedTxs)
 	s.NoError(err)
 
 	for i := range txs {
@@ -173,7 +175,11 @@ func (s *StoredTransactionTestSuite) TestGetTransactionCount() {
 	count := s.storage.GetTransactionCount()
 	s.EqualValues(3, count)
 
-	err = s.storage.MarkTransactionsAsPending([]models.CommitmentSlot{*transferInCommitment.CommitmentSlot})
+	batchedTxs, err := s.storage.DeleteBatchedTxs([]models.CommitmentSlot{
+		*transferInCommitment.CommitmentSlot,
+	})
+	s.NoError(err)
+	err = s.storage.UnbatchTransactions(batchedTxs)
 	s.NoError(err)
 	storageCount, err = s.storage.getTransactionCount()
 	s.NoError(err)

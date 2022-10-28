@@ -3,6 +3,7 @@ package eth
 import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/pkg/errors"
 )
 
 func (c *Client) GetDomain() (*bls.Domain, error) {
@@ -12,7 +13,7 @@ func (c *Client) GetDomain() (*bls.Domain, error) {
 
 	domainSeparator, err := c.Rollup.DomainSeparator(&bind.CallOpts{})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	domain := bls.Domain(domainSeparator)
 	c.domain = &domain

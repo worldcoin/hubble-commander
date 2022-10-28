@@ -1,4 +1,4 @@
-package executor
+package storage
 
 import (
 	"github.com/Worldcoin/hubble-commander/models"
@@ -6,16 +6,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (c *ExecutionContext) RevertBatches(startBatch *models.Batch) error {
-	err := c.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
+func (s *Storage) RevertBatches(startBatch *models.Batch) error {
+	err := s.StateTree.RevertTo(*startBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}
-	return c.revertBatchesFrom(&startBatch.ID)
+	return s.revertBatchesFrom(&startBatch.ID)
 }
 
-func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error {
-	batches, err := c.storage.GetBatchesInRange(startBatchID, nil)
+func (s *Storage) revertBatchesFrom(startBatchID *models.Uint256) error {
+	batches, err := s.GetBatchesInRange(startBatchID, nil)
 	if err != nil {
 		return err
 	}
@@ -24,26 +24,26 @@ func (c *ExecutionContext) revertBatchesFrom(startBatchID *models.Uint256) error
 	for i := range batches {
 		batchIDs = append(batchIDs, batches[i].ID)
 	}
-	err = c.revertCommitments(batches)
+	err = s.revertCommitments(batches)
 	if err != nil {
 		return err
 	}
-	err = c.storage.RemoveCommitmentsByBatchIDs(batchIDs...)
+	err = s.RemoveCommitmentsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
 	logrus.Debugf("Removing %d local batches", len(batches))
-	return c.storage.RemoveBatches(batchIDs...)
+	return s.RemoveBatches(batchIDs...)
 }
 
-func (c *ExecutionContext) revertCommitments(batches []models.Batch) error {
+func (s *Storage) revertCommitments(batches []models.Batch) error {
 	txBatchIDs := make([]models.Uint256, 0, len(batches))
 	for i := range batches {
 		switch batches[i].Type {
 		case batchtype.Transfer, batchtype.Create2Transfer, batchtype.MassMigration:
 			txBatchIDs = append(txBatchIDs, batches[i].ID)
 		case batchtype.Deposit:
-			err := c.revertDepositCommitment(batches[i].ID)
+			err := s.revertDepositCommitment(batches[i].ID)
 			if err != nil {
 				return err
 			}
@@ -51,11 +51,11 @@ func (c *ExecutionContext) revertCommitments(batches []models.Batch) error {
 			panic("batch types not supported")
 		}
 	}
-	return c.excludeTransactionsFromCommitment(txBatchIDs...)
+	return s.excludeTransactionsFromCommitment(txBatchIDs...)
 }
 
-func (c *ExecutionContext) revertDepositCommitment(batchID models.Uint256) error {
-	commitment, err := c.storage.GetCommitment(&models.CommitmentID{
+func (s *Storage) revertDepositCommitment(batchID models.Uint256) error {
+	commitment, err := s.GetCommitment(&models.CommitmentID{
 		BatchID:      batchID,
 		IndexInBatch: 0,
 	})
@@ -64,14 +64,14 @@ func (c *ExecutionContext) revertDepositCommitment(batchID models.Uint256) error
 	}
 
 	depositCommitment := commitment.ToDepositCommitment()
-	return c.storage.AddPendingDepositSubtree(&models.PendingDepositSubtree{
+	return s.AddPendingDepositSubtree(&models.PendingDepositSubtree{
 		ID:       depositCommitment.SubtreeID,
 		Root:     depositCommitment.SubtreeRoot,
 		Deposits: depositCommitment.Deposits,
 	})
 }
 
-func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
+func (s *Storage) excludeTransactionsFromCommitment(batchIDs ...models.Uint256) error {
 	if len(batchIDs) == 0 {
 		return nil
 	}
@@ -81,14 +81,18 @@ func (c *ExecutionContext) excludeTransactionsFromCommitment(batchIDs ...models.
 		logIDs = append(logIDs, batchID.Uint64())
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"hubble.batches": logIDs,
-	}).Error("Rolling back batches, transactions not returned to the mempool")
-
-	slots, err := c.storage.GetTransactionIDsByBatchIDs(batchIDs...)
+	// TODO: confirm this returns transactions from oldest to newest,
+	//       even when we are reverting multiple batches
+	slots, err := s.GetTransactionIDsByBatchIDs(batchIDs...)
 	if err != nil {
 		return err
 	}
 
-	return c.storage.MarkTransactionsAsPending(slots)
+	// TODO: confirm these are recieved in the correct order
+
+	batchedTxs, err := s.DeleteBatchedTxs(slots)
+	if err != nil {
+		return err
+	}
+	return s.UnbatchTransactions(batchedTxs)
 }

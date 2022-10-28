@@ -3,6 +3,7 @@ package syncer
 import (
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	st "github.com/Worldcoin/hubble-commander/storage"
 	"github.com/ethereum/go-ethereum/common"
 	log "github.com/sirupsen/logrus"
@@ -105,6 +106,19 @@ func (c *TxsContext) addTxs(txs models.GenericTransactionArray, commitmentID *mo
 	log.WithFields(log.Fields{
 		"commitmentID": commitmentID,
 	}).Errorf("Unimplemented: synced transactions not removed from mempool.")
+
+	batchedTxs := make([]stored.BatchedTx, 0)
+	for i := 0; i < txs.Len(); i++ {
+		batchedTxs = append(batchedTxs, *stored.NewBatchedTx(txs.At(i)))
+	}
+
+	err := c.storage.MempoolDropBatchedTransactions(batchedTxs)
+	if err != nil {
+		return err
+	}
+
+	// the below is going to add each of these batched transactions and should only fail
+	// if for some reason the txs were already batched
 
 	return c.storage.BatchUpsertTransaction(txs)
 }

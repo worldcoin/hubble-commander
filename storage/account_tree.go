@@ -144,6 +144,50 @@ func (s *AccountTree) unsafeSet(leaf *models.AccountLeaf) (models.Witness, error
 	return witness, nil
 }
 
+// this function should be called in extremely few circumstances,
+// it is very likely to desync us with the chain and was created
+// to allow us to manually fix our local state when we have already
+// desynced with the chain
+func (s *AccountTree) UnsafeReset(pubKeyID uint32, pubKey *models.PublicKey) (*models.PublicKey, error) {
+	var oldLeaf models.AccountLeaf
+	var oldPubKey *models.PublicKey = nil
+
+	err := s.database.Badger.Get(pubKeyID, &oldLeaf)
+	if err != nil && !errors.Is(err, bh.ErrNotFound) {
+		return nil, err
+	} else if err == nil {
+		oldPubKey = &oldLeaf.PublicKey
+	}
+
+	var dataHash common.Hash
+	if pubKey == nil {
+		err := s.database.Badger.Delete(pubKeyID, models.AccountLeaf{})
+		if err != nil {
+			return nil, err
+		}
+
+		dataHash = merkletree.GetZeroHash(0)
+	} else {
+		err := s.database.Badger.Upsert(pubKeyID, models.AccountLeaf{
+			PubKeyID:  pubKeyID,
+			PublicKey: *pubKey,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		dataHash = crypto.Keccak256Hash(pubKey.Bytes())
+	}
+
+	path := models.MakeMerklePathFromLeafID(pubKeyID)
+	_, _, err = s.merkleTree.SetNode(&path, dataHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return oldPubKey, nil
+}
+
 func (s *AccountTree) NextBatchAccountPubKeyID() (*uint32, error) {
 	nextPubKeyID := uint32(AccountBatchOffset)
 	err := s.database.Badger.Iterator(models.AccountLeafPrefix, db.ReverseKeyIteratorOpts, func(item *bdg.Item) (finish bool, err error) {
@@ -182,6 +226,7 @@ func (s *AccountTree) IterateLeaves(action func(stateLeaf *models.AccountLeaf) e
 	return nil
 }
 
+// TODO: rename to isNotValidBatchAccount
 func isValidBatchAccount(leaf *models.AccountLeaf) bool {
 	return leaf.PubKeyID < AccountBatchOffset || leaf.PubKeyID > rightSubtreeMaxValue
 }

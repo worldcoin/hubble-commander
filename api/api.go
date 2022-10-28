@@ -109,7 +109,7 @@ func getAPIServer(
 		isMigrating:             isMigrating,
 	}
 	if err := hubbleAPI.initSignature(); err != nil {
-		return nil, errors.WithMessage(err, "failed to create mock signature")
+		return nil, errors.Wrap(err, "failed to create mock signature")
 	}
 
 	adminAPI := admin.NewAPI(cfg, storage, client, enableBatchCreation, hubbleAPI.enableTxsAcceptance)

@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -88,6 +89,8 @@ func packAndRequest(
 		attribute.String("hubble.method", qualifiedName),
 	)
 	span.SetAttributes(attributes...)
+
+	logrus.WithFields(logrus.Fields{"method": qualifiedName}).Debug("sending tx to chain")
 
 	responseChan := make(chan SendResponse, 1)
 	txsChannels.Requests <- &TxSendingRequest{
