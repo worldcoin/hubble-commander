@@ -28,6 +28,9 @@ type MockHubble struct {
 	mock.Mock
 }
 
+// TODO: this mock caused a test to fail because it returned pending transactions
+//       even though the API returns batched transactions. This should not be
+//       a mock, we should run and talk to a second commander.
 func (m *MockHubble) GetPendingBatches() ([]dto.PendingBatch, error) {
 	args := m.Called()
 	return args.Get(0).([]dto.PendingBatch), args.Error(1)
@@ -123,12 +126,16 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsBatches() {
 	hubble.On(getPendingTransactionsMethod).Return(models.TransferArray{}, nil)
 	hubble.On(getFailedTransactionsMethod).Return(models.TransferArray{}, nil)
 
-	err := s.cmd.migrateCommanderData(hubble)
-	s.NoError(err)
-
 	leaf, err := s.storage.StateTree.Leaf(1)
 	s.NoError(err)
-	s.EqualValues(200, leaf.Balance.Uint64())
+	s.EqualValues(uint64(200), leaf.Balance.Uint64())
+
+	err = s.cmd.migrateCommanderData(hubble)
+	s.NoError(err)
+
+	leaf, err = s.storage.StateTree.Leaf(1)
+	s.NoError(err)
+	s.EqualValues(400, leaf.Balance.Uint64()) // we're sending it 200
 }
 
 func (s *MigrateTestSuite) TestMigrateCommanderData_SyncsPendingTransactions() {
@@ -177,6 +184,19 @@ func (s *MigrateTestSuite) TestMigrateCommanderData_AddsPendingTransactionsToMem
 }
 
 func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.PendingBatch {
+	commitmentID := models.CommitmentID{
+		BatchID:      models.MakeUint256(batchID),
+		IndexInBatch: 0,
+	}
+
+	for i := 0; i < txs.Len(); i++ {
+		txs.At(i).GetBase().CommitmentSlot = &models.CommitmentSlot{
+			BatchID:           models.MakeUint256(batchID),
+			IndexInBatch:      0,
+			IndexInCommitment: uint8(i),
+		}
+	}
+
 	return dto.PendingBatch{
 		ID:              models.MakeUint256(batchID),
 		Type:            batchtype.Transfer,
@@ -186,10 +206,7 @@ func makePendingBatch(batchID uint64, txs models.GenericTransactionArray) dto.Pe
 			{
 				Commitment: &models.TxCommitment{
 					CommitmentBase: models.CommitmentBase{
-						ID: models.CommitmentID{
-							BatchID:      models.MakeUint256(batchID),
-							IndexInBatch: 0,
-						},
+						ID:            commitmentID,
 						Type:          batchtype.Transfer,
 						PostStateRoot: utils.RandomHash(),
 					},
