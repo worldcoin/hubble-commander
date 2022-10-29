@@ -7,18 +7,6 @@ env:
   IMAGE_ID: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
 jobs:
-  lint:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.45.2
-          args: --timeout 5m --build-tags hardhat,e2e
-          skip-build-cache: true
-          skip-pkg-cache: true
   test-on-hardhat:
     runs-on: ubuntu-20.04
     steps:
