@@ -6,6 +6,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/require"
@@ -74,6 +75,15 @@ func (s *MempoolTestSuite) TestMempool_UsesPendingBalance() {
 	s.ErrorContains(err, "balance too low")
 
 	transfer = testutils.NewTransfer(1, 2, 0, 10)
+	err = s.storage.AddMempoolTx(transfer)
+	s.NoError(err)
+
+	// we have 10 but this txn also pays a fee of 10 so it still fails
+	transfer = testutils.NewTransfer(2, 1, 0, 10)
+	err = s.storage.AddMempoolTx(transfer)
+	s.ErrorContains(err, "balance too low")
+
+	transfer = testutils.NewTransfer(1, 2, 1, 10)
 	err = s.storage.AddMempoolTx(transfer)
 	s.NoError(err)
 
@@ -223,6 +233,11 @@ func (s *ConflictTestSuite) TestConflict_ConflictsWithGet() {
 	s.ErrorIs(err, badger.ErrConflict)
 }
 
+// now, confirm that there is no conflict even if the rollup loop has "read" the key.
+// in TestConflict_ConflictsWithGet we saw that a call to `rawLookup` in the rollup loop
+// will cause a conflict to occur. Here we throw a transaction into the mempool which is not
+// executable (the balance is too low) and check that the rollup builds a batch which correctly
+// excludes the transaction without causing a conflict.
 func (s *ConflictTestSuite) TestConflict_NoConflict() {
 	transfer := testutils.NewTransfer(1, 2, 0, 10)
 	err := s.apiStorage.AddMempoolTx(transfer)
@@ -231,8 +246,18 @@ func (s *ConflictTestSuite) TestConflict_NoConflict() {
 	// stateID=2 starts with a balance of 0 so this transaction is not
 	// executable
 	transfer = testutils.NewTransfer(2, 1, 0, 10)
-	err = s.apiStorage.AddMempoolTx(transfer)
-	s.NoError(err)
+	{
+		// go through some hoops to insert the transaction because the normal
+		// code paths very much so do not want to accept transactions which the
+		// user does not have enough funds to pay for
+		pending := stored.NewPendingTx(transfer)
+		key := pendingTxKey(2, 0)
+		err = s.apiStorage.rawSet(key, pending.Bytes())
+		s.NoError(err)
+
+		err = s.apiStorage.UnsafeSetPendingState(2, models.MakeUint256(1), models.MakeUint256(0))
+		s.NoError(err)
+	}
 
 	// (I)   we start the rollupTx
 
@@ -257,6 +282,7 @@ func (s *ConflictTestSuite) TestConflict_NoConflict() {
 	s.Equal(uint32(1), firstTx.GetFromStateID())
 
 	// this attempts to read out txns from both accounts
+	//  this is the line which will cause a conflict if mempool contains a bug
 	err = mempoolHeap.DropHighestFeeExecutableTx()
 	s.NoError(err)
 	err = mempoolHeap.Savepoint()
@@ -264,7 +290,7 @@ func (s *ConflictTestSuite) TestConflict_NoConflict() {
 
 	// (IV)  we insert some new txns from the api
 
-	transfer = testutils.NewTransfer(1, 2, 1, 10)
+	transfer = testutils.NewTransfer(1, 2, 1, 40)
 	err = txAPIStorage.AddMempoolTx(transfer)
 	s.NoError(err)
 
