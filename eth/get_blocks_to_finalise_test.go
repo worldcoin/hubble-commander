@@ -3,6 +3,7 @@ package eth
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -28,7 +29,9 @@ func (s *GetBlocksToFinaliseTestSuite) TearDownTest() {
 }
 
 func (s *GetBlocksToFinaliseTestSuite) TestGetBlocksToFinalise() {
-	expected := int64(40320)
+	expected := int64(5760)
+	s.Equal(expected, int64(config.DefaultBlocksToFinalise))
+
 	blocksToFinalise, err := s.client.GetBlocksToFinalise()
 	s.NoError(err)
 	s.Equal(expected, *blocksToFinalise)
