@@ -43,7 +43,7 @@ func TestTestDB_Prune(t *testing.T) {
 
 	var res someStruct
 	err = bdg.DB.Get(testStruct.Name, &res)
-	require.Equal(t, bh.ErrNotFound, err)
+	require.ErrorIs(t, err, bh.ErrNotFound)
 }
 
 func TestTestDB_Clone(t *testing.T) {
