@@ -149,11 +149,8 @@ func (s *testSuiteWithContexts) submitBatch(tx models.GenericTransaction) *model
 }
 
 func (s *testSuiteWithContexts) addTxs(txs models.GenericTransactionArray) {
-	err := s.disputeCtx.storage.BatchAddTransaction(txs)
-	s.NoError(err)
-
 	for i := 0; i < txs.Len(); i++ {
-		err = s.disputeCtx.storage.AddMempoolTx(txs.At(i))
+		err := s.disputeCtx.storage.AddMempoolTx(txs.At(i))
 		s.NoError(err)
 	}
 }

@@ -162,8 +162,6 @@ func (s *syncTestSuite) createBatch(tx models.GenericTransaction) (*models.Batch
 }
 
 func (s *syncTestSuite) addTx(tx models.GenericTransaction) {
-	err := s.storage.AddTransaction(tx)
-	s.NoError(err)
-	err = s.storage.AddMempoolTx(tx)
+	err := s.storage.AddMempoolTx(tx)
 	s.NoError(err)
 }
