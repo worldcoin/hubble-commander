@@ -26,7 +26,9 @@ import (
 /// These are used by the API
 
 var pendingStatePrefix = []byte("PendingAccountState")
+var pendingPubkeyBalancePrefix = []byte("PendingPubKeyBalance")
 var pendingTxPrefix = []byte("PendingTxs")
+var migratedPubkeyStatePrefix = []byte("migration:PubKeyPendingState")
 
 var ErrBalanceTooLow = fmt.Errorf("balance too low")
 
@@ -58,6 +60,13 @@ func pendingStateKey(stateID uint32) []byte {
 
 	return bytes.Join(
 		[][]byte{pendingStatePrefix, encodedStateID},
+		[]byte(":"),
+	)
+}
+
+func pendingPubkeyBalanceKey(pubkey *models.PublicKey) []byte {
+	return bytes.Join(
+		[][]byte{pendingStatePrefix, pubkey[:]},
 		[]byte(":"),
 	)
 }
@@ -105,6 +114,20 @@ func (s *Storage) rawLookup(key []byte) (value []byte, err error) {
 	return value, err
 }
 
+func (s *Storage) hasKey(key []byte) (bool, error) {
+	_, err := s.rawLookup(key)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, badger.ErrKeyNotFound) {
+		return false, nil
+	}
+
+	return false, err
+}
+
 func (s *Storage) rawSet(key, value []byte) error {
 	return s.database.Badger.RawUpdate(func(txn *badger.Txn) error {
 		err := txn.Set(key, value)
@@ -113,6 +136,18 @@ func (s *Storage) rawSet(key, value []byte) error {
 		}
 		return nil
 	})
+}
+
+func (s *Storage) alreadyRanPubKeyMigration() (bool, error) {
+	alreadyMigrated, err := s.hasKey(migratedPubkeyStatePrefix)
+	if err != nil {
+		return false, err
+	}
+	return alreadyMigrated, nil
+}
+
+func (s *Storage) markRanPubKeyMigration() error {
+	return s.rawSet(migratedPubkeyStatePrefix, []byte("true"))
 }
 
 // It is possible that the account does not exist in our pending state and also does not
@@ -144,6 +179,34 @@ func (s *Storage) getPendingState(stateID uint32) (
 	}
 
 	return nil, nil, err
+}
+
+func (s *Storage) setPendingPubkeyBalance(pubkey *models.PublicKey, balance *models.Uint256) error {
+	key := pendingPubkeyBalanceKey(pubkey)
+	return s.rawSet(key, balance.Bytes())
+}
+
+func (s *Storage) getPendingPubkeyBalance(pubkey *models.PublicKey) (*models.Uint256, error) {
+	key := pendingPubkeyBalanceKey(pubkey)
+	value, err := s.rawLookup(key)
+	if err != nil {
+		return nil, err
+	}
+
+	var balance models.Uint256
+	balance.SetBytes(value)
+
+	return &balance, nil
+}
+
+func (s *Storage) addToPendingPubkeyBalance(pubkey *models.PublicKey, amount *models.Uint256) error {
+	balance, err := s.getPendingPubkeyBalance(pubkey)
+	if err != nil {
+		return err
+	}
+
+	newBalance := balance.Add(amount)
+	return s.setPendingPubkeyBalance(pubkey, newBalance)
 }
 
 // this is public so tests can call it, nobody else should call it.
@@ -193,17 +256,16 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 	}, nil
 }
 
-// does not return the full list of states, only the pending c2ts
-func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserState, error) {
-	result := make([]models.UserState, 0)
-
-	pubKeyID := consts.PendingID
-
-	accounts, err := s.AccountTree.Leaves(pubkey)
-	if err == nil && len(accounts) > 0 {
-		// TODO: is this lookup really the right thing to do?
-		pubKeyID = accounts[0].PubKeyID
+func (s *Storage) MigratePubKeyPendingState() error {
+	alreadyMigrated, err := s.alreadyRanPubKeyMigration()
+	if err != nil {
+		return err
 	}
+	if alreadyMigrated {
+		return nil
+	}
+
+	keyBalances := make(map[models.PublicKey]*models.Uint256)
 
 	err = s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
 		if pendingTx.TxType != txtype.Create2Transfer {
@@ -211,24 +273,50 @@ func (s *Storage) GetPendingUserStates(pubkey *models.PublicKey) ([]models.UserS
 		}
 
 		c2t := pendingTx.ToCreate2Transfer()
-		if c2t.ToPublicKey != *pubkey {
-			return nil
+		balance, present := keyBalances[c2t.ToPublicKey]
+		if !present {
+			keyBalances[c2t.ToPublicKey] = &c2t.Amount
+		} else {
+			keyBalances[c2t.ToPublicKey] = balance.Add(&c2t.Amount)
 		}
-
-		result = append(result, models.UserState{
-			PubKeyID: pubKeyID,
-			TokenID:  models.MakeUint256(0),
-			Balance:  c2t.Amount,
-			Nonce:    models.MakeUint256(0),
-		})
 
 		return nil
 	})
 	if err != nil {
+		return err
+	}
+
+	for pubKey, balance := range keyBalances {
+		s.setPendingPubkeyBalance(&pubKey, balance)
+	}
+
+	return s.markRanPubKeyMigration()
+}
+
+// does not return the full list of states, only the pending c2ts
+func (s *Storage) GetPendingC2TState(pubkey *models.PublicKey) (*models.UserState, error) {
+	pubKeyID := consts.PendingID
+
+	// TODO: pull this pubKeyId lookup into a function and use it the other places we do this
+	accounts, err := s.AccountTree.Leaves(pubkey)
+	if err == nil && len(accounts) > 0 {
+		pubKeyID = accounts[0].PubKeyID
+	}
+
+	balance, err := s.getPendingPubkeyBalance(pubkey)
+	if err != nil && errors.Is(err, badger.ErrKeyNotFound) {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return &models.UserState{
+		PubKeyID: pubKeyID,
+		TokenID:  models.MakeUint256(0),
+		Balance:  *balance,
+		Nonce:    models.MakeUint256(0),
+	}, nil
 }
 
 // TODO: this assumes the sender & receiver stateIDs are in the state tree,
@@ -300,6 +388,14 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 	if tx.Type() == txtype.Transfer {
 		toStateID := *tx.GetToStateID() // will not panic, transfers have this
 		err = s.addToPendingBalance(toStateID, &txAmount)
+		if err != nil {
+			return err
+		}
+	}
+
+	if tx.Type() == txtype.Create2Transfer {
+		toPubKey := tx.ToCreate2Transfer().ToPublicKey
+		err = s.addToPendingPubkeyBalance(&toPubKey, &txAmount)
 		if err != nil {
 			return err
 		}

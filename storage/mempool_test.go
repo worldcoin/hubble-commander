@@ -3,11 +3,13 @@ package storage
 import (
 	"testing"
 
+	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/enums/txtype"
 	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/testutils"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -128,6 +130,56 @@ func (s *MempoolTestSuite) TestMempool_PeekEmptyMempool() {
 	// if there's nothing in the mempool you won't crash when you ask for the next Tx
 	firstTx := mempoolHeap.PeekHighestFeeExecutableTx()
 	s.Nil(firstTx)
+}
+
+func (s *MempoolTestSuite) randomPublicKey() *models.PublicKey {
+	domain := bls.Domain{1, 2, 3, 4}
+	wallet, err := bls.NewRandomWallet(domain)
+	s.NoError(err)
+
+	return wallet.PublicKey()
+}
+
+// skips all pending state maintenance
+func (s *MempoolTestSuite) rawInsert(tx models.GenericTransaction) {
+	pendingTx := stored.NewPendingTx(tx)
+	txKey := pendingTxKey(pendingTx.FromStateID, pendingTx.Nonce.Uint64())
+	err := s.storage.rawSet(txKey, pendingTx.Bytes())
+	s.NoError(err)
+}
+
+func (s *MempoolTestSuite) TestMempool_MigrateState() {
+	destKey := s.randomPublicKey()
+
+	s.rawInsert(testutils.NewCreate2Transfer(1, nil, 0, 10, destKey))
+	s.rawInsert(testutils.NewCreate2Transfer(1, nil, 1, 10, destKey))
+
+	pendingState, err := s.storage.GetPendingC2TState(destKey)
+	s.NoError(err)
+	s.Nil(pendingState)
+
+	migrated, err := s.storage.alreadyRanPubKeyMigration()
+	s.NoError(err)
+	s.False(migrated)
+
+	err = s.storage.MigratePubKeyPendingState()
+	s.NoError(err)
+
+	migrated, err = s.storage.alreadyRanPubKeyMigration()
+	s.NoError(err)
+	s.True(migrated)
+
+	pendingState, err = s.storage.GetPendingC2TState(destKey)
+	s.NoError(err)
+	s.Equal(
+		models.UserState{
+			PubKeyID: consts.PendingID,
+			TokenID:  models.MakeUint256(0),
+			Balance:  models.MakeUint256(20),
+			Nonce:    models.MakeUint256(0),
+		},
+		*pendingState,
+	)
 }
 
 func TestMempoolTestSuite(t *testing.T) {
