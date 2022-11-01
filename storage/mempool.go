@@ -66,7 +66,7 @@ func pendingStateKey(stateID uint32) []byte {
 
 func pendingPubkeyBalanceKey(pubkey *models.PublicKey) []byte {
 	return bytes.Join(
-		[][]byte{pendingStatePrefix, pubkey[:]},
+		[][]byte{pendingPubkeyBalancePrefix, pubkey[:]},
 		[]byte(":"),
 	)
 }
@@ -287,7 +287,10 @@ func (s *Storage) MigratePubKeyPendingState() error {
 	}
 
 	for pubKey, balance := range keyBalances {
-		s.setPendingPubkeyBalance(&pubKey, balance)
+		err = s.setPendingPubkeyBalance(&pubKey, balance)
+		if err != nil {
+			return err
+		}
 	}
 
 	return s.markRanPubKeyMigration()
