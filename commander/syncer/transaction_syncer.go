@@ -171,7 +171,10 @@ func (s *C2TSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs S
 		leaf, err := s.storage.AccountTree.Leaf(syncedTxs.PubKeyIDs()[i])
 		if err != nil {
 			if commitment.ToDecodedCommitment().ID.BatchID.CmpN(2022) == 0 || commitment.ToDecodedCommitment().ID.BatchID.CmpN(2024) == 0 {
-				// HACK: There are errors in blocks 2022 and 2024.
+				// HACK: There are errors in batches 2022 and 2024.
+				//       This might have happened because the eth transaction which registered these pubkeyids was dropped
+				//       Note that this means the affected Hubble accounts will not receive their airdrop, their money was instead
+				//       sent to the zero account.
 				log.WithFields(log.Fields{
 					"batchId":       commitment.ToDecodedCommitment().ID.BatchID,
 					"commitmentIdx": commitment.ToDecodedCommitment().ID.IndexInBatch,
