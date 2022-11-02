@@ -54,7 +54,10 @@ func (c *TxsContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		if commitment.ID.BatchID.CmpN(65) <= 0 || commitment.ID.BatchID.CmpN(2022) == 0 || commitment.ID.BatchID.CmpN(2024) == 0 {
+		shouldIgnoreFailure :=
+			c.cfg.HackSkipKnownBadSignatures &&
+				(commitment.ID.BatchID.CmpN(65) <= 0 || commitment.ID.BatchID.CmpN(2022) == 0 || commitment.ID.BatchID.CmpN(2024) == 0)
+		if shouldIgnoreFailure {
 			// HACK: Signatures are screwed on the first 65 blocks and block 2022. We just ignore these and continue processing.
 			log.WithFields(log.Fields{
 				"batchId": commitment.ID.BatchID,

@@ -79,6 +79,10 @@ type RollupConfig struct {
 	BatchLoopInterval                time.Duration
 	DisableSignatures                bool
 
+	// the current prod deployment has printed some bad batches and this flag triggers
+	// a hack to treat them as valid
+	HackSkipKnownBadSignatures bool
+
 	// if MinTxsPerCommitment or MinCommitmentsPerBatch cause a pending transaction to
 	// wait to be included for longer than this delay then they will be ignored and a
 	// new batch will be submitted
