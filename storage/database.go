@@ -1,12 +1,18 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	bdg "github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
+
+var databaseTracer = otel.Tracer("database")
 
 type Database struct {
 	Badger *db.Database
@@ -42,6 +48,18 @@ func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database
 	return badgerTx, &database
 }
 
+func (d *Database) ExecuteInTransactionWithSpan(ctx context.Context, opts TxOptions, fn func(txCtx context.Context, txDatabase *Database) error) error {
+	retries := 0
+	err := d.unsafeExecuteInTransactionWithSpan(ctx, retries, opts, fn)
+	for errors.Is(err, bdg.ErrConflict) {
+		log.WithError(err).Warn("Retrying transaction due to conflict")
+		err = d.unsafeExecuteInTransactionWithSpan(ctx, retries, opts, fn)
+		retries += 1
+	}
+
+	return err
+}
+
 // all errors are already wrapped w stack traces, except errors fn returns
 func (d *Database) ExecuteInTransaction(opts TxOptions, fn func(txDatabase *Database) error) error {
 	err := d.unsafeExecuteInTransaction(opts, fn)
@@ -66,6 +84,28 @@ func (d *Database) unsafeExecuteInTransaction(opts TxOptions, fn func(txDatabase
 	}
 
 	return txController.Commit()
+}
+
+func (d *Database) unsafeExecuteInTransactionWithSpan(ctx context.Context, retries int, opts TxOptions, fn func(txCtx context.Context, txDatabase *Database) error) (err error) {
+	spanCtx, span := databaseTracer.Start(ctx, "database.ExecuteInTransaction")
+	defer span.End()
+
+	span.SetAttributes(attribute.Int("hubble.database.tx_retries", retries))
+
+	txController, txDatabase := d.BeginTransaction(opts)
+	defer txController.Rollback(&err)
+
+	err = fn(spanCtx, txDatabase)
+	if err != nil {
+		return err
+	}
+
+	return func() error {
+		_, span := databaseTracer.Start(spanCtx, "database.Commit")
+		defer span.End()
+
+		return txController.Commit()
+	}()
 }
 
 func (d *Database) Close() error {
