@@ -4,6 +4,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/bls"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -29,10 +30,11 @@ func (c *TxsContext) verifyTxSignature(commitment *encoder.DecodedCommitment, tx
 		}
 	}
 
-	return c.verifyCommitmentSignature(&commitment.CombinedSignature, domain, messages, publicKeys, txs)
+	return c.verifyCommitmentSignature(commitment, &commitment.CombinedSignature, domain, messages, publicKeys, txs)
 }
 
 func (c *TxsContext) verifyCommitmentSignature(
+	commitment *encoder.DecodedCommitment,
 	signature *models.Signature,
 	domain *bls.Domain,
 	messages [][]byte,
@@ -52,7 +54,18 @@ func (c *TxsContext) verifyCommitmentSignature(
 		return err
 	}
 	if !isValid {
-		return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
+		shouldIgnoreFailure :=
+			c.cfg.HackSkipKnownBadSignatures &&
+				(commitment.ID.BatchID.CmpN(65) <= 0 || commitment.ID.BatchID.CmpN(2022) == 0 || commitment.ID.BatchID.CmpN(2024) == 0)
+		if shouldIgnoreFailure {
+			// HACK: Signatures are screwed on the first 65 blocks and block 2022. We just ignore these and continue processing.
+			log.WithFields(log.Fields{
+				"batchId": commitment.ID.BatchID,
+				"index":   commitment.ID.IndexInBatch,
+			}).Error("Invalid aggregate signature, pretending it is valid")
+		} else {
+			return c.createDisputableSignatureError(InvalidSignatureMessage, txs)
+		}
 	}
 	return nil
 }

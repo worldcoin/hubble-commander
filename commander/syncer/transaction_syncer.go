@@ -11,6 +11,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/utils/merkletree"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrInvalidSlicesLength = fmt.Errorf("invalid slices length")
@@ -164,12 +165,26 @@ func (s *C2TSyncer) VerifyAmountAndWithdrawRoots(
 	return nil
 }
 
-func (s *C2TSyncer) SetMissingTxsData(_ encoder.Commitment, syncedTxs SyncedTxs) error {
+func (s *C2TSyncer) SetMissingTxsData(commitment encoder.Commitment, syncedTxs SyncedTxs) error {
 	txs := syncedTxs.Txs().ToCreate2TransferArray()
 	for i := range txs {
 		leaf, err := s.storage.AccountTree.Leaf(syncedTxs.PubKeyIDs()[i])
 		if err != nil {
-			return err
+			if commitment.ToDecodedCommitment().ID.BatchID.CmpN(2022) == 0 || commitment.ToDecodedCommitment().ID.BatchID.CmpN(2024) == 0 {
+				// HACK: There are errors in batches 2022 and 2024.
+				//       This might have happened because the eth transaction which registered these pubkeyids was dropped
+				//       Note that this means the affected Hubble accounts will not receive their airdrop, their money was instead
+				//       sent to the zero account.
+				log.WithFields(log.Fields{
+					"batchId":       commitment.ToDecodedCommitment().ID.BatchID,
+					"commitmentIdx": commitment.ToDecodedCommitment().ID.IndexInBatch,
+					"txIdx":         i,
+				}).Error("Recipient account not found in Create2Transfer, substituting pubkey id zero")
+				leaf, err = s.storage.AccountTree.Leaf(0)
+			}
+			if err != nil {
+				return err
+			}
 		}
 		txs[i].ToPublicKey = leaf.PublicKey
 	}
