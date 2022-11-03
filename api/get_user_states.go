@@ -65,20 +65,19 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 			userStates = append(userStates, dto.MakeUserStateWithID(stateID, pendingState))
 		}
 
-		pendingUserStates, err := func() ([]models.UserState, error) {
+		pendingC2TState, err := func() (*models.UserState, error) {
 			_, innerSpan := getUserStatesTracer.Start(txCtx, "GetPendingC2TState")
 			defer innerSpan.End()
 
-			return txStorage.GetPendingUserStates(publicKey)
+			return txStorage.GetPendingC2TState(publicKey)
 		}()
 		if err != nil {
 			return err
 		}
-		for i := range pendingUserStates {
-			// TODO: change the dto format
+		if pendingC2TState != nil {
 			userStates = append(
 				userStates,
-				dto.MakeUserStateWithID(consts.PendingID, &pendingUserStates[i]),
+				dto.MakeUserStateWithID(consts.PendingID, pendingC2TState),
 			)
 		}
 

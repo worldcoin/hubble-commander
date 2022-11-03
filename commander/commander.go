@@ -97,6 +97,11 @@ func (c *Commander) Start() (err error) {
 		return err
 	}
 
+	err = c.storage.MigratePubKeyPendingState()
+	if err != nil {
+		return err
+	}
+
 	c.client, err = getClient(c.blockchain, c.storage, c.cfg, c.metrics, c.txsTrackingChannels)
 	if err != nil {
 		return err

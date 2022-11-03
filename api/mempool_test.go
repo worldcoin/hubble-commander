@@ -14,6 +14,7 @@ import (
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -141,6 +142,12 @@ func (s *MempoolTestSuite) assertPendingStates(startID, pageSize uint32, expecte
 	s.Equal(expected, pendingStates)
 }
 
+func (s *MempoolTestSuite) assertUserStates(pubkey *models.PublicKey, expected []dto.UserStateWithID) {
+	pendingStates, err := s.hubbleAPI.GetUserStates(contextWithAuthKey(), pubkey)
+	s.NoError(err)
+	s.Equal(expected, pendingStates)
+}
+
 func (s *MempoolTestSuite) expectedStateWithID(stateID, nonce, balance uint32) dto.UserStateWithID {
 	return dto.UserStateWithID{
 		StateID: stateID,
@@ -182,24 +189,45 @@ func (s *MempoolTestSuite) TestGetPendingStates() {
 	})
 }
 
+func (s *MempoolTestSuite) TestGetPendingC2TState() {
+	firstStateID, _ := s.createState(1)
+
+	randomWallet := s.randomWallet()
+	s.sendC2T(firstStateID, 0, randomWallet.PublicKey())
+	s.assertUserStates(randomWallet.PublicKey(), []dto.UserStateWithID{
+		s.expectedStateWithID(consts.PendingID, 0, 10),
+	})
+
+	s.sendC2T(firstStateID, 1, randomWallet.PublicKey())
+	s.assertUserStates(randomWallet.PublicKey(), []dto.UserStateWithID{
+		s.expectedStateWithID(consts.PendingID, 0, 20),
+	})
+}
+
 func (s *MempoolTestSuite) assertAPIBalance(stateID, balance uint32) {
 	userState, err := s.hubbleAPI.GetUserState(context.Background(), stateID)
 	s.NoError(err)
 	s.Equal(models.MakeUint256(uint64(balance)), userState.Balance)
 }
 
-func (s *MempoolTestSuite) createState(stateID uint32) (uint32, *bls.Wallet) {
+func (s *MempoolTestSuite) randomWallet() *bls.Wallet {
 	domain, err := s.client.GetDomain()
 	s.NoError(err)
 
 	wallet, err := bls.NewRandomWallet(*domain)
 	s.NoError(err)
 
+	return wallet
+}
+
+func (s *MempoolTestSuite) createState(stateID uint32) (uint32, *bls.Wallet) {
+	wallet := s.randomWallet()
+
 	account := models.AccountLeaf{
 		PubKeyID:  stateID,
 		PublicKey: *wallet.PublicKey(),
 	}
-	err = s.storage.AccountTree.SetSingle(&account)
+	err := s.storage.AccountTree.SetSingle(&account)
 	s.NoError(err)
 
 	_, err = s.storage.StateTree.Set(
