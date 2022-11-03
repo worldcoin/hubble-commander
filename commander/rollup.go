@@ -51,9 +51,6 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 	ticker := time.NewTicker(c.cfg.Rollup.BatchLoopInterval)
 	defer ticker.Stop()
 
-	updateMempoolTicker := time.NewTicker(time.Second * 10)
-	defer updateMempoolTicker.Stop()
-
 	currentBatchType := batchtype.Transfer
 
 	for {
@@ -62,13 +59,6 @@ func (c *Commander) rollupLoop(ctx context.Context) (err error) {
 			return nil
 		case <-ticker.C:
 			err = c.rollupLoopIteration(ctx, &currentBatchType)
-			if err != nil {
-				return err
-			}
-		case <-updateMempoolTicker.C:
-			// TODO: a long rollupLoopIteration can starve this metric,
-			//       create a separate worker
-			err := c.updateMempoolMetrics()
 			if err != nil {
 				return err
 			}
