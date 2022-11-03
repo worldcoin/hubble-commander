@@ -25,7 +25,7 @@ start-geth-locally:
 
 setup-geth:
 	rm -rf e2e/geth-data/geth
-	docker-compose up -d geth
+	docker compose up -d geth
 	./e2e/geth-data/fundSecondAccount.sh docker
 
 update-contracts:

@@ -201,7 +201,11 @@ func (s *Storage) getPendingPubkeyBalance(pubkey *models.PublicKey) (*models.Uin
 
 func (s *Storage) addToPendingPubkeyBalance(pubkey *models.PublicKey, amount *models.Uint256) error {
 	balance, err := s.getPendingPubkeyBalance(pubkey)
-	if err != nil {
+
+	if err != nil && errors.Is(err, badger.ErrKeyNotFound) {
+		addressableValue := models.MakeUint256(0)
+		balance = &addressableValue
+	} else if err != nil {
 		return err
 	}
 
