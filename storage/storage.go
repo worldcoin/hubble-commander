@@ -136,12 +136,19 @@ func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storag
 	})
 }
 
-func (s *Storage) ExecuteInReadWriteTransactionWithSpan(ctx context.Context, fn func(txCtx context.Context, txStorage *Storage) error) error {
+func (s *Storage) ExecuteInReadWriteTransactionWithSpan(
+	ctx context.Context,
+	fn func(txCtx context.Context, txStorage *Storage) error,
+) error {
 	opts := TxOptions{ReadOnly: false}
 	return s.ExecuteInTransactionWithSpan(ctx, opts, fn)
 }
 
-func (s *Storage) ExecuteInTransactionWithSpan(ctx context.Context, opts TxOptions, fn func(txCtx context.Context, txStorage *Storage) error) error {
+func (s *Storage) ExecuteInTransactionWithSpan(
+	ctx context.Context,
+	opts TxOptions,
+	fn func(txCtx context.Context, txStorage *Storage) error,
+) error {
 	return s.database.ExecuteInTransactionWithSpan(ctx, opts, func(txCtx context.Context, txDatabase *Database) error {
 		return fn(txCtx, s.copyWithNewDatabase(txDatabase))
 	})

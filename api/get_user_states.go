@@ -38,14 +38,14 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 
 	err := a.storage.ExecuteInReadWriteTransactionWithSpan(ctx, func(txCtx context.Context, txStorage *storage.Storage) error {
 		leaves, err := func() ([]models.StateLeaf, error) {
-			_, span := getUserStatesTracer.Start(txCtx, "GetStateLeavesByPublicKey")
-			defer span.End()
+			_, innerSpan := getUserStatesTracer.Start(txCtx, "GetStateLeavesByPublicKey")
+			defer innerSpan.End()
 
 			return txStorage.GetStateLeavesByPublicKey(publicKey)
 		}()
 		if err != nil && !storage.IsNotFoundError(err) {
 			span.SetAttributes(attribute.String("hubble.error", err.Error()))
-			log.WithFields(o11y.TraceFields(ctx)).Errorf("Error getting leaves by public key: %v", err)
+			log.WithFields(o11y.TraceFields(txCtx)).Errorf("Error getting leaves by public key: %v", err)
 			return err
 		}
 
@@ -53,8 +53,8 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 			stateID := leaves[i].StateID
 
 			pendingState, innerErr := func() (*models.UserState, error) {
-				_, span := getUserStatesTracer.Start(txCtx, "GetPendingUserState")
-				defer span.End()
+				_, innerSpan := getUserStatesTracer.Start(txCtx, "GetPendingUserState")
+				defer innerSpan.End()
 
 				return txStorage.GetPendingUserState(stateID)
 			}()
@@ -66,8 +66,8 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 		}
 
 		pendingUserStates, err := func() ([]models.UserState, error) {
-			_, span := getUserStatesTracer.Start(txCtx, "GetPendingC2TState")
-			defer span.End()
+			_, innerSpan := getUserStatesTracer.Start(txCtx, "GetPendingC2TState")
+			defer innerSpan.End()
 
 			return txStorage.GetPendingUserStates(publicKey)
 		}()

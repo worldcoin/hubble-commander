@@ -48,10 +48,18 @@ func (d *Database) BeginTransaction(opts TxOptions) (*db.TxController, *Database
 	return badgerTx, &database
 }
 
-func (d *Database) ExecuteInTransactionWithSpan(ctx context.Context, opts TxOptions, fn func(txCtx context.Context, txDatabase *Database) error) error {
+func (d *Database) ExecuteInTransactionWithSpan(
+	ctx context.Context,
+	opts TxOptions,
+	fn func(txCtx context.Context, txDatabase *Database) error,
+) error {
 	retries := 0
 	err := d.unsafeExecuteInTransactionWithSpan(ctx, retries, opts, fn)
 	for errors.Is(err, bdg.ErrConflict) {
+		// nb. if we were already inside a transaction when this function is
+		//     called then we run inside the outer transaction, so the `Commit`
+		//     call is a no-op and this retry logic will never get a chance to
+		//     fire
 		log.WithError(err).Warn("Retrying transaction due to conflict")
 		err = d.unsafeExecuteInTransactionWithSpan(ctx, retries, opts, fn)
 		retries += 1
@@ -86,7 +94,12 @@ func (d *Database) unsafeExecuteInTransaction(opts TxOptions, fn func(txDatabase
 	return txController.Commit()
 }
 
-func (d *Database) unsafeExecuteInTransactionWithSpan(ctx context.Context, retries int, opts TxOptions, fn func(txCtx context.Context, txDatabase *Database) error) (err error) {
+func (d *Database) unsafeExecuteInTransactionWithSpan(
+	ctx context.Context,
+	retries int,
+	opts TxOptions,
+	fn func(txCtx context.Context, txDatabase *Database) error,
+) (err error) {
 	spanCtx, span := databaseTracer.Start(ctx, "database.ExecuteInTransaction")
 	defer span.End()
 
@@ -101,8 +114,8 @@ func (d *Database) unsafeExecuteInTransactionWithSpan(ctx context.Context, retri
 	}
 
 	return func() error {
-		_, span := databaseTracer.Start(spanCtx, "database.Commit")
-		defer span.End()
+		_, innerSpan := databaseTracer.Start(spanCtx, "database.Commit")
+		defer innerSpan.End()
 
 		return txController.Commit()
 	}()
