@@ -9,13 +9,15 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
-    - host: {{ .Values.ingress.host }}
+  {{- range .Values.ingress.hosts }}
+    - host: {{ . }}
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: "{{ include "hubble.fullname" . }}"
+                name: "{{ include "hubble.fullname" $ }}"
                 port:
                   name: http
+  {{- end }}
