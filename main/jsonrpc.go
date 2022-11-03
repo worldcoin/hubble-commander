@@ -21,6 +21,10 @@ func getNetworkInfo(client jsonrpc.RPCClient) *dto.NetworkInfo {
 		log.Fatal(err)
 	}
 
+	if resp.Error != nil {
+		log.Fatal(resp.Error)
+	}
+
 	var networkInfo dto.NetworkInfo
 	err = resp.GetObject(&networkInfo)
 	if err != nil {
@@ -36,6 +40,10 @@ func getUserState(client jsonrpc.RPCClient, treeIndex uint32) *dto.UserStateWith
 		log.Fatal(err)
 	}
 
+	if resp.Error != nil {
+		log.Fatal(resp.Error)
+	}
+
 	var userState dto.UserStateWithID
 	err = resp.GetObject(&userState)
 	if err != nil {
@@ -45,10 +53,34 @@ func getUserState(client jsonrpc.RPCClient, treeIndex uint32) *dto.UserStateWith
 	return &userState
 }
 
+func getUserStates(client jsonrpc.RPCClient, pubkey *models.PublicKey) []dto.UserStateWithID {
+	params := []models.PublicKey{*pubkey} // wrapping in an array tells the jsonrpc library not to perform any magic
+	resp, err := client.Call("hubble_getUserStates", params)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if resp.Error != nil {
+		log.Fatal(resp.Error)
+	}
+
+	result := make([]dto.UserStateWithID, 0)
+	err = resp.GetObject(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result
+}
+
 func getPublicKey(client jsonrpc.RPCClient, treeIndex uint32) *models.PublicKey {
 	resp, err := client.Call("hubble_getPublicKeyByStateID", treeIndex)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if resp.Error != nil {
+		log.Fatal(resp.Error)
 	}
 
 	var publicKey models.PublicKey

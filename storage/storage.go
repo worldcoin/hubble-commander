@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/Worldcoin/hubble-commander/config"
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/utils"
@@ -131,6 +133,24 @@ func (s *Storage) ExecuteInReadWriteTransaction(fn func(txStorage *Storage) erro
 func (s *Storage) ExecuteInTransaction(opts TxOptions, fn func(txStorage *Storage) error) error {
 	return s.database.ExecuteInTransaction(opts, func(txDatabase *Database) error {
 		return fn(s.copyWithNewDatabase(txDatabase))
+	})
+}
+
+func (s *Storage) ExecuteInReadWriteTransactionWithSpan(
+	ctx context.Context,
+	fn func(txCtx context.Context, txStorage *Storage) error,
+) error {
+	opts := TxOptions{ReadOnly: false}
+	return s.ExecuteInTransactionWithSpan(ctx, opts, fn)
+}
+
+func (s *Storage) ExecuteInTransactionWithSpan(
+	ctx context.Context,
+	opts TxOptions,
+	fn func(txCtx context.Context, txStorage *Storage) error,
+) error {
+	return s.database.ExecuteInTransactionWithSpan(ctx, opts, func(txCtx context.Context, txDatabase *Database) error {
+		return fn(txCtx, s.copyWithNewDatabase(txDatabase))
 	})
 }
 
