@@ -94,5 +94,12 @@ func (a *API) unsafeGetUserStates(ctx context.Context, publicKey *models.PublicK
 		)
 	}
 
+	totalBalance := models.NewUint256(0)
+	for _, userState := range userStates {
+		totalBalance = totalBalance.Add(&userState.Balance)
+	}
+	span.SetAttributes(attribute.String("hubble.response.totalBalance", totalBalance.String()))
+	span.SetAttributes(attribute.Int("hubble.response.userStatesCount", len(userStates)))
+
 	return userStates, nil
 }

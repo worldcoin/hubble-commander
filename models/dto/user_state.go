@@ -16,6 +16,11 @@ type UserStateWithID struct {
 	UserState
 }
 
+type PubkeyBalance struct {
+	PubKey  models.PublicKey
+	Balance models.Uint256
+}
+
 func MakeUserStateWithID(stateID uint32, userState *models.UserState) UserStateWithID {
 	return UserStateWithID{
 		StateID:   stateID,

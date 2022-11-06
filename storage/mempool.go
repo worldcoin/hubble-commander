@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -69,6 +70,14 @@ func pendingPubkeyBalanceKey(pubkey *models.PublicKey) []byte {
 		[][]byte{pendingPubkeyBalancePrefix, pubkey[:]},
 		[]byte(":"),
 	)
+}
+
+func decodePendingPubkeyBalanceKey(keyBytes []byte) *models.PublicKey {
+	pubkeyBytes := keyBytes[len(pendingPubkeyBalancePrefix)+1:]
+	var pubkey models.PublicKey
+	copy(pubkey[:], pubkeyBytes)
+
+	return &pubkey
 }
 
 func decodePendingStateKey(keyBytes []byte) uint32 {
@@ -260,18 +269,14 @@ func (s *Storage) GetPendingUserState(stateID uint32) (*models.UserState, error)
 	}, nil
 }
 
-func (s *Storage) MigratePubKeyPendingState() error {
-	alreadyMigrated, err := s.alreadyRanPubKeyMigration()
-	if err != nil {
-		return err
-	}
-	if alreadyMigrated {
-		return nil
-	}
-
+// SELECT pubkey, SUM(amount)
+// FROM pending_transactions
+// WHERE tx_type = 'Create2Transfer'
+// GROUP BY pubkey
+func (s *Storage) pendingPubkeyBalances() (map[models.PublicKey]*models.Uint256, error) {
 	keyBalances := make(map[models.PublicKey]*models.Uint256)
 
-	err = s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
+	err := s.forEachMempoolTransaction(func(pendingTx *stored.PendingTx) error {
 		if pendingTx.TxType != txtype.Create2Transfer {
 			return nil
 		}
@@ -286,6 +291,23 @@ func (s *Storage) MigratePubKeyPendingState() error {
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return keyBalances, nil
+}
+
+func (s *Storage) MigratePubKeyPendingState() error {
+	alreadyMigrated, err := s.alreadyRanPubKeyMigration()
+	if err != nil {
+		return err
+	}
+	if alreadyMigrated {
+		return nil
+	}
+
+	keyBalances, err := s.pendingPubkeyBalances()
 	if err != nil {
 		return err
 	}
@@ -424,6 +446,11 @@ func (s *Storage) unsafeAddMempoolTx(tx models.GenericTransaction) error {
 	return s.rawSet(txKey, pendingTx.Bytes())
 }
 
+func (s *Storage) UnsafeInsertPendingTxSkipValidation(pendingTx *stored.PendingTx) error {
+	txKey := pendingTxKey(pendingTx.FromStateID, pendingTx.Nonce.Uint64())
+	return s.rawSet(txKey, pendingTx.Bytes())
+}
+
 /// These are used by the rollup loop:
 // TODO: break into a separate file?
 
@@ -536,6 +563,18 @@ func itemToPendingTx(item *badger.Item) (*stored.PendingTx, error) {
 		// TODO: confirm we don't need to attach a stack here
 		return nil, err
 	}
+
+	return &result, nil
+}
+
+func itemToPendingPubkeyBalance(item *badger.Item) (*models.Uint256, error) {
+	value, err := item.ValueCopy(nil)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var result models.Uint256
+	result.SetBytes(value)
 
 	return &result, nil
 }
@@ -725,6 +764,50 @@ func (s *Storage) unsafeGetPendingStates(startStateID, pageSize uint32) (
 	return result, err
 }
 
+// pageSize==0 means no limit
+func (s *Storage) GetPendingPubkeyBalances(startPrefix []byte, pageSize uint32) ([]dto.PubkeyBalance, error) {
+	result := make([]dto.PubkeyBalance, 0)
+
+	err := s.database.Badger.View(func(txn *badger.Txn) error {
+		iter := txn.NewIterator(db.PrefetchIteratorOpts)
+		defer iter.Close()
+
+		seekPrefix := bytes.Join(
+			[][]byte{pendingPubkeyBalancePrefix, startPrefix},
+			[]byte(":"),
+		)
+		iter.Seek(seekPrefix)
+
+		for iter.ValidForPrefix(pendingPubkeyBalancePrefix) {
+			item := iter.Item()
+			pendingBalance, innerErr := itemToPendingPubkeyBalance(item)
+			if innerErr != nil {
+				return innerErr
+			}
+
+			keyBytes := item.Key()
+			pubkey := decodePendingPubkeyBalanceKey(keyBytes)
+
+			result = append(result, dto.PubkeyBalance{
+				PubKey:  *pubkey,
+				Balance: *pendingBalance,
+			})
+
+			if pageSize != 0 && len(result) >= int(pageSize) {
+				break
+			}
+
+			iter.Next()
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (s *Storage) RecomputePendingState(stateID uint32, mutate bool) (
 	result *dto.RecomputePendingState,
 	err error,
@@ -817,6 +900,77 @@ func (s *Storage) unsafeRecomputePendingState(stateID uint32, mutate bool) (
 		NewNonce:   *newNonce,
 		NewBalance: *newBalance,
 	}, nil
+}
+
+func (s *Storage) RecomputePendingPubkeyBalances(startPrefix []byte, pageSize uint32) (
+	result []dto.PubkeyBalance,
+	err error,
+) {
+	err = s.ExecuteInReadWriteTransaction(func(txStorage *Storage) error {
+		innerResult, innerErr := txStorage.unsafeRecomputePendingPubkeyBalances(startPrefix, pageSize)
+		result = innerResult
+		return innerErr
+	})
+	return result, err
+}
+
+// SELECT
+//   pubkey,
+//   SUM(amount) AS balance
+// FROM mempool_transactions
+// WHERE
+//   tx_type = 'CREATE2TRANSFER' AND
+//   pubkey >= startPrefix
+// GROUP BY pubkey
+// ORDER BY pubkey
+// LIMIT pageSize
+func (s *Storage) unsafeRecomputePendingPubkeyBalances(startPrefix []byte, pageSize uint32) ([]dto.PubkeyBalance, error) {
+	keyBalances, err := s.pendingPubkeyBalances()
+	if err != nil {
+		return nil, err
+	}
+
+	keys := make([][]byte, 0, len(keyBalances))
+	for key := range keyBalances {
+		keys = append(keys, key.Bytes())
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return bytes.Compare(keys[i], keys[j]) < 0
+	})
+
+	var result []dto.PubkeyBalance
+	if pageSize == 0 {
+		result = make([]dto.PubkeyBalance, 0, len(keys))
+	} else {
+		result = make([]dto.PubkeyBalance, 0, pageSize)
+	}
+
+	for _, key := range keys {
+		if bytes.Compare(key, startPrefix) == -1 { // if key < startPrefix
+			continue
+		}
+
+		if pageSize > 0 && uint32(len(result)) >= pageSize {
+			break
+		}
+
+		var pubkey models.PublicKey
+		err = pubkey.SetBytes(key)
+		if err != nil {
+			// TODO: remove this wrap, SetBytes should attach the stacktrace
+			return nil, errors.WithStack(err)
+		}
+
+		balance := keyBalances[pubkey]
+
+		result = append(result, dto.PubkeyBalance{
+			PubKey:  pubkey,
+			Balance: *balance,
+		})
+	}
+
+	return result, nil
 }
 
 func (s *Storage) GetAllMempoolTransactions() ([]stored.PendingTx, error) {

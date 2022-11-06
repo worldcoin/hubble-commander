@@ -143,8 +143,7 @@ func (s *MempoolTestSuite) randomPublicKey() *models.PublicKey {
 // skips all pending state maintenance
 func (s *MempoolTestSuite) rawInsert(tx models.GenericTransaction) {
 	pendingTx := stored.NewPendingTx(tx)
-	txKey := pendingTxKey(pendingTx.FromStateID, pendingTx.Nonce.Uint64())
-	err := s.storage.rawSet(txKey, pendingTx.Bytes())
+	err := s.storage.UnsafeInsertPendingTxSkipValidation(pendingTx)
 	s.NoError(err)
 }
 
