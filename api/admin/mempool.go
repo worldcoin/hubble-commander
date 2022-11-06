@@ -23,3 +23,23 @@ func (a *API) GetPendingStates(ctx context.Context, startStateID, pageSize uint3
 
 	return a.storage.GetPendingStates(startStateID, pageSize)
 }
+
+// reads the pending balances from badger
+func (a *API) GetPendingPubkeyBalances(ctx context.Context, startPrefix []byte, pageSize uint32) ([]dto.PubkeyBalance, error) {
+	err := a.verifyAuthKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.storage.GetPendingPubkeyBalances(startPrefix, pageSize)
+}
+
+// scans the mempool to recompute the pending balances
+func (a *API) RecomputePubkeyBalances(ctx context.Context, startPrefix []byte, pageSize uint32) ([]dto.PubkeyBalance, error) {
+	err := a.verifyAuthKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.storage.RecomputePendingPubkeyBalances(startPrefix, pageSize)
+}

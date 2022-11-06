@@ -35,6 +35,7 @@ func (p PublicKey) Bytes() []byte {
 
 func (p *PublicKey) SetBytes(b []byte) error {
 	if len(b) != PublicKeyLength {
+		// TODO: wrap with stacktrace
 		return ErrInvalidPublicKeyLength
 	}
 

@@ -13,7 +13,9 @@ import (
 	"github.com/Worldcoin/hubble-commander/eth"
 	"github.com/Worldcoin/hubble-commander/models"
 	"github.com/Worldcoin/hubble-commander/models/dto"
+	"github.com/Worldcoin/hubble-commander/models/stored"
 	"github.com/Worldcoin/hubble-commander/storage"
+	"github.com/Worldcoin/hubble-commander/testutils"
 	"github.com/Worldcoin/hubble-commander/utils/consts"
 	"github.com/Worldcoin/hubble-commander/utils/ref"
 	"github.com/stretchr/testify/require"
@@ -148,6 +150,12 @@ func (s *MempoolTestSuite) assertUserStates(pubkey *models.PublicKey, expected [
 	s.Equal(expected, pendingStates)
 }
 
+func (s *MempoolTestSuite) assertNoUserStates(pubkey *models.PublicKey) {
+	pendingStates, err := s.hubbleAPI.GetUserStates(contextWithAuthKey(), pubkey)
+	s.ErrorContains(err, "user states not found")
+	s.Len(pendingStates, 0)
+}
+
 func (s *MempoolTestSuite) expectedStateWithID(stateID, nonce, balance uint32) dto.UserStateWithID {
 	return dto.UserStateWithID{
 		StateID: stateID,
@@ -202,6 +210,98 @@ func (s *MempoolTestSuite) TestGetPendingC2TState() {
 	s.assertUserStates(randomWallet.PublicKey(), []dto.UserStateWithID{
 		s.expectedStateWithID(consts.PendingID, 0, 20),
 	})
+}
+
+func (s *MempoolTestSuite) randomPublicKey() *models.PublicKey {
+	domain := bls.Domain{1, 2, 3, 4}
+	wallet, err := bls.NewRandomWallet(domain)
+	s.NoError(err)
+
+	return wallet.PublicKey()
+}
+
+func (s *MempoolTestSuite) rawInsert(tx models.GenericTransaction) {
+	pendingTx := stored.NewPendingTx(tx)
+	err := s.storage.UnsafeInsertPendingTxSkipValidation(pendingTx)
+	s.NoError(err)
+}
+
+func (s *MempoolTestSuite) TestGetPendingC2TStateFromMigratedAccount() {
+	firstStateID, _ := s.createState(1)
+	destKey := s.randomPublicKey()
+	s.assertNoUserStates(destKey)
+
+	s.rawInsert(testutils.NewCreate2Transfer(firstStateID, nil, 0, 10, destKey))
+	s.rawInsert(testutils.NewCreate2Transfer(firstStateID, nil, 1, 20, destKey))
+
+	err := s.storage.MigratePubKeyPendingState()
+	s.NoError(err)
+
+	// the raw insert skipped the codepath which updates the pending state so we do it manually
+	err = s.storage.UnsafeSetPendingState(firstStateID, models.MakeUint256(2), models.MakeUint256(50))
+	s.NoError(err)
+
+	// confirm the migration happened correctly
+	s.assertUserStates(destKey, []dto.UserStateWithID{
+		s.expectedStateWithID(consts.PendingID, 0, 30),
+	})
+
+	s.sendC2T(firstStateID, 2, destKey)
+	s.assertUserStates(destKey, []dto.UserStateWithID{
+		s.expectedStateWithID(consts.PendingID, 0, 40),
+	})
+}
+
+func (s *MempoolTestSuite) bothPubkeyMethodsEqual(startPrefix []byte, pageSize uint32) []dto.PubkeyBalance {
+	balancesGet, err := s.adminAPI.GetPendingPubkeyBalances(contextWithAuthKey(), startPrefix, pageSize)
+	s.NoError(err)
+
+	balancesRecompute, err := s.adminAPI.RecomputePubkeyBalances(contextWithAuthKey(), startPrefix, pageSize)
+	s.NoError(err)
+
+	s.Equal(balancesGet, balancesRecompute)
+	return balancesGet
+}
+
+func (s *MempoolTestSuite) TestGetPendingPubkeyBalances() {
+	firstStateID, _ := s.createState(1)
+
+	firstDestKey := s.randomPublicKey()
+	s.sendC2T(firstStateID, 0, firstDestKey)
+	s.sendC2T(firstStateID, 1, firstDestKey)
+
+	secondDestKey := s.randomPublicKey()
+	s.sendC2T(firstStateID, 2, secondDestKey)
+
+	thirdDestKey := s.randomPublicKey()
+	s.sendC2T(firstStateID, 3, thirdDestKey)
+
+	_, err := s.adminAPI.GetPendingPubkeyBalances(context.Background(), []byte{}, 0)
+	s.ErrorContains(err, "missing authentication key")
+
+	allbalances := s.bothPubkeyMethodsEqual([]byte{}, 0)
+	s.Len(allbalances, 3)
+	s.Contains(allbalances, dto.PubkeyBalance{
+		PubKey:  *firstDestKey,
+		Balance: models.MakeUint256(20),
+	})
+	s.Contains(allbalances, dto.PubkeyBalance{
+		PubKey:  *secondDestKey,
+		Balance: models.MakeUint256(10),
+	})
+	s.Contains(allbalances, dto.PubkeyBalance{
+		PubKey:  *thirdDestKey,
+		Balance: models.MakeUint256(10),
+	})
+
+	// test pagination
+	balances := s.bothPubkeyMethodsEqual([]byte{}, 1)
+	s.Len(balances, 1)
+	s.Equal(allbalances[0], balances[0])
+
+	balances = s.bothPubkeyMethodsEqual(allbalances[1].PubKey[:], 1)
+	s.Len(balances, 1)
+	s.Equal(allbalances[1], balances[0])
 }
 
 func (s *MempoolTestSuite) assertAPIBalance(stateID, balance uint32) {
