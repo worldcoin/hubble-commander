@@ -65,7 +65,6 @@ func (s *NewBlockLoopTestSuite) SetupTest() {
 
 func (s *NewBlockLoopTestSuite) TearDownTest() {
 	s.cmd.stopWorkersAndWait()
-	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
@@ -280,13 +279,6 @@ func setStateLeaves(t *testing.T, storage *st.Storage) {
 		Nonce:    models.MakeUint256(0),
 	})
 	require.NoError(t, err)
-}
-
-func stopCommander(cmd *Commander) {
-	if !cmd.isActive() {
-		return
-	}
-	cmd.stopWorkersAndWait()
 }
 
 func TestNewBlockLoopTestSuite(t *testing.T) {

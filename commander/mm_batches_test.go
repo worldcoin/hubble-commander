@@ -50,7 +50,7 @@ func (s *MMBatchesTestSuite) SetupTest() {
 }
 
 func (s *MMBatchesTestSuite) TearDownTest() {
-	stopCommander(s.cmd)
+	s.cmd.stopWorkersAndWait()
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
