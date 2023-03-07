@@ -5,6 +5,7 @@ go 1.17
 // fixes a bug with mremap on arm64 linux, without this we get weird errors from badger
 // which look a lot like database corruption
 replace github.com/dgraph-io/ristretto => github.com/lithp/ristretto v0.1.0-hotfix
+
 // fixes a bug where badger does not garbage collect if you are only updating a single
 // key over and over again
 replace github.com/dgraph-io/badger/v3 => github.com/lithp/badger/v3 v3.2103.2-hotfix
@@ -15,6 +16,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/ethereum/go-ethereum v1.10.8
+	github.com/felixge/httpsnoop v1.0.3
 	github.com/holiman/uint256 v1.2.0
 	github.com/kilic/bn254 v0.0.0-20201116081810-790649bc68fe
 	github.com/pkg/errors v0.9.1
@@ -29,6 +31,7 @@ require (
 	go.opentelemetry.io/otel v1.7.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.7.0
 	go.opentelemetry.io/otel/sdk v1.7.0
+	go.opentelemetry.io/otel/trace v1.7.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc v1.46.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -52,7 +55,6 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
-	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -100,12 +102,11 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.7.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.7.0 // indirect
-	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.16.0 // indirect
 	golang.org/x/crypto v0.0.0-20210812204632-0ba0e8f03122 // indirect
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
-	golang.org/x/sys v0.0.0-20210816183151-1e6c022a8912 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
