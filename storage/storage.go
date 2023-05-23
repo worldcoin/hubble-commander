@@ -54,6 +54,11 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 
 	registeredSpokeStorage := NewRegisteredSpokeStorage(database)
 
+	stateTree, err := NewStateTree(database)
+	if err != nil {
+		return nil, err
+	}
+
 	accountTree, err := NewAccountTree(database)
 	if err != nil {
 		return nil, err
@@ -69,7 +74,7 @@ func newStorageFromDatabase(database *Database) (*Storage, error) {
 		ChainStateStorage:             chainStateStorage,
 		RegisteredTokenStorage:        registeredTokenStorage,
 		RegisteredSpokeStorage:        registeredSpokeStorage,
-		StateTree:                     NewStateTree(database),
+		StateTree:                     stateTree,
 		AccountTree:                   accountTree,
 		PendingStakeWithdrawalStorage: pendingStakeWithdrawalStorage,
 		database:                      database,

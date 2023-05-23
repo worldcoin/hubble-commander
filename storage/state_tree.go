@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"sync/atomic"
+
 	"github.com/Worldcoin/hubble-commander/db"
 	"github.com/Worldcoin/hubble-commander/encoder"
 	"github.com/Worldcoin/hubble-commander/models"
@@ -21,17 +23,33 @@ const (
 type StateTree struct {
 	database   *Database
 	merkleTree *StoredMerkleTree
+
+	leavesCount *uint64
 }
 
-func NewStateTree(database *Database) *StateTree {
+func NewStateTree(database *Database) (*StateTree, error) {
+	stateTree := newStateTree(database)
+	count, err := stateTree.getLeavesCountFromStorage()
+	if err != nil {
+		return nil, err
+	}
+	atomic.StoreUint64(stateTree.leavesCount, count)
+	return stateTree, nil
+}
+
+func newStateTree(database *Database) *StateTree {
 	return &StateTree{
-		database:   database,
-		merkleTree: NewStoredMerkleTree("state", database, StateTreeDepth),
+		database:    database,
+		merkleTree:  NewStoredMerkleTree("state", database, StateTreeDepth),
+		leavesCount: ref.Uint64(0),
 	}
 }
 
 func (s *StateTree) copyWithNewDatabase(database *Database) *StateTree {
-	return NewStateTree(database)
+	stateTree := newStateTree(database)
+	leavesCount := atomic.LoadUint64(s.leavesCount)
+	atomic.StoreUint64(stateTree.leavesCount, leavesCount)
+	return stateTree
 }
 
 func (s *StateTree) Root() (*common.Hash, error) {
@@ -51,14 +69,38 @@ func (s *StateTree) Leaf(stateID uint32) (stateLeaf *models.StateLeaf, err error
 }
 
 func (s *StateTree) LeafOrEmpty(stateID uint32) (*models.StateLeaf, error) {
-	leaf, err := s.Leaf(stateID)
-	if IsNotFoundError(err) {
-		return &models.StateLeaf{
-			StateID:  stateID,
-			DataHash: merkletree.GetZeroHash(0),
-		}, nil
+	leaf, _, err := s.leafOrEmpty(stateID)
+	if err != nil {
+		return nil, err
 	}
-	return leaf, err
+	return leaf, nil
+}
+
+func (s *StateTree) leafOrEmpty(stateID uint32) (leaf *models.StateLeaf, isEmpty bool, err error) {
+	leaf, err = s.Leaf(stateID)
+	if IsNotFoundError(err) {
+		return emptyStateLeaf(stateID), true, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	return leaf, false, nil
+}
+
+func (s *StateTree) LeavesCount() uint64 {
+	return atomic.LoadUint64(s.leavesCount)
+}
+
+func (s *StateTree) getLeavesCountFromStorage() (uint64, error) {
+	count, err := s.database.Badger.Count(&stored.StateLeaf{}, nil)
+	return count, err
+}
+
+func (s *StateTree) incrementLeavesCount() {
+	atomic.AddUint64(s.leavesCount, 1)
+}
+
+func (s *StateTree) decreaseLeavesCount(delta uint64) {
+	atomic.AddUint64(s.leavesCount, ^(delta - 1))
 }
 
 func (s *StateTree) NextAvailableStateID() (*uint32, error) {
@@ -128,12 +170,16 @@ func roundAndValidateStateTreeSlot(rangeStart, rangeEnd, subtreeWidth int64) *in
 
 // Set returns a witness containing 32 elements for the current set operation
 func (s *StateTree) Set(id uint32, state *models.UserState) (witness models.Witness, err error) {
+	isNewLeaf := false
 	err = s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) error {
-		witness, err = NewStateTree(txDatabase).unsafeSet(id, state)
+		witness, isNewLeaf, err = newStateTree(txDatabase).unsafeSet(id, state)
 		return err
 	})
 	if err != nil {
 		return nil, err
+	}
+	if isNewLeaf {
+		s.incrementLeavesCount()
 	}
 
 	return witness, nil
@@ -155,9 +201,10 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 	if *currentRootHash == targetRootHash {
 		return nil
 	}
+	revertedLeavesCount := uint64(0)
 
 	return s.database.ExecuteInTransaction(TxOptions{}, func(txDatabase *Database) (err error) {
-		stateTree := NewStateTree(txDatabase)
+		stateTree := newStateTree(txDatabase)
 
 		err = txDatabase.Badger.Iterator(models.StateUpdatePrefix, db.ReversePrefetchIteratorOpts, func(item *bdg.Item) (bool, error) {
 			var stateUpdate *models.StateUpdate
@@ -173,6 +220,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 			if err != nil {
 				return false, err
 			}
+			revertedLeavesCount++
 			return *currentRootHash == targetRootHash, nil
 		})
 		if err != nil && !errors.Is(err, db.ErrIteratorFinished) {
@@ -182,6 +230,7 @@ func (s *StateTree) RevertTo(targetRootHash common.Hash) error {
 		if *currentRootHash != targetRootHash {
 			return errors.WithStack(ErrNonexistentState)
 		}
+		s.decreaseLeavesCount(revertedLeavesCount)
 		return nil
 	})
 }
@@ -201,12 +250,19 @@ func decodeStateUpdate(item *bdg.Item) (*models.StateUpdate, error) {
 	return &stateUpdate, nil
 }
 
-func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (models.Witness, error) {
-	prevLeaf, err := s.LeafOrEmpty(index)
+func (s *StateTree) unsafeSet(index uint32, state *models.UserState) (witness models.Witness, isNewLeaf bool, err error) {
+	prevLeaf, isNewLeaf, err := s.leafOrEmpty(index)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+	witness, err = s.unsafeSetLeaf(index, prevLeaf, state)
+	if err != nil {
+		return nil, false, err
+	}
+	return witness, isNewLeaf, nil
+}
 
+func (s *StateTree) unsafeSetLeaf(index uint32, prevLeaf *models.StateLeaf, state *models.UserState) (witness models.Witness, err error) {
 	prevRoot, err := s.Root()
 	if err != nil {
 		return nil, err
@@ -294,6 +350,13 @@ func (s *StateTree) IterateLeaves(action func(stateLeaf *models.StateLeaf) error
 		return err
 	}
 	return nil
+}
+
+func emptyStateLeaf(stateID uint32) *models.StateLeaf {
+	return &models.StateLeaf{
+		StateID:  stateID,
+		DataHash: merkletree.GetZeroHash(0),
+	}
 }
 
 func NewStateLeaf(stateID uint32, state *models.UserState) (*models.StateLeaf, error) {

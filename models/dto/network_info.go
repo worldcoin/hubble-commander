@@ -17,7 +17,7 @@ type NetworkInfo struct {
 	Rollup                         common.Address
 	BlockNumber                    uint32
 	TransactionCount               uint64
-	AccountCount                   uint32
+	AccountCount                   uint64
 	LatestBatch                    *models.Uint256
 	LatestFinalisedBatch           *models.Uint256
 	SignatureDomain                bls.Domain
