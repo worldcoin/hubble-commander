@@ -72,7 +72,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SingleBatch() {
 	batches, err := s.storage.GetBatchesInRange(nil, nil)
 	s.NoError(err)
 	s.Len(batches, 2)
-	s.Equal(prevStateRoot, batches[1].PrevStateRoot)
+	s.Equal(*prevStateRoot, batches[1].PrevStateRoot)
 
 	_, err = s.storage.GetFirstPendingDepositSubtree()
 	s.True(st.IsNotFoundError(err))
@@ -122,7 +122,7 @@ func (s *SyncDepositBatchTestSuite) TestSyncBatch_SyncsExistingBatch() {
 	batch, err := s.storage.GetBatch(batches[1].ID)
 	s.NoError(err)
 	s.NotNil(batch.Hash)
-	s.NotNil(batch.PrevStateRoot)
+	s.NotEmpty(batch.PrevStateRoot)
 }
 
 func (s *SyncDepositBatchTestSuite) syncBatches() {
@@ -152,7 +152,7 @@ func (s *SyncDepositBatchTestSuite) addGenesisBatch() {
 	s.NoError(err)
 
 	batch := contractBatch.ToModelBatch()
-	batch.PrevStateRoot = root
+	batch.PrevStateRoot = *root
 	err = s.storage.AddBatch(batch)
 	s.NoError(err)
 }

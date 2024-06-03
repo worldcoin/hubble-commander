@@ -12,6 +12,6 @@ type Batch struct {
 	Hash              *common.Hash // root of tree containing all commitments included in this batch
 	FinalisationBlock *uint32
 	AccountTreeRoot   *common.Hash
-	PrevStateRoot     *common.Hash
+	PrevStateRoot     common.Hash
 	MinedTime         *Timestamp
 }

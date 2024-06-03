@@ -34,6 +34,7 @@ func (s *TransactionTestSuite) SetupTest() {
 		TransactionHash: utils.RandomHash(),
 		Hash:            utils.NewRandomHash(),
 		MinedTime:       &models.Timestamp{Time: time.Unix(140, 0).UTC()},
+		PrevStateRoot:   utils.RandomHash(),
 	}
 
 	err = s.storage.AddBatch(s.batch)

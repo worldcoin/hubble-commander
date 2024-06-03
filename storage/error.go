@@ -12,6 +12,7 @@ var (
 	ErrNoRowsAffected          = fmt.Errorf("no rows were affected by the update")
 	ErrNonexistentState        = fmt.Errorf("cannot revert to nonexistent state")
 	ErrAlreadyMinedTransaction = fmt.Errorf("transaction already mined")
+	ErrPrevStateRootIsEmpty    = fmt.Errorf("PrevStateRoot is empty")
 
 	AnyNotFoundError, anyNotFoundErrorSupport = utils.NewAnyError(&NotFoundError{})
 )

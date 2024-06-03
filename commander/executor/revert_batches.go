@@ -7,7 +7,7 @@ import (
 )
 
 func (c *ExecutionContext) RevertBatches(startBatch *models.Batch) error {
-	err := c.storage.StateTree.RevertTo(*startBatch.PrevStateRoot)
+	err := c.storage.StateTree.RevertTo(startBatch.PrevStateRoot)
 	if err != nil {
 		return err
 	}

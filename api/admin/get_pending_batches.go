@@ -30,7 +30,7 @@ func (a *API) GetPendingBatches(ctx context.Context) ([]dto.PendingBatch, error)
 			ID:              batches[i].ID,
 			Type:            batches[i].Type,
 			TransactionHash: batches[i].TransactionHash,
-			PrevStateRoot:   *batches[i].PrevStateRoot,
+			PrevStateRoot:   batches[i].PrevStateRoot,
 			Commitments:     commitments,
 		})
 	}

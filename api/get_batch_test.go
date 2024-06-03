@@ -41,6 +41,8 @@ func (s *GetBatchTestSuite) SetupTest() {
 	s.testClient, err = eth.NewTestClient()
 	s.NoError(err)
 	s.api = &API{storage: s.storage.Storage, client: s.testClient.Client}
+	prevStateRoot, err := s.storage.StateTree.Root()
+	s.NoError(err)
 
 	s.batch = &models.Batch{
 		ID:                models.MakeUint256(1),
@@ -49,6 +51,7 @@ func (s *GetBatchTestSuite) SetupTest() {
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(42000),
 		AccountTreeRoot:   utils.NewRandomHash(),
+		PrevStateRoot:     *prevStateRoot,
 		MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
 	}
 
@@ -178,6 +181,7 @@ func (s *GetBatchTestSuite) TestGetBatchByHash_GenesisBatch() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)
@@ -252,6 +256,7 @@ func (s *GetBatchTestSuite) TestGetBatchByID_GenesisBatch() {
 		TransactionHash:   utils.RandomHash(),
 		Hash:              utils.NewRandomHash(),
 		FinalisationBlock: ref.Uint32(10),
+		PrevStateRoot:     utils.RandomHash(),
 	}
 	err := s.storage.AddBatch(&genesisBatch)
 	s.NoError(err)

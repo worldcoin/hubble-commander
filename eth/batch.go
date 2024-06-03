@@ -53,7 +53,7 @@ func (b *DecodedBatchBase) ToBatch(prevStateRoot common.Hash) *models.Batch {
 		FinalisationBlock: &b.FinalisationBlock,
 		AccountTreeRoot:   &b.AccountTreeRoot,
 		MinedTime:         &b.MinedTime,
-		PrevStateRoot:     &prevStateRoot,
+		PrevStateRoot:     prevStateRoot,
 	}
 }
 

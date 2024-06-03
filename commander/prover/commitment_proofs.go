@@ -69,9 +69,9 @@ func (c *Context) genesisBatchCommitmentInclusionProof() (*models.CommitmentIncl
 	}
 
 	return createCommitmentInclusionProof(
-		[]common.Hash{*previousBatch.PrevStateRoot},
+		[]common.Hash{previousBatch.PrevStateRoot},
 		0,
-		*previousBatch.PrevStateRoot,
+		previousBatch.PrevStateRoot,
 		merkletree.GetZeroHash(0),
 	)
 }

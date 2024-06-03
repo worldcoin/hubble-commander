@@ -45,6 +45,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			TransactionHash:   utils.RandomHash(),
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(1),
@@ -53,6 +54,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(42000),
 			MinedTime:         models.NewTimestamp(time.Unix(140, 0).UTC()),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(2),
@@ -61,6 +63,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(43000),
 			MinedTime:         models.NewTimestamp(time.Unix(150, 0).UTC()),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(3),
@@ -69,6 +72,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(44000),
 			MinedTime:         models.NewTimestamp(time.Unix(160, 0).UTC()),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 		{
 			ID:                models.MakeUint256(4),
@@ -77,6 +81,7 @@ func (s *GetBatchesTestSuite) SetupTest() {
 			Hash:              utils.NewRandomHash(),
 			FinalisationBlock: ref.Uint32(44000),
 			MinedTime:         models.NewTimestamp(time.Unix(160, 0).UTC()),
+			PrevStateRoot:     utils.RandomHash(),
 		},
 	}
 }
