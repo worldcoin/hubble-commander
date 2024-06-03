@@ -77,7 +77,7 @@ func (s *MigrateTestSuite) SetupTest() {
 }
 
 func (s *MigrateTestSuite) TearDownTest() {
-	stopCommander(s.cmd)
+	s.cmd.stopWorkersAndWait()
 	err := s.storage.Teardown()
 	s.NoError(err)
 }

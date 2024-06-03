@@ -59,7 +59,6 @@ func (s *SyncStakeWithdrawalsTestSuite) SetupTest() {
 
 func (s *SyncStakeWithdrawalsTestSuite) TearDownTest() {
 	s.cmd.stopWorkersAndWait()
-	stopCommander(s.cmd)
 	s.client.Close()
 	err := s.storage.Teardown()
 	s.NoError(err)
@@ -94,7 +93,7 @@ func (s *SyncStakeWithdrawalsTestSuite) TestNewBlockLoop_DoesNotSendStakeWithdra
 		"timeout when waiting for StakeWithdrawEvent",
 	)
 
-	stopCommander(s.cmd)
+	s.cmd.stopWorkersAndWait()
 
 	startBlock, err := s.client.GetLatestBlockNumber()
 	s.NoError(err)
